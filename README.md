@@ -44,36 +44,31 @@ JWT_SECRET=talentspherejwtsecretkey12345
 
 ---
 
-### 2. Seed Sandbox Data
-Populate the database with default admin accounts, staff profiles, and logs:
+### 2. Start Backend Server
+Install dependencies and run the Node.js development server (port `5001` with hot-reloading). On first run, a default HR Director account will be automatically created in the database:
 ```bash
 # Navigate to the backend directory
 cd backend
 
-# Install dependencies and seed the database
+# Install dependencies
 npm install
-npm run seed
-```
 
----
-
-### 3. Start Backend Server
-Run the Node.js development server (port `5001` with hot-reloading):
-```bash
 # Run server
 npm run dev
 ```
 
 ---
 
-### 4. Start React Frontend
-In a new terminal window, boot up the local Vite development server (usually served on `http://localhost:5173`):
+### 3. Start React Frontend
+In a new terminal window, install dependencies and boot up the local Vite development server (port `5173`):
 ```bash
 # Navigate to the frontend directory
 cd frontend
 
-# Install dependencies and launch Dev Server
+# Install dependencies
 npm install
+
+# Launch Dev Server
 npm run dev
 ```
 Vite will automatically proxy requests to `/api` directly to your backend on port `5001`.
@@ -82,15 +77,14 @@ Vite will automatically proxy requests to `/api` directly to your backend on por
 
 ## Sandbox Login Credentials
 
-Once the servers are running, log in with the following credentials to test features:
+Once the servers are running, log in with the following default credentials to access the system:
 
 ### HR Director Portal
 - **Email**: `hr@company.com`
 - **Password**: `admin123`
 - **Role**: Select **HR Portal** on the login card.
 
-### Employee Portal (Arjun Mehta)
-- **Email**: `emp@company.com`
-- **Password**: `emp123`
-- **Role**: Select **Employee Portal** on the login card.
+### Employee Portal
+- **Registration**: There are no pre-seeded demo employee accounts. Click on the **Create an account** link in the Employee Portal section of the login gateway to sign up.
+- **Access**: After submitting the registration form, your account is automatically approved, and you can log in immediately with your registered email and password.
 # HRM_PROJECT

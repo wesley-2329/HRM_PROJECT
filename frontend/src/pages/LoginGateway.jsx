@@ -35,8 +35,8 @@ const LoginGateway = () => {
       setEmail('hr@company.com');
       setPassword('admin123');
     } else {
-      setEmail('emp@company.com');
-      setPassword('emp123');
+      setEmail('');
+      setPassword('');
     }
   };
 
