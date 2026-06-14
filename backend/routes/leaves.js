@@ -37,6 +37,18 @@ router.post('/', protect, async (req, res) => {
       status: 'Pending'
     });
 
+    // Create notification for HR
+    const Notification = require('../models/Notification');
+    const notif = await Notification.create({
+      type: 'leave',
+      title: 'New Leave Request',
+      desc: `${req.user.name} applied for ${type} leave from ${start} to ${end}.`,
+      empId: 'hr'
+    });
+
+    // Emit socket notification to HR room
+    req.io.to('hr').emit('notification', notif);
+
     res.status(201).json(leave);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,6 +73,19 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
 
     leave.status = status;
     await leave.save();
+
+    // Create notification for employee
+    const Notification = require('../models/Notification');
+    const notif = await Notification.create({
+      type: 'leave',
+      title: `Leave request ${status}`,
+      desc: `Your leave request for ${leave.type} has been ${status.toLowerCase()}.`,
+      empId: leave.empId
+    });
+
+    // Emit socket notification to employee room
+    req.io.to(leave.empId).emit('notification', notif);
+
     res.json(leave);
   } catch (error) {
     res.status(500).json({ message: error.message });

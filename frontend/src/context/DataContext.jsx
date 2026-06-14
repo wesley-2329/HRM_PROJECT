@@ -1,11 +1,14 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import api from '../api';
 import { AuthContext } from './AuthContext';
+import { useToast } from '../components/Toast';
 
 export const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useToast();
 
   const [employees, setEmployees] = useState([]);
   const [leaves, setLeaves] = useState([]);
@@ -17,6 +20,10 @@ export const DataProvider = ({ children }) => {
   const [timesheets, setTimesheets] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [discussionMessages, setDiscussionMessages] = useState([]);
+  const [warningLetters, setWarningLetters] = useState([]);
+
+
 
   const fetchEmployees = async () => {
     try {
@@ -112,6 +119,24 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const fetchDiscussionMessages = async () => {
+    try {
+      const res = await api.get('/discussion');
+      setDiscussionMessages(res.data);
+    } catch (err) {
+      console.error('Error fetching discussion messages:', err);
+    }
+  };
+
+  const fetchWarningLetters = async () => {
+    try {
+      const res = await api.get('/warning-letters');
+      setWarningLetters(res.data);
+    } catch (err) {
+      console.error('Error fetching warning letters:', err);
+    }
+  };
+
   const fetchAllData = async () => {
     if (!user) return;
     await Promise.all([
@@ -122,11 +147,57 @@ export const DataProvider = ({ children }) => {
       fetchTrainings(),
       fetchTimesheets(),
       fetchNotifications(),
+      fetchDiscussionMessages(),
+      fetchWarningLetters(),
       user.role === 'hr' ? fetchEmployees() : Promise.resolve(),
       user.role === 'hr' ? fetchCandidates() : Promise.resolve(),
       user.role !== 'hr' ? fetchChatMessages() : Promise.resolve()
     ]);
   };
+  // Socket Connection and Event Listeners
+  useEffect(() => {
+    if (!user) return;
+
+    const socket = io('/', {
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => {
+      console.log('WebSocket connected successfully');
+      socket.emit('join', { userId: user.id, role: user.role });
+    });
+
+    socket.on('notification', (notif) => {
+      console.log('Notification socket message received:', notif);
+      showToast(`${notif.title}: ${notif.desc}`, 'info');
+      fetchNotifications();
+      if (notif.type === 'leave') {
+        fetchLeaves();
+      } else if (notif.type === 'meeting') {
+        fetchMeetings();
+      } else if (notif.type === 'reminder') {
+        fetchTasks();
+        fetchTickets();
+        fetchWarningLetters();
+      }
+    });
+
+    socket.on('discussion_message', (msg) => {
+      setDiscussionMessages(prev => {
+        if (prev.some(m => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
+    });
+
+    socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   return (
     <DataContext.Provider
@@ -141,6 +212,8 @@ export const DataProvider = ({ children }) => {
         timesheets,
         chatMessages,
         notifications,
+        discussionMessages,
+        warningLetters,
         setEmployees,
         setLeaves,
         setTasks,
@@ -151,6 +224,8 @@ export const DataProvider = ({ children }) => {
         setTimesheets,
         setChatMessages,
         setNotifications,
+        setDiscussionMessages,
+        setWarningLetters,
         fetchEmployees,
         fetchLeaves,
         fetchTasks,
@@ -161,6 +236,8 @@ export const DataProvider = ({ children }) => {
         fetchTimesheets,
         fetchChatMessages,
         fetchNotifications,
+        fetchDiscussionMessages,
+        fetchWarningLetters,
         fetchAllData
       }}
     >

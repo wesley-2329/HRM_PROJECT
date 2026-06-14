@@ -11,6 +11,11 @@ router.get('/', protect, async (req, res) => {
     let tasks;
     if (req.user.role === 'hr') {
       tasks = await Task.find({});
+    } else if (req.user.isTeamLead) {
+      const Employee = require('../models/Employee');
+      const teammates = await Employee.find({ teamLeadId: req.user.id });
+      const teammateIds = teammates.map(t => t.id);
+      tasks = await Task.find({ empId: { $in: [req.user.id, ...teammateIds] } });
     } else {
       tasks = await Task.find({ empId: req.user.id });
     }
@@ -27,8 +32,25 @@ router.post('/', protect, async (req, res) => {
   const { title, project, priority, due, progress, status, empId } = req.body;
 
   try {
-    // If not HR, auto-assign to self
-    const assignedEmpId = req.user.role === 'hr' ? (empId || '') : req.user.id;
+    const Employee = require('../models/Employee');
+    let assignedEmpId;
+    
+    if (req.user.role === 'hr') {
+      assignedEmpId = empId || '';
+    } else if (req.user.isTeamLead) {
+      if (empId) {
+        const checkEmp = await Employee.findOne({ id: empId });
+        if (checkEmp && checkEmp.teamLeadId === req.user.id) {
+          assignedEmpId = empId;
+        } else {
+          return res.status(403).json({ message: 'Can only assign tasks to direct teammates' });
+        }
+      } else {
+        assignedEmpId = req.user.id;
+      }
+    } else {
+      assignedEmpId = req.user.id;
+    }
 
     const task = await Task.create({
       title,
@@ -39,6 +61,18 @@ router.post('/', protect, async (req, res) => {
       status: status || 'todo',
       empId: assignedEmpId
     });
+
+    // Notify employee of new task assignment
+    if (assignedEmpId && assignedEmpId !== req.user.id) {
+      const Notification = require('../models/Notification');
+      const notif = await Notification.create({
+        type: 'reminder',
+        title: 'New Task Assigned',
+        desc: `You have been assigned task "${title}" in project "${project}".`,
+        empId: assignedEmpId
+      });
+      req.io.to(assignedEmpId).emit('notification', notif);
+    }
 
     res.status(201).json(task);
   } catch (error) {

@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -9,9 +10,65 @@ import {
   AddTaskModal,
   PayslipModal
 } from '../components/Modals';
+import { getAvatarUrl } from '../App';
+
+const SubjectSparkline = ({ progress }) => {
+  const canvasRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (!window.Chart || !canvasRef.current) return;
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
+    const ctx = canvasRef.current.getContext('2d');
+    
+    // Draw micro sparkline
+    const mockData = Array.from({ length: 6 }, (_, i) => Math.min(100, Math.max(0, progress - 15 + Math.random() * 30)));
+    mockData[mockData.length - 1] = progress; // ensure final matches
+
+    chartInstanceRef.current = new window.Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['', '', '', '', '', ''],
+        datasets: [{
+          data: mockData,
+          borderColor: 'hsl(var(--primary))',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        }
+      }
+    });
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, [progress]);
+
+  return (
+    <div style={{ width: '80px', height: '24px' }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+};
 
 const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const {
+    employees,
     leaves,
     tasks,
     tickets,
@@ -20,6 +77,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     timesheets,
     chatMessages,
     notifications,
+    discussionMessages,
+    warningLetters,
     fetchAllData,
     fetchLeaves,
     fetchTasks,
@@ -28,10 +87,15 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     fetchTrainings,
     fetchTimesheets,
     fetchChatMessages,
-    fetchNotifications
+    fetchNotifications,
+    fetchDiscussionMessages,
+    fetchWarningLetters
   } = useContext(DataContext);
   
-  const { user, loadUser } = useContext(AuthContext);
+  const { user: authUser, loadUser } = useContext(AuthContext);
+  const { id } = useParams();
+  const user = (authUser?.role === 'hr' && id) ? (employees.find(e => e.id === id) || authUser) : authUser;
+
   const { showToast } = useToast();
   const [selectedEmpForPayslip, setSelectedEmpForPayslip] = useState(user);
 
@@ -58,8 +122,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     }
     
     const hra = 15000;
-    const medical = 5000;
-    const gross = basic + hra + medical;
+    const other = 5000;
+    const gross = basic + hra + other;
     
     const pf = Math.round(basic * 0.12);
     const profTax = 250;
@@ -67,7 +131,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     const deductions = pf + profTax + tds;
     const net = gross - deductions;
     
-    return { basic, hra, medical, gross, pf, profTax, tds, deductions, net };
+    return { basic, hra, other, gross, pf, profTax, tds, deductions, net };
   };
 
   const presentDaysCount = timesheets.filter(t => t.status === 'Punctual' || t.status === 'Late Entry').length;
@@ -82,6 +146,47 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profilePhone, setProfilePhone] = useState(user?.phone || '');
+  const [profileParentStatus, setProfileParentStatus] = useState(user?.parentStatus || 'No');
+  
+  // Discussion Input State
+  const [discussionInput, setDiscussionInput] = useState('');
+  const discussionMessagesEndRef = useRef(null);
+
+  // Trivia states
+  const [triviaIndex, setTriviaIndex] = useState(0);
+  const [triviaSelected, setTriviaSelected] = useState('');
+  const [triviaScore, setTriviaScore] = useState(0);
+  const [triviaChecked, setTriviaChecked] = useState(false);
+  const [triviaComplete, setTriviaComplete] = useState(false);
+
+  const triviaQuestions = [
+    {
+      question: "Which of the following is NOT a core value of clean code?",
+      options: ["Readability", "Complexity", "Maintainability", "Testability"],
+      answer: "Complexity"
+    },
+    {
+      question: "What does HTML stand for?",
+      options: ["Hyper Text Markup Language", "High Tech Multi Language", "Hyperlink and Text Markup Language", "Home Tool Markup Language"],
+      answer: "Hyper Text Markup Language"
+    },
+    {
+      question: "What is the primary benefit of version control systems like Git?",
+      options: ["Tracking code changes & collaboration", "Compiling code faster", "Writing code automatically", "Designing database schemas"],
+      answer: "Tracking code changes & collaboration"
+    },
+    {
+      question: "In CSS, what does HSL stand for?",
+      options: ["Hue, Saturation, Lightness", "High-level Style Language", "Heading, Section, Layout", "Horizontal Styling Lines"],
+      answer: "Hue, Saturation, Lightness"
+    },
+    {
+      question: "Which of the following is a key feature of glassmorphism?",
+      options: ["Solid bright backgrounds", "Backdrop blur effect", "Fuzzy borders", "3D rotated frames"],
+      answer: "Backdrop blur effect"
+    }
+  ];
+
   const [profileDoor, setProfileDoor] = useState(user?.address?.door || '');
   const [profileStreet, setProfileStreet] = useState(user?.address?.street || '');
   const [profileCity, setProfileCity] = useState(user?.address?.city || '');
@@ -115,6 +220,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [ticketCategory, setTicketCategory] = useState('HR Query');
   const [ticketPriority, setTicketPriority] = useState('Low');
   const [ticketDesc, setTicketDesc] = useState('');
+  const [ticketSubmitted, setTicketSubmitted] = useState(false);
 
   // New Meeting Form States
   const [meetingMode, setMeetingMode] = useState('schedule');
@@ -123,17 +229,75 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [newMeetTime, setNewMeetTime] = useState('');
   const [newMeetLink, setNewMeetLink] = useState('');
   const [newMeetEmpIds, setNewMeetEmpIds] = useState('');
+  const [newMeetAgenda, setNewMeetAgenda] = useState('');
+  const [newMeetFromTime, setNewMeetFromTime] = useState('');
+  const [newMeetToTime, setNewMeetToTime] = useState('');
+  const [newMeetPoints, setNewMeetPoints] = useState('');
+  const [newMeetAttendeesCount, setNewMeetAttendeesCount] = useState(1);
+  const [newMeetTopics, setNewMeetTopics] = useState('');
 
-  // Documents Upload State
-  const [uploadedDocs, setUploadedDocs] = useState({});
+  // Daily Reports State
+  const [dailyReports, setDailyReports] = useState([]);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportTasks, setReportTasks] = useState('');
+  const [reportBlockers, setReportBlockers] = useState('');
+  const [reportHours, setReportHours] = useState(8);
+  const [reportTab, setReportTab] = useState('submit'); // 'submit' or 'reviews'
+  const [selectedReportForReview, setSelectedReportForReview] = useState(null);
+  const [reviewFeedback, setReviewFeedback] = useState('');
 
-  const handleDocUpload = (docName, file) => {
-    if (file) {
-      setUploadedDocs(prev => ({
-        ...prev,
-        [docName]: file.name
-      }));
+  // Profile upload input ref
+  const fileInputRef = useRef(null);
+
+  const getAvailableSlots = () => {
+    if (!newMeetDate) return [];
+    const standardSlots = [
+      { id: '1', label: '09:00 AM - 10:00 AM', from: '09:00', to: '10:00' },
+      { id: '2', label: '10:00 AM - 11:00 AM', from: '10:00', to: '11:00' },
+      { id: '3', label: '11:00 AM - 12:00 PM', from: '11:00', to: '12:00' },
+      { id: '4', label: '01:00 PM - 02:00 PM', from: '13:00', to: '14:00' },
+      { id: '5', label: '02:00 PM - 03:00 PM', from: '14:00', to: '15:00' },
+      { id: '6', label: '03:00 PM - 04:00 PM', from: '15:00', to: '16:00' },
+      { id: '7', label: '04:00 PM - 05:00 PM', from: '16:00', to: '17:00' },
+      { id: '8', label: '05:00 PM - 06:00 PM', from: '17:00', to: '18:00' }
+    ];
+
+    const dateMeetings = meetings.filter(m => m.date === newMeetDate && m.status === 'Scheduled');
+    
+    return standardSlots.map(slot => {
+      const isBooked = dateMeetings.some(m => {
+        if (m.fromTime && m.toTime) {
+          return (slot.from >= m.fromTime && slot.from < m.toTime) || 
+                 (slot.to > m.fromTime && slot.to <= m.toTime) ||
+                 (m.fromTime >= slot.from && m.fromTime < slot.to);
+        }
+        return false;
+      });
+      return { ...slot, isBooked };
+    });
+  };
+
+  const handleDocUpload = async (docName, file) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('docName', docName);
+
+    try {
+      showToast(`Uploading ${docName}...`, 'info');
+      await api.post('/employees/upload-doc', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       showToast(`${docName} uploaded successfully.`, 'success');
+      if (loadUser) {
+        await loadUser();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Failed to upload document.', 'error');
     }
   };
 
@@ -453,9 +617,21 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   
   const chartsInstanceRef = useRef({});
 
+  const fetchDailyReports = async () => {
+    try {
+      const res = await api.get('/daily-reports');
+      setDailyReports(res.data);
+    } catch (err) {
+      console.error('Error fetching daily reports:', err);
+    }
+  };
+
   // Sync data
   useEffect(() => {
     fetchAllData();
+    if (currentModule === 'emp-reports') {
+      fetchDailyReports();
+    }
   }, [currentModule]);
 
   // Set Profile Fields once user context loads
@@ -464,6 +640,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       setProfileName(user.name || '');
       setProfileEmail(user.email || '');
       setProfilePhone(user.phone || '');
+      setProfileParentStatus(user.parentStatus || 'No');
       setProfileDoor(user.address?.door || '');
       setProfileStreet(user.address?.street || '');
       setProfileCity(user.address?.city || '');
@@ -475,10 +652,20 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     }
   }, [user]);
 
-  // Scroll chat messages
+  // Scroll chat messages (scrollTop method prevents page-level scrolling on load)
   useEffect(() => {
-    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatMessagesEndRef.current?.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [chatMessages]);
+
+  useEffect(() => {
+    const container = discussionMessagesEndRef.current?.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [discussionMessages]);
 
   // Handle charts rendering
   useEffect(() => {
@@ -492,20 +679,32 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (currentModule === 'emp-dashboard') {
       const ctxDonut = empAttendanceDonutRef.current?.getContext('2d');
       if (ctxDonut) {
+        const curMonthRate = timesheets.length > 0 ? Math.round((presentDaysCount / timesheets.length) * 100) : 95;
         chartsInstanceRef.current.dashboardDonut = new window.Chart(ctxDonut, {
-          type: 'doughnut',
+          type: 'bar',
           data: {
-            labels: ['Present', 'Absent', 'Leave'],
+            labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
             datasets: [{
-              data: [
-                presentDaysCount || 22,
-                timesheets.filter(t => t.status === 'Absent').length || 1,
-                leavesTakenDays || 1
-              ],
-              backgroundColor: ['#10b981', '#f4637e', '#f59e0b']
+              label: 'Attendance Rate (%)',
+              data: [92, 94, 96, 93, 97, curMonthRate],
+              backgroundColor: 'rgba(16, 185, 129, 0.85)',
+              borderColor: '#10b981',
+              borderWidth: 1
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: 0,
+                max: 100,
+                ticks: {
+                  callback: function(value) { return value + "%" }
+                }
+              }
+            }
+          }
         });
       }
 
@@ -568,10 +767,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         chartsInstanceRef.current.payrollBar = new window.Chart(ctxBar, {
           type: 'bar',
           data: {
-            labels: ['Basic', 'HRA', 'Medical'],
+            labels: ['Basic', 'HRA', 'Other'],
             datasets: [{
               label: 'Monthly Breakup',
-              data: [salary.basic, salary.hra, salary.medical],
+              data: [salary.basic, salary.hra, salary.other],
               backgroundColor: 'rgba(16, 185, 129, 0.8)'
             }]
           },
@@ -586,19 +785,271 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         chartsInstanceRef.current.learningLine = new window.Chart(ctxLine, {
           type: 'line',
           data: {
-            labels: ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4', 'Wk 5', 'Wk 6', 'Wk 7', 'Wk 8'],
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
             datasets: [{
-              label: 'Completed Modules',
-              data: [1, 2, 4, 4, 6, 7, 9, 12],
+              label: 'Course Completion Progress (%)',
+              data: [10, 25, 40, 55, 68, 75, 88, 95],
               borderColor: 'hsl(158, 64%, 42%)',
-              tension: 0.2
+              tension: 0.2,
+              fill: false
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                reverse: true, // Inverted Y-axis
+                min: 0,
+                max: 100,
+                ticks: {
+                  callback: function(value) { return value + "%" }
+                }
+              }
+            }
+          }
         });
       }
     }
   }, [currentModule, attSubTab]);
+
+  // Trigger count-up and module entry animations
+  useEffect(() => {
+    const moduleTimer = setTimeout(() => {
+      const el = document.querySelector('.emp-module');
+      if (el && window.animateModuleIn) {
+        window.animateModuleIn(el);
+      }
+    }, 50);
+
+    const countTimer = setTimeout(() => {
+      const countElements = document.querySelectorAll('.emp-module .count-up');
+      countElements.forEach(item => {
+        const targetVal = parseFloat(item.getAttribute('data-target'));
+        if (!isNaN(targetVal) && window.animateCountUp) {
+          window.animateCountUp(item, targetVal);
+        }
+      });
+    }, 150);
+
+    return () => {
+      clearTimeout(moduleTimer);
+      clearTimeout(countTimer);
+    };
+  }, [currentModule]);
+
+  // Dinosaur Runner Game engine
+  useEffect(() => {
+    if (currentModule !== 'emp-engagement') return;
+
+    const canvas = document.getElementById('runner-canvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let raf = null;
+    let running = false;
+    let score = 0;
+    let speed = 4;
+    let frame = 0;
+    let obstacles = [];
+    const ground = 160;
+    const player = { x: 80, y: 110, width: 40, height: 50, vy: 0, onGround: true };
+
+    const jump = () => {
+      if (player.onGround) {
+        player.vy = -14;
+        player.onGround = false;
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Ignore keystrokes if typing inside text fields
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
+
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+      }
+    };
+
+    const handleCanvasClick = (e) => {
+      e.preventDefault();
+      if (!running) {
+        startGame();
+      } else {
+        jump();
+      }
+    };
+
+    const spawnObstacle = () => {
+      const types = [
+        { label: '📋 Task', w: 30, h: 40 },
+        { label: '📧 Email', w: 25, h: 35 },
+        { label: '📊 Report', w: 35, h: 45 }
+      ];
+      const t = types[Math.floor(Math.random() * types.length)];
+      obstacles.push({ x: 700, y: ground - t.h, width: t.w, height: t.h, label: t.label });
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, 680, 200);
+
+      // Ground line
+      ctx.strokeStyle = 'rgba(99,102,241,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, ground + 10);
+      ctx.lineTo(680, ground + 10);
+      ctx.stroke();
+
+      // Score
+      ctx.fillStyle = '#C7D2FE';
+      ctx.font = '14px Plus Jakarta Sans, sans-serif';
+      ctx.fillText(`Score: ${score}`, 560, 30);
+      ctx.fillText('SPACE / tap to jump', 20, 30);
+
+      // Player (stick figure HR person)
+      ctx.fillStyle = '#818CF8';
+      // Body
+      ctx.fillRect(player.x + 10, player.y + 15, 20, 25);
+      // Head
+      ctx.beginPath();
+      ctx.arc(player.x + 20, player.y + 10, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Legs (animated)
+      ctx.strokeStyle = '#818CF8';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      const legSwing = player.onGround ? Math.sin(frame * 0.3) * 15 : 0;
+      ctx.beginPath();
+      ctx.moveTo(player.x + 15, player.y + 40);
+      ctx.lineTo(player.x + 10, player.y + 55 + legSwing);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(player.x + 25, player.y + 40);
+      ctx.lineTo(player.x + 30, player.y + 55 - legSwing);
+      ctx.stroke();
+
+      // Briefcase
+      ctx.fillStyle = '#4338CA';
+      ctx.fillRect(player.x + 32, player.y + 25, 12, 10);
+
+      // Obstacles
+      obstacles.forEach(obs => {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.fillStyle = '#FEF2F2';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(obs.label, obs.x - 10, obs.y - 5);
+      });
+    };
+
+    const update = () => {
+      frame++;
+      // Gravity
+      player.vy += 0.8;
+      player.y += player.vy;
+      if (player.y >= ground - player.height) {
+        player.y = ground - player.height;
+        player.vy = 0;
+        player.onGround = true;
+      }
+
+      // Spawn
+      if (frame % Math.max(60, Math.floor(100 - score / 10)) === 0) {
+        spawnObstacle();
+      }
+
+      // Move
+      obstacles = obstacles.filter(o => {
+        o.x -= speed;
+        return o.x > -50;
+      });
+
+      // Collision
+      obstacles.forEach(obs => {
+        if (player.x + 8 < obs.x + obs.width && player.x + 32 > obs.x &&
+            player.y + 8 < obs.y + obs.height && player.y + player.height > obs.y) {
+          gameOver();
+        }
+      });
+
+      score++;
+      speed = 4 + Math.floor(score / 200) * 0.5;
+    };
+
+    const gameOver = () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      ctx.fillStyle = 'rgba(15,23,42,0.85)';
+      ctx.fillRect(0, 0, 680, 200);
+      ctx.fillStyle = '#EF4444';
+      ctx.font = 'bold 28px Plus Jakarta Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('OVERLOADED! 😵', 340, 80);
+      ctx.fillStyle = '#C7D2FE';
+      ctx.font = '18px Plus Jakarta Sans, sans-serif';
+      ctx.fillText(`Final Score: ${score}`, 340, 115);
+      ctx.fillStyle = '#818CF8';
+      ctx.font = '14px Plus Jakarta Sans, sans-serif';
+      ctx.fillText('Click canvas to restart', 340, 145);
+      ctx.textAlign = 'left';
+    };
+
+    const loop = () => {
+      if (!running) return;
+      update();
+      draw();
+      raf = requestAnimationFrame(loop);
+    };
+
+    const startGame = () => {
+      running = true;
+      score = 0;
+      speed = 4;
+      frame = 0;
+      obstacles = [];
+      player.y = ground - player.height;
+      player.vy = 0;
+      player.onGround = true;
+      loop();
+    };
+
+    // Draw initial cover screen
+    ctx.fillStyle = 'rgba(15,23,42,0.9)';
+    ctx.fillRect(0, 0, 680, 200);
+    ctx.fillStyle = '#818CF8';
+    ctx.font = 'bold 22px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Dino Runner: Avoid Work Overload!', 340, 75);
+    ctx.fillStyle = '#C7D2FE';
+    ctx.font = '14px Plus Jakarta Sans, sans-serif';
+    ctx.fillText('Press SPACE, UP Arrow, or Tap to jump', 340, 115);
+    ctx.fillStyle = '#10B981';
+    ctx.fillText('Click canvas or the button to START', 340, 150);
+    ctx.textAlign = 'left';
+
+    document.addEventListener('keydown', handleKeyDown);
+    canvas.addEventListener('click', handleCanvasClick);
+
+    const startBtn = document.getElementById('start-runner-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', startGame);
+    }
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (canvas) canvas.removeEventListener('click', handleCanvasClick);
+      if (startBtn) startBtn.removeEventListener('click', startGame);
+    };
+  }, [currentModule]);
 
   // Edit personal profile details
   const handleUpdateProfile = async (e) => {
@@ -608,6 +1059,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         name: profileName,
         email: profileEmail,
         phone: profilePhone,
+        parentStatus: profileParentStatus,
         address: {
           door: profileDoor,
           street: profileStreet,
@@ -628,6 +1080,31 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       loadUser();
     } catch (err) {
       showToast('Error updating profile.', 'error');
+    }
+  };
+
+  const handleSendDiscussion = async (e) => {
+    e.preventDefault();
+    if (!discussionInput.trim()) return;
+    try {
+      await api.post('/discussion', { message: discussionInput });
+      setDiscussionInput('');
+    } catch (err) {
+      showToast('Error sending message to discussion board.', 'error');
+    }
+  };
+
+  const getTicketStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'Approved':
+      case 'Closed':
+        return 'badge-success';
+      case 'Cancelled':
+        return 'badge-danger';
+      case 'Raised':
+      case 'Open':
+      default:
+        return 'badge-warning';
     }
   };
 
@@ -673,10 +1150,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       showToast('Support ticket raised.', 'success');
       setTicketTitle(''); setTicketDesc('');
       setRaiseTicketActive(false);
+      setTicketSubmitted(true);
       fetchTickets();
-      if (currentModule !== 'emp-profile') {
-        setCurrentModule('emp-profile');
-      }
     } catch (err) {
       showToast('Error raising ticket.', 'error');
     }
@@ -762,15 +1237,32 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
     const link = newMeetLink.trim() || `https://meet.talentsphere.company/join/sync-${Math.random().toString(36).substring(7)}`;
 
+    let durationHours = 0;
+    if (newMeetFromTime && newMeetToTime) {
+      const [fromH, fromM] = newMeetFromTime.split(':').map(Number);
+      const [toH, toM] = newMeetToTime.split(':').map(Number);
+      const diffMins = (toH * 60 + toM) - (fromH * 60 + fromM);
+      if (diffMins > 0) {
+        durationHours = Number((diffMins / 60).toFixed(2));
+      }
+    }
+
     try {
       await api.post('/meetings', {
         title,
         host: user?.name || 'Employee',
         date,
-        time,
+        time: newMeetFromTime && newMeetToTime ? `${newMeetFromTime} - ${newMeetToTime}` : time,
         type: 'Online',
         empId: newMeetEmpIds.trim() || user?.id,
-        link
+        link,
+        agenda: newMeetAgenda,
+        fromTime: newMeetFromTime || time,
+        toTime: newMeetToTime || time,
+        points: newMeetPoints,
+        durationHours,
+        attendeesCount: Number(newMeetAttendeesCount) || 1,
+        topics: newMeetTopics
       });
 
       showToast(meetingMode === 'instant' ? 'Instant meeting started successfully.' : 'Meeting scheduled successfully.', 'success');
@@ -781,6 +1273,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       setNewMeetTime('');
       setNewMeetLink('');
       setNewMeetEmpIds('');
+      setNewMeetAgenda('');
+      setNewMeetFromTime('');
+      setNewMeetToTime('');
+      setNewMeetPoints('');
+      setNewMeetAttendeesCount(1);
+      setNewMeetTopics('');
 
       fetchMeetings();
     } catch (err) {
@@ -830,10 +1328,71 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     }
   };
 
-  const handleDailyReportSubmit = (e) => {
+  const handleDailyReportSubmit = async (e) => {
     e.preventDefault();
-    showToast('Daily work report submitted successfully.', 'success');
-    setDailyReportVal('');
+    try {
+      await api.post('/daily-reports', {
+        date: reportDate,
+        tasksCompleted: reportTasks,
+        blockers: reportBlockers,
+        hoursWorked: reportHours
+      });
+      showToast('Daily work report submitted successfully.', 'success');
+      setReportTasks('');
+      setReportBlockers('');
+      setReportHours(8);
+      fetchDailyReports();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Error submitting report.', 'error');
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedReportForReview) return;
+    try {
+      await api.put(`/daily-reports/${selectedReportForReview._id}/review`, {
+        reviewFeedback
+      });
+      showToast('Review feedback submitted.', 'success');
+      setSelectedReportForReview(null);
+      setReviewFeedback('');
+      fetchDailyReports();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Error submitting review.', 'error');
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+    if (authUser?.role === 'hr' && id) {
+      formData.append('empId', id);
+    }
+
+    try {
+      showToast('Uploading profile picture...', 'info');
+      await api.post('/employees/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      showToast('Profile picture uploaded successfully.', 'success');
+      if (loadUser) {
+        await loadUser(); // refresh navbar and context user
+      }
+      fetchAllData(); // refresh employee records
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Failed to upload profile picture.', 'error');
+    } finally {
+      e.target.value = null; // reset file input
+    }
   };
 
   // Notifications
@@ -869,9 +1428,17 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         <section id="emp-mod-emp-dashboard" className="emp-module">
           <div className="card" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, #4f46e5 100%)', color: '#fff', border: 'none', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '4px' }}>Welcome to TalentSphere Employee Portal</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.875rem' }}>Today is {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    Welcome to TalentSphere Employee Portal
+                    <span className={`badge ${activeShift ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '12px', color: '#fff', verticalAlign: 'middle' }}>
+                      <i className={`fa-solid ${activeShift ? 'fa-circle-check' : 'fa-circle-xmark'}`} style={{ marginRight: '4px' }}></i>
+                      {activeShift ? 'Clocked In' : 'Clocked Out'}
+                    </span>
+                  </h3>
+                  <p style={{ opacity: 0.9, fontSize: '0.875rem' }}>Today is {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }} className="quick-links">
                 <button className="btn btn-secondary" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => setCurrentModule('emp-profile')}>My Profile</button>
@@ -886,7 +1453,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="metric-card primary">
               <div>
                 <span className="metric-label">Attendance This Month</span>
-                <div className="metric-val">{presentDaysCount}/{timesheets.length || 24} Days</div>
+                <div className="metric-val"><span className="count-up" data-target={presentDaysCount}>{presentDaysCount}</span>/<span className="count-up" data-target={timesheets.length || 24}>{timesheets.length || 24}</span> Days</div>
                 <span className="badge badge-success">Punctual</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-calendar-check"></i></div>
@@ -894,7 +1461,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="metric-card success">
               <div>
                 <span className="metric-label">Leave Balance</span>
-                <div className="metric-val">{Math.max(0, 15 - leavesTakenDays)} Days</div>
+                <div className="metric-val"><span className="count-up" data-target={Math.max(0, 15 - leavesTakenDays)}>{Math.max(0, 15 - leavesTakenDays)}</span> Days</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Earned & Casual</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-plane"></i></div>
@@ -902,7 +1469,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="metric-card info">
               <div>
                 <span className="metric-label">Pending Tasks</span>
-                <div className="metric-val">{activeTasksCount}</div>
+                <div className="metric-val"><span className="count-up" data-target={activeTasksCount}>{activeTasksCount}</span></div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Assigned tasks</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-list-check"></i></div>
@@ -910,7 +1477,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="metric-card warning">
               <div>
                 <span className="metric-label">Upcoming Meetings</span>
-                <div className="metric-val">{meetings.filter(m => m.status === 'Scheduled').length} Meetings</div>
+                <div className="metric-val"><span className="count-up" data-target={meetings.filter(m => m.status === 'Scheduled').length}>{meetings.filter(m => m.status === 'Scheduled').length}</span> Meetings</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Scheduled for today</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-video"></i></div>
@@ -921,7 +1488,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div>
               {renderPunchClockCard()}
               <div className="card">
-                <div className="card-title">Attendance Ratio Breakdown</div>
+                <div className="card-title">Monthly Attendance Ratio (%)</div>
                 <div className="chart-container">
                   <canvas ref={empAttendanceDonutRef}></canvas>
                 </div>
@@ -932,6 +1499,47 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <canvas ref={empHoursLineRef}></canvas>
                 </div>
               </div>
+
+              {/* Group Discussion Chat Widget */}
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '380px' }}>
+                <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Group Discussion Board</span>
+                  <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-engagement')}>Open Full Hub</button>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {discussionMessages.slice(-6).map((msg) => (
+                    <div key={msg._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.8rem' }}>
+                      <img src={msg.senderAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="Avatar" />
+                      <div style={{ background: 'hsl(var(--bg-main))', padding: '8px 12px', borderRadius: '12px', flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.75rem', marginBottom: '2px' }}>
+                          <span>{msg.senderName} ({msg.senderRole})</span>
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{msg.time}</span>
+                        </div>
+                        <div style={{ wordBreak: 'break-word' }}>{msg.message}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {discussionMessages.length === 0 && (
+                    <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '20px' }}>No messages posted yet. Be the first to start the discussion!</div>
+                  )}
+                  <div ref={discussionMessagesEndRef} />
+                </div>
+                <form onSubmit={handleSendDiscussion} style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Type a message..."
+                    value={discussionInput}
+                    onChange={(e) => setDiscussionInput(e.target.value)}
+                    style={{ flex: 1 }}
+                    required
+                  />
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 12px' }}><i className="fa-solid fa-paper-plane"></i></button>
+                </form>
+              </div>
+            </div>
+
+            <div>
               <div className="card">
                 <div className="card-title">Assigned Tasks</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -952,9 +1560,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   )}
                 </div>
               </div>
-            </div>
-
-            <div>
               <div className="card">
                 <div className="card-title">Upcoming Meetings</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1016,11 +1621,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </div>
               </div>
               <div className="card">
-                <div className="card-title">Performance & PIP Overview</div>
+                <div className="card-title">Performance Standing Summary</div>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
                     <span>Current Rating: 4.2 / 5.0</span>
-                    <span className="badge badge-success">PIP Status: Not Initiated</span>
+                    <span className="badge badge-success">Standing: Excellent</span>
                   </div>
                   <div style={{ color: 'var(--warning)', fontSize: '0.95rem', marginBottom: '12px' }}>
                     <i className="fa-solid fa-star"></i>
@@ -1047,8 +1652,49 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           {profileTab === 'personal' && (
             <div id="profile-tab-personal">
               <div className="card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid hsl(var(--border))' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img src={getAvatarUrl(user)} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid hsl(var(--primary))' }} alt="profile" />
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()} 
+                      style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        right: '0',
+                        background: 'hsl(var(--primary))',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                      }}
+                      title="Upload picture"
+                    >
+                      <i className="fa-solid fa-camera" style={{ fontSize: '0.85rem' }}></i>
+                    </button>
+                  </div>
+                  <div>
+                    <h3 style={{ fontWeight: 700, fontSize: '1.25rem', margin: 0 }}>{user?.name}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>{user?.role} | {user?.dept}</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '2px 0 0 0' }}>Emp ID: {user?.id}</p>
+                  </div>
+                </div>
+
                 <div className="card-title">Personal Details</div>
                 <form onSubmit={handleUpdateProfile}>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    style={{ display: 'none' }} 
+                    accept="image/*" 
+                    onChange={handleAvatarUpload} 
+                  />
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
                     <div>
                       <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Employee ID</label>
@@ -1105,6 +1751,17 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => setAadhaarMasked(!aadhaarMasked)}><i className="fa-solid fa-eye"></i></button>
                       </div>
                     </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Parent Status</label>
+                      {profileEditing ? (
+                        <select className="form-control" value={profileParentStatus} onChange={(e) => setProfileParentStatus(e.target.value)} style={{ marginTop: '4px' }}>
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      ) : (
+                        <p style={{ fontWeight: 700, marginTop: '4px' }}>{user?.parentStatus || 'No'}</p>
+                      )}
+                    </div>
                   </div>
                   <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
                     {!profileEditing ? (
@@ -1115,7 +1772,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <button type="button" className="btn btn-secondary" onClick={() => setProfileEditing(false)}>Cancel</button>
                       </>
                     )}
-                    <button type="button" className="btn btn-secondary" onClick={() => showToast('Profile image updated.', 'success')}>Upload Profile Picture</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()}>Upload Profile Picture</button>
                     <button type="button" className="btn btn-secondary" onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
                   </div>
                 </form>
@@ -1177,13 +1834,69 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <td><strong>{t.id}</strong></td>
                       <td>{t.title}</td>
                       <td>{t.category}</td>
-                      <td><span className={`badge ${t.status === 'Open' ? 'badge-warning' : 'badge-success'}`}>{t.status}</span></td>
+                      <td><span className={`badge ${getTicketStatusBadgeClass(t.status)}`}>{t.status}</span></td>
                       <td>{t.raisedOn}</td>
                       <td>{t.response || '--'}</td>
                     </tr>
                   ))}
                   {tickets.length === 0 && (
                     <tr><td colSpan="6" style={{ textAlign: 'center' }}>No tickets raised.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card" style={{ marginTop: '20px' }}>
+            <div className="card-title">Warning Letters / Compliance Logs</div>
+            <div className="table-responsive">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Subject</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {warningLetters.map(warning => (
+                    <tr key={warning._id}>
+                      <td><strong>{warning.date}</strong></td>
+                      <td>{warning.subject}</td>
+                      <td>{warning.reason}</td>
+                      <td>
+                        <span className={`badge ${warning.status === 'Acknowledged' ? 'badge-success' : 'badge-danger'}`}>
+                          {warning.status}
+                        </span>
+                      </td>
+                      <td>
+                        {warning.status === 'Issued' ? (
+                          <button
+                            className="btn btn-primary"
+                            type="button"
+                            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                            onClick={async () => {
+                              try {
+                                await api.put(`/warning-letters/${warning._id}/acknowledge`);
+                                showToast('Warning letter acknowledged.', 'success');
+                                fetchWarningLetters();
+                              } catch (err) {
+                                showToast('Error acknowledging warning letter.', 'error');
+                              }
+                            }}
+                          >
+                            Acknowledge Letter
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Acknowledged</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {warningLetters.length === 0 && (
+                    <tr><td colSpan="5" style={{ textAlign: 'center' }}>No compliance warning letters issued.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1208,8 +1921,16 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               { name: 'Previous Company Relieving Letter', status: 'Upload Required', icon: 'fa-briefcase', upload: true },
               { name: 'Certifications Log', status: 'Upload Required', icon: 'fa-certificate', upload: true }
             ].map((d, idx) => {
-              const isUploaded = !!uploadedDocs[d.name];
-              const docStatus = isUploaded ? `Uploaded (${uploadedDocs[d.name]})` : d.status;
+              const documentPath = user?.documents ? (
+                user.documents instanceof Map ? user.documents.get(d.name) : user.documents[d.name]
+              ) : null;
+              const isUploaded = !!documentPath;
+              const getCleanFileName = (pathStr) => {
+                if (!pathStr) return '';
+                const parts = pathStr.split('/');
+                return parts[parts.length - 1];
+              };
+              const docStatus = isUploaded ? `Uploaded (${getCleanFileName(documentPath)})` : d.status;
               return (
                 <div key={idx} className="emp-card" style={{ textAlign: 'left' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -1238,7 +1959,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <button 
                           className="btn btn-secondary" 
                           style={{ width: '100%' }} 
-                          onClick={() => showToast(`Downloading ${uploadedDocs[d.name]}...`, 'info')}
+                          onClick={() => {
+                            showToast(`Opening ${getCleanFileName(documentPath)}...`, 'info');
+                            window.open(`/${documentPath}`, '_blank');
+                          }}
                         >
                           Download Uploaded
                         </button>
@@ -1502,7 +2226,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         </section>
       )}
 
-      {/* 6. PIP View */}
+      {/* 6. PIP / Performance View */}
       {currentModule === 'emp-pip' && (
         <section id="emp-mod-emp-pip" className="emp-module">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
@@ -1521,13 +2245,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
             <div className="card">
-              <div className="card-title">Performance Improvement Plan (PIP)</div>
+              <div className="card-title">Development & Performance Standing</div>
               <div style={{ padding: '15px', borderRadius: '10px', background: 'hsla(var(--success), 0.1)', border: '1px solid hsla(var(--success), 0.2)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>PIP Status</strong>
-                  <span className="badge badge-success">Not Initiated</span>
+                  <strong>Performance Level</strong>
+                  <span className="badge badge-success">Meeting Expectations</span>
                 </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>No performance plans are currently active. Keep up the high standards!</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>You are in good standing. No special improvement plans are active. Keep up the high standards!</p>
               </div>
             </div>
           </div>
@@ -1571,7 +2295,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       {currentModule === 'emp-learning' && (
         <section id="emp-mod-emp-learning" className="emp-module">
           <div className="card">
-            <div className="card-title">Learning Progress</div>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-crown" style={{ color: 'var(--warning)' }}></i> Learning Progress
+            </div>
             <div className="chart-container">
               <canvas ref={empLearningLineRef}></canvas>
             </div>
@@ -1590,6 +2316,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                   <div style={{ width: `${tr.progress}%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
                 </div>
+                <SubjectSparkline progress={tr.progress} />
                 <button className="btn btn-secondary" style={{ width: '100%' }} onClick={async () => {
                   try {
                     await api.put(`/trainings/${tr._id}/progress`, { progress: Math.min(tr.progress + 20, 100) });
@@ -1676,6 +2403,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px' }}>
                     {statusTasks.map(t => {
                       const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
+                      const assignee = employees.find(e => e.id === t.empId);
                       return (
                         <div key={t._id} className="ats-cand-card" style={{ cursor: 'pointer' }} onClick={() => {
                           const nextState = t.status === 'todo' ? 'in-progress' : t.status === 'in-progress' ? 'done' : 'todo';
@@ -1683,6 +2411,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         }}>
                           <h5 style={{ marginBottom: '6px' }}>{t.title}</h5>
                           <p>{t.project}</p>
+                          {assignee && assignee.id !== user.id && (
+                            <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <i className="fa-solid fa-circle-user"></i>
+                              <span>{assignee.name}</span>
+                            </div>
+                          )}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
                             <span className={`badge ${priorityColor}`}>{t.priority}</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Due: {t.due}</span>
@@ -1696,41 +2430,47 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             })}
           </div>
 
-          <div className="dashboard-layout">
-            <div>
-              <div className="card">
-                <div className="card-title">Daily Work Report</div>
-                <form onSubmit={handleDailyReportSubmit}>
-                  <div className="form-group">
-                    <label>What did you work on today?</label>
-                    <textarea className="form-control" style={{ height: '90px' }} value={dailyReportVal} onChange={(e) => setDailyReportVal(e.target.value)} required></textarea>
-                  </div>
-                  <button type="submit" className="btn btn-primary">Submit Report</button>
-                </form>
-              </div>
-            </div>
-            <div>
-              <div className="card">
-                <div className="card-title">Task Deadline Tracker</div>
-                <div className="table-responsive">
-                  <table className="custom-table" style={{ fontSize: '0.8rem' }}>
-                    <thead>
-                      <tr>
-                        <th>Task</th>
-                        <th>Due Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tasks.map((t, idx) => (
+          <div className="card" style={{ marginTop: '24px' }}>
+            <div className="card-title">Task Deadline Tracker</div>
+            <div className="table-responsive">
+              <table className="custom-table" style={{ fontSize: '0.85rem' }}>
+                <thead>
+                  <tr>
+                    <th>Task Title</th>
+                    <th>Project</th>
+                    <th>Assignee</th>
+                    <th>Priority</th>
+                    <th>Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tasks.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '16px' }}>No tasks registered.</td>
+                    </tr>
+                  ) : (
+                    tasks.map((t, idx) => {
+                      const assignee = employees.find(e => e.id === t.empId);
+                      return (
                         <tr key={idx} style={t.priority === 'High' ? { background: 'rgba(244,63,94,0.05)' } : {}}>
                           <td><strong>{t.title}</strong></td>
+                          <td>{t.project}</td>
+                          <td>
+                            {assignee ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <img src={getAvatarUrl(assignee)} style={{ width: '22px', height: '22px', borderRadius: '50%' }} alt="avatar" />
+                                <span>{assignee.name}</span>
+                              </div>
+                            ) : 'Unassigned'}
+                          </td>
+                          <td><span className={`badge ${t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success'}`}>{t.priority}</span></td>
                           <td>{t.due}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -1788,28 +2528,119 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               )}
               
               {meetingMode === 'schedule' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Scheduled Date</label>
-                    <input 
-                      type="date" 
-                      className="form-control" 
-                      value={newMeetDate}
-                      onChange={(e) => setNewMeetDate(e.target.value)}
-                      required
-                    />
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label>Scheduled Date</label>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        value={newMeetDate}
+                        onChange={(e) => setNewMeetDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div className="form-group">
+                        <label>From Time</label>
+                        <input 
+                          type="time" 
+                          className="form-control" 
+                          value={newMeetFromTime}
+                          onChange={(e) => { setNewMeetFromTime(e.target.value); setNewMeetTime(e.target.value); }}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>To Time</label>
+                        <input 
+                          type="time" 
+                          className="form-control" 
+                          value={newMeetToTime}
+                          onChange={(e) => setNewMeetToTime(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Scheduled Time</label>
-                    <input 
-                      type="time" 
-                      className="form-control" 
-                      value={newMeetTime}
-                      onChange={(e) => setNewMeetTime(e.target.value)}
-                      required
-                    />
+
+                  {newMeetDate && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                        Available Time Slots on {newMeetDate}:
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {getAvailableSlots().map(slot => (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            className={`btn ${slot.isBooked ? 'btn-secondary' : 'btn-primary'}`}
+                            style={{ 
+                              padding: '4px 10px', 
+                              fontSize: '0.75rem', 
+                              opacity: slot.isBooked ? 0.4 : 1,
+                              cursor: slot.isBooked ? 'not-allowed' : 'pointer'
+                            }}
+                            disabled={slot.isBooked}
+                            onClick={() => {
+                              setNewMeetFromTime(slot.from);
+                              setNewMeetToTime(slot.to);
+                              setNewMeetTime(slot.from);
+                            }}
+                          >
+                            {slot.label} {slot.isBooked ? '(Booked)' : '(Available)'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                    <div className="form-group">
+                      <label>Meeting Agenda</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. Sprint planning review" 
+                        value={newMeetAgenda}
+                        onChange={(e) => setNewMeetAgenda(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Topics to Discuss</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. Architecture, Design" 
+                        value={newMeetTopics}
+                        onChange={(e) => setNewMeetTopics(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                    <div className="form-group">
+                      <label>Expected Attendees Count</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        className="form-control" 
+                        value={newMeetAttendeesCount}
+                        onChange={(e) => setNewMeetAttendeesCount(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Meeting Notes / Points</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. Bring laptop and research materials" 
+                        value={newMeetPoints}
+                        onChange={(e) => setNewMeetPoints(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               {meetingMode === 'instant' && (
@@ -1839,7 +2670,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </span>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '10px' }}>
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '10px', width: '100%' }}>
                 {meetingMode === 'instant' ? 'Start Instant Meeting' : 'Schedule Meeting'}
               </button>
             </form>
@@ -1871,9 +2702,16 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 }
 
                 return (
-                  <div key={idx} className="emp-card" style={{ textAlign: 'left', ...cardStyle }}>
+                  <div key={idx} className="emp-card" style={{ textAlign: 'left', ...cardStyle, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <strong>{m.title}</strong>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0' }}>Host: {m.host} | Time: {m.time}</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0' }}>Host: {m.host} | Date: {m.date} | Time: {m.time}</p>
+                    {m.agenda && <p style={{ fontSize: '0.8rem', margin: '0' }}><strong>Agenda:</strong> {m.agenda}</p>}
+                    {m.topics && <p style={{ fontSize: '0.8rem', margin: '0' }}><strong>Topics:</strong> {m.topics}</p>}
+                    {m.points && <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0' }}><strong>Notes:</strong> {m.points}</p>}
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', fontSize: '0.75rem', marginTop: '4px' }}>
+                      <span className="badge badge-info">Duration: {m.durationHours || 1.0}h</span>
+                      <span className="badge badge-primary">Attendees: {m.attendeesCount || 1}</span>
+                    </div>
                     {actBtn}
                   </div>
                 );
@@ -1972,38 +2810,47 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           <div className="dashboard-layout">
             <div className="card">
               <div className="card-title">Raise Support Ticket</div>
-              <form onSubmit={handleRaiseTicketSubmit}>
-                <div className="form-group">
-                  <label>Ticket Subject</label>
-                  <input type="text" className="form-control" value={ticketTitle} onChange={(e) => setTicketTitle(e.target.value)} required />
+              {ticketSubmitted ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <i className="fa-solid fa-circle-check" style={{ fontSize: '3rem', color: '#10B981', marginBottom: '16px' }}></i>
+                  <h4 style={{ color: '#fff', marginBottom: '8px' }}>Ticket Submitted!</h4>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '20px' }}>Your ticket has been logged and sent to HR.</p>
+                  <button className="btn btn-secondary" onClick={() => setTicketSubmitted(false)}>Raise a New Ticket</button>
                 </div>
-                <div className="form-group">
-                  <label>Category</label>
-                  <select className="form-control" value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)}>
-                    <option value="HR Query">HR Query</option>
-                    <option value="IT Support">IT Support</option>
-                    <option value="Payroll Issue">Payroll Issue</option>
-                    <option value="Leave Related">Leave Related</option>
-                    <option value="Purchase Request">Purchase Request</option>
-                    <option value="Store / Inventory Requirement">Store / Inventory Requirement</option>
-                    <option value="Advance Amount Request">Advance Amount Request</option>
-                    <option value="Employee Feedback">Employee Feedback</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Priority</label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <label><input type="radio" name="ticketPriority" value="Low" checked={ticketPriority === 'Low'} onChange={() => setTicketPriority('Low')} /> Low</label>
-                    <label><input type="radio" name="ticketPriority" value="Medium" checked={ticketPriority === 'Medium'} onChange={() => setTicketPriority('Medium')} /> Medium</label>
-                    <label><input type="radio" name="ticketPriority" value="High" checked={ticketPriority === 'High'} onChange={() => setTicketPriority('High')} /> High</label>
+              ) : (
+                <form onSubmit={handleRaiseTicketSubmit}>
+                  <div className="form-group">
+                    <label>Ticket Subject</label>
+                    <input type="text" className="form-control" value={ticketTitle} onChange={(e) => setTicketTitle(e.target.value)} required />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>Description</label>
-                  <textarea className="form-control" style={{ height: '80px' }} value={ticketDesc} onChange={(e) => setTicketDesc(e.target.value)} required />
-                </div>
-                <button type="submit" className="btn btn-primary">Submit Ticket</button>
-              </form>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select className="form-control" value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)}>
+                      <option value="HR Query">HR Query</option>
+                      <option value="IT Support">IT Support</option>
+                      <option value="Payroll Issue">Payroll Issue</option>
+                      <option value="Leave Related">Leave Related</option>
+                      <option value="Purchase Request">Purchase Request</option>
+                      <option value="Store / Inventory Requirement">Store / Inventory Requirement</option>
+                      <option value="Advance Amount Request">Advance Amount Request</option>
+                      <option value="Employee Feedback">Employee Feedback</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Priority</label>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <label><input type="radio" name="ticketPriority" value="Low" checked={ticketPriority === 'Low'} onChange={() => setTicketPriority('Low')} /> Low</label>
+                      <label><input type="radio" name="ticketPriority" value="Medium" checked={ticketPriority === 'Medium'} onChange={() => setTicketPriority('Medium')} /> Medium</label>
+                      <label><input type="radio" name="ticketPriority" value="High" checked={ticketPriority === 'High'} onChange={() => setTicketPriority('High')} /> High</label>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Description</label>
+                    <textarea className="form-control" style={{ height: '80px' }} value={ticketDesc} onChange={(e) => setTicketDesc(e.target.value)} required />
+                  </div>
+                  <button type="submit" className="btn btn-primary">Submit Ticket</button>
+                </form>
+              )}
             </div>
 
             <div className="card">
@@ -2114,6 +2961,416 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         </section>
       )}
 
+ 
+      {/* 14. Engagement Hub View */}
+      {currentModule === 'emp-engagement' && (
+        <section id="emp-mod-emp-engagement" className="emp-module">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* Dino Runner Game */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div className="card-title" style={{ width: '100%' }}>
+                <i className="fa-solid fa-person-running" style={{ marginRight: '8px', color: 'hsl(var(--primary))' }}></i>
+                HR Dino Runner (Overload Dodge)
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '100%' }}>
+                <div style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
+                  <canvas id="runner-canvas" width="680" height="200" style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.4)', display: 'block' }}></canvas>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                  <button type="button" className="btn btn-primary" id="start-runner-btn">Start / Restart Game</button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
+            {/* Global Chat Board */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+              <div className="card-title">
+                <i className="fa-solid fa-comments" style={{ marginRight: '8px', color: 'hsl(var(--primary))' }}></i>
+                Global Discussion Board
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {discussionMessages.map((msg) => (
+                  <div key={msg._id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '0.85rem' }}>
+                    <img src={msg.senderAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="Avatar" />
+                    <div style={{ background: 'hsl(var(--bg-main))', padding: '10px 14px', borderRadius: '12px', flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.8rem', marginBottom: '4px' }}>
+                        <span>{msg.senderName} <span style={{ opacity: 0.7, fontWeight: 400, fontSize: '0.75rem', marginLeft: '4px' }}>({msg.senderRole})</span></span>
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.75rem' }}>{msg.time}</span>
+                      </div>
+                      <div style={{ wordBreak: 'break-word', lineHeight: '1.4' }}>{msg.message}</div>
+                    </div>
+                  </div>
+                ))}
+                {discussionMessages.length === 0 && (
+                  <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '40px' }}>No messages posted yet. Be the first to start the discussion!</div>
+                )}
+                <div ref={discussionMessagesEndRef} />
+              </div>
+              <form onSubmit={handleSendDiscussion} style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Type a message to broadcast..."
+                  value={discussionInput}
+                  onChange={(e) => setDiscussionInput(e.target.value)}
+                  style={{ flex: 1 }}
+                  required
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}><i className="fa-solid fa-paper-plane"></i> Send</button>
+              </form>
+            </div>
+
+            {/* Interactive Trivia Challenge */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="card-title">
+                <i className="fa-solid fa-gamepad" style={{ marginRight: '8px', color: 'hsl(var(--warning))' }}></i>
+                TalentSphere Trivia Challenge
+              </div>
+              
+              {!triviaComplete ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span>Question {triviaIndex + 1} of {triviaQuestions.length}</span>
+                    <span>Score: {triviaScore} / {triviaQuestions.length}</span>
+                  </div>
+                  
+                  <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: `${((triviaIndex) / triviaQuestions.length) * 100}%`, height: '100%', backgroundColor: 'hsl(var(--primary))', transition: 'width 0.3s' }}></div>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '10px 0', lineHeight: '1.4' }}>
+                    {triviaQuestions[triviaIndex].question}
+                  </h3>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                    {triviaQuestions[triviaIndex].options.map((opt) => {
+                      let btnStyle = {
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        padding: '12px 16px',
+                        border: '1px solid hsl(var(--border))',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        width: '100%',
+                        cursor: 'pointer',
+                        borderRadius: '8px',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      };
+
+                      if (triviaSelected === opt) {
+                        btnStyle.border = '2px solid hsl(var(--primary))';
+                        btnStyle.background = 'hsla(var(--primary), 0.1)';
+                      }
+
+                      if (triviaChecked) {
+                        btnStyle.cursor = 'not-allowed';
+                        if (opt === triviaQuestions[triviaIndex].answer) {
+                          btnStyle.border = '2px solid hsl(var(--success))';
+                          btnStyle.background = 'hsla(var(--success), 0.1)';
+                          btnStyle.color = 'hsl(var(--success))';
+                        } else if (triviaSelected === opt) {
+                          btnStyle.border = '2px solid hsl(var(--danger))';
+                          btnStyle.background = 'hsla(var(--danger), 0.1)';
+                          btnStyle.color = 'hsl(var(--danger))';
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          className="btn"
+                          style={btnStyle}
+                          disabled={triviaChecked}
+                          onClick={() => setTriviaSelected(opt)}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ marginTop: '20px' }}>
+                    {!triviaChecked ? (
+                      <button
+                        className="btn btn-primary"
+                        style={{ width: '100%' }}
+                        disabled={!triviaSelected}
+                        onClick={() => {
+                          setTriviaChecked(true);
+                          if (triviaSelected === triviaQuestions[triviaIndex].answer) {
+                            setTriviaScore(prev => prev + 1);
+                          }
+                        }}
+                      >
+                        Check Answer
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        style={{ width: '100%' }}
+                        onClick={() => {
+                          if (triviaIndex < triviaQuestions.length - 1) {
+                            setTriviaIndex(prev => prev + 1);
+                            setTriviaSelected('');
+                            setTriviaChecked(false);
+                          } else {
+                            setTriviaComplete(true);
+                          }
+                        }}
+                      >
+                        {triviaIndex < triviaQuestions.length - 1 ? 'Next Question' : 'Finish Challenge'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                  <i className="fa-solid fa-trophy" style={{ fontSize: '4rem', color: 'hsl(var(--warning))' }}></i>
+                  <div>
+                    <h2 style={{ fontWeight: 700 }}>Challenge Completed!</h2>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Your final score is: <strong>{triviaScore} / {triviaQuestions.length}</strong></p>
+                  </div>
+                  <div style={{ background: 'hsl(var(--bg-main))', padding: '15px 25px', borderRadius: '10px', fontSize: '0.85rem' }}>
+                    {triviaScore === triviaQuestions.length ? (
+                      <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are a TalentSphere Expert!</span>
+                    ) : triviaScore >= 3 ? (
+                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>🌟 Great job! Excellent knowledge.</span>
+                    ) : (
+                      <span>Keep learning and try again to beat your score!</span>
+                    )}
+                  </div>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setTriviaIndex(0);
+                      setTriviaSelected('');
+                      setTriviaChecked(false);
+                      setTriviaScore(0);
+                      setTriviaComplete(false);
+                    }}
+                  >
+                    Play Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+      )}
+
+      {/* Daily Work Reports Module */}
+      {currentModule === 'emp-reports' && (
+        <section id="emp-mod-emp-reports" className="emp-module">
+          {user.isTeamLead && (
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <button className={`btn ${reportTab === 'submit' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setReportTab('submit')}>Submit My Report</button>
+              <button className={`btn ${reportTab === 'reviews' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => { setReportTab('reviews'); setSelectedReportForReview(null); }}>Teammate Reports</button>
+            </div>
+          )}
+
+          {(!user.isTeamLead || reportTab === 'submit') && (
+            <div className="dashboard-layout">
+              <div>
+                <div className="card">
+                  <div className="card-title">Submit Daily Work Report</div>
+                  <form onSubmit={handleDailyReportSubmit}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label>Report Date</label>
+                        <input type="date" className="form-control" value={reportDate} onChange={(e) => setReportDate(e.target.value)} required />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label>Hours Worked</label>
+                        <input type="number" className="form-control" min="1" max="24" value={reportHours} onChange={(e) => setReportHours(parseInt(e.target.value))} required />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>Tasks Completed Today</label>
+                      <textarea className="form-control" style={{ height: '100px' }} placeholder="Detail your daily achievements..." value={reportTasks} onChange={(e) => setReportTasks(e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Blockers (Optional)</label>
+                      <textarea className="form-control" style={{ height: '70px' }} placeholder="Any issues or blockers you faced..." value={reportBlockers} onChange={(e) => setReportBlockers(e.target.value)} />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Submit to Reporting Lead</button>
+                  </form>
+                </div>
+              </div>
+
+              <div>
+                <div className="card">
+                  <div className="card-title">My Past Reports</div>
+                  <div className="table-responsive" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+                    <table className="custom-table" style={{ fontSize: '0.825rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Hours</th>
+                          <th>Tasks</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dailyReports.filter(r => r.empId === user.id).length === 0 ? (
+                          <tr>
+                            <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '16px' }}>No reports submitted yet.</td>
+                          </tr>
+                        ) : (
+                          dailyReports.filter(r => r.empId === user.id).map(r => (
+                            <tr key={r._id}>
+                              <td>{r.date}</td>
+                              <td>{r.hoursWorked} hrs</td>
+                              <td>
+                                <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.tasksCompleted}>
+                                  {r.tasksCompleted}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <span className={`badge ${r.status === 'Reviewed' ? 'badge-success' : 'badge-warning'}`}>{r.status}</span>
+                                  {r.reviewFeedback && (
+                                    <div style={{ 
+                                      fontSize: '0.75rem', 
+                                      background: 'hsla(var(--success), 0.08)', 
+                                      padding: '6px', 
+                                      borderRadius: '4px',
+                                      border: '1px solid hsla(var(--success), 0.2)',
+                                      color: 'var(--text-primary)',
+                                      marginTop: '4px',
+                                      whiteSpace: 'pre-wrap',
+                                      lineHeight: '1.3'
+                                    }}>
+                                      <strong>Review:</strong> {r.reviewFeedback}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {user.isTeamLead && reportTab === 'reviews' && (
+            <div className="dashboard-layout">
+              <div style={{ flex: 1.5 }}>
+                <div className="card">
+                  <div className="card-title">Teammate Work Reports Received</div>
+                  <div className="table-responsive">
+                    <table className="custom-table" style={{ fontSize: '0.825rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Employee</th>
+                          <th>Date</th>
+                          <th>Tasks Completed</th>
+                          <th>Blockers</th>
+                          <th>Hours</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dailyReports.filter(r => r.empId !== user.id).length === 0 ? (
+                          <tr>
+                            <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '16px' }}>No reports received from teammates yet.</td>
+                          </tr>
+                        ) : (
+                          dailyReports.filter(r => r.empId !== user.id).map(r => (
+                            <tr key={r._id} style={r.blockers ? { background: 'hsla(var(--danger), 0.02)' } : {}}>
+                              <td>
+                                <strong>{r.empName}</strong>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{r.empEmail}</div>
+                              </td>
+                              <td>{r.date}</td>
+                              <td>
+                                <div style={{ maxWidth: '250px', maxHeight: '60px', overflowY: 'auto', whiteSpace: 'pre-wrap', lineHeight: '1.3' }}>
+                                  {r.tasksCompleted}
+                                </div>
+                              </td>
+                              <td>
+                                {r.blockers ? (
+                                  <span style={{ color: 'hsl(var(--danger))', fontWeight: 600 }}>
+                                    ⚠️ {r.blockers}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: 'var(--text-secondary)' }}>None</span>
+                                )}
+                              </td>
+                              <td>{r.hoursWorked} hrs</td>
+                              <td>
+                                <span className={`badge ${r.status === 'Reviewed' ? 'badge-success' : 'badge-warning'}`}>{r.status}</span>
+                              </td>
+                              <td>
+                                <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setSelectedReportForReview(r); setReviewFeedback(r.reviewFeedback || ''); }}>Review</button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {selectedReportForReview && (
+                <div style={{ flex: 1 }}>
+                  <div className="card" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <div className="card-title" style={{ marginBottom: 0 }}>Reviewing Report</div>
+                      <button className="close-modal" type="button" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={() => setSelectedReportForReview(null)}>
+                        <i className="fa-solid fa-xmark" style={{ fontSize: '1rem' }}></i>
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div>
+                        <strong>From:</strong> {selectedReportForReview.empName} ({selectedReportForReview.empId})
+                      </div>
+                      <div>
+                        <strong>Date:</strong> {selectedReportForReview.date} | <strong>Hours:</strong> {selectedReportForReview.hoursWorked} hrs
+                      </div>
+                      <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '6px' }}>
+                        <strong>Tasks Completed:</strong>
+                        <p style={{ marginTop: '4px', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{selectedReportForReview.tasksCompleted}</p>
+                      </div>
+                      {selectedReportForReview.blockers && (
+                        <div style={{ background: 'hsla(var(--danger), 0.05)', border: '1px solid hsla(var(--danger), 0.2)', padding: '10px', borderRadius: '6px', color: 'hsl(var(--danger))' }}>
+                          <strong>Blockers reported:</strong>
+                          <p style={{ marginTop: '4px', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{selectedReportForReview.blockers}</p>
+                        </div>
+                      )}
+                      <form onSubmit={handleReviewSubmit}>
+                        <div className="form-group">
+                          <label>Review Feedback</label>
+                          <textarea 
+                            className="form-control" 
+                            style={{ height: '90px' }} 
+                            placeholder="Type feedback, approval comments or guidance..." 
+                            value={reviewFeedback} 
+                            onChange={(e) => setReviewFeedback(e.target.value)} 
+                            required 
+                          />
+                        </div>
+                        <button type="submit" className="btn btn-success" style={{ width: '100%' }}>Submit Review & Feedback</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Modals Mounting */}
       <RaiseTicketModal
         active={raiseTicketActive}
@@ -2131,6 +3388,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         active={addTaskActive}
         onClose={() => setAddTaskActive(false)}
         onSubmit={handleAddTaskSubmit}
+        teammates={user.isTeamLead ? employees.filter(e => e.teamLeadId === user.id) : []}
       />
 
       <PayslipModal

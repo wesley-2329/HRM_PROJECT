@@ -30,7 +30,7 @@ router.get('/', protect, async (req, res) => {
 // @desc    Schedule a meeting
 // @access  Private
 router.post('/', protect, async (req, res) => {
-  const { title, host, date, time, type, empId, link } = req.body;
+  const { title, host, date, time, type, empId, link, agenda, fromTime, toTime, points, durationHours, attendeesCount, topics } = req.body;
 
   try {
     const meeting = await Meeting.create({
@@ -41,8 +41,33 @@ router.post('/', protect, async (req, res) => {
       type: type || 'Online',
       status: 'Scheduled',
       empId: empId || req.user.id,
-      link: link || ''
+      link: link || '',
+      agenda: agenda || '',
+      fromTime: fromTime || '',
+      toTime: toTime || '',
+      points: points || '',
+      durationHours: durationHours || 0,
+      attendeesCount: attendeesCount || 1,
+      topics: topics || ''
     });
+
+    // Notify all invited attendees
+    const attendees = (empId || '').split(',').map(id => id.trim()).filter(Boolean);
+    if (attendees.length > 0) {
+      const Notification = require('../models/Notification');
+      const senderName = host || req.user.name;
+      for (const attId of attendees) {
+        if (attId !== req.user.id) {
+          const notif = await Notification.create({
+            type: 'meeting',
+            title: 'New Meeting Invite',
+            desc: `You are invited to "${title}" on ${date} at ${time} by ${senderName}.`,
+            empId: attId
+          });
+          req.io.to(attId).emit('notification', notif);
+        }
+      }
+    }
 
     res.status(201).json(meeting);
   } catch (error) {

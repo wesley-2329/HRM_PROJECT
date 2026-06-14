@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getAvatarUrl } from '../App';
 
 const getSalaryDetails = (role) => {
   let basic = 65000;
@@ -14,8 +15,8 @@ const getSalaryDetails = (role) => {
   }
   
   const hra = 15000;
-  const medical = 5000;
-  const gross = basic + hra + medical;
+  const other = 5000;
+  const gross = basic + hra + other;
   
   const pf = Math.round(basic * 0.12);
   const profTax = 250;
@@ -23,7 +24,7 @@ const getSalaryDetails = (role) => {
   const deductions = pf + profTax + tds;
   const net = gross - deductions;
   
-  return { basic, hra, medical, gross, pf, profTax, tds, deductions, net };
+  return { basic, hra, other, gross, pf, profTax, tds, deductions, net };
 };
 
 // Wrapper for all modals to apply styling
@@ -44,7 +45,10 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
   const [dept, setDept] = useState(employee?.dept || 'Engineering');
   const [role, setRole] = useState(employee?.role || '');
   const [aadhaar, setAadhaar] = useState(employee?.aadhaar || '');
+  const [phone, setPhone] = useState(employee?.phone || '');
+  const [gender, setGender] = useState(employee?.gender || 'Male');
   const [joined, setJoined] = useState(employee?.joined || '');
+  const [parentStatus, setParentStatus] = useState(employee?.parentStatus || 'No');
 
   React.useEffect(() => {
     setName(employee?.name || '');
@@ -52,12 +56,15 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
     setDept(employee?.dept || 'Engineering');
     setRole(employee?.role || '');
     setAadhaar(employee?.aadhaar || '');
+    setPhone(employee?.phone || '');
+    setGender(employee?.gender || 'Male');
     setJoined(employee?.joined || '');
+    setParentStatus(employee?.parentStatus || 'No');
   }, [employee]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name, email, dept, role, aadhaar, joined });
+    onSubmit({ name, email, dept, role, aadhaar, phone, gender, joined, parentStatus });
   };
 
   return (
@@ -91,13 +98,33 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
             <input type="text" className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required />
           </div>
         </div>
-        <div className="form-group">
-          <label>Aadhaar Card Number</label>
-          <input type="text" className="form-control" placeholder="XXXX-XXXX-XXXX" value={aadhaar} onChange={(e) => setAadhaar(e.target.value)} required />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input type="text" className="form-control" placeholder="+91 XXXXX XXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Aadhaar Card Number</label>
+            <input type="text" className="form-control" placeholder="XXXX-XXXX-XXXX" value={aadhaar} onChange={(e) => setAadhaar(e.target.value)} required />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Joining Date</label>
+            <input type="date" className="form-control" value={joined} onChange={(e) => setJoined(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Gender</label>
+            <select className="form-control" value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
         <div className="form-group">
-          <label>Joining Date</label>
-          <input type="date" className="form-control" value={joined} onChange={(e) => setJoined(e.target.value)} required />
+          <label>Parent Status</label>
+          <input type="text" className="form-control" placeholder="e.g. Yes (2 Children) or No" value={parentStatus} onChange={(e) => setParentStatus(e.target.value)} />
         </div>
         <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Save Employee Record</button>
       </form>
@@ -122,7 +149,7 @@ export const LedgerModal = ({ active, onClose, employee, timesheets = [], leaves
       </div>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-          <img src={employee.avatar} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
+          <img src={getAvatarUrl(employee)} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
           <div>
             <h3>{employee.name}</h3>
             <p>{employee.role} | Department: {employee.dept}</p>
@@ -199,7 +226,7 @@ export const StatsModal = ({ active, onClose, employee, timesheets = [], leaves 
       </div>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-          <img src={employee.avatar} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
+          <img src={getAvatarUrl(employee)} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
           <div>
             <h4>{employee.name}</h4>
             <p>{employee.role}</p>
@@ -268,7 +295,11 @@ export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
             </tr>
             <tr>
               <td style={{ padding: '4px', fontWeight: 600 }}>Department:</td><td>{employee.dept}</td>
+              <td style={{ padding: '4px', fontWeight: 600 }}>Parent Status:</td><td>{employee.parentStatus || 'No'}</td>
+            </tr>
+            <tr>
               <td style={{ padding: '4px', fontWeight: 600 }}>Role Designation:</td><td>{employee.role}</td>
+              <td style={{ padding: '4px', fontWeight: 600 }}>Net Pay:</td><td><strong>₹{salary.net.toLocaleString()}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -278,7 +309,7 @@ export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
             <h4 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px', color: 'hsl(var(--success))' }}>Earnings</h4>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Basic Salary</span><strong>₹{salary.basic.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>HRA Reimbursement</span><strong>₹{salary.hra.toLocaleString()}</strong></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Medical Allowance</span><strong>₹{salary.medical.toLocaleString()}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Other Allowance</span><strong>₹{salary.other.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: '6px', fontWeight: 700 }}><span>Total Earnings</span><span>₹{salary.gross.toLocaleString()}</span></div>
           </div>
           <div>
@@ -309,34 +340,92 @@ export const AddWalkinModal = ({ active, onClose, onSubmit }) => {
   const [role, setRole] = useState('');
   const [experience, setExperience] = useState('');
   const [notes, setNotes] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [currentPosition, setCurrentPosition] = useState('');
+  const [currentCompany, setCurrentCompany] = useState('');
+  const [lastSalary, setLastSalary] = useState('');
+  const [workingStatus, setWorkingStatus] = useState('');
+  const [skills, setSkills] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name, role, experience, notes });
+    onSubmit({ name, role, experience, notes, phone, email, currentPosition, currentCompany, lastSalary, workingStatus, skills });
     setName(''); setRole(''); setExperience(''); setNotes('');
+    setPhone(''); setEmail(''); setCurrentPosition(''); setCurrentCompany('');
+    setLastSalary(''); setWorkingStatus(''); setSkills('');
   };
 
   return (
     <ModalWrapper id="add-walkin-modal" active={active} onClose={onClose}>
       <div className="modal-header">
-        <h3 className="modal-title">Add Walk-In Candidate</h3>
+        <h3 className="modal-title">Add Recruitment Candidate</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Full Name</label>
-          <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Full Name</label>
+            <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Applied Position</label>
+            <input type="text" className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required />
+          </div>
         </div>
-        <div className="form-group">
-          <label>Applied Position</label>
-          <input type="text" className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Email ID</label>
+            <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Mobile Number</label>
+            <input type="text" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          </div>
         </div>
-        <div className="form-group">
-          <label>Experience (Years)</label>
-          <input type="text" className="form-control" value={experience} onChange={(e) => setExperience(e.target.value)} required />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Current Position</label>
+            <input type="text" className="form-control" value={currentPosition} onChange={(e) => setCurrentPosition(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Current Company</label>
+            <input type="text" className="form-control" value={currentCompany} onChange={(e) => setCurrentCompany(e.target.value)} />
+          </div>
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Experience (Years)</label>
+            <input type="text" className="form-control" value={experience} onChange={(e) => setExperience(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Last Salary (LPA)</label>
+            <input type="text" className="form-control" value={lastSalary} onChange={(e) => setLastSalary(e.target.value)} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Working Status</label>
+            <select className="form-control" value={workingStatus} onChange={(e) => setWorkingStatus(e.target.value)}>
+              <option value="">Select Working Status</option>
+              <option value="Serving Notice">Serving Notice</option>
+              <option value="Immediate Joiner">Immediate Joiner</option>
+              <option value="Looking for Change">Looking for Change</option>
+              <option value="Currently Employed">Currently Employed</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Skills (comma separated)</label>
+            <input type="text" className="form-control" placeholder="React, Node, Python" value={skills} onChange={(e) => setSkills(e.target.value)} />
+          </div>
+        </div>
+
         <div className="form-group">
-          <label>Notes</label>
+          <label>Notes / Feedback</label>
           <textarea className="form-control" style={{ height: '70px' }} value={notes} onChange={(e) => setNotes(e.target.value)}></textarea>
         </div>
         <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Add Candidate</button>
@@ -424,23 +513,40 @@ export const JoinMeetingModal = ({ active, onClose, onJoin }) => {
 };
 
 // 8. Add Task Modal
-export const AddTaskModal = ({ active, onClose, onSubmit }) => {
+export const AddTaskModal = ({ active, onClose, onSubmit, teammates = [] }) => {
   const [title, setTitle] = useState('');
   const [project, setProject] = useState('');
   const [priority, setPriority] = useState('High');
   const [due, setDue] = useState('');
+  const [assigneeEmail, setAssigneeEmail] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ title, project, priority, due });
-    setTitle(''); setProject(''); setDue('');
+    let targetEmpId = '';
+    if (teammates.length > 0) {
+      if (assigneeEmail) {
+        const matched = teammates.find(t => t.email.toLowerCase() === assigneeEmail.trim().toLowerCase());
+        if (!matched) {
+          alert('You can only assign tasks to your direct teammates by entering their email address.');
+          return;
+        }
+        targetEmpId = matched.id;
+      }
+    }
+    onSubmit({ title, project, priority, due, empId: targetEmpId });
+    setTitle('');
+    setProject('');
+    setDue('');
+    setAssigneeEmail('');
   };
+
+  const isInvalidEmail = assigneeEmail && teammates.length > 0 && !teammates.some(t => t.email.toLowerCase() === assigneeEmail.trim().toLowerCase());
 
   return (
     <ModalWrapper id="add-task-modal" active={active} onClose={onClose}>
       <div className="modal-header">
         <h3 className="modal-title">Create New Task</h3>
-        <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
+        <button className="close-modal" type="button" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -451,6 +557,29 @@ export const AddTaskModal = ({ active, onClose, onSubmit }) => {
           <label>Project Name</label>
           <input type="text" className="form-control" value={project} onChange={(e) => setProject(e.target.value)} required />
         </div>
+        {teammates && teammates.length > 0 && (
+          <div className="form-group">
+            <label>Assignee Email Address (Direct Teammate)</label>
+            <input 
+              type="email" 
+              className="form-control" 
+              placeholder="teammate@company.com" 
+              value={assigneeEmail} 
+              onChange={(e) => setAssigneeEmail(e.target.value)}
+              list="teammate-emails"
+            />
+            <datalist id="teammate-emails">
+              {teammates.map(t => (
+                <option key={t.id} value={t.email}>{t.name}</option>
+              ))}
+            </datalist>
+            {isInvalidEmail && (
+              <p style={{ color: 'hsl(var(--danger))', fontSize: '0.75rem', marginTop: '4px' }}>
+                ⚠️ Must belong to a direct teammate.
+              </p>
+            )}
+          </div>
+        )}
         <div className="form-group">
           <label>Priority</label>
           <select className="form-control" value={priority} onChange={(e) => setPriority(e.target.value)}>
@@ -463,7 +592,7 @@ export const AddTaskModal = ({ active, onClose, onSubmit }) => {
           <label>Due Date</label>
           <input type="date" className="form-control" value={due} onChange={(e) => setDue(e.target.value)} required />
         </div>
-        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Create Task</button>
+        <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isInvalidEmail}>Create Task</button>
       </form>
     </ModalWrapper>
   );

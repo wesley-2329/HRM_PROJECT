@@ -40,7 +40,7 @@ router.get('/:id', protect, async (req, res) => {
 // @desc    Add employee manually
 // @access  Private/HR only
 router.post('/', protect, adminOnly, async (req, res) => {
-  const { name, email, dept, role, aadhaar, phone, joined } = req.body;
+  const { name, email, dept, role, aadhaar, phone, joined, gender } = req.body;
 
   try {
     const userExists = await Employee.findOne({ email });
@@ -62,6 +62,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
       joined,
       aadhaar,
       phone,
+      gender: gender || 'Male',
       status: 'Approved'
     });
 
@@ -98,6 +99,8 @@ router.put('/:id', protect, async (req, res) => {
       employee.aadhaar = req.body.aadhaar || employee.aadhaar;
       employee.joined = req.body.joined || employee.joined;
       employee.phone = req.body.phone || employee.phone;
+      if (req.body.isTeamLead !== undefined) employee.isTeamLead = req.body.isTeamLead;
+      if (req.body.teamLeadId !== undefined) employee.teamLeadId = req.body.teamLeadId;
     }
 
     // Both HR and Self can update personal fields
@@ -125,6 +128,10 @@ router.put('/:id', protect, async (req, res) => {
     employee.phone = req.body.phone || employee.phone;
     employee.name = req.body.name || employee.name;
     employee.email = req.body.email || employee.email;
+    if (req.body.parentStatus !== undefined) employee.parentStatus = req.body.parentStatus;
+    if (req.body.licenseNumber !== undefined) employee.licenseNumber = req.body.licenseNumber;
+    if (req.body.licenseExpiry !== undefined) employee.licenseExpiry = req.body.licenseExpiry;
+    if (req.body.certifications !== undefined) employee.certifications = req.body.certifications;
 
     const updatedEmployee = await employee.save();
     res.json(updatedEmployee);
@@ -169,6 +176,99 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     employee.status = status;
     await employee.save();
     res.json({ message: `Employee status set to ${status}`, employee });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Multer Storage Configuration
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const cleanDocName = (req.body.docName || 'document').replace(/[^a-zA-Z0-9]/g, '_');
+    cb(null, `${req.user.id}-${cleanDocName}-${Date.now()}${ext}`);
+  }
+});
+
+const upload = multer({ storage });
+
+// @route   POST /api/employees/upload-doc
+// @desc    Upload employee document
+// @access  Private
+router.post('/upload-doc', protect, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const { docName } = req.body;
+    if (!docName) {
+      return res.status(400).json({ message: 'Document name is required' });
+    }
+
+    const employee = await Employee.findOne({ id: req.user.id });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    if (!employee.documents) {
+      employee.documents = new Map();
+    }
+
+    const fileRelativePath = `uploads/${req.file.filename}`;
+    employee.documents.set(docName, fileRelativePath);
+    employee.markModified('documents');
+    await employee.save();
+
+    res.json({
+      message: 'File uploaded successfully',
+      docName,
+      filePath: fileRelativePath,
+      fileName: req.file.filename
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   POST /api/employees/upload-avatar
+// @desc    Upload employee profile picture (avatar)
+// @access  Private
+router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // HR can upload for another employee by passing empId
+    const targetEmpId = (req.user.role === 'hr' && req.body.empId) ? req.body.empId : req.user.id;
+
+    const employee = await Employee.findOne({ id: targetEmpId });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    const fileRelativePath = `/uploads/${req.file.filename}`;
+    employee.avatar = fileRelativePath;
+    await employee.save();
+
+    res.json({
+      message: 'Profile picture uploaded successfully',
+      avatar: fileRelativePath,
+      empId: targetEmpId
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

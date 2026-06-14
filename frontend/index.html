@@ -12,6 +12,308 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Mode Chase Container -->
+    <div id="mode-chase-container">
+      <div class="chase-wrapper">
+        <!-- Tom -->
+        <svg viewBox="0 0 110 80" width="90" height="72" class="tom-svg">
+          <g class="tom-bounce">
+            <ellipse cx="35" cy="50" rx="24" ry="16" fill="#64748b" />
+            <circle cx="58" cy="32" r="14" fill="#64748b" />
+            <circle cx="64" cy="36" r="5" fill="#fff" />
+            <circle cx="68" cy="36" r="4" fill="#fff" />
+            <circle cx="66" cy="33" r="2" fill="#ef4444" />
+            <path d="M 48 24 L 42 12 L 53 18 Z" fill="#475569" />
+            <path d="M 64 22 L 68 10 L 68 20 Z" fill="#475569" />
+            <line x1="66" y1="36" x2="78" y2="34" stroke="#e2e8f0" stroke-width="1" />
+            <line x1="66" y1="38" x2="76" y2="40" stroke="#e2e8f0" stroke-width="1" />
+            <ellipse cx="56" cy="28" rx="3.5" ry="5" fill="#eab308" />
+            <ellipse cx="63" cy="28" rx="3.5" ry="5" fill="#eab308" />
+            <circle cx="57" cy="29" r="1.5" fill="#22c55e" />
+            <circle cx="62" cy="29" r="1.5" fill="#22c55e" />
+            <circle cx="57.2" cy="29.2" r="0.6" fill="#000" />
+            <circle cx="61.8" cy="29.2" r="0.6" fill="#000" />
+            <g transform="translate(62, 45)" class="pan-wiggle">
+              <line x1="0" y1="0" x2="20" y2="-10" stroke="#1e293b" stroke-width="4" stroke-linecap="round" />
+              <circle cx="26" cy="-13" r="10" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+            </g>
+            <line x1="22" y1="64" x2="15" y2="74" stroke="#64748b" stroke-width="4.5" stroke-linecap="round" class="leg-run-1" />
+            <line x1="42" y1="64" x2="48" y2="74" stroke="#64748b" stroke-width="4.5" stroke-linecap="round" class="leg-run-2" />
+          </g>
+        </svg>
+        <!-- Jerry -->
+        <svg viewBox="0 0 60 60" width="50" height="50" class="jerry-svg">
+          <g class="jerry-bounce">
+            <ellipse cx="20" cy="35" rx="15" ry="12" fill="#b45309" />
+            <circle cx="32" cy="28" r="9" fill="#b45309" />
+            <circle cx="24" cy="18" r="7" fill="#f43f5e" stroke="#b45309" stroke-width="2" />
+            <circle cx="34" cy="18" r="5" fill="#f43f5e" stroke="#b45309" stroke-width="2" />
+            <ellipse cx="32" cy="26" rx="2" ry="1" fill="#fff" />
+            <circle cx="32.5" cy="26" r="0.8" fill="#000" />
+            <polygon points="38,20 55,10 52,32 36,28" fill="#facc15" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.15))" />
+            <circle cx="43" cy="22" r="1.5" fill="#ca8a04" />
+            <circle cx="48" cy="26" r="2" fill="#ca8a04" />
+            <circle cx="45" cy="17" r="1" fill="#ca8a04" />
+            <line x1="10" y1="45" x2="5" y2="52" stroke="#b45309" stroke-width="3" stroke-linecap="round" class="leg-run-1" />
+            <line x1="25" y1="45" x2="30" y2="52" stroke="#b45309" stroke-width="3" stroke-linecap="round" class="leg-run-2" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Games Overlay (Fun Zone) -->
+    <div id="games-overlay">
+      <div class="games-container-card">
+        <div class="games-header">
+          <h2><i class="fa-solid fa-gamepad"></i> TalentSphere Fun Zone</h2>
+          <button class="close-games-btn" onclick="closeFunZone()">×</button>
+        </div>
+        <div class="games-tabs">
+          <button class="game-tab-btn active" id="tab-btn-puzzle" onclick="switchGameTab('puzzle')">🧩 Sliding Puzzle</button>
+          <button class="game-tab-btn" id="tab-btn-memory" onclick="switchGameTab('memory')">🧠 Memory Match</button>
+        </div>
+        
+        <!-- Sliding Puzzle Game -->
+        <div id="game-puzzle-section" class="game-section active">
+          <div id="puzzle-board" style="display:grid; grid-template-columns:repeat(4,80px); gap:4px; margin:0 auto"></div>
+          <div style="text-align:center; margin-top:1rem; display:flex; justify-content:center; align-items:center; gap:20px;">
+            <span id="puzzle-moves" style="color:#C7D2FE; font-size:14px">Moves: 0</span>
+            <button class="btn btn-secondary" onclick="puzzleGame.init()" style="padding: 6px 12px; font-size: 0.85rem; cursor:pointer;">Shuffle</button>
+          </div>
+        </div>
+        
+        <!-- Memory Match Game -->
+        <div id="game-memory-section" class="game-section">
+          <div id="memory-board"></div>
+          <div style="text-align:center; margin-top:1rem; display:flex; justify-content:center; align-items:center; gap:20px;">
+            <span id="memory-moves" style="color:#C7D2FE; font-size:14px">Moves: 0</span>
+            <button class="btn btn-secondary" onclick="memoryGame.init()" style="padding: 6px 12px; font-size: 0.85rem; cursor:pointer;">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Global Chart.js default animation configurations
+      if (window.Chart) {
+        window.Chart.defaults.animation.duration = 900;
+        window.Chart.defaults.animation.easing = 'easeOutQuart';
+      }
+
+      // Button Click Ripple Effect via Event Delegation
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-primary');
+        if (!btn) return;
+
+        const rect = btn.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        const ripple = document.createElement('span');
+        ripple.style.cssText = `position:absolute;border-radius:50%;background:rgba(255,255,255,0.4);transform:scale(0);animation:ripple 0.5s linear;pointer-events:none;width:100px;height:100px;left:${offsetX-50}px;top:${offsetY-50}px`;
+        
+        btn.style.position = 'relative';
+        btn.style.overflow = 'hidden';
+        btn.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 500);
+      });
+
+      // Fun Zone Game Tab switcher
+      window.switchGameTab = function(tab) {
+        const puzzleBtn = document.getElementById('tab-btn-puzzle');
+        const memoryBtn = document.getElementById('tab-btn-memory');
+        const puzzleSec = document.getElementById('game-puzzle-section');
+        const memorySec = document.getElementById('game-memory-section');
+
+        if (puzzleBtn) puzzleBtn.classList.toggle('active', tab === 'puzzle');
+        if (memoryBtn) memoryBtn.classList.toggle('active', tab === 'memory');
+        if (puzzleSec) puzzleSec.classList.toggle('active', tab === 'puzzle');
+        if (memorySec) memorySec.classList.toggle('active', tab === 'memory');
+        
+        if (tab === 'puzzle') {
+          window.puzzleGame.init();
+        } else {
+          window.memoryGame.init();
+        }
+      };
+
+      // Close games overlay
+      window.closeFunZone = function() {
+        const gamesOverlay = document.getElementById('games-overlay');
+        if (gamesOverlay) {
+          gamesOverlay.style.display = 'none';
+        }
+        if (window.stopAllGames) window.stopAllGames();
+      };
+
+      // Global stopAllGames
+      window.stopAllGames = function() {
+        if (window.runnerGame && typeof window.runnerGame.stop === 'function') {
+          window.runnerGame.stop();
+        }
+        if (window.triviaGame && window.triviaGame.timerInterval) {
+          clearInterval(window.triviaGame.timerInterval);
+        }
+      };
+
+      // 15-Puzzle Sliding Game logic
+      window.puzzleGame = {
+        tiles: [], moves: 0, solved: false,
+        labels: ['🧑💼','👩💻','👨🔬','👩🎨','👨💼','📊','📋','🏆','💡','🎯','📅','🤝','💼','📈','🌟',''],
+
+        init() {
+          this.moves = 0; this.solved = false;
+          const movesEl = document.getElementById('puzzle-moves');
+          if (movesEl) movesEl.textContent = `Moves: ${this.moves}`;
+          this.tiles = [...Array(16).keys()];
+          do {
+            this.tiles.sort(() => Math.random() - 0.5);
+          } while(!this.isSolvable());
+          this.render();
+        },
+
+        isSolvable() {
+          let inv = 0, blankRow = 0;
+          for(let i=0; i<16; i++) {
+            if(this.tiles[i]===15) blankRow = Math.floor(i/4);
+            for(let j=i+1; j<16; j++) {
+              if(this.tiles[i]!==15 && this.tiles[j]!==15 && this.tiles[i]>this.tiles[j]) inv++;
+            }
+          }
+          return (inv + blankRow) % 2 === 0;
+        },
+
+        canMove(idx) {
+          const blank = this.tiles.indexOf(15);
+          const r1=Math.floor(idx/4), c1=idx%4, r2=Math.floor(blank/4), c2=blank%4;
+          return (Math.abs(r1-r2)+Math.abs(c1-c2))===1;
+        },
+
+        move(idx) {
+          if(this.solved || !this.canMove(idx)) return;
+          const blank = this.tiles.indexOf(15);
+          [this.tiles[idx], this.tiles[blank]] = [this.tiles[blank], this.tiles[idx]];
+          this.moves++;
+          const movesEl = document.getElementById('puzzle-moves');
+          if (movesEl) movesEl.textContent = `Moves: ${this.moves}`;
+          this.render();
+          if(this.tiles.every((v,i)=>v===i)) {
+            this.solved=true;
+            this.celebrate();
+          }
+        },
+
+        render() {
+          const board = document.getElementById('puzzle-board');
+          if (!board) return;
+          board.innerHTML = '';
+          this.tiles.forEach((val, idx) => {
+            const cell = document.createElement('div');
+            cell.style.cssText = `width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:10px;cursor:pointer;transition:all 0.15s;user-select:none;${
+              val===15 ? 'background:rgba(99,102,241,0.1);border:2px dashed rgba(99,102,241,0.3)' :
+              'background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);box-shadow:0 2px 8px rgba(0,0,0,0.3)'
+            }`;
+            if(val!==15) {
+              cell.textContent = this.labels[val];
+              cell.onmouseenter = () => cell.style.transform='scale(1.05)';
+              cell.onmouseleave = () => cell.style.transform='scale(1)';
+              cell.onclick = () => this.move(idx);
+            }
+            board.appendChild(cell);
+          });
+        },
+
+        celebrate() {
+          if (window.showToast) {
+            window.showToast("🎉 Puzzle Solved! You're a team builder!", 'success');
+          } else {
+            alert("🎉 Puzzle Solved! You're a team builder!");
+          }
+        }
+      };
+
+      // Memory Match Game logic
+      window.memoryGame = {
+        pairs: ['🧑💼','👩💻','👨🔬','👩🎨','📊','📋','🏆','💡'],
+        cards: [], flipped: [], matched: [], moves: 0, locked: false,
+
+        init() {
+          this.cards = [...this.pairs, ...this.pairs].sort(() => Math.random()-0.5);
+          this.flipped = []; this.matched = []; this.moves = 0; this.locked = false;
+          this.render();
+        },
+
+        flip(idx) {
+          if(this.locked || this.flipped.includes(idx) || this.matched.includes(idx)) return;
+          this.flipped.push(idx);
+          const cardEl = document.getElementById(`mc-${idx}`);
+          if (cardEl) cardEl.classList.add('flipped');
+          
+          if(this.flipped.length===2) {
+            this.moves++;
+            const movesEl = document.getElementById('memory-moves');
+            if (movesEl) movesEl.textContent = `Moves: ${this.moves}`;
+            this.locked = true;
+            const [a,b] = this.flipped;
+            if(this.cards[a]===this.cards[b]) {
+              this.matched.push(a,b);
+              this.flipped = []; this.locked = false;
+              if(this.matched.length===this.cards.length) {
+                setTimeout(() => {
+                  if (window.showToast) {
+                    window.showToast('🎉 All matched! Memory champion!', 'success');
+                  } else {
+                    alert('🎉 All matched! Memory champion!');
+                  }
+                }, 200);
+              }
+            } else {
+              setTimeout(() => {
+                const cardA = document.getElementById(`mc-${a}`);
+                const cardB = document.getElementById(`mc-${b}`);
+                if (cardA) cardA.classList.remove('flipped');
+                if (cardB) cardB.classList.remove('flipped');
+                this.flipped = []; this.locked = false;
+              }, 1000);
+            }
+          }
+        },
+
+        render() {
+          const board = document.getElementById('memory-board');
+          if (!board) return;
+          const movesEl = document.getElementById('memory-moves');
+          if (movesEl) movesEl.textContent = 'Moves: 0';
+          board.innerHTML = this.cards.map((card, idx) => `
+            <div id="mc-${idx}" class="memory-card" onclick="window.memoryGame.flip(${idx})">
+              <div class="mc-front">❓</div>
+              <div class="mc-back">${card}</div>
+            </div>`).join('');
+        }
+      };
+
+      // Global theme transition animation with Tom & Jerry
+      window.triggerModeAnimation = function(toDark) {
+        const container = document.getElementById('mode-chase-container');
+        if (!container) return;
+        
+        // Clear classes and trigger reflow to reset animation
+        container.className = '';
+        void container.offsetWidth;
+        
+        if (toDark) {
+          container.classList.add('active', 'to-dark');
+        } else {
+          container.classList.add('active', 'to-light');
+        }
+        
+        setTimeout(() => {
+          container.classList.remove('active', 'to-dark', 'to-light');
+        }, 2600);
+      };
+    </script>
   </body>
 </html>

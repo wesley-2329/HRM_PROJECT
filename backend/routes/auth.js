@@ -91,7 +91,8 @@ router.post('/register', async (req, res) => {
       aadhaar,
       phone,
       joined: joined || new Date().toISOString().split('T')[0],
-      status: 'Approved'
+      status: 'Approved',
+      parentStatus: req.body.parentStatus || 'No'
     });
 
     res.status(201).json({

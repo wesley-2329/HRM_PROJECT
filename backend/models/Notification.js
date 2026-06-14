@@ -24,6 +24,10 @@ const NotificationSchema = new mongoose.Schema({
   empId: {
     type: String,
     default: ''
+  },
+  ticketId: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

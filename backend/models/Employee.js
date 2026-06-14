@@ -39,7 +39,7 @@ const EmployeeSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+    default: ''
   },
   aadhaar: {
     type: String,
@@ -72,8 +72,37 @@ const EmployeeSchema = new mongoose.Schema({
   gender: {
     type: String,
     default: 'Male'
+  },
+  documents: {
+    type: Map,
+    of: String,
+    default: {}
+  },
+  parentStatus: {
+    type: String,
+    default: 'No'
+  },
+  licenseNumber: {
+    type: String,
+    default: ''
+  },
+  licenseExpiry: {
+    type: String,
+    default: ''
+  },
+  certifications: {
+    type: Array,
+    default: []
+  },
+  isTeamLead: {
+    type: Boolean,
+    default: false
+  },
+  teamLeadId: {
+    type: String,
+    default: ''
   }
-}, { timestamps: true });
+}, { timestamps: true, id: false });
 
 // Hash password before saving
 EmployeeSchema.pre('save', async function (next) {

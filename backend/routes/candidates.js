@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 // @desc    Add a candidate (Walk-In or job application)
 // @access  HR Director Only
 router.post('/', async (req, res) => {
-  const { name, role, source, experience, notes } = req.body;
+  const { name, role, source, experience, notes, phone, email, currentPosition, currentCompany, lastSalary, workingStatus, skills } = req.body;
 
   try {
     const candidate = await Candidate.create({
@@ -32,7 +32,14 @@ router.post('/', async (req, res) => {
       experience,
       notes: notes || '',
       stage: 'applied',
-      offerReleased: 'No'
+      offerReleased: 'No',
+      phone: phone || '',
+      email: email || '',
+      currentPosition: currentPosition || '',
+      currentCompany: currentCompany || '',
+      lastSalary: lastSalary || '',
+      workingStatus: workingStatus || '',
+      skills: skills || ''
     });
 
     res.status(201).json(candidate);

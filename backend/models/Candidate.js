@@ -42,6 +42,34 @@ const CandidateSchema = new mongoose.Schema({
   interviewStage: {
     type: String,
     default: ''
+  },
+  phone: {
+    type: String,
+    default: ''
+  },
+  email: {
+    type: String,
+    default: ''
+  },
+  currentPosition: {
+    type: String,
+    default: ''
+  },
+  currentCompany: {
+    type: String,
+    default: ''
+  },
+  lastSalary: {
+    type: String,
+    default: ''
+  },
+  workingStatus: {
+    type: String,
+    default: ''
+  },
+  skills: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

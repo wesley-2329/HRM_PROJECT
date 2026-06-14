@@ -27,6 +27,10 @@ export const ToastProvider = ({ children }) => {
     }, 3500);
   };
 
+  React.useEffect(() => {
+    window.showToast = showToast;
+  }, []);
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
@@ -40,6 +44,7 @@ export const ToastProvider = ({ children }) => {
             <div key={t.id} className={`toast ${t.type === 'danger' ? 'error' : t.type} ${t.active ? 'active' : ''}`}>
               <i className={`fa-solid ${icon}`}></i>
               <span>{t.message}</span>
+              <div className="toast-progress"></div>
             </div>
           );
         })}

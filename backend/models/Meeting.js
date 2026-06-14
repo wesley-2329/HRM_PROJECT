@@ -37,6 +37,34 @@ const MeetingSchema = new mongoose.Schema({
   link: {
     type: String,
     default: ''
+  },
+  agenda: {
+    type: String,
+    default: ''
+  },
+  fromTime: {
+    type: String,
+    default: ''
+  },
+  toTime: {
+    type: String,
+    default: ''
+  },
+  points: {
+    type: String,
+    default: ''
+  },
+  durationHours: {
+    type: Number,
+    default: 0
+  },
+  attendeesCount: {
+    type: Number,
+    default: 1
+  },
+  topics: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

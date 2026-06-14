@@ -10,9 +10,8 @@ router.get('/', protect, async (req, res) => {
   try {
     let notifications;
     if (req.user.role === 'hr') {
-      // HR sees general notifications or specific to HR
       notifications = await Notification.find({
-        $or: [{ empId: req.user.id }, { empId: '' }]
+        $or: [{ empId: req.user.id }, { empId: '' }, { empId: 'hr' }]
       }).sort({ createdAt: -1 });
     } else {
       notifications = await Notification.find({

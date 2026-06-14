@@ -35,11 +35,22 @@ router.post('/', protect, async (req, res) => {
       title,
       category,
       priority: priority || 'Low',
-      status: 'Open',
+      status: 'Raised',
       raisedOn: new Date().toISOString().split('T')[0],
       empId: req.user.id,
       response: ''
     });
+
+    // Notify HR of new support ticket
+    const Notification = require('../models/Notification');
+    const notif = await Notification.create({
+      type: 'reminder',
+      title: 'New Support Ticket',
+      desc: `${req.user.name} raised ticket "${title}" (Category: ${category}).`,
+      empId: 'hr',
+      ticketId: ticket.id
+    });
+    req.io.to('hr').emit('notification', notif);
 
     res.status(201).json(ticket);
   } catch (error) {
@@ -54,7 +65,14 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
   const { response, status } = req.body;
 
   try {
-    const ticket = await Ticket.findOne({ id: req.params.id });
+    const mongoose = require('mongoose');
+    let ticket;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      ticket = await Ticket.findOne({ $or: [{ _id: req.params.id }, { id: req.params.id }] });
+    } else {
+      ticket = await Ticket.findOne({ id: req.params.id });
+    }
+
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket not found' });
     }
@@ -67,6 +85,17 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     }
 
     await ticket.save();
+
+    // Notify employee of ticket response/update
+    const Notification = require('../models/Notification');
+    const notif = await Notification.create({
+      type: 'reminder',
+      title: `Ticket ${ticket.id} Resolved`,
+      desc: `Your ticket "${ticket.title}" has been closed. HR Response: "${response}".`,
+      empId: ticket.empId
+    });
+    req.io.to(ticket.empId).emit('notification', notif);
+
     res.json(ticket);
   } catch (error) {
     res.status(500).json({ message: error.message });

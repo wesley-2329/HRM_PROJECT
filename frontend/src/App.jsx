@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ToastProvider } from './components/Toast';
@@ -8,20 +9,51 @@ import TopNavbar from './components/TopNavbar';
 import HRApp from './pages/HRApp';
 import EmployeeApp from './pages/EmployeeApp';
 
-const AppContent = () => {
-  const { user, loading } = useContext(AuthContext);
+export const encodeId = (id) => {
+  if (!id) return '';
+  try {
+    return btoa(id).replace(/=/g, '');
+  } catch (e) {
+    return id;
+  }
+};
+
+export const decodeId = (hash) => {
+  if (!hash) return '';
+  try {
+    let str = hash;
+    while (str.length % 4) {
+      str += '=';
+    }
+    return atob(str);
+  } catch (e) {
+    return hash;
+  }
+};
+
+export const getAvatarUrl = (emp) => {
+  if (emp?.avatar && emp.avatar.trim() !== '' && !emp.avatar.includes('unsplash.com')) {
+    return emp.avatar;
+  }
+  const gender = (emp?.gender || 'Male').toLowerCase();
+  if (gender === 'female') {
+    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ec4899"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
+  }
+  if (gender === 'other') {
+    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2364748b"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
+  }
+  return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
+};
+
+const MainLayoutWrapper = ({ role }) => {
+  const { user } = useContext(AuthContext);
+  const { id: hashId, module } = useParams();
+  const id = decodeId(hashId);
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileActive, setMobileActive] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [currentModule, setCurrentModule] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Handle module default reset when role changes
-  useEffect(() => {
-    if (user) {
-      setCurrentModule(user.role === 'hr' ? 'dashboard' : 'emp-dashboard');
-    }
-  }, [user]);
 
   // Apply dark mode class to document body
   useEffect(() => {
@@ -31,6 +63,81 @@ const AppContent = () => {
       document.body.classList.remove('dark-mode');
     }
   }, [darkMode]);
+
+  // Authorization checks
+  useEffect(() => {
+    if (!user) return;
+    if (role === 'hr' && user.role !== 'hr') {
+      navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
+    } else if (role === 'employee') {
+      if (user.role !== 'hr' && user.id !== id) {
+        navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
+      }
+    }
+  }, [user, role, id, navigate]);
+
+  if (!user) return null;
+
+  return (
+    <div className={`app-layout ${mobileActive ? 'mobile-active' : ''}`}>
+      {/* Sidebar navigation */}
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        currentModule={module}
+        mobileActive={mobileActive}
+        setMobileActive={setMobileActive}
+      />
+
+      {/* Main dashboard viewport */}
+      <main className="main-content">
+        <TopNavbar
+          currentModule={module}
+          setMobileActive={setMobileActive}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          onSearch={setSearchQuery}
+        />
+
+        <div className="module-viewport">
+          {role === 'hr' ? (
+            <HRApp
+              currentModule={module}
+              searchQuery={searchQuery}
+            />
+          ) : (
+            <EmployeeApp
+              currentModule={module}
+            />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const AppContent = () => {
+  const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect logic on load / auth change
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true });
+      }
+    } else {
+      if (location.pathname === '/login' || location.pathname === '/') {
+        if (user.role === 'hr') {
+          navigate('/hr/dashboard', { replace: true });
+        } else {
+          navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
+        }
+      }
+    }
+  }, [user, loading, location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -43,61 +150,27 @@ const AppContent = () => {
     );
   }
 
-  if (!user) {
-    return <LoginGateway />;
-  }
-
   return (
-    <div className={`app-layout ${mobileActive ? 'mobile-active' : ''}`}>
-      {/* Sidebar navigation */}
-      <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        currentModule={currentModule}
-        setCurrentModule={setCurrentModule}
-        mobileActive={mobileActive}
-        setMobileActive={setMobileActive}
-      />
-
-      {/* Main dashboard viewport */}
-      <main className="main-content">
-        <TopNavbar
-          currentModule={currentModule}
-          setCurrentModule={setCurrentModule}
-          setMobileActive={setMobileActive}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          onSearch={setSearchQuery}
-        />
-
-        <div className="module-viewport">
-          {user.role === 'hr' ? (
-            <HRApp
-              currentModule={currentModule}
-              setCurrentModule={setCurrentModule}
-              searchQuery={searchQuery}
-            />
-          ) : (
-            <EmployeeApp
-              currentModule={currentModule}
-              setCurrentModule={setCurrentModule}
-            />
-          )}
-        </div>
-      </main>
-    </div>
+    <Routes>
+      <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to="/" replace />} />
+      <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
+      <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
+    <Router>
+      <AuthProvider>
         <ToastProvider>
-          <AppContent />
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
         </ToastProvider>
-      </DataProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -1,11 +1,14 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
+import { encodeId, getAvatarUrl } from '../App';
 
-const TopNavbar = ({ currentModule, setCurrentModule, setMobileActive, darkMode, setDarkMode, onSearch }) => {
+const TopNavbar = ({ currentModule, setMobileActive, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
   const { notifications } = useContext(DataContext);
   const [dropdownActive, setDropdownActive] = useState(false);
+  const navigate = useNavigate();
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -23,7 +26,11 @@ const TopNavbar = ({ currentModule, setCurrentModule, setMobileActive, darkMode,
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleModuleChange = (mod) => {
-    setCurrentModule(mod);
+    if (user.role === 'hr') {
+      navigate(`/hr/${mod}`);
+    } else {
+      navigate(`/employee/${encodeId(user.id)}/${mod}`);
+    }
     setDropdownActive(false);
   };
 
@@ -66,11 +73,38 @@ const TopNavbar = ({ currentModule, setCurrentModule, setMobileActive, darkMode,
           <i className="fa-solid fa-bell"></i>
           {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
         </button>
-        <button className="nav-icon-btn" onClick={() => setDarkMode(!darkMode)}>
-          <i className={`fa-solid ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+        <button
+          className="theme-toggle-btn"
+          onClick={() => {
+            const nextMode = !darkMode;
+            setDarkMode(nextMode);
+            if (window.triggerModeAnimation) {
+              window.triggerModeAnimation(nextMode);
+            }
+          }}
+          aria-label="Toggle dark mode"
+          title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          <svg className={`theme-toggle-svg ${darkMode ? 'dark' : 'light'}`} viewBox="0 0 24 24" width="24" height="24">
+            <mask id="moon-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              <circle className="moon-mask-circle" cx="24" cy="0" r="9" fill="black" />
+            </mask>
+            <circle className="sun-center" cx="12" cy="12" r="5" fill="currentColor" mask="url(#moon-mask)" />
+            <g className="sun-rays" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </g>
+          </svg>
         </button>
         <div className="user-dropdown-btn" onClick={() => setDropdownActive(prev => !prev)}>
-          <img src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} alt="Profile" />
+          <img src={getAvatarUrl(user)} alt="Profile" />
           <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.75rem' }}></i>
         </div>
         <div className={`dropdown-menu ${dropdownActive ? 'active' : ''}`}>
