@@ -85,6 +85,8 @@ Once the servers are running, log in with the following default credentials to a
 - **Role**: Select **HR Portal** on the login card.
 
 ### Employee Portal
-- **Registration**: There are no pre-seeded demo employee accounts. Click on the **Create an account** link in the Employee Portal section of the login gateway to sign up.
-- **Access**: After submitting the registration form, your account is automatically approved, and you can log in immediately with your registered email and password.
+- **Email**: `employee@company.com`
+- **Password**: `employee123`
+- **Role**: Select **Employee Portal** on the login card.
+- **Registration Option**: You can also register a new account. Click on the **Create an account** link in the Employee Portal section of the login gateway to sign up. Once submitted, it is automatically approved and ready to log in.
 # HRM_PROJECT
