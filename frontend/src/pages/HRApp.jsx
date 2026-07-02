@@ -698,10 +698,23 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const pendingLeavesCount = leaves.filter(l => l.status === 'Pending').length;
 
   return (
-    <>
+    <div className="portal-container animate-fade-in-up">
       {/* Overview Module */}
       {currentModule === 'dashboard' && (
         <section id="hr-mod-dashboard" className="hr-module">
+          <div className="welcome-card-banner">
+            <div className="welcome-banner-text">
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--text-primary))', marginBottom: '8px' }}>
+                Welcome back, {user ? user.name.split(' ')[0] : 'HR Administrator'}!
+              </h2>
+              <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                You have administrative access to monitor employee directories, manage statutory PF/ESI compliance, approve timesheets, and review candidate applications.
+              </p>
+            </div>
+            <div className="welcome-banner-img-container">
+              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+            </div>
+          </div>
           <div className="metric-grid">
             <div className="metric-card primary">
               <div>
@@ -2418,86 +2431,100 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       {/* System Settings Module */}
       {currentModule === 'settings-profile' && (
         <section id="hr-mod-settings-profile" className="hr-module">
-          <div className="card">
-            <div className="card-title">System Settings</div>
-            <form onSubmit={(e) => { e.preventDefault(); showToast('Settings saved successfully.', 'success'); }}>
-              <div className="form-group">
-                <label>Portal Primary Access Name</label>
-                <input type="text" className="form-control" defaultValue="TalentSphere HR Portal" />
-              </div>
-              <div className="form-group" style={{ marginTop: '16px' }}>
-                <label>Automatic Payslip Release Date</label>
-                <select className="form-control" defaultValue="1st of every Month">
-                  <option>1st of every Month</option>
-                  <option>30th of every Month</option>
-                </select>
-              </div>
-              <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
-                    const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => {
-                          localStorage.setItem('talentsphere-navbar-theme', t);
-                          if (window.changeNavbarTheme) window.changeNavbarTheme(t);
-                          showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
-                          // Force re-render of settings panel to update selection outline
-                          setCurrentModule('');
-                          setTimeout(() => setCurrentModule('settings-profile'), 5);
-                        }}
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          border: currentTheme === t ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
-                          boxShadow: currentTheme === t ? '0 0 0 3px #6366f1' : '0 0 0 1px rgba(0,0,0,0.15)',
-                          cursor: 'pointer',
-                          background: t === 'indigo' ? '#6366f1' :
-                                      t === 'slate' ? '#64748b' :
-                                      t === 'emerald' ? '#10b981' :
-                                      t === 'rose' ? '#f43f5e' :
-                                      t === 'amber' ? '#f59e0b' : '#8b5cf6',
-                          transition: 'all 0.2s ease',
-                          transform: currentTheme === t ? 'scale(1.1)' : 'scale(1)'
-                        }}
-                        title={t.toUpperCase()}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-              <button type="submit" className="btn btn-primary">Save Config</button>
-            </form>
-          </div>
+          <div className="split-layout-2col">
+            {/* Left Info Panel */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div className="card-title">System Settings & Safety</div>
+              <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
+                Configure global settings, define automated payslip cycles, select header highlighting color themes, and update administrative credentials.
+              </p>
+              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+            </div>
 
-          <div className="card" style={{ marginTop: '20px' }}>
-            <div className="card-title">Change HR Password</div>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              const cur = e.target.elements.currentPassword.value;
-              const nxt = e.target.elements.newPassword.value;
-              try {
-                await api.post('/auth/change-password', { currentPassword: cur, newPassword: nxt });
-                showToast('Password updated successfully.', 'success');
-                e.target.reset();
-              } catch (err) {
-                showToast(err.response?.data?.message || 'Error updating password.', 'error');
-              }
-            }}>
-              <div className="form-group">
-                <label>Current Password</label>
-                <input type="password" name="currentPassword" className="form-control" required />
+            {/* Right Forms Column */}
+            <div>
+              <div className="card">
+                <div className="card-title">System Settings</div>
+                <form onSubmit={(e) => { e.preventDefault(); showToast('Settings saved successfully.', 'success'); }}>
+                  <div className="form-group">
+                    <label>Portal Primary Access Name</label>
+                    <input type="text" className="form-control" defaultValue="TalentSphere HR Portal" />
+                  </div>
+                  <div className="form-group" style={{ marginTop: '16px' }}>
+                    <label>Automatic Payslip Release Date</label>
+                    <select className="form-control" defaultValue="1st of every Month">
+                      <option>1st of every Month</option>
+                      <option>30th of every Month</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
+                        const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              localStorage.setItem('talentsphere-navbar-theme', t);
+                              if (window.changeNavbarTheme) window.changeNavbarTheme(t);
+                              showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
+                              // Force re-render of settings panel to update selection outline
+                              setCurrentModule('');
+                              setTimeout(() => setCurrentModule('settings-profile'), 5);
+                            }}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              border: currentTheme === t ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                              boxShadow: currentTheme === t ? '0 0 0 3px #6366f1' : '0 0 0 1px rgba(0,0,0,0.15)',
+                              cursor: 'pointer',
+                              background: t === 'indigo' ? '#6366f1' :
+                                          t === 'slate' ? '#64748b' :
+                                          t === 'emerald' ? '#10b981' :
+                                          t === 'rose' ? '#f43f5e' :
+                                          t === 'amber' ? '#f59e0b' : '#8b5cf6',
+                              transition: 'all 0.2s ease',
+                              transform: currentTheme === t ? 'scale(1.1)' : 'scale(1)'
+                            }}
+                            title={t.toUpperCase()}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <button type="submit" className="btn btn-primary">Save Config</button>
+                </form>
               </div>
-              <div className="form-group">
-                <label>New Password</label>
-                <input type="password" name="newPassword" className="form-control" required />
+
+              <div className="card">
+                <div className="card-title">Change HR Password</div>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const cur = e.target.elements.currentPassword.value;
+                  const nxt = e.target.elements.newPassword.value;
+                  try {
+                    await api.post('/auth/change-password', { currentPassword: cur, newPassword: nxt });
+                    showToast('Password updated successfully.', 'success');
+                    e.target.reset();
+                  } catch (err) {
+                    showToast(err.response?.data?.message || 'Error updating password.', 'error');
+                  }
+                }}>
+                  <div className="form-group">
+                    <label>Current Password</label>
+                    <input type="password" name="currentPassword" className="form-control" required />
+                  </div>
+                  <div className="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="newPassword" className="form-control" required />
+                  </div>
+                  <button className="btn btn-primary">Update Password</button>
+                </form>
               </div>
-              <button className="btn btn-primary">Update Password</button>
-            </form>
+            </div>
           </div>
         </section>
       )}
@@ -2547,7 +2574,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         accept="image/*" 
         onChange={handleAvatarFileChange} 
       />
-    </>
+    </div>
   );
 };
 

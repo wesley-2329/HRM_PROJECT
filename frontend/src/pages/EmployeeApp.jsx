@@ -1424,30 +1424,31 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const activeTasksCount = tasks.filter(t => t.status !== 'done').length;
 
   return (
-    <>
+    <div className="portal-container animate-fade-in-up">
       {/* 1. Dashboard View */}
       {currentModule === 'emp-dashboard' && (
         <section id="emp-mod-emp-dashboard" className="emp-module">
-          <div className="card" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, #4f46e5 100%)', color: '#fff', border: 'none', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    Welcome to TalentSphere Employee Portal
-                    <span className={`badge ${activeShift ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '12px', color: '#fff', verticalAlign: 'middle' }}>
-                      <i className={`fa-solid ${activeShift ? 'fa-circle-check' : 'fa-circle-xmark'}`} style={{ marginRight: '4px' }}></i>
-                      {activeShift ? 'Clocked In' : 'Clocked Out'}
-                    </span>
-                  </h3>
-                  <p style={{ opacity: 0.9, fontSize: '0.875rem' }}>Today is {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                </div>
+          <div className="welcome-card-banner">
+            <div className="welcome-banner-text">
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--text-primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                Welcome to your Employee Portal
+                <span className={`badge ${activeShift ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '12px', color: '#fff' }}>
+                  <i className={`fa-solid ${activeShift ? 'fa-circle-check' : 'fa-circle-xmark'}`} style={{ marginRight: '4px' }}></i>
+                  {activeShift ? 'Clocked In' : 'Clocked Out'}
+                </span>
+              </h2>
+              <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '16px' }}>
+                Access directory tools, review attendance schedules, download payroll slips, view performance objectives, and join meetings directly from your dashboard.
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} className="quick-links">
+                <button className="btn btn-secondary" onClick={() => setCurrentModule('emp-profile')}>My Profile</button>
+                <button className="btn btn-secondary" onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
+                <button className="btn btn-secondary" onClick={() => { setCurrentModule('emp-attendance'); setAttSubTab('apply'); }}>Apply Leave</button>
+                <button className="btn btn-secondary" onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }} className="quick-links">
-                <button className="btn btn-secondary" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => setCurrentModule('emp-profile')}>My Profile</button>
-                <button className="btn btn-secondary" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
-                <button className="btn btn-secondary" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => { setCurrentModule('emp-attendance'); setAttSubTab('apply'); }}>Apply Leave</button>
-                <button className="btn btn-secondary" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>
-              </div>
+            </div>
+            <div className="welcome-banner-img-container">
+              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
             </div>
           </div>
 
@@ -2838,89 +2839,104 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       {/* 13. Settings View */}
       {currentModule === 'emp-settings' && (
         <section id="emp-mod-emp-settings" className="emp-module">
-          <div className="card">
-            <div className="card-title">Change Password</div>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              const cur = e.target.elements[0].value;
-              const nxt = e.target.elements[1].value;
-              try {
-                await api.post('/auth/change-password', { currentPassword: cur, newPassword: nxt });
-                showToast('Password updated successfully.', 'success');
-                e.target.reset();
-              } catch (err) {
-                showToast(err.response?.data?.message || 'Error updating password.', 'error');
-              }
-            }}>
-              <div className="form-group">
-                <label>Current Password</label>
-                <input type="password" className="form-control" required />
+          <div className="split-layout-2col">
+            {/* Left Info Panel */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div className="card-title">Security & Config</div>
+              <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
+                Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
+              </p>
+              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+            </div>
+
+            {/* Right Forms Column */}
+            <div>
+              <div className="card">
+                <div className="card-title">Change Password</div>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const cur = e.target.elements[0].value;
+                  const nxt = e.target.elements[1].value;
+                  try {
+                    await api.post('/auth/change-password', { currentPassword: cur, newPassword: nxt });
+                    showToast('Password updated successfully.', 'success');
+                    e.target.reset();
+                  } catch (err) {
+                    showToast(err.response?.data?.message || 'Error updating password.', 'error');
+                  }
+                }}>
+                  <div className="form-group">
+                    <label>Current Password</label>
+                    <input type="password" className="form-control" required />
+                  </div>
+                  <div className="form-group">
+                    <label>New Password</label>
+                    <input type="password" className="form-control" required />
+                  </div>
+                  <button className="btn btn-primary">Update Password</button>
+                </form>
               </div>
-              <div className="form-group">
-                <label>New Password</label>
-                <input type="password" className="form-control" required />
-              </div>
-              <button className="btn btn-primary">Update Password</button>
-            </form>
-          </div>
-          <div className="card">
-            <div className="card-title">Portal Preferences</div>
-            <div className="form-group">
-              <label>System Display Language</label>
-              <select className="form-control" defaultValue="English">
-                <option>English</option>
-                <option>Hindi</option>
-                <option>Tamil</option>
-                <option>Telugu</option>
-                <option>Kannada</option>
-                <option>Gujarati</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label><input type="checkbox" defaultChecked /> Email notifications</label>
-            </div>
-            <div className="form-group">
-              <label><input type="checkbox" defaultChecked /> SMS notifications</label>
-            </div>
-            <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
-                  const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        localStorage.setItem('talentsphere-navbar-theme', t);
-                        if (window.changeNavbarTheme) window.changeNavbarTheme(t);
-                        showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
-                        // Force re-render of settings panel to update selection outline
-                        setCurrentModule('');
-                        setTimeout(() => setCurrentModule('emp-settings'), 5);
-                      }}
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        border: currentTheme === t ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: currentTheme === t ? '0 0 0 3px #6366f1' : '0 0 0 1px rgba(0,0,0,0.15)',
-                        cursor: 'pointer',
-                        background: t === 'indigo' ? '#6366f1' :
-                                    t === 'slate' ? '#64748b' :
-                                    t === 'emerald' ? '#10b981' :
-                                    t === 'rose' ? '#f43f5e' :
-                                    t === 'amber' ? '#f59e0b' : '#8b5cf6',
-                        transition: 'all 0.2s ease',
-                        transform: currentTheme === t ? 'scale(1.1)' : 'scale(1)'
-                      }}
-                      title={t.toUpperCase()}
-                    />
-                  );
-                })}
+
+              <div className="card">
+                <div className="card-title">Portal Preferences</div>
+                <div className="form-group">
+                  <label>System Display Language</label>
+                  <select className="form-control" defaultValue="English">
+                    <option>English</option>
+                    <option>Hindi</option>
+                    <option>Tamil</option>
+                    <option>Telugu</option>
+                    <option>Kannada</option>
+                    <option>Gujarati</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label><input type="checkbox" defaultChecked /> Email notifications</label>
+                </div>
+                <div className="form-group">
+                  <label><input type="checkbox" defaultChecked /> SMS notifications</label>
+                </div>
+                <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
+                      const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            localStorage.setItem('talentsphere-navbar-theme', t);
+                            if (window.changeNavbarTheme) window.changeNavbarTheme(t);
+                            showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
+                            // Force re-render of settings panel to update selection outline
+                            setCurrentModule('');
+                            setTimeout(() => setCurrentModule('emp-settings'), 5);
+                          }}
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            border: currentTheme === t ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                            boxShadow: currentTheme === t ? '0 0 0 3px #6366f1' : '0 0 0 1px rgba(0,0,0,0.15)',
+                            cursor: 'pointer',
+                            background: t === 'indigo' ? '#6366f1' :
+                                        t === 'slate' ? '#64748b' :
+                                        t === 'emerald' ? '#10b981' :
+                                        t === 'rose' ? '#f43f5e' :
+                                        t === 'amber' ? '#f59e0b' : '#8b5cf6',
+                            transition: 'all 0.2s ease',
+                            transform: currentTheme === t ? 'scale(1.1)' : 'scale(1)'
+                          }}
+                          title={t.toUpperCase()}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+                <button className="btn btn-secondary" onClick={() => showToast('Preferences updated.', 'success')}>Save Preferences</button>
               </div>
             </div>
-            <button className="btn btn-secondary" onClick={() => showToast('Preferences updated.', 'success')}>Save Preferences</button>
           </div>
         </section>
       )}
@@ -3362,7 +3378,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         month={payslipMonth}
         onPrint={() => { showToast('Payslip invoice sent to printer!', 'success'); setPayslipActive(false); }}
       />
-    </>
+    </div>
   );
 };
 

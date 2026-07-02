@@ -32,11 +32,11 @@
   --warning: 38 92% 50%;
   --danger: 350 80% 56%;
   --info: 199 89% 48%;
-  --bg-main: 220 20% 97%;
+  --bg-main: 30 20% 97%;
   --bg-card: 0 0% 100%;
   --text-primary: 222 47% 11%;
   --text-secondary: 215 16% 47%;
-  --border: 214 32% 91%;
+  --border: 34 16% 89%;
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -59,7 +59,7 @@ body.dark-mode {
 }
 
 body {
-  background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e0e7ff, #eef2f6);
+  background: linear-gradient(-45deg, #FAF8F5, #F5F2EB, #FAF6F0, #EAE6DF);
   background-size: 400% 400%;
   animation: var(--animate-mesh-shift);
   color: #0f172a;
@@ -279,7 +279,7 @@ body.dark-mode {
 }
 
 .module-viewport {
-  @apply flex-1 p-6 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/20;
+  @apply flex-1 p-0 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/20;
 }
 
 /* Grid & Cards system */
@@ -1600,3 +1600,79 @@ body.dark-mode .emp-search:focus-within {
   color: hsl(var(--text-secondary));
   opacity: 0.7;
 }
+
+/* --- Premium Overhaul Layout Containers --- */
+.portal-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  width: 100%;
+}
+
+.split-layout-2col {
+  display: grid;
+  grid-template-cols: 1fr;
+  gap: 32px;
+}
+
+@media (min-width: 1024px) {
+  .split-layout-2col {
+    grid-template-cols: 1fr 2fr;
+  }
+}
+
+.welcome-card-banner {
+  background: linear-gradient(135deg, rgba(250, 246, 240, 0.9) 0%, rgba(234, 230, 221, 0.9) 100%);
+  border: 1px solid rgba(235, 230, 221, 0.8);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px -2px rgba(234, 230, 221, 0.3);
+}
+
+body.dark-mode .welcome-card-banner {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .welcome-card-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.welcome-banner-text {
+  flex: 1.5;
+  z-index: 2;
+}
+
+.welcome-banner-img-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 180px;
+  z-index: 1;
+}
+
+.welcome-banner-img {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.illustration-card-img {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  margin-top: 16px;
+}
+
