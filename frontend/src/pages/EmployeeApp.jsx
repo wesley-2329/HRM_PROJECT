@@ -2882,6 +2882,44 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="form-group">
               <label><input type="checkbox" defaultChecked /> SMS notifications</label>
             </div>
+            <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
+                  const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        localStorage.setItem('talentsphere-navbar-theme', t);
+                        if (window.changeNavbarTheme) window.changeNavbarTheme(t);
+                        showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
+                        // Force re-render of settings panel to update selection outline
+                        setCurrentModule('');
+                        setTimeout(() => setCurrentModule('emp-settings'), 5);
+                      }}
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        border: currentTheme === t ? '3px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: currentTheme === t ? '0 0 0 3px #6366f1' : '0 0 0 1px rgba(0,0,0,0.15)',
+                        cursor: 'pointer',
+                        background: t === 'indigo' ? '#6366f1' :
+                                    t === 'slate' ? '#64748b' :
+                                    t === 'emerald' ? '#10b981' :
+                                    t === 'rose' ? '#f43f5e' :
+                                    t === 'amber' ? '#f59e0b' : '#8b5cf6',
+                        transition: 'all 0.2s ease',
+                        transform: currentTheme === t ? 'scale(1.1)' : 'scale(1)'
+                      }}
+                      title={t.toUpperCase()}
+                    />
+                  );
+                })}
+              </div>
+            </div>
             <button className="btn btn-secondary" onClick={() => showToast('Preferences updated.', 'success')}>Save Preferences</button>
           </div>
         </section>

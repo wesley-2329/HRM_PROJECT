@@ -7,6 +7,7 @@ import LoginGateway from './pages/LoginGateway';
 import Sidebar from './components/Sidebar';
 import TopNavbar from './components/TopNavbar';
 import HRTopNavbar from './components/HRTopNavbar';
+import EmpTopNavbar from './components/EmpTopNavbar';
 import HRApp from './pages/HRApp';
 import EmployeeApp from './pages/EmployeeApp';
 
@@ -90,11 +91,12 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
   if (!user) return null;
 
   const isHR = user && user.role === 'hr';
+  const isEmployee = user && user.role === 'employee';
 
   return (
-    <div className={isHR ? 'hr-top-layout' : `app-layout ${mobileActive ? 'mobile-active' : ''}`}>
+    <div className={isHR ? 'hr-top-layout' : isEmployee ? 'emp-top-layout' : `app-layout ${mobileActive ? 'mobile-active' : ''}`}>
       {/* Sidebar navigation */}
-      {!isHR && (
+      {!isHR && !isEmployee && (
         <Sidebar
           collapsed={collapsed}
           setCollapsed={setCollapsed}
@@ -108,6 +110,14 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
       <main className="main-content">
         {isHR ? (
           <HRTopNavbar
+            currentModule={overrideModule || module}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            navbarTheme={navbarTheme}
+            onSearch={setSearchQuery}
+          />
+        ) : isEmployee ? (
+          <EmpTopNavbar
             currentModule={overrideModule || module}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
