@@ -6,6 +6,7 @@ import { ToastProvider } from './components/Toast';
 import LoginGateway from './pages/LoginGateway';
 import Sidebar from './components/Sidebar';
 import TopNavbar from './components/TopNavbar';
+import HRTopNavbar from './components/HRTopNavbar';
 import HRApp from './pages/HRApp';
 import EmployeeApp from './pages/EmployeeApp';
 
@@ -54,6 +55,16 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
   const [mobileActive, setMobileActive] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [navbarTheme, setNavbarTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
+
+  useEffect(() => {
+    window.changeNavbarTheme = (theme) => {
+      setNavbarTheme(theme);
+    };
+    return () => {
+      delete window.changeNavbarTheme;
+    };
+  }, []);
 
   // Apply dark mode class to document body
   useEffect(() => {
@@ -78,26 +89,40 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
 
   if (!user) return null;
 
+  const isHR = user && user.role === 'hr';
+
   return (
-    <div className={`app-layout ${mobileActive ? 'mobile-active' : ''}`}>
+    <div className={isHR ? 'hr-top-layout' : `app-layout ${mobileActive ? 'mobile-active' : ''}`}>
       {/* Sidebar navigation */}
-      <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        currentModule={overrideModule || module}
-        mobileActive={mobileActive}
-        setMobileActive={setMobileActive}
-      />
+      {!isHR && (
+        <Sidebar
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          currentModule={overrideModule || module}
+          mobileActive={mobileActive}
+          setMobileActive={setMobileActive}
+        />
+      )}
 
       {/* Main dashboard viewport */}
       <main className="main-content">
-        <TopNavbar
-          currentModule={overrideModule || module}
-          setMobileActive={setMobileActive}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          onSearch={setSearchQuery}
-        />
+        {isHR ? (
+          <HRTopNavbar
+            currentModule={overrideModule || module}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            navbarTheme={navbarTheme}
+            onSearch={setSearchQuery}
+          />
+        ) : (
+          <TopNavbar
+            currentModule={overrideModule || module}
+            setMobileActive={setMobileActive}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            onSearch={setSearchQuery}
+          />
+        )}
 
         <div className="module-viewport">
           {role === 'hr' ? (
