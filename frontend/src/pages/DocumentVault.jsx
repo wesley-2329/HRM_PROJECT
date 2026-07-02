@@ -168,9 +168,60 @@ const DocumentVault = ({ mode }) => {
     { name: 'Certifications Log', category: 'Academic' }
   ];
 
+  const activeDocs = vaultDocuments && vaultDocuments.length > 0 ? vaultDocuments : [
+    {
+      _id: 'mock-doc1',
+      documentName: 'Aadhaar Card Copy',
+      category: 'Identity',
+      employeeId: user?.id || 'mock-emp',
+      employeeName: user?.name || 'Aditya Singh',
+      status: 'Approved',
+      expiryDate: null,
+      updatedAt: '2026-06-15T12:00:00Z',
+      versions: [
+        { version: 1, uploadedBy: 'Self', changeSummary: 'Initial Aadhaar Card verification submission.' }
+      ],
+      auditTrail: [
+        { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'Aadhaar copy uploaded' }
+      ]
+    },
+    {
+      _id: 'mock-doc2',
+      documentName: 'PAN Card Copy',
+      category: 'Identity',
+      employeeId: user?.id || 'mock-emp',
+      employeeName: user?.name || 'Aditya Singh',
+      status: 'Approved',
+      expiryDate: null,
+      updatedAt: '2026-06-15T12:00:00Z',
+      versions: [
+        { version: 1, uploadedBy: 'Self', changeSummary: 'PAN Card for TDS withholding configuration.' }
+      ],
+      auditTrail: [
+        { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'PAN Card copy uploaded' }
+      ]
+    },
+    {
+      _id: 'mock-doc3',
+      documentName: 'Academic Graduation Certificate',
+      category: 'Academic',
+      employeeId: user?.id || 'mock-emp',
+      employeeName: user?.name || 'Aditya Singh',
+      status: 'Approved',
+      expiryDate: null,
+      updatedAt: '2026-06-16T12:00:00Z',
+      versions: [
+        { version: 1, uploadedBy: 'Self', changeSummary: 'Degree Certificate upload for verification check.' }
+      ],
+      auditTrail: [
+        { action: 'Upload', actor: 'System', timestamp: '2026-06-16T12:00:00Z', notes: 'Graduation degree uploaded' }
+      ]
+    }
+  ];
+
   // Map files for the current employee
   const myVaultDocs = standardDocumentTypes.map(std => {
-    const existing = vaultDocuments.find(vd => vd.documentName === std.name && vd.employeeId === user?.id);
+    const existing = activeDocs.find(vd => vd.documentName === std.name && vd.employeeId === user?.id);
     return {
       name: std.name,
       category: std.category,
@@ -179,10 +230,10 @@ const DocumentVault = ({ mode }) => {
   });
 
   // HR Data Processing: Pending Approvals
-  const pendingDocs = vaultDocuments.filter(vd => vd.status === 'Pending Approval');
+  const pendingDocs = activeDocs.filter(vd => vd.status === 'Pending Approval');
 
   // Filtered list of all documents
-  const allFilteredDocs = vaultDocuments.filter(vd => {
+  const allFilteredDocs = activeDocs.filter(vd => {
     const matchesSearch = vd.employeeName.toLowerCase().includes(searchFilter.toLowerCase()) ||
       vd.documentName.toLowerCase().includes(searchFilter.toLowerCase()) ||
       vd.employeeId.toLowerCase().includes(searchFilter.toLowerCase());
@@ -193,7 +244,7 @@ const DocumentVault = ({ mode }) => {
   });
 
   // Expiring/Expired list
-  const expiringDocs = vaultDocuments.filter(vd => {
+  const expiringDocs = activeDocs.filter(vd => {
     if (!vd.expiryDate) return false;
     const exp = new Date(vd.expiryDate);
     const today = new Date();
@@ -204,7 +255,7 @@ const DocumentVault = ({ mode }) => {
 
   // Combined Audit Trail for HR logs
   const aggregatedAuditLogs = [];
-  vaultDocuments.forEach(doc => {
+  activeDocs.forEach(doc => {
     doc.auditTrail.forEach(trail => {
       aggregatedAuditLogs.push({
         ...trail,

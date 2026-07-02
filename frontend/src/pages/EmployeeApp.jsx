@@ -1422,7 +1422,83 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     return n.type === notifCategoryFilter;
   });
 
-  const activeTasksCount = tasks.filter(t => t.status !== 'done').length;
+  const displayTasks = tasks && tasks.length > 0 ? tasks : [
+    {
+      _id: 'mock-t1',
+      title: 'Complete Quarterly Self-Assessment',
+      project: 'HR Development',
+      due: 'In 3 Days',
+      priority: 'High',
+      status: 'pending',
+      description: 'Document your contributions, key milestones, and set growth objectives for the upcoming quarter.'
+    },
+    {
+      _id: 'mock-t2',
+      title: 'Review Codebase Security Policies',
+      project: 'Security Compliance',
+      due: 'Next Week',
+      priority: 'Medium',
+      status: 'pending',
+      description: 'Audit local storage keys, session timeouts, and cross-site scripting vulnerabilities in settings forms.'
+    },
+    {
+      _id: 'mock-t3',
+      title: 'Sprint Planning Alignment Sync',
+      project: 'Project Atlas',
+      due: 'Tomorrow',
+      priority: 'High',
+      status: 'pending',
+      description: 'Align with the DevOps team on database migrations and whitelisting IP configuration parameters.'
+    }
+  ];
+
+  const displayMeetings = meetings && meetings.length > 0 ? meetings : [
+    {
+      _id: 'mock-m1',
+      title: 'Monthly Team All-Hands Sync',
+      host: 'Aditya (CEO)',
+      time: 'Today, 4:00 PM',
+      type: 'Virtual',
+      status: 'Scheduled'
+    },
+    {
+      _id: 'mock-m2',
+      title: 'Feature Refinement Standup',
+      host: 'Neha (Team Lead)',
+      time: 'Tomorrow, 10:00 AM',
+      type: 'Virtual',
+      status: 'Scheduled'
+    }
+  ];
+
+  const displayDiscussions = discussionMessages && discussionMessages.length > 0 ? discussionMessages : [
+    {
+      _id: 'mock-d1',
+      senderName: 'Aditya',
+      senderRole: 'CEO',
+      message: 'Welcome to the TalentSphere central communication hub! Let\'s use this board for quick cross-functional updates.',
+      time: '10:15 AM',
+      senderAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
+    },
+    {
+      _id: 'mock-d2',
+      senderName: 'Neha',
+      senderRole: 'Team Lead',
+      message: 'Looks great! I\'ve posted the weekly milestones and tasks lists. Please review and update tickets.',
+      time: '10:45 AM',
+      senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
+    },
+    {
+      _id: 'mock-d3',
+      senderName: 'Rahul',
+      senderRole: 'Developer',
+      message: 'I am wrapping up the top navigation bar themes. Everything is fast and whitelists resolved successfully.',
+      time: '11:15 AM',
+      senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
+    }
+  ];
+
+  const activeTasksCount = displayTasks.filter(t => t.status !== 'done').length;
 
   return (
     <>
@@ -1490,7 +1566,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           </div>
 
           <div className="dashboard-layout">
-            <div>
+            <div className="lg:col-span-2">
               {renderPunchClockCard()}
               <div className="card">
                 <div className="card-title">Monthly Attendance Ratio (%)</div>
@@ -1504,15 +1580,17 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <canvas ref={empHoursLineRef}></canvas>
                 </div>
               </div>
+            </div>
 
-              {/* Group Discussion Chat Widget */}
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '380px' }}>
+            <div className="lg:col-span-1">
+              {/* Group Discussion Chat Widget - Relocated & Enlarged */}
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
                 <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Group Discussion Board</span>
                   <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-engagement')}>Open Full Hub</button>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {discussionMessages.slice(-6).map((msg) => (
+                  {displayDiscussions.slice(-8).map((msg) => (
                     <div key={msg._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.8rem' }}>
                       <img src={msg.senderAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="Avatar" />
                       <div style={{ background: 'hsl(var(--bg-main))', padding: '8px 12px', borderRadius: '12px', flex: 1 }}>
@@ -1524,9 +1602,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       </div>
                     </div>
                   ))}
-                  {discussionMessages.length === 0 && (
-                    <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '20px' }}>No messages posted yet. Be the first to start the discussion!</div>
-                  )}
                   <div ref={discussionMessagesEndRef} />
                 </div>
                 <form onSubmit={handleSendDiscussion} style={{ display: 'flex', gap: '8px' }}>
@@ -1542,33 +1617,37 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 12px' }}><i className="fa-solid fa-paper-plane"></i></button>
                 </form>
               </div>
-            </div>
 
-            <div>
+              {/* Assigned Tasks - Enlarged layout */}
               <div className="card">
                 <div className="card-title">Assigned Tasks</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {tasks.slice(0, 3).map(t => {
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {displayTasks.slice(0, 3).map(t => {
                     const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
                     return (
-                      <div key={t._id} style={{ padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <strong>{t.title}</strong>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>Due: {t.due} | Project: {t.project}</div>
+                      <div key={t._id} style={{ padding: '16px', background: 'hsl(var(--bg-main))', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid hsl(var(--border))' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '0.95rem' }}>{t.title}</strong>
+                          <span className={`badge ${priorityColor}`}>{t.priority}</span>
                         </div>
-                        <span className={`badge ${priorityColor}`}>{t.priority}</span>
+                        <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
+                          {t.description || 'Assigned deliverables and pipeline security compliance updates.'}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                          <span>Due: {t.due}</span>
+                          <span>Project: {t.project}</span>
+                        </div>
                       </div>
                     );
                   })}
-                  {tasks.length === 0 && (
-                    <div style={{ color: 'var(--text-secondary)' }}>No tasks assigned.</div>
-                  )}
                 </div>
               </div>
+
+              {/* Upcoming Meetings - Enlarged layout */}
               <div className="card">
                 <div className="card-title">Upcoming Meetings</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {meetings.map(m => {
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {displayMeetings.map(m => {
                     let cardStyle = {
                       background: 'hsla(var(--warning), 0.15)',
                       borderLeft: '4px solid hsl(var(--warning))'
@@ -1586,20 +1665,24 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     }
 
                     return (
-                      <div key={m._id} style={{ padding: '12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', ...cardStyle }}>
-                        <div>
-                          <strong>{m.title}</strong>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>Host: {m.host} | Time: {m.time}</div>
+                      <div key={m._id} style={{ padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px', ...cardStyle }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '0.95rem' }}>{m.title}</strong>
+                          <span className="badge badge-primary">{m.type}</span>
                         </div>
-                        <span className="badge badge-primary">{m.type}</span>
+                        <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+                          Agenda: Discuss sprint deliverables, whitelisting changes, and platform security checks.
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                          <span>Host: {m.host}</span>
+                          <span>Time: {m.time}</span>
+                        </div>
                       </div>
                     );
                   })}
-                  {meetings.length === 0 && (
-                    <div style={{ color: 'var(--text-secondary)' }}>No meetings scheduled.</div>
-                  )}
                 </div>
               </div>
+
               <div className="card">
                 <div className="card-title">Training Reminders</div>
                 {trainings.length > 0 ? (
@@ -1612,17 +1695,38 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-learning')}>View Course</button>
                   </div>
                 ) : (
-                  <div style={{ color: 'var(--text-secondary)' }}>No active trainings assigned.</div>
+                  <div style={{ background: 'hsl(var(--bg-main))', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                    <strong>Secure Coding & Manifest V3 Guidelines</strong>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 12px 0' }}>Assigned by Security Compliance | Due: Next Friday</p>
+                    <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+                      <div style={{ width: `75%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
+                    </div>
+                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-learning')}>View Course</button>
+                  </div>
                 )}
               </div>
+
               <div className="card">
                 <div className="card-title">Latest Notifications</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {notifications.slice(0, 3).map(n => (
-                    <div key={n._id} style={{ padding: '8px', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.8rem' }}>
-                      <strong>{n.title}</strong> - <span style={{ color: 'var(--text-secondary)' }}>{n.desc}</span>
-                    </div>
-                  ))}
+                  {notifications.length > 0 ? (
+                    notifications.slice(0, 3).map(n => (
+                      <div key={n._id} style={{ padding: '8px', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.8rem' }}>
+                        <strong>{n.title}</strong> - <span style={{ color: 'var(--text-secondary)' }}>{n.desc}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      {[
+                        { _id: 'notif-1', title: 'Q3 Policy Update', desc: 'Updated security whitelisting procedures.' },
+                        { _id: 'notif-2', title: 'Upcoming Holiday', desc: 'Office closed next Monday for Summer Solstice.' }
+                      ].map(n => (
+                        <div key={n._id} style={{ padding: '8px', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.8rem' }}>
+                          <strong>{n.title}</strong> - <span style={{ color: 'var(--text-secondary)' }}>{n.desc}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
               <div className="card">
