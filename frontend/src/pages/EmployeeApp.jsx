@@ -4,6 +4,8 @@ import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api from '../api';
+import OrgStructure from './OrgStructure';
+import DocumentVault from './DocumentVault';
 import {
   RaiseTicketModal,
   JoinMeetingModal,
@@ -1908,90 +1910,14 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       {/* 3. Documents View */}
       {currentModule === 'emp-documents' && (
         <section id="emp-mod-emp-documents" className="emp-module">
-          <div className="emp-grid">
-            {[
-              { name: 'Offer Letter', status: 'Available', icon: 'fa-file-contract', givenByHr: true },
-              { name: 'Appointment Letter', status: 'Available', icon: 'fa-file-signature', givenByHr: true },
-              { name: 'Experience Letters', status: 'Available', icon: 'fa-file-circle-check', givenByHr: true },
-              { name: 'Salary Slips', status: 'Available', icon: 'fa-file-invoice-dollar', link: 'emp-payroll', givenByHr: true },
-              { name: 'Tax Documents', status: 'Upload Required', icon: 'fa-receipt', upload: true },
-              { name: 'ID Proof — Aadhaar Card', status: 'Upload Required', icon: 'fa-id-card', upload: true },
-              { name: 'PAN Card', status: 'Upload Required', icon: 'fa-credit-card', upload: true },
-              { name: 'Driving License', status: 'Upload Required', icon: 'fa-car', upload: true },
-              { name: 'Previous Company Relieving Letter', status: 'Upload Required', icon: 'fa-briefcase', upload: true },
-              { name: 'Certifications Log', status: 'Upload Required', icon: 'fa-certificate', upload: true }
-            ].map((d, idx) => {
-              const documentPath = user?.documents ? (
-                user.documents instanceof Map ? user.documents.get(d.name) : user.documents[d.name]
-              ) : null;
-              const isUploaded = !!documentPath;
-              const getCleanFileName = (pathStr) => {
-                if (!pathStr) return '';
-                const parts = pathStr.split('/');
-                return parts[parts.length - 1];
-              };
-              const docStatus = isUploaded ? `Uploaded (${getCleanFileName(documentPath)})` : d.status;
-              return (
-                <div key={idx} className="emp-card" style={{ textAlign: 'left' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <div className="metric-icon-box" style={{ background: 'hsla(var(--primary), 0.1)', color: 'hsl(var(--primary))', width: '40px', height: '40px' }}><i className={`fa-solid ${d.icon}`}></i></div>
-                    <div>
-                      <strong>{d.name}</strong>
-                      <p style={{ fontSize: '0.75rem', color: isUploaded ? 'hsl(var(--success))' : 'var(--text-secondary)' }}>{docStatus}</p>
-                    </div>
-                  </div>
-                  {d.upload ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-                      <input 
-                        type="file" 
-                        id={`upload-${idx}`} 
-                        style={{ display: 'none' }} 
-                        onChange={(e) => handleDocUpload(d.name, e.target.files[0])} 
-                      />
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ width: '100%' }} 
-                        onClick={() => document.getElementById(`upload-${idx}`).click()}
-                      >
-                        {isUploaded ? 'Re-upload File' : 'Upload File'}
-                      </button>
-                      {isUploaded && (
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ width: '100%' }} 
-                          onClick={() => {
-                            showToast(`Opening ${getCleanFileName(documentPath)}...`, 'info');
-                            window.open(`/${documentPath}`, '_blank');
-                          }}
-                        >
-                          Download Uploaded
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ width: '100%' }} 
-                        onClick={() => showToast(`Downloading ${d.name}...`, 'info')}
-                      >
-                        Download
-                      </button>
-                      {d.link && (
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ width: '100%' }} 
-                          onClick={() => setCurrentModule(d.link)}
-                        >
-                          View Payslips
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <DocumentVault mode="employee" />
+        </section>
+      )}
+
+      {/* Org Structure View */}
+      {currentModule === 'org-structure' && (
+        <section id="emp-mod-org-structure" className="emp-module">
+          <OrgStructure mode="employee" />
         </section>
       )}
 

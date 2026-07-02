@@ -45,7 +45,7 @@ export const getAvatarUrl = (emp) => {
   return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
 };
 
-const MainLayoutWrapper = ({ role }) => {
+const MainLayoutWrapper = ({ role, overrideModule }) => {
   const { user } = useContext(AuthContext);
   const { id: hashId, module } = useParams();
   const id = decodeId(hashId);
@@ -69,12 +69,12 @@ const MainLayoutWrapper = ({ role }) => {
     if (!user) return;
     if (role === 'hr' && user.role !== 'hr') {
       navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
-    } else if (role === 'employee') {
+    } else if (role === 'employee' && overrideModule !== 'org-structure') {
       if (user.role !== 'hr' && user.id !== id) {
         navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
       }
     }
-  }, [user, role, id, navigate]);
+  }, [user, role, id, navigate, overrideModule]);
 
   if (!user) return null;
 
@@ -84,7 +84,7 @@ const MainLayoutWrapper = ({ role }) => {
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
-        currentModule={module}
+        currentModule={overrideModule || module}
         mobileActive={mobileActive}
         setMobileActive={setMobileActive}
       />
@@ -92,7 +92,7 @@ const MainLayoutWrapper = ({ role }) => {
       {/* Main dashboard viewport */}
       <main className="main-content">
         <TopNavbar
-          currentModule={module}
+          currentModule={overrideModule || module}
           setMobileActive={setMobileActive}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
@@ -102,12 +102,12 @@ const MainLayoutWrapper = ({ role }) => {
         <div className="module-viewport">
           {role === 'hr' ? (
             <HRApp
-              currentModule={module}
+              currentModule={overrideModule || module}
               searchQuery={searchQuery}
             />
           ) : (
             <EmployeeApp
-              currentModule={module}
+              currentModule={overrideModule || module}
             />
           )}
         </div>
@@ -152,9 +152,11 @@ const AppContent = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to={user ? (user.role === 'hr' ? '/hr/dashboard' : `/employee/${encodeId(user.id)}/emp-dashboard`) : '/login'} replace />} />
       <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to="/" replace />} />
       <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
       <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
+      <Route path="/organization/*" element={<MainLayoutWrapper role={user?.role === 'hr' ? 'hr' : 'employee'} overrideModule="org-structure" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
