@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { encodeId, getAvatarUrl } from '../App';
 
 const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobileActive }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!user) return null;
 
@@ -13,6 +14,8 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
     { id: 'dashboard', label: 'Overview', icon: 'fa-chart-line' },
     { id: 'hr-profile', label: 'My Profile', icon: 'fa-circle-user' },
     { id: 'employee-management', label: 'Employee Directory', icon: 'fa-user-group' },
+    { id: 'org-structure', label: 'Org Structure', icon: 'fa-sitemap' },
+    { id: 'document-vault', label: 'Document Vault', icon: 'fa-vault' },
     { id: 'attendance-leave', label: 'Attendance & Shift', icon: 'fa-calendar-check' },
     { id: 'payroll-management', label: 'Payroll Hub', icon: 'fa-wallet' },
     { id: 'recruitment-ats', label: 'Recruitment ATS', icon: 'fa-magnifying-glass-chart' },
@@ -25,8 +28,9 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
 
   const empMenu = [
     { id: 'emp-dashboard', label: 'My Dashboard', icon: 'fa-gauge-high' },
+    { id: 'org-structure', label: 'Org Structure', icon: 'fa-sitemap' },
     { id: 'emp-profile', label: 'My Profile', icon: 'fa-circle-user' },
-    { id: 'emp-documents', label: 'My Documents', icon: 'fa-folder-open' },
+    { id: 'emp-documents', label: 'My Document Vault', icon: 'fa-vault' },
     { id: 'emp-attendance', label: 'Attendance', icon: 'fa-calendar-check' },
     { id: 'emp-payroll', label: 'Payroll & Salary', icon: 'fa-indian-rupee-sign' },
     { id: 'emp-pip', label: 'Performance & Appraisals', icon: 'fa-star-half-stroke' },
@@ -44,7 +48,9 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
   const menu = user.role === 'hr' ? hrMenu : empMenu;
 
   const handleNavClick = (id) => {
-    if (user.role === 'hr') {
+    if (id === 'org-structure') {
+      navigate('/organization');
+    } else if (user.role === 'hr') {
       navigate(`/hr/${id}`);
     } else {
       navigate(`/employee/${encodeId(user.id)}/${id}`);
@@ -70,7 +76,11 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
           {menu.map((item) => (
             <a
               key={item.id}
-              className={`nav-item ${currentModule === item.id ? 'active' : ''}`}
+              className={`nav-item ${
+                currentModule === item.id || (item.id === 'org-structure' && location.pathname.startsWith('/organization'))
+                  ? 'active'
+                  : ''
+              }`}
               onClick={() => handleNavClick(item.id)}
             >
               <i className={`fa-solid ${item.icon}`}></i>
@@ -92,6 +102,13 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
             <span className="nav-text">Fun Zone</span>
           </a>
         )}
+        <div style={{ padding: collapsed ? '12px 0' : '12px 16px', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-start', alignItems: 'center', gap: '10px', fontSize: '0.7rem', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          {!collapsed && <span style={{ transition: 'opacity 0.2s', fontWeight: 600 }}>Atlas Node Active</span>}
+        </div>
         <a className="nav-item signout" onClick={logout}>
           <i className="fa-solid fa-right-from-bracket"></i>
           <span className="nav-text">Secure Sign Out</span>

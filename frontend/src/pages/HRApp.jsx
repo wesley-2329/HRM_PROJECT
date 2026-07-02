@@ -4,6 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api from '../api';
 import { getAvatarUrl } from '../App';
+import OrgStructure from './OrgStructure';
+import DocumentVault from './DocumentVault';
 import {
   AddEmployeeModal,
   LedgerModal,
@@ -918,6 +920,20 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </div>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* Org Structure Module */}
+      {currentModule === 'org-structure' && (
+        <section id="hr-mod-org-structure" className="hr-module">
+          <OrgStructure mode="hr" />
+        </section>
+      )}
+
+      {/* Document Vault Module */}
+      {currentModule === 'document-vault' && (
+        <section id="hr-mod-document-vault" className="hr-module">
+          <DocumentVault mode="hr" />
         </section>
       )}
 

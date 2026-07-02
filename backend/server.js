@@ -78,6 +78,8 @@ app.use('/api/hr-notes', require('./routes/hrNotes'));
 app.use('/api/warning-letters', require('./routes/warnings'));
 app.use('/api/discussion', require('./routes/discussion'));
 app.use('/api/daily-reports', require('./routes/dailyReports'));
+app.use('/api/org', require('./routes/org'));
+app.use('/api/vault', require('./routes/vault'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

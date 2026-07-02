@@ -101,6 +101,70 @@ const EmployeeSchema = new mongoose.Schema({
   teamLeadId: {
     type: String,
     default: ''
+  },
+  branch: {
+    type: String,
+    default: ''
+  },
+  businessUnit: {
+    type: String,
+    default: ''
+  },
+  costCenter: {
+    type: String,
+    default: ''
+  },
+  grade: {
+    type: String,
+    default: ''
+  },
+  designation: {
+    type: String,
+    default: ''
+  },
+  functionalManagerId: {
+    type: String,
+    default: ''
+  },
+  secondaryManagerId: {
+    type: String,
+    default: ''
+  },
+  projectManagerId: {
+    type: String,
+    default: ''
+  },
+  hrManagerId: {
+    type: String,
+    default: ''
+  },
+  mentorId: {
+    type: String,
+    default: ''
+  },
+  buddyId: {
+    type: String,
+    default: ''
+  },
+  skipManagerId: {
+    type: String,
+    default: ''
+  },
+  escalationManagerId: {
+    type: String,
+    default: ''
+  },
+  companyCode: {
+    type: String,
+    default: ''
+  },
+  regionCode: {
+    type: String,
+    default: ''
+  },
+  positionCode: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true, id: false });
 
