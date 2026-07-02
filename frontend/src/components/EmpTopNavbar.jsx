@@ -60,7 +60,6 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       <div className="emp-header-left">
         <div className="emp-logo" onClick={() => navigate(`/employee/${hashId}/emp-dashboard`)}>
           <i className="fa-solid fa-graduation-cap"></i>
-          <span>TalentSphere</span>
         </div>
 
         <nav className="emp-nav-menu">

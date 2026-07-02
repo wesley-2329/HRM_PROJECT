@@ -1137,18 +1137,22 @@ body.dark-mode .hr-header {
 .hr-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.25rem;
-  font-weight: 800;
   color: hsl(var(--text-primary));
   text-decoration: none;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .hr-logo i {
   color: var(--hr-primary);
   font-size: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: logo-glow 3s infinite alternate;
+}
+
+.hr-logo:hover i {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px rgba(var(--hr-primary-rgb), 0.6));
 }
 
 @keyframes logo-glow {
@@ -1180,7 +1184,7 @@ body.dark-mode .hr-header {
   padding: 8px 16px;
   border-radius: 12px;
   color: hsl(var(--text-secondary));
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -1393,18 +1397,22 @@ body.dark-mode .emp-header {
 .emp-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.25rem;
-  font-weight: 800;
   color: hsl(var(--text-primary));
   text-decoration: none;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .emp-logo i {
   color: var(--emp-primary);
   font-size: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: emp-logo-glow 3s infinite alternate;
+}
+
+.emp-logo:hover i {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px rgba(var(--emp-primary-rgb), 0.6));
 }
 
 @keyframes emp-logo-glow {
@@ -1436,7 +1444,7 @@ body.dark-mode .emp-header {
   padding: 8px 16px;
   border-radius: 12px;
   color: hsl(var(--text-secondary));
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;

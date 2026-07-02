@@ -50,7 +50,6 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       <div className="hr-header-left">
         <div className="hr-logo" onClick={() => navigate('/hr/dashboard')}>
           <i className="fa-solid fa-layer-group"></i>
-          <span>TalentSphere</span>
         </div>
 
         <nav className="hr-nav-menu">
