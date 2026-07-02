@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -12,7 +12,7 @@ import {
   AddTaskModal,
   PayslipModal
 } from '../components/Modals';
-import { getAvatarUrl } from '../App';
+import { getAvatarUrl, encodeId } from '../App';
 
 const SubjectSparkline = ({ progress }) => {
   const canvasRef = useRef(null);
@@ -69,6 +69,7 @@ const SubjectSparkline = ({ progress }) => {
 };
 
 const EmployeeApp = ({ currentModule, setCurrentModule }) => {
+  const navigate = useNavigate();
   const {
     employees,
     leaves,
@@ -1424,7 +1425,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const activeTasksCount = tasks.filter(t => t.status !== 'done').length;
 
   return (
-    <div className="portal-container animate-fade-in-up">
+    <>
+      <div className="portal-container animate-fade-in-up">
       {/* 1. Dashboard View */}
       {currentModule === 'emp-dashboard' && (
         <section id="emp-mod-emp-dashboard" className="emp-module">
@@ -1441,9 +1443,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 Access directory tools, review attendance schedules, download payroll slips, view performance objectives, and join meetings directly from your dashboard.
               </p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} className="quick-links">
-                <button className="btn btn-secondary" onClick={() => setCurrentModule('emp-profile')}>My Profile</button>
+                <button className="btn btn-secondary" onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-profile`)}>My Profile</button>
                 <button className="btn btn-secondary" onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
-                <button className="btn btn-secondary" onClick={() => { setCurrentModule('emp-attendance'); setAttSubTab('apply'); }}>Apply Leave</button>
+                <button className="btn btn-secondary" onClick={() => { navigate(`/employee/${encodeId(user.id)}/emp-attendance`); setAttSubTab('apply'); }}>Apply Leave</button>
                 <button className="btn btn-secondary" onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>
               </div>
             </div>
@@ -3350,36 +3352,37 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           )}
         </section>
       )}
-
-      {/* Modals Mounting */}
-      <RaiseTicketModal
-        active={raiseTicketActive}
-        onClose={() => setRaiseTicketActive(false)}
-        onSubmit={handleRaiseTicketSubmit}
-      />
-
-      <JoinMeetingModal
-        active={joinMeetingActive}
-        onClose={() => setJoinMeetingActive(false)}
-        onJoin={() => { showToast('Connecting to meeting...', 'info'); setJoinMeetingActive(false); }}
-      />
-
-      <AddTaskModal
-        active={addTaskActive}
-        onClose={() => setAddTaskActive(false)}
-        onSubmit={handleAddTaskSubmit}
-        teammates={user.isTeamLead ? employees.filter(e => e.teamLeadId === user.id) : []}
-      />
-
-      <PayslipModal
-        active={payslipActive}
-        onClose={() => setPayslipActive(false)}
-        employee={selectedEmpForPayslip}
-        month={payslipMonth}
-        onPrint={() => { showToast('Payslip invoice sent to printer!', 'success'); setPayslipActive(false); }}
-      />
     </div>
-  );
+
+    {/* Modals Mounting */}
+    <RaiseTicketModal
+      active={raiseTicketActive}
+      onClose={() => setRaiseTicketActive(false)}
+      onSubmit={handleRaiseTicketSubmit}
+    />
+
+    <JoinMeetingModal
+      active={joinMeetingActive}
+      onClose={() => setJoinMeetingActive(false)}
+      onJoin={() => { showToast('Connecting to meeting...', 'info'); setJoinMeetingActive(false); }}
+    />
+
+    <AddTaskModal
+      active={addTaskActive}
+      onClose={() => setAddTaskActive(false)}
+      onSubmit={handleAddTaskSubmit}
+      teammates={user.isTeamLead ? employees.filter(e => e.teamLeadId === user.id) : []}
+    />
+
+    <PayslipModal
+      active={payslipActive}
+      onClose={() => setPayslipActive(false)}
+      employee={selectedEmpForPayslip}
+      month={payslipMonth}
+      onPrint={() => { showToast('Payslip invoice sent to printer!', 'success'); setPayslipActive(false); }}
+    />
+  </>
+);
 };
 
 export default EmployeeApp;

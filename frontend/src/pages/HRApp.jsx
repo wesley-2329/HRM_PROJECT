@@ -698,7 +698,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const pendingLeavesCount = leaves.filter(l => l.status === 'Pending').length;
 
   return (
-    <div className="portal-container animate-fade-in-up">
+    <>
+      <div className="portal-container animate-fade-in-up">
       {/* Overview Module */}
       {currentModule === 'dashboard' && (
         <section id="hr-mod-dashboard" className="hr-module">
@@ -2528,54 +2529,55 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
         </section>
       )}
-
-      {/* Modals Mounting */}
-      <AddEmployeeModal
-        active={addEmpActive}
-        onClose={() => setAddEmpActive(false)}
-        onSubmit={handleAddOrEditEmployee}
-        employee={selectedEmpForEdit}
-      />
-
-      <LedgerModal
-        active={ledgerActive}
-        onClose={() => setLedgerActive(false)}
-        employee={selectedEmpForLedger}
-        timesheets={timesheets}
-        leaves={leaves}
-      />
-
-      <StatsModal
-        active={statsActive}
-        onClose={() => setStatsActive(false)}
-        employee={selectedEmpForStats}
-        timesheets={timesheets}
-        leaves={leaves}
-      />
-
-      <PayslipModal
-        active={payslipActive}
-        onClose={() => setPayslipActive(false)}
-        employee={selectedEmpForPayslip}
-        month={payslipMonth}
-        onPrint={() => { showToast(`Payslip invoice sent to printer!`, 'success'); setPayslipActive(false); }}
-      />
-
-      <AddWalkinModal
-        active={walkinActive}
-        onClose={() => setWalkinActive(false)}
-        onSubmit={handleAddWalkinCandidate}
-      />
-
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        accept="image/*" 
-        onChange={handleAvatarFileChange} 
-      />
     </div>
-  );
+
+    {/* Modals Mounting */}
+    <AddEmployeeModal
+      active={addEmpActive}
+      onClose={() => setAddEmpActive(false)}
+      onSubmit={handleAddOrEditEmployee}
+      employee={selectedEmpForEdit}
+    />
+
+    <LedgerModal
+      active={ledgerActive}
+      onClose={() => setLedgerActive(false)}
+      employee={selectedEmpForLedger}
+      timesheets={timesheets}
+      leaves={leaves}
+    />
+
+    <StatsModal
+      active={statsActive}
+      onClose={() => setStatsActive(false)}
+      employee={selectedEmpForStats}
+      timesheets={timesheets}
+      leaves={leaves}
+    />
+
+    <PayslipModal
+      active={payslipActive}
+      onClose={() => setPayslipActive(false)}
+      employee={selectedEmpForPayslip}
+      month={payslipMonth}
+      onPrint={() => { showToast(`Payslip invoice sent to printer!`, 'success'); setPayslipActive(false); }}
+    />
+
+    <AddWalkinModal
+      active={walkinActive}
+      onClose={() => setWalkinActive(false)}
+      onSubmit={handleAddWalkinCandidate}
+    />
+
+    <input 
+      type="file" 
+      ref={fileInputRef} 
+      style={{ display: 'none' }} 
+      accept="image/*" 
+      onChange={handleAvatarFileChange} 
+    />
+  </>
+);
 };
 
 export default HRApp;
