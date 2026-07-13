@@ -60,7 +60,7 @@ const VacancyMappingLanding = ({ mode }) => {
       title: 'Vacancy Request Approval',
       icon: 'fa-circle-check',
       description: 'Approve, reject, or hold raised vacancy manpower requests with budget verification logs.',
-      route: '/organization/vacancy-mapping/setup',
+      route: '/organization/vacancy-mapping/setup?mode=approval',
       color: 'from-rose-500/20 to-pink-500/10 text-rose-600 dark:text-rose-400',
     },
     {

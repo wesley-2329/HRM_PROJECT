@@ -19,6 +19,7 @@ const VacancyMappingPage = ({ mode }) => {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
   const isHr = mode === 'hr' || user?.role === 'hr';
+  const isApprovalMode = window.location.search.includes('mode=approval');
 
   // --- Modal States ---
   const [showModal, setShowModal] = useState(false);
@@ -125,13 +126,13 @@ const VacancyMappingPage = ({ mode }) => {
       <SubmoduleHeader 
         title="Vacancy & Headcount Mapping" 
         description="Map approved department headcounts to active job vacancies, assign hiring managers, and update budget allocations."
-        actionLabel={isHr ? "Register Vacancy" : null}
+        actionLabel={(isHr && !isApprovalMode) ? "Register Vacancy" : null}
         onActionClick={() => {
           setEditingVac(null);
           resetForm();
           setShowModal(true);
         }}
-        isHr={isHr}
+        isHr={isHr && !isApprovalMode}
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
