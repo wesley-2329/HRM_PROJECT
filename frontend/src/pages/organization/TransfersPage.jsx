@@ -14,17 +14,22 @@ const TransfersPage = ({ mode }) => {
     gradeBands,
     transferHistory,
     designationHistory,
+    reportingHistory,
     fetchEmployees,
     fetchDepartments,
     fetchDesignations,
     fetchGradeBands,
     fetchTransferHistory,
-    fetchDesignationHistory
+    fetchDesignationHistory,
+    fetchReportingHistory
   } = useContext(DataContext);
 
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
   const isHr = mode === 'hr' || user?.role === 'hr';
+
+  // --- Sub Tab State ---
+  const [transSubTab, setTransSubTab] = useState('dept');
 
   // --- Modal Visibility States ---
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -49,8 +54,11 @@ const TransfersPage = ({ mode }) => {
     fetchGradeBands();
     fetchTransferHistory();
     fetchDesignationHistory();
+    fetchReportingHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const getEmpById = (id) => employees.find(e => e.id === id);
 
   const handleDeptTransfer = async (e) => {
     e.preventDefault();
@@ -115,58 +123,179 @@ const TransfersPage = ({ mode }) => {
         isHr={isHr}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        {/* Department Transfers Log */}
-        <div className="emp-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px' }}>Department Transfers History</h3>
-          <div style={{ flex: 1, maxHeight: '550px', overflowY: 'auto' }}>
-            {transferHistory.length > 0 ? (
-              transferHistory.map(h => (
-                <div key={h._id} style={{ fontSize: '0.875rem', borderBottom: '1px solid hsl(var(--border))', padding: '12px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                    <span>{h.employeeName}</span>
-                    <span className="badge badge-info" style={{ fontSize: '0.75rem' }}>Dept Shift</span>
-                  </div>
-                  <div style={{ marginTop: '4px', color: 'hsl(var(--text-primary))' }}>
-                    <strong>{h.oldDept || 'None'}</strong> &rarr; <strong>{h.newDept}</strong>
-                  </div>
-                  <div style={{ color: 'hsl(var(--text-secondary))', marginTop: '6px', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Reason: {h.reason}</span>
-                    <span>Effective: {new Date(h.effectiveDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', padding: '24px 0', textAlign: 'center' }}>No department transfers registered.</p>
-            )}
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Sub Tab Navigation */}
+        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border))', marginBottom: '8px' }}>
+          {[
+            { id: 'dept', label: 'Department Transfers', icon: 'fa-exchange-alt' },
+            { id: 'reporting', label: 'Reporting Manager History', icon: 'fa-people-arrows' },
+            { id: 'promo', label: 'Designations & Promotions', icon: 'fa-arrow-trend-up' }
+          ].map(tab => {
+            const isActive = transSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setTransSubTab(tab.id)}
+                style={{
+                  background: isActive ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? '3px solid hsl(var(--primary))' : '3px solid transparent',
+                  color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))',
+                  padding: '10px 18px',
+                  fontSize: '0.9rem',
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  borderRadius: '6px 6px 0 0',
+                  transition: 'all 0.2s',
+                  outline: 'none'
+                }}
+              >
+                <i className={`fa-solid ${tab.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Designation Promotions Log */}
-        <div className="emp-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px' }}>Designation Promotions History</h3>
-          <div style={{ flex: 1, maxHeight: '550px', overflowY: 'auto' }}>
-            {designationHistory.length > 0 ? (
-              designationHistory.map(h => (
-                <div key={h._id} style={{ fontSize: '0.875rem', borderBottom: '1px solid hsl(var(--border))', padding: '12px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                    <span>{h.employeeName}</span>
-                    <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>Promotion</span>
-                  </div>
-                  <div style={{ marginTop: '4px', color: 'hsl(var(--text-primary))' }}>
-                    <strong>{h.oldDesignation || 'None'}</strong> &rarr; <strong>{h.newDesignation}</strong> {h.newGrade && `(Grade: ${h.newGrade})`}
-                  </div>
-                  <div style={{ color: 'hsl(var(--text-secondary))', marginTop: '6px', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Reason: {h.reason}</span>
-                    <span>Effective: {new Date(h.effectiveDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', padding: '24px 0', textAlign: 'center' }}>No designations promotions registered.</p>
-            )}
+        {/* Tab 1: Department Transfers Table */}
+        {transSubTab === 'dept' && (
+          <div className="emp-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '1.20rem', fontWeight: 700, marginBottom: '16px' }}>Department Transfers History</h3>
+            <div className="table-responsive">
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid hsl(var(--border))', color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>
+                    <th style={{ padding: '12px' }}>Employee ID</th>
+                    <th style={{ padding: '12px' }}>Employee Name</th>
+                    <th style={{ padding: '12px' }}>Previous Department</th>
+                    <th style={{ padding: '12px' }}>New Department</th>
+                    <th style={{ padding: '12px' }}>Change Date</th>
+                    <th style={{ padding: '12px' }}>Change Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transferHistory.map(h => (
+                    <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeId}</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeName}</td>
+                      <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>{h.oldDept || 'None'}</td>
+                      <td style={{ padding: '12px', fontWeight: 600, color: 'hsl(var(--primary))' }}>{h.newDept}</td>
+                      <td style={{ padding: '12px' }}>{new Date(h.effectiveDate).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px' }}>{h.reason}</td>
+                    </tr>
+                  ))}
+                  {transferHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No department transfers registered.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Tab 2: Reporting Manager History Table */}
+        {transSubTab === 'reporting' && (
+          <div className="emp-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '1.20rem', fontWeight: 700, marginBottom: '16px' }}>Reporting Manager Assignment History</h3>
+            <div className="table-responsive">
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid hsl(var(--border))', color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>
+                    <th style={{ padding: '12px' }}>Employee ID</th>
+                    <th style={{ padding: '12px' }}>Employee Name</th>
+                    <th style={{ padding: '12px' }}>Previous Primary Manager</th>
+                    <th style={{ padding: '12px' }}>New Primary Manager</th>
+                    <th style={{ padding: '12px' }}>Previous Functional Manager</th>
+                    <th style={{ padding: '12px' }}>New Functional Manager</th>
+                    <th style={{ padding: '12px' }}>Change Date</th>
+                    <th style={{ padding: '12px' }}>Change Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportingHistory.map(h => {
+                    const prevMgr = getEmpById(h.oldManagerId);
+                    const newMgr = getEmpById(h.newManagerId);
+                    const prevFunc = getEmpById(h.oldFunctionalManagerId);
+                    const newFunc = getEmpById(h.newFunctionalManagerId);
+                    
+                    return (
+                      <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeId}</td>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeName}</td>
+                        <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>
+                          {prevMgr ? `${prevMgr.name} (${prevMgr.id})` : (h.oldManagerId || 'None')}
+                        </td>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>
+                          {newMgr ? `${newMgr.name} (${newMgr.id})` : (h.newManagerId || 'None')}
+                        </td>
+                        <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>
+                          {prevFunc ? `${prevFunc.name} (${prevFunc.id})` : (h.oldFunctionalManagerId || 'None')}
+                        </td>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>
+                          {newFunc ? `${newFunc.name} (${newFunc.id})` : (h.newFunctionalManagerId || 'None')}
+                        </td>
+                        <td style={{ padding: '12px' }}>{new Date(h.effectiveDate).toLocaleDateString()}</td>
+                        <td style={{ padding: '12px' }}>{h.reason}</td>
+                      </tr>
+                    );
+                  })}
+                  {reportingHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No reporting manager movements registered.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Designation & Promotion Table */}
+        {transSubTab === 'promo' && (
+          <div className="emp-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '1.20rem', fontWeight: 700, marginBottom: '16px' }}>Designation Promotions History</h3>
+            <div className="table-responsive">
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid hsl(var(--border))', color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>
+                    <th style={{ padding: '12px' }}>Employee ID</th>
+                    <th style={{ padding: '12px' }}>Employee Name</th>
+                    <th style={{ padding: '12px' }}>Previous Designation</th>
+                    <th style={{ padding: '12px' }}>New Designation</th>
+                    <th style={{ padding: '12px' }}>Previous Grade</th>
+                    <th style={{ padding: '12px' }}>New Grade</th>
+                    <th style={{ padding: '12px' }}>Change Date</th>
+                    <th style={{ padding: '12px' }}>Change Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {designationHistory.map(h => (
+                    <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeId}</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{h.employeeName}</td>
+                      <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>{h.oldDesignation || 'None'}</td>
+                      <td style={{ padding: '12px', fontWeight: 600, color: 'hsl(var(--primary))' }}>{h.newDesignation}</td>
+                      <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>{h.oldGrade || 'None'}</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{h.newGrade || 'None'}</td>
+                      <td style={{ padding: '12px' }}>{new Date(h.effectiveDate).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px' }}>{h.reason}</td>
+                    </tr>
+                  ))}
+                  {designationHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No designations promotions registered.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dept Transfer Modal */}

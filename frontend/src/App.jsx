@@ -10,6 +10,7 @@ import HRTopNavbar from './components/HRTopNavbar';
 import EmpTopNavbar from './components/EmpTopNavbar';
 import HRApp from './pages/HRApp';
 import EmployeeApp from './pages/EmployeeApp';
+import LandingPage from './pages/LandingPage';
 
 export const encodeId = (id) => {
   if (!id) return '';
@@ -160,7 +161,7 @@ const AppContent = () => {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      if (location.pathname !== '/login') {
+      if (location.pathname !== '/login' && location.pathname !== '/') {
         navigate('/login', { replace: true });
       }
     } else {
@@ -187,7 +188,7 @@ const AppContent = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={user ? (user.role === 'hr' ? '/hr/dashboard' : `/employee/${encodeId(user.id)}/emp-dashboard`) : '/login'} replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to="/" replace />} />
       <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
       <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
