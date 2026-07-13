@@ -53,6 +53,27 @@ const TopNavbar = ({ currentModule, setMobileActive, darkMode, setDarkMode, onSe
         >
           <i className="fa-solid fa-bars"></i>
         </button>
+
+        {/* Back and Forward Navigation Controls */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="btn btn-secondary"
+            title="Navigate Back"
+            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+          <button 
+            onClick={() => navigate(1)} 
+            className="btn btn-secondary"
+            title="Navigate Forward"
+            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+        </div>
+
         <h2 style={{ fontWeight: 700, fontSize: '1.25rem' }}>{getPageTitle()}</h2>
       </div>
 
