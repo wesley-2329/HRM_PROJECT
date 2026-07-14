@@ -25,6 +25,37 @@ router.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
 
   try {
+    // Self-healing database check
+    const hrCount = await Employee.countDocuments({ email: 'hr@company.com' });
+    if (hrCount === 0) {
+      console.log('Self-healing database seeding triggered...');
+      await Employee.create({
+        id: "EMP-0001",
+        name: "Venkat Raman",
+        role: "hr",
+        dept: "Human Resources",
+        joined: "2018-05-10",
+        email: "hr@company.com",
+        password: "admin123",
+        status: "Approved",
+        aadhaar: "4567-8901-2345",
+        phone: "+91 98765 00001"
+      });
+      await Employee.create({
+        id: "EMP-0002",
+        name: "Aditya Kumar",
+        role: "employee",
+        dept: "Engineering",
+        joined: "2021-06-15",
+        email: "employee@company.com",
+        password: "employee123",
+        status: "Approved",
+        aadhaar: "1234-5678-9012",
+        phone: "+91 98765 00002"
+      });
+      console.log('Self-healing database seeding completed.');
+    }
+
     const employee = await Employee.findOne({ email });
 
     if (!employee) {
