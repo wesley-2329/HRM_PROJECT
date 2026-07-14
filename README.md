@@ -1,4 +1,4 @@
-# TalentSphere — Premium HRM Portal
+# HRorbit — Premium HRM Portal
 
 A full-stack Human Resource Management (HRM) web application built using React (Vite) on the frontend, Node.js & Express on the backend, and MongoDB for database storage. It supports role-based features for HR Directors and Employees (Shift logging, Leave approvals, Recruitment ATS Kanban, Learning academy, and Support helpdesk).
 
@@ -33,13 +33,13 @@ Make sure you have [Node.js](https://nodejs.org/) installed.
 
 ### 1. MongoDB Database Setup
 The backend connects to MongoDB locally. Ensure MongoDB is running on your machine:
-- Default Connection URI: `mongodb://127.0.0.1:27017/talentsphere`
+- Default Connection URI: `mongodb://127.0.0.1:27017/hrorbit`
 
 If you are using a hosted MongoDB cluster (e.g. MongoDB Atlas) or a different local port, configure it inside `backend/.env`:
 ```env
 PORT=5001
 MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=talentspherejwtsecretkey12345
+JWT_SECRET=hrorbitjwtsecretkey12345
 ```
 
 ---

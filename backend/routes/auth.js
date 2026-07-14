@@ -13,7 +13,7 @@ const { protect } = require('../middleware/auth');
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'talentspherejwtsecretkey12345', {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345', {
     expiresIn: '30d'
   });
 };

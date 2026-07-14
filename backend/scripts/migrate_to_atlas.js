@@ -34,8 +34,8 @@ async function migrate() {
   const localDbTest = localClient.db('test');
   const collectionsTest = await localDbTest.listCollections().toArray();
   
-  // Check 'talentsphere' database
-  const localDbTS = localClient.db('talentsphere');
+  // Check 'hrorbit' database
+  const localDbTS = localClient.db('hrorbit');
   const collectionsTS = await localDbTS.listCollections().toArray();
 
   // Select source database based on which one has data

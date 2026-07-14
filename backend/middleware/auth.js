@@ -7,7 +7,7 @@ const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'talentspherejwtsecretkey12345');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345');
       
       // Get employee from the token (exclude password)
       req.user = await Employee.findById(decoded.id).select('-password');

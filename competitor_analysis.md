@@ -1,6 +1,6 @@
 # Competitor Analysis: Modern HRIS & HRM Systems Comparison
 
-This research report compares key market competitors in the Human Resource Management System (HRIS/HRMS) space to help guide feature roadmap decisions for **TalentSphere HRM**.
+This research report compares key market competitors in the Human Resource Management System (HRIS/HRMS) space to help guide feature roadmap decisions for **HRorbit HRM**.
 
 ---
 
@@ -35,31 +35,31 @@ Key players analyzed:
 Workday is the gold standard for global enterprise companies. It handles hundreds of thousands of users and provides deep, machine-learning-driven analytics.
 - **Key Modules**: HCM, Financial Management, Planning, Professional Services Automation.
 - **Integration**: Extensive REST API with high integration costs.
-- **Key Takeaway for TalentSphere**: Focus on keeping dashboard analytics comprehensive, but avoid the deployment complexity of Workday.
+- **Key Takeaway for HRorbit**: Focus on keeping dashboard analytics comprehensive, but avoid the deployment complexity of Workday.
 
 ### B. BambooHR
 BambooHR targets the middle market. It is built to organize employee records, track time, manage performance reviews, and keep employees engaged via NPS-style feedback surveys.
 - **Key Modules**: Employee Records, Mobile App, Performance Management, Onboarding checklists.
-- **Key Takeaway for TalentSphere**: The mobile-friendly checklist design and quick-action links are highly popular and should be mirrored.
+- **Key Takeaway for HRorbit**: The mobile-friendly checklist design and quick-action links are highly popular and should be mirrored.
 
 ### C. Rippling
 Rippling excels at cross-department operations. When a new employee is hired, Rippling automatically purchases their computer, provisions Slack, sets up GitHub access, and registers them for state payroll tax.
 - **Key Modules**: HR Cloud, IT Cloud (Device/App provisioning), Finance Cloud (Spend management).
-- **Key Takeaway for TalentSphere**: Real-time webhook notifications and socket updates align with Rippling's style of immediate, synchronized action.
+- **Key Takeaway for HRorbit**: Real-time webhook notifications and socket updates align with Rippling's style of immediate, synchronized action.
 
 ### D. Gusto
 Gusto dominates small-scale automated payroll. Its payroll runs in a single click, calculates taxes, files forms, and distributes paystubs.
 - **Key Modules**: Payroll, Health Benefits, Time Tracking, Contractor Payments.
-- **Key Takeaway for TalentSphere**: Keep payslips incredibly clean, showing HRA, Allowances, PF, and TDS transparently.
+- **Key Takeaway for HRorbit**: Keep payslips incredibly clean, showing HRA, Allowances, PF, and TDS transparently.
 
 ### E. Personio
 Personio is the "HR Operating System" for SMEs in Europe, focusing on digital workflows, document management, and compliance.
 - **Key Modules**: Digital Employee Files, Recruiting/ATS, Absence Management.
-- **Key Takeaway for TalentSphere**: The license expiry compliance checker and certifications tracker are features inspired directly by Personio's strong regulatory tools.
+- **Key Takeaway for HRorbit**: The license expiry compliance checker and certifications tracker are features inspired directly by Personio's strong regulatory tools.
 
 ---
 
-## 4. Recommendations for TalentSphere Roadmap
+## 4. Recommendations for HRorbit Roadmap
 
 1. **Keep Payroll Clean**: Focus on transparent calculations (HRA + Other allowance) with a printable payslip.
 2. **Double down on Engagement**: Trivia games and internal chats improve portal daily active usage (DAU).

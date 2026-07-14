@@ -1,4 +1,4 @@
--- SQL Migration Script for TalentSphere HRMS Database (Normalized Schema)
+-- SQL Migration Script for HRorbit HRMS Database (Normalized Schema)
 -- Database Dialect: PostgreSQL / standard SQL (compatible with MySQL/SQLite)
 
 -- Enable UUID extension if using PostgreSQL
