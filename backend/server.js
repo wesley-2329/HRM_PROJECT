@@ -63,23 +63,27 @@ app.get('/', (req, res) => {
 });
 
 // Register routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/employees', require('./routes/employees'));
-app.use('/api/leaves', require('./routes/leaves'));
-app.use('/api/tasks', require('./routes/tasks'));
-app.use('/api/tickets', require('./routes/tickets'));
-app.use('/api/candidates', require('./routes/candidates'));
-app.use('/api/meetings', require('./routes/meetings'));
-app.use('/api/timesheet', require('./routes/timesheet'));
-app.use('/api/trainings', require('./routes/trainings'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/hr-notes', require('./routes/hrNotes'));
-app.use('/api/warning-letters', require('./routes/warnings'));
-app.use('/api/discussion', require('./routes/discussion'));
-app.use('/api/daily-reports', require('./routes/dailyReports'));
-app.use('/api/org', require('./routes/org'));
-app.use('/api/vault', require('./routes/vault'));
+const loadRoute = (rPath) => {
+  const r = require(rPath);
+  return r.default || r;
+};
+app.use('/api/auth', loadRoute('./routes/auth'));
+app.use('/api/employees', loadRoute('./routes/employees'));
+app.use('/api/leaves', loadRoute('./routes/leaves'));
+app.use('/api/tasks', loadRoute('./routes/tasks'));
+app.use('/api/tickets', loadRoute('./routes/tickets'));
+app.use('/api/candidates', loadRoute('./routes/candidates'));
+app.use('/api/meetings', loadRoute('./routes/meetings'));
+app.use('/api/timesheet', loadRoute('./routes/timesheet'));
+app.use('/api/trainings', loadRoute('./routes/trainings'));
+app.use('/api/notifications', loadRoute('./routes/notifications'));
+app.use('/api/chat', loadRoute('./routes/chat'));
+app.use('/api/hr-notes', loadRoute('./routes/hrnotes'));
+app.use('/api/warning-letters', loadRoute('./routes/warnings'));
+app.use('/api/discussion', loadRoute('./routes/discussion'));
+app.use('/api/daily-reports', loadRoute('./routes/dailyreports'));
+app.use('/api/org', loadRoute('./routes/org'));
+app.use('/api/vault', loadRoute('./routes/vault'));
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
