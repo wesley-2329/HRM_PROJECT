@@ -11,8 +11,12 @@ const OrgChartPage = ({ mode }) => {
   const {
     employees,
     departments,
+    positions,
+    vacancies,
     fetchEmployees,
-    fetchDepartments
+    fetchDepartments,
+    fetchPositions,
+    fetchVacancies
   } = useContext(DataContext);
 
   const { user } = useContext(AuthContext);
@@ -23,15 +27,25 @@ const OrgChartPage = ({ mode }) => {
 
   // View settings
   let chartSubView = 'hierarchy';
-  if (location.pathname === '/organization/org-chart/departments') {
+  if (location.pathname.includes('/departments')) {
     chartSubView = 'department';
-  } else if (location.pathname === '/organization/org-chart/span-of-control') {
+  } else if (location.pathname.includes('/span-of-control')) {
     chartSubView = 'manager';
   }
+
+  const [spanGrouping, setSpanGrouping] = useState('list'); // 'list' or 'dept'
 
   const [chartSearch, setChartSearch] = useState('');
   const [selectedNodeEmp, setSelectedNodeEmp] = useState(null);
   const [spanOfControlList, setSpanOfControlList] = useState([]);
+  
+  // New filters & expanded manager reportees states
+  const [selectedDept, setSelectedDept] = useState('All');
+  const [expandedManagers, setExpandedManagers] = useState({});
+
+  const toggleManagerExpand = (id) => {
+    setExpandedManagers(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Zoom / Pan states
   const [zoom, setZoom] = useState(1);
@@ -44,6 +58,8 @@ const OrgChartPage = ({ mode }) => {
     fetchEmployees();
     fetchDepartments();
     fetchSpanOfControl();
+    fetchPositions();
+    fetchVacancies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -220,12 +236,60 @@ const OrgChartPage = ({ mode }) => {
     return !employees.some(p => p.id === e.teamLeadId);
   });
 
+  const matchedEmployees = employees.filter(emp => 
+    chartSearch && (
+      emp.name.toLowerCase().includes(chartSearch.toLowerCase()) ||
+      (emp.designation || emp.role).toLowerCase().includes(chartSearch.toLowerCase()) ||
+      emp.dept.toLowerCase().includes(chartSearch.toLowerCase()) ||
+      emp.id.toLowerCase().includes(chartSearch.toLowerCase())
+    )
+  );
+
   return (
     <div style={{ padding: '24px' }}>
       <SubmoduleHeader 
         title="Organization Chart" 
         description="Interactive visual hierarchy tree showing direct functional reporting lines." 
       />
+
+      {/* Overview Statistics Ribbon */}
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-folder-tree" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Departments</span>
+            <strong style={{ fontSize: '1rem' }}>{departments.length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-users" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Employees</span>
+            <strong style={{ fontSize: '1rem' }}>{employees.length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-user-tie" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Managers</span>
+            <strong style={{ fontSize: '1rem' }}>{employees.filter(e => e.isTeamLead || employees.some(x => x.teamLeadId === e.id)).length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-chair" style={{ color: '#f43f5e' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Vacant Positions</span>
+            <strong style={{ fontSize: '1rem' }}>{positions.filter(p => p.status === 'Vacant' || p.status === 'Open').length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-clock-rotate-left" style={{ color: '#f59e0b' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Pending Approvals</span>
+            <strong style={{ fontSize: '1rem' }}>{vacancies.filter(v => v.status === 'Pending Approval' || v.status === 'Pending').length}</strong>
+          </div>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: selectedNodeEmp ? '2.5fr 1fr' : '1fr', gap: '24px' }}>
         <div className="emp-card" style={{ padding: '24px', overflowX: 'auto', minHeight: '65vh', display: 'flex', flexDirection: 'column' }}>
@@ -245,9 +309,68 @@ const OrgChartPage = ({ mode }) => {
               <button className="btn btn-secondary" onClick={handleExportCSV}>
                 <i className="fa-solid fa-file-export"></i> Export Structure
               </button>
-              <div className="nav-search" style={{ margin: 0, width: '220px' }}>
+              <div className="nav-search" style={{ margin: 0, width: '250px', position: 'relative', zIndex: 100 }}>
                 <i className="fa-solid fa-magnifying-glass"></i>
                 <input type="text" placeholder="Search employee..." value={chartSearch} onChange={(e) => setChartSearch(e.target.value)} />
+                {chartSearch && (
+                  <span className="badge badge-info" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.65rem' }}>
+                    {matchedEmployees.length} Match{matchedEmployees.length !== 1 ? 'es' : ''}
+                  </span>
+                )}
+                {chartSearch && matchedEmployees.length > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: 'hsl(var(--bg-card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    marginTop: '4px',
+                    zIndex: 110
+                  }}>
+                    {matchedEmployees.map(emp => (
+                      <div 
+                        key={emp.id} 
+                        onClick={() => {
+                          setSelectedNodeEmp(emp);
+                          setChartSearch('');
+                          // Auto scroll/center the element if it exists in DOM
+                          setTimeout(() => {
+                            const cards = document.querySelectorAll('.tree-card');
+                            let found = false;
+                            cards.forEach(card => {
+                              if (card.textContent.includes(emp.name)) {
+                                card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                                found = true;
+                              }
+                            });
+                            if (!found) {
+                              showToast(`Found ${emp.name} (${emp.id}) in ${emp.dept}. Node is highlighted in list views.`, 'info');
+                            }
+                          }, 150);
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderBottom: '1px solid hsl(var(--border))',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'hsl(var(--text-primary))' }}>{emp.name}</span>
+                        <span style={{ fontSize: '0.68rem', color: 'hsl(var(--text-secondary))' }}>{emp.designation || emp.role} | {emp.dept}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -255,9 +378,9 @@ const OrgChartPage = ({ mode }) => {
           {/* Sub Tab Navigation */}
           <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border))', marginBottom: '16px' }}>
             {[
-              { id: 'hierarchy', label: 'Hierarchy Tree View', icon: 'fa-network-wired', route: '/organization/org-chart' },
-              { id: 'department', label: 'Department Grid', icon: 'fa-table-cells', route: '/organization/org-chart/departments' },
-              { id: 'manager', label: 'Span of Control', icon: 'fa-users-viewfinder', route: '/organization/org-chart/span-of-control' }
+              { id: 'hierarchy', label: 'Hierarchy Tree / Reporting Structure View', icon: 'fa-network-wired', route: '/organization/org-chart' },
+              { id: 'department', label: 'Department-wise View', icon: 'fa-table-cells', route: '/organization/org-chart/departments' },
+              { id: 'manager', label: 'Manager-wise View (Span of Control)', icon: 'fa-users-viewfinder', route: '/organization/org-chart/span-of-control' }
             ].map(tab => {
               const isActive = chartSubView === tab.id;
               return (
@@ -351,26 +474,174 @@ const OrgChartPage = ({ mode }) => {
 
           {/* Manager view */}
           {chartSubView === 'manager' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-              {spanOfControlList.map(s => {
-                const total = s.directCount + s.indirectCount;
-                return (
-                  <div key={s.managerId} className="emp-card" style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <img src={getAvatarUrl(s)} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
-                      <div>
-                        <strong style={{ display: 'block' }}>{s.name}</strong>
-                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{s.designation || s.role}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                {/* Department-wise Selector */}
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>Filter by Department:</span>
+                  <select 
+                    className="form-control" 
+                    style={{ width: '220px', height: '36px', padding: '0 12px' }} 
+                    value={selectedDept} 
+                    onChange={e => setSelectedDept(e.target.value)}
+                  >
+                    <option value="All">All Departments</option>
+                    {departments.map(d => (
+                      <option key={d._id} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Grouping Selector */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'hsl(var(--bg-main))', padding: '4px 8px', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'hsl(var(--text-secondary))', paddingRight: '4px' }}>Grouping:</span>
+                  <button 
+                    type="button"
+                    className="btn" 
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: spanGrouping === 'list' ? 'hsl(var(--primary))' : 'transparent', color: spanGrouping === 'list' ? '#fff' : 'hsl(var(--text-secondary))', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => setSpanGrouping('list')}
+                  >
+                    Flat Grid
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn" 
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: spanGrouping === 'dept' ? 'hsl(var(--primary))' : 'transparent', color: spanGrouping === 'dept' ? '#fff' : 'hsl(var(--text-secondary))', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => setSpanGrouping('dept')}
+                  >
+                    Department-wise View
+                  </button>
+                </div>
+              </div>
+
+              {spanGrouping === 'list' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                  {spanOfControlList.filter(s => selectedDept === 'All' || s.dept === selectedDept).map(s => {
+                    const total = s.directCount + s.indirectCount;
+                    return (
+                      <div key={s.managerId} className="emp-card" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img src={getAvatarUrl(s)} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                          <div>
+                            <strong style={{ display: 'block', fontSize: '0.9rem' }}>{s.name}</strong>
+                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{s.designation || s.role}</span>
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.8rem', background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
+                          <div><strong>Direct:</strong> {s.directCount}</div>
+                          <div><strong>Indirect:</strong> {s.indirectCount}</div>
+                          <div style={{ gridColumn: '1/-1', color: 'hsl(var(--primary))' }}><strong>Total Span of Control:</strong> {total}</div>
+                        </div>
+
+                        {s.directCount > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ width: '100%', padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                              onClick={() => toggleManagerExpand(s.managerId)}
+                            >
+                              <i className={`fa-solid ${expandedManagers[s.managerId] ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                              <span>{expandedManagers[s.managerId] ? 'Hide Reportees' : 'View Reportees List'}</span>
+                            </button>
+
+                            {expandedManagers[s.managerId] && s.directReports && (
+                              <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px', border: '1px solid hsl(var(--border))', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ fontWeight: 600, color: 'hsl(var(--text-secondary))', marginBottom: '2px' }}>Direct Reportees:</div>
+                                {s.directReports.map(d => (
+                                  <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed hsl(var(--border))', paddingBottom: '4px' }}>
+                                    <span style={{ fontWeight: 600 }}>{d.name} ({d.id})</span>
+                                    <span style={{ color: 'hsl(var(--text-secondary))' }}>{d.role}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                  {spanOfControlList.filter(s => selectedDept === 'All' || s.dept === selectedDept).length === 0 && (
+                    <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>
+                      No managers found matching filters.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.8rem', background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-                      <div><strong>Direct Reports:</strong> {s.directCount}</div>
-                      <div><strong>Indirect:</strong> {s.indirectCount}</div>
-                      <div style={{ gridColumn: '1/-1', color: 'hsl(var(--primary))' }}><strong>Total Span of Control:</strong> {total}</div>
-                    </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                  {(() => {
+                    const groupedManagers = {};
+                    spanOfControlList.forEach(s => {
+                      const dept = s.dept || 'General';
+                      if (!groupedManagers[dept]) groupedManagers[dept] = [];
+                      groupedManagers[dept].push(s);
+                    });
+
+                    const filteredDeptsList = Object.keys(groupedManagers).filter(deptName => selectedDept === 'All' || deptName === selectedDept);
+
+                    return filteredDeptsList.length > 0 ? (
+                      filteredDeptsList.map(deptName => {
+                        const managers = groupedManagers[deptName];
+                        return (
+                          <div key={deptName} style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'hsl(var(--bg-card))', padding: '20px', borderRadius: '12px', border: '1px solid hsl(var(--border))' }}>
+                            <h4 style={{ margin: 0, paddingBottom: '8px', borderBottom: '2px solid hsl(var(--primary))', color: 'hsl(var(--primary))', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <i className="fa-solid fa-folder-tree"></i>
+                              <span>{deptName} ({managers.length} Manager{managers.length !== 1 ? 's' : ''})</span>
+                            </h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginTop: '10px' }}>
+                              {managers.map(s => {
+                                const total = s.directCount + s.indirectCount;
+                                return (
+                                  <div key={s.managerId} style={{ background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', borderRadius: '8px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <img src={getAvatarUrl(s)} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                                      <div>
+                                        <strong style={{ display: 'block', fontSize: '0.85rem' }}>{s.name}</strong>
+                                        <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>{s.designation || s.role}</span>
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.75rem', background: 'hsl(var(--bg-card))', padding: '8px', borderRadius: '6px' }}>
+                                      <div><strong>Direct:</strong> {s.directCount}</div>
+                                      <div><strong>Indirect:</strong> {s.indirectCount}</div>
+                                      <div style={{ gridColumn: '1/-1', color: 'hsl(var(--primary))', fontWeight: 600 }}>Total Span: {total}</div>
+                                    </div>
+                                    {s.directCount > 0 && (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <button 
+                                          className="btn btn-secondary" 
+                                          style={{ width: '100%', padding: '4px 8px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                          onClick={() => toggleManagerExpand(s.managerId)}
+                                        >
+                                          <i className={`fa-solid ${expandedManagers[s.managerId] ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                          <span>{expandedManagers[s.managerId] ? 'Hide Reportees' : 'View Reportees'}</span>
+                                        </button>
+                                        {expandedManagers[s.managerId] && s.directReports && (
+                                          <div style={{ background: 'hsl(var(--bg-card))', padding: '8px', borderRadius: '6px', border: '1px solid hsl(var(--border))', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            {s.directReports.map(d => (
+                                              <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed hsl(var(--border))', paddingBottom: '2px' }}>
+                                                <span>{d.name}</span>
+                                                <span style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.65rem' }}>{d.role}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: '40px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>
+                        No departments found matching filters.
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
         </div>

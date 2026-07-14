@@ -347,6 +347,27 @@ router.post('/departments', protect, adminOnly, async (req, res) => {
     if (exists) return res.status(400).json({ message: 'Department code already exists' });
     const rec = await Department.create({ name, code, description, parentDept, managerId, businessUnit, location, costCenter, status });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_DEPT', details: `Created Department: ${name} (${code})` });
+    
+    // Notification: Notify HR on Department Creation
+    const hrNotif = await Notification.create({
+      type: 'reminder',
+      title: 'New Department Created',
+      desc: `Department: ${name} (${code}) has been created in the system.`,
+      empId: 'hr'
+    });
+    if (req.io) req.io.to('hr').emit('notification', hrNotif);
+
+    // Notification: Notify HOD if assigned
+    if (managerId) {
+      const hodNotif = await Notification.create({
+        type: 'reminder',
+        title: 'Assigned as Department Head',
+        desc: `You have been assigned as the Department Head of the new department: ${name}.`,
+        empId: managerId
+      });
+      if (req.io) req.io.to(managerId).emit('notification', hodNotif);
+    }
+
     res.status(201).json(rec);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -365,9 +386,31 @@ router.put('/departments/:id', protect, adminOnly, async (req, res) => {
       }
     }
 
+    const oldManagerId = dept.managerId;
     Object.assign(dept, req.body);
     await dept.save();
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'UPDATE_DEPT', details: `Updated Department: ${dept.name} (${dept.code})` });
+
+    // Notification: Notify new HOD if updated
+    if (managerId && managerId !== oldManagerId) {
+      const managerNotif = await Notification.create({
+        type: 'reminder',
+        title: 'Assigned as Department Head',
+        desc: `You have been assigned as the Department Head of ${dept.name}.`,
+        empId: managerId
+      });
+      if (req.io) req.io.to(managerId).emit('notification', managerNotif);
+    }
+
+    // Notification: Notify HR on Department updates
+    const hrNotif = await Notification.create({
+      type: 'reminder',
+      title: 'Department Setup Updated',
+      desc: `Department details for ${dept.name} (${dept.code}) were updated.`,
+      empId: 'hr'
+    });
+    if (req.io) req.io.to('hr').emit('notification', hrNotif);
+
     res.json(dept);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -666,6 +709,26 @@ router.put('/reporting-manager', protect, adminOnly, async (req, res) => {
     });
     if (req.io) req.io.to(employeeId).emit('notification', notif);
 
+    // Notification: Notify new reporting manager
+    if (newManagerId) {
+      const managerNotif = await Notification.create({
+        type: 'reminder',
+        title: 'New Team Member Assigned',
+        desc: `${emp.name} has been assigned to report to you as a primary team lead reportee.`,
+        empId: newManagerId
+      });
+      if (req.io) req.io.to(newManagerId).emit('notification', managerNotif);
+    }
+
+    // Notification: Notify HR on reporting updates
+    const hrNotif = await Notification.create({
+      type: 'reminder',
+      title: 'Reporting Structure Modified',
+      desc: `Reporting manager assignment updated for ${emp.name} (${employeeId}).`,
+      empId: 'hr'
+    });
+    if (req.io) req.io.to('hr').emit('notification', hrNotif);
+
     res.json({ message: 'Reporting manager details updated successfully', employee: emp });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -694,8 +757,26 @@ router.put('/department-transfer', protect, adminOnly, async (req, res) => {
       actorId: req.user.id,
       actorName: req.user.name,
       action: 'TRANSFER_DEPT',
-      details: `Transferred employee ${emp.name} (${employeeId}) from ${oldDept} to ${newDept}`
+      details: `Transferred employee ${emp.name} (${employeeId}) from ${oldDept || 'Unassigned'} to ${newDept}`
     });
+
+    // Notification: Notify employee on department transfer
+    const empNotif = await Notification.create({
+      type: 'reminder',
+      title: 'Department Transfer Processed',
+      desc: `You have been transferred from department ${oldDept || 'Unassigned'} to ${newDept}.`,
+      empId: employeeId
+    });
+    if (req.io) req.io.to(employeeId).emit('notification', empNotif);
+
+    // Notification: Notify HR on department transfers
+    const hrNotif = await Notification.create({
+      type: 'reminder',
+      title: 'Employee Department Transferred',
+      desc: `${emp.name} (${employeeId}) transferred from ${oldDept || 'Unassigned'} to ${newDept}.`,
+      empId: 'hr'
+    });
+    if (req.io) req.io.to('hr').emit('notification', hrNotif);
 
     res.json({ message: 'Department transfer processed successfully', employee: emp });
   } catch (err) { res.status(500).json({ message: err.message }); }

@@ -29,7 +29,13 @@ const DepartmentsPage = ({ mode }) => {
   let deptSubTab = 'dept';
   if (location.pathname === '/organization/departments/sub-departments') {
     deptSubTab = 'subdept';
+  } else if (location.pathname === '/organization/departments/hierarchy') {
+    deptSubTab = 'hierarchy';
   }
+
+  // --- Search & Filters States ---
+  const [deptSearch, setDeptSearch] = useState('');
+  const [deptStatusFilter, setDeptStatusFilter] = useState('All');
 
   // --- Modal Open States ---
   const [showDeptModal, setShowDeptModal] = useState(false);
@@ -119,23 +125,32 @@ const DepartmentsPage = ({ mode }) => {
     } catch (err) { showToast(err.response?.data?.message || 'Failed to delete Sub-department', 'error'); }
   };
 
-  const headerActionLabel = deptSubTab === 'dept' ? 'Add Department' : 'Add Sub-Department';
+  const headerActionLabel = deptSubTab === 'dept' ? 'Add Department' : (deptSubTab === 'subdept' ? 'Add Sub-Department' : null);
   const handleHeaderActionClick = () => {
     if (deptSubTab === 'dept') {
       setEditingDept(null);
       resetDeptForm();
       setShowDeptModal(true);
-    } else {
+    } else if (deptSubTab === 'subdept') {
       setEditingSubDept(null);
       resetSubDeptForm();
       setShowSubDeptModal(true);
     }
   };
 
+  // Apply Department Search & Filters
+  const filteredDepts = departments.filter(d => {
+    const matchesSearch = d.name.toLowerCase().includes(deptSearch.toLowerCase()) || 
+                          d.code.toLowerCase().includes(deptSearch.toLowerCase()) ||
+                          (getEmpById(d.managerId)?.name || '').toLowerCase().includes(deptSearch.toLowerCase());
+    const matchesStatus = deptStatusFilter === 'All' ? true : d.status === deptStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div style={{ padding: '24px' }}>
       <SubmoduleHeader 
-        title="Departments & Sub-departments" 
+        title="Department Setup" 
         description="Organize functional business departments and nested sub-department structures."
         actionLabel={headerActionLabel}
         onActionClick={handleHeaderActionClick}
@@ -147,7 +162,8 @@ const DepartmentsPage = ({ mode }) => {
         <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border))', marginBottom: '8px' }}>
           {[
             { id: 'dept', label: 'Departments', icon: 'fa-sitemap', route: '/organization/departments' },
-            { id: 'subdept', label: 'Sub-Departments', icon: 'fa-network-wired', route: '/organization/departments/sub-departments' }
+            { id: 'subdept', label: 'Sub-Departments', icon: 'fa-network-wired', route: '/organization/departments/sub-departments' },
+            { id: 'hierarchy', label: 'Reporting Hierarchy', icon: 'fa-folder-tree', route: '/organization/departments/hierarchy' }
           ].map(tab => {
             const isActive = deptSubTab === tab.id;
             return (
@@ -181,7 +197,33 @@ const DepartmentsPage = ({ mode }) => {
         {deptSubTab === 'dept' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
             <div className="emp-card" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px' }}>Business Departments Matrix</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>Business Departments Matrix</h3>
+                
+                {/* Search & Active/Inactive Dropdown */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div className="nav-search" style={{ margin: 0, width: '220px' }}>
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                    <input 
+                      type="text" 
+                      placeholder="Search department..." 
+                      value={deptSearch} 
+                      onChange={e => setDeptSearch(e.target.value)} 
+                    />
+                  </div>
+                  <select 
+                    className="form-control" 
+                    style={{ width: '150px', height: '38px', padding: '0 12px' }} 
+                    value={deptStatusFilter} 
+                    onChange={e => setDeptStatusFilter(e.target.value)}
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="table-responsive">
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
@@ -189,6 +231,7 @@ const DepartmentsPage = ({ mode }) => {
                       <th style={{ padding: '12px' }}>Name (Code)</th>
                       <th style={{ padding: '12px' }}>Parent Dept</th>
                       <th style={{ padding: '12px' }}>Head of Dept</th>
+                      <th style={{ padding: '12px' }}>Employee Count</th>
                       <th style={{ padding: '12px' }}>Business Unit</th>
                       <th style={{ padding: '12px' }}>Location</th>
                       <th style={{ padding: '12px' }}>Cost Center</th>
@@ -197,28 +240,32 @@ const DepartmentsPage = ({ mode }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {departments.map(d => (
-                      <tr key={d._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.875rem' }}>
-                        <td style={{ padding: '12px', fontWeight: 600 }}>{d.name} ({d.code})</td>
-                        <td style={{ padding: '12px' }}>{d.parentDept || 'None'}</td>
-                        <td style={{ padding: '12px' }}>{getEmpById(d.managerId)?.name || 'Unassigned'}</td>
-                        <td style={{ padding: '12px' }}>{d.businessUnit || 'General'}</td>
-                        <td style={{ padding: '12px' }}>{d.location || 'General'}</td>
-                        <td style={{ padding: '12px' }}>{d.costCenter || 'N/A'}</td>
-                        <td style={{ padding: '12px' }}><span className={`badge ${d.status === 'Active' ? 'badge-success' : 'badge-danger'}`}>{d.status}</span></td>
-                        {isHr && (
-                          <td style={{ padding: '12px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setEditingDept(d); setDeptName(d.name); setDeptCode(d.code); setDeptParent(d.parentDept || ''); setDeptManager(d.managerId || ''); setDeptBU(d.businessUnit || ''); setDeptLoc(d.location || ''); setDeptCC(d.costCenter || ''); setDeptStatus(d.status); setShowDeptModal(true); }}>Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'red' }} onClick={async () => { try { const res = await api.delete(`/org/departments/${d._id}`); showToast(res.data.message, 'success'); fetchDepartments(); } catch (err) { showToast(err.response?.data?.message || 'Error deleting department', 'error'); } }}>Delete</button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                    {departments.length === 0 && (
+                    {filteredDepts.map(d => {
+                      const empCount = employees.filter(e => e.dept === d.name).length;
+                      return (
+                        <tr key={d._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.875rem' }}>
+                          <td style={{ padding: '12px', fontWeight: 600 }}>{d.name} ({d.code})</td>
+                          <td style={{ padding: '12px' }}>{d.parentDept || 'None'}</td>
+                          <td style={{ padding: '12px' }}>{getEmpById(d.managerId)?.name || 'Unassigned'}</td>
+                          <td style={{ padding: '12px', fontWeight: 600, color: 'hsl(var(--primary))' }}>{empCount} Employees</td>
+                          <td style={{ padding: '12px' }}>{d.businessUnit || 'General'}</td>
+                          <td style={{ padding: '12px' }}>{d.location || 'General'}</td>
+                          <td style={{ padding: '12px' }}>{d.costCenter || 'N/A'}</td>
+                          <td style={{ padding: '12px' }}><span className={`badge ${d.status === 'Active' ? 'badge-success' : 'badge-danger'}`}>{d.status}</span></td>
+                          {isHr && (
+                            <td style={{ padding: '12px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setEditingDept(d); setDeptName(d.name); setDeptCode(d.code); setDeptParent(d.parentDept || ''); setDeptManager(d.managerId || ''); setDeptBU(d.businessUnit || ''); setDeptLoc(d.location || ''); setDeptCC(d.costCenter || ''); setDeptStatus(d.status); setShowDeptModal(true); }}>Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'red' }} onClick={async () => { try { const res = await api.delete(`/org/departments/${d._id}`); showToast(res.data.message, 'success'); fetchDepartments(); } catch (err) { showToast(err.response?.data?.message || 'Error deleting department', 'error'); } }}>Delete</button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                    {filteredDepts.length === 0 && (
                       <tr>
-                        <td colSpan={isHr ? 8 : 7} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No departments found.</td>
+                        <td colSpan={isHr ? 9 : 8} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No departments found.</td>
                       </tr>
                     )}
                   </tbody>
@@ -271,6 +318,79 @@ const DepartmentsPage = ({ mode }) => {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {deptSubTab === 'hierarchy' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            {departments.map(d => {
+              const hod = getEmpById(d.managerId);
+              const deptEmps = employees.filter(e => e.dept === d.name);
+              
+              // Find HOD's direct reports within this department
+              const directToHod = deptEmps.filter(e => e.teamLeadId === d.managerId);
+              // Find other employees in department who report to someone else or no one
+              const others = deptEmps.filter(e => e.id !== d.managerId && e.teamLeadId !== d.managerId);
+
+              return (
+                <div key={d._id} className="emp-card" style={{ padding: '24px', borderTop: '4px solid hsl(var(--primary))', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ fontWeight: 700, fontSize: '1.05rem', margin: 0 }}>{d.name}</h4>
+                    <span className="badge badge-primary">{deptEmps.length} Employees</span>
+                  </div>
+                  
+                  <div style={{ background: 'hsl(var(--bg-main))', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', fontWeight: 600, textTransform: 'uppercase' }}>Department Head (HOD)</div>
+                    {hod ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                        <img src={hod.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80'} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <div>
+                          <strong style={{ fontSize: '0.85rem', display: 'block' }}>{hod.name}</strong>
+                          <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>ID: {hod.id} | {hod.designation || hod.role}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', marginTop: '6px' }}>No HOD Assigned</div>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem' }}>
+                    <div style={{ fontWeight: 600, color: 'hsl(var(--text-secondary))', marginBottom: '8px' }}>Reporting Structure:</div>
+                    {directToHod.length > 0 && (
+                      <div style={{ borderLeft: '2px solid hsl(var(--border))', marginLeft: '6px', paddingLeft: '10px', marginBottom: '10px' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'hsl(var(--primary))', fontWeight: 600, marginBottom: '6px' }}>Direct Reports to HOD:</div>
+                        {directToHod.map(e => (
+                          <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+                            <i className="fa-solid fa-angle-right" style={{ fontSize: '0.7rem', color: 'hsl(var(--text-secondary))' }}></i>
+                            <span>{e.name} ({e.id}) - <span style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.75rem' }}>{e.designation || e.role}</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {others.length > 0 && (
+                      <div style={{ borderLeft: '2px solid hsl(var(--border))', marginLeft: '6px', paddingLeft: '10px' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', fontWeight: 600, marginBottom: '6px' }}>Other Members:</div>
+                        {others.map(e => {
+                          const manager = getEmpById(e.teamLeadId);
+                          return (
+                            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+                              <i className="fa-solid fa-circle-user" style={{ fontSize: '0.7rem', color: 'hsl(var(--text-secondary))' }}></i>
+                              <span>
+                                {e.name} ({e.id})
+                                {manager && <span style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.75rem' }}> (Reports to {manager.name})</span>}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {directToHod.length === 0 && others.length === 0 && (
+                      <div style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.75rem', fontStyle: 'italic' }}>No other department members found.</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

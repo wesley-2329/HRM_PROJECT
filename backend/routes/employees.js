@@ -15,6 +15,18 @@ router.get('/', protect, adminOnly, async (req, res) => {
   }
 });
 
+// @route   GET /api/employees/public
+// @desc    Get basic info of all active employees for public org directory / org chart
+// @access  Private
+router.get('/public', protect, async (req, res) => {
+  try {
+    const list = await Employee.find({ status: 'Approved' }).select('id name role dept teamLeadId isTeamLead avatar gender designation functionalManagerId branch businessUnit grade');
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @route   GET /api/employees/:id
 // @desc    Get employee details
 // @access  Private

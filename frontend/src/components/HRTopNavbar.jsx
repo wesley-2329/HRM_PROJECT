@@ -52,6 +52,26 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           <i className="fa-solid fa-layer-group"></i>
         </div>
 
+        {/* Back and Forward Navigation Controls */}
+        <div style={{ display: 'flex', gap: '8px', marginRight: '16px', marginLeft: '8px' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="btn btn-secondary"
+            title="Navigate Back"
+            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+          <button 
+            onClick={() => navigate(1)} 
+            className="btn btn-secondary"
+            title="Navigate Forward"
+            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
+          </button>
+        </div>
+
         <nav className="hr-nav-menu">
           {/* Overview Link */}
           <div className="hr-menu-item">

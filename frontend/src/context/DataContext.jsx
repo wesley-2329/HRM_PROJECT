@@ -54,6 +54,9 @@ export const DataProvider = ({ children }) => {
       if (user?.role === 'hr') {
         const res = await api.get('/employees');
         setEmployees(res.data);
+      } else if (user) {
+        const res = await api.get('/employees/public');
+        setEmployees(res.data);
       }
     } catch (err) {
       console.error('Error fetching employees:', err);

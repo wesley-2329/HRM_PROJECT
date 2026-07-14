@@ -69,27 +69,6 @@ const SubmoduleHeader = ({ title, description, actions, onActionClick, actionLab
             </button>
           )}
 
-          <button 
-            className="btn btn-secondary hover:bg-slate-200 dark:hover:bg-slate-800" 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              padding: '8px 16px', 
-              borderRadius: '8px', 
-              fontSize: '0.85rem', 
-              fontWeight: 600,
-              cursor: 'pointer',
-              border: '1px solid hsl(var(--border))',
-              background: 'hsl(var(--bg-card))',
-              color: 'hsl(var(--text-primary))',
-              transition: 'all 0.2s'
-            }}
-            onClick={() => navigate('/organization')}
-          >
-            <i className="fa-solid fa-arrow-left" style={{ fontSize: '0.75rem' }}></i>
-            <span>Back to Directory</span>
-          </button>
         </div>
       </div>
       <div style={{ borderBottom: '1px solid hsl(var(--border))', marginTop: '16px' }}></div>

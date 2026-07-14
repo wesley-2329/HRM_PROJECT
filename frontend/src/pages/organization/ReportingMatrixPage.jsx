@@ -9,9 +9,17 @@ import Modal from '../../components/Modal';
 const ReportingMatrixPage = ({ mode }) => {
   const {
     employees,
+    departments,
     reportingHistory,
+    transferHistory,
+    positions,
+    vacancies,
     fetchEmployees,
-    fetchReportingHistory
+    fetchDepartments,
+    fetchReportingHistory,
+    fetchTransferHistory,
+    fetchPositions,
+    fetchVacancies
   } = useContext(DataContext);
 
   const { user } = useContext(AuthContext);
@@ -39,7 +47,11 @@ const ReportingMatrixPage = ({ mode }) => {
 
   useEffect(() => {
     fetchEmployees();
+    fetchDepartments();
     fetchReportingHistory();
+    fetchTransferHistory();
+    fetchPositions();
+    fetchVacancies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,11 +105,50 @@ const ReportingMatrixPage = ({ mode }) => {
   return (
     <div style={{ padding: '24px' }}>
       <SubmoduleHeader 
-        title="Reporting Matrix" 
+        title="Reporting Structure & Matrix" 
         description="Reassign reporting structures, solid/dotted manager lines, and team lead flags."
         actions={headerActions}
         isHr={isHr}
       />
+
+      {/* Overview Statistics Ribbon */}
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-folder-tree" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Departments</span>
+            <strong style={{ fontSize: '1rem' }}>{departments.length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-users" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Employees</span>
+            <strong style={{ fontSize: '1rem' }}>{employees.length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-user-tie" style={{ color: 'hsl(var(--primary))' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Total Managers</span>
+            <strong style={{ fontSize: '1rem' }}>{employees.filter(e => e.isTeamLead || employees.some(x => x.teamLeadId === e.id)).length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-chair" style={{ color: '#f43f5e' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Vacant Positions</span>
+            <strong style={{ fontSize: '1rem' }}>{positions.filter(p => p.status === 'Vacant' || p.status === 'Open').length}</strong>
+          </div>
+        </div>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+          <i className="fa-solid fa-clock-rotate-left" style={{ color: '#f59e0b' }}></i>
+          <div>
+            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block' }}>Pending Approvals</span>
+            <strong style={{ fontSize: '1rem' }}>{vacancies.filter(v => v.status === 'Pending Approval' || v.status === 'Pending').length}</strong>
+          </div>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         {/* Main Employee Matrix Table */}
@@ -107,10 +158,13 @@ const ReportingMatrixPage = ({ mode }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid hsl(var(--border))', color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>
-                  <th style={{ padding: '12px' }}>Employee</th>
+                  <th style={{ padding: '12px' }}>Employee ID</th>
+                  <th style={{ padding: '12px' }}>Employee Name</th>
                   <th style={{ padding: '12px' }}>Department</th>
-                  <th style={{ padding: '12px' }}>Primary Manager (Solid Line)</th>
-                  <th style={{ padding: '12px' }}>Functional Manager (Dotted Line)</th>
+                  <th style={{ padding: '12px' }}>Reporting Manager (Primary Manager)</th>
+                  <th style={{ padding: '12px' }}>Functional Manager</th>
+                  <th style={{ padding: '12px' }}>Department Head</th>
+                  <th style={{ padding: '12px' }}>Effective Date</th>
                   <th style={{ padding: '12px' }}>Role Type</th>
                 </tr>
               </thead>
@@ -118,15 +172,36 @@ const ReportingMatrixPage = ({ mode }) => {
                 {employees.map(emp => {
                   const primaryMgr = getEmpById(emp.teamLeadId);
                   const funcMgr = getEmpById(emp.functionalManagerId);
+
+                  // Department Head Lookup
+                  const empDept = departments.find(d => d.name === emp.dept);
+                  const hodEmp = empDept ? employees.find(e => e.id === empDept.managerId) : null;
+                  const deptHeadStr = hodEmp ? `${hodEmp.name} (${hodEmp.id})` : 'Unassigned';
+
+                  // Effective Date Lookup from reportingHistory
+                  const latestChange = reportingHistory
+                    .filter(h => h.employeeId === emp.id)
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+                  const effDateStr = latestChange 
+                    ? new Date(latestChange.effectiveDate).toLocaleDateString() 
+                    : (emp.joined ? new Date(emp.joined).toLocaleDateString() : (emp.createdAt ? new Date(emp.createdAt).toLocaleDateString() : new Date().toLocaleDateString()));
+
                   return (
                     <tr key={emp.id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>{emp.name} ({emp.id})</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{emp.id}</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{emp.name}</td>
                       <td style={{ padding: '12px' }}>{emp.dept}</td>
                       <td style={{ padding: '12px' }}>
                         {primaryMgr ? `${primaryMgr.name} (${primaryMgr.id})` : <span style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>Direct to Board</span>}
                       </td>
                       <td style={{ padding: '12px' }}>
                         {funcMgr ? `${funcMgr.name} (${funcMgr.id})` : <span style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>None</span>}
+                      </td>
+                      <td style={{ padding: '12px', fontWeight: 500 }}>
+                        {deptHeadStr}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        {effDateStr}
                       </td>
                       <td style={{ padding: '12px' }}>
                         {emp.isManager ? (
@@ -262,16 +337,43 @@ const ReportingMatrixPage = ({ mode }) => {
       </Modal>
 
       {/* Changes Log Modal */}
-      <Modal isOpen={showLogModal} onClose={() => setShowLogModal(false)} title="Reporting Line Changes Log">
+      <Modal isOpen={showLogModal} onClose={() => setShowLogModal(false)} title="Organization History Log (Reporting & Transfers)">
         <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          {reportingHistory.length > 0 ? (
-            reportingHistory.map(h => (
-              <div key={h._id} style={{ fontSize: '0.85rem', borderBottom: '1px solid hsl(var(--border))', padding: '12px 0' }}>
-                <strong>{h.employeeName}:</strong> Manager {h.oldManagerId || 'None'} → {h.newManagerId || 'None'}
-                <div style={{ color: 'hsl(var(--text-secondary))', marginTop: '4px' }}>Reason: {h.reason} | Effective: {new Date(h.effectiveDate).toLocaleDateString()}</div>
-              </div>
-            ))
-          ) : <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', textAlign: 'center', padding: '24px 0' }}>No reporting line changes registered.</p>}
+          {(() => {
+            const combinedHistory = [
+              ...reportingHistory.map(h => ({
+                id: h._id || Math.random().toString(),
+                employeeName: h.employeeName,
+                employeeId: h.employeeId,
+                title: 'Reporting Manager Shift',
+                desc: `Manager: ${h.oldManagerId || 'None'} → ${h.newManagerId || 'None'}`,
+                reason: h.reason,
+                date: new Date(h.effectiveDate || h.createdAt)
+              })),
+              ...(transferHistory || []).map(t => ({
+                id: t._id || Math.random().toString(),
+                employeeName: t.employeeName,
+                employeeId: t.employeeId,
+                title: 'Department Transfer',
+                desc: `Dept: ${t.oldDept || 'None'} → ${t.newDept || 'None'}`,
+                reason: t.reason,
+                date: new Date(t.effectiveDate || t.createdAt)
+              }))
+            ].sort((a, b) => b.date - a.date);
+
+            return combinedHistory.length > 0 ? (
+              combinedHistory.map(h => (
+                <div key={h.id} style={{ fontSize: '0.85rem', borderBottom: '1px solid hsl(var(--border))', padding: '12px 0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong>{h.employeeName} ({h.employeeId})</strong>
+                    <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>{h.title}</span>
+                  </div>
+                  <div style={{ margin: '4px 0', fontWeight: 500 }}>{h.desc}</div>
+                  <div style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.8rem' }}>Reason: {h.reason || 'Restructuring'} | Effective Date: {h.date.toLocaleDateString()}</div>
+                </div>
+              ))
+            ) : <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', textAlign: 'center', padding: '24px 0' }}>No organization change history records found.</p>;
+          })()}
         </div>
       </Modal>
     </div>
