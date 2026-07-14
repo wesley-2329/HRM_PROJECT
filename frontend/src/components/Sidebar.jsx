@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { encodeId, getAvatarUrl } from '../App';
+import hrorbitLogo from '../assets/hrorbit_logo.png';
 
 const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobileActive }) => {
   const { user, logout } = useContext(AuthContext);
@@ -61,9 +62,9 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileActive ? 'active' : ''}`}>
       <div className="sidebar-top">
-        <div className="sidebar-header">
-          <i className="fa-solid fa-layer-group"></i>
-          <span className="logo-text">TalentSphere</span>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+          <span className="logo-text" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HRorbit</span>
         </div>
         <div className="profile-card">
           <img src={getAvatarUrl(user)} alt="Avatar" />

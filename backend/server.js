@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
 
 // Root path indicator
 app.get('/', (req, res) => {
-  res.send('TalentSphere HRM API is running...');
+  res.send('HRorbit HRM API is running...');
 });
 
 // Register routes

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
 import { getAvatarUrl } from '../App';
+import hrorbitLogo from '../assets/hrorbit_logo.png';
 
 const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
@@ -48,8 +49,9 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   return (
     <header className="hr-header">
       <div className="hr-header-left">
-        <div className="hr-logo" onClick={() => navigate('/hr/dashboard')}>
-          <i className="fa-solid fa-layer-group"></i>
+        <div className="hr-logo" onClick={() => navigate('/hr/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HRorbit</span>
         </div>
 
         {/* Back and Forward Navigation Controls */}
