@@ -101,6 +101,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const { showToast } = useToast();
   const [selectedEmpForPayslip, setSelectedEmpForPayslip] = useState(user);
+  const [localTheme, setLocalTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
 
   const getDuration = (startStr, endStr) => {
     if (!startStr || !endStr) return 0;
@@ -3006,7 +3007,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                     {['indigo', 'slate', 'emerald', 'rose', 'amber', 'violet'].map(t => {
-                      const currentTheme = localStorage.getItem('talentsphere-navbar-theme') || 'indigo';
+                      const currentTheme = localTheme;
                       return (
                         <button
                           key={t}
@@ -3014,10 +3015,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                           onClick={() => {
                             localStorage.setItem('talentsphere-navbar-theme', t);
                             if (window.changeNavbarTheme) window.changeNavbarTheme(t);
+                            setLocalTheme(t);
                             showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
-                            // Force re-render of settings panel to update selection outline
-                            setCurrentModule('');
-                            setTimeout(() => setCurrentModule('emp-settings'), 5);
                           }}
                           style={{
                             width: '36px',
