@@ -278,7 +278,7 @@ export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
       <div id="payslip-modal-body" style={{ background: '#fff', color: '#0f172a', padding: '20px', borderRadius: '8px' }}>
         <div style={{ borderBottom: '2px solid hsl(var(--primary))', paddingBottom: '15px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 700 }}>HRorbit Corp</h2>
+            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 700 }}>HR O Corp</h2>
             <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Bengaluru Office, India</p>
           </div>
           <div style={{ textAlign: 'right' }}>

@@ -4,7 +4,7 @@
 | Parameter | Value |
 | :--- | :--- |
 | **Project Name** | Human Resource Management System Software |
-| **Module Name** | HRorbit Portal & Payroll Management |
+| **Module Name** | HR O Portal & Payroll Management |
 | **Prepared By** | John Wesley & Dev Team |
 | **Start Date** | 10/06/2026 |
 | **Target Go-Live** | 31/07/2026 |

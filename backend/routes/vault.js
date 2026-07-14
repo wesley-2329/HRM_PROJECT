@@ -380,7 +380,7 @@ router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
         doc.auditTrail.push({
           action: 'Expire',
           userId: 'system',
-          userName: 'HRorbit System',
+          userName: 'HR O System',
           details: `Document auto-marked as 'Expired' due to date passing: ${doc.expiryDate}`
         });
 
@@ -403,7 +403,7 @@ router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
         doc.auditTrail.push({
           action: 'Expiry Alert Triggered',
           userId: 'system',
-          userName: 'HRorbit System',
+          userName: 'HR O System',
           details: `Expiry alert triggered (Expiring soon on ${doc.expiryDate})`
         });
 

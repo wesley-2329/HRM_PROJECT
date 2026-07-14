@@ -63,8 +63,8 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileActive ? 'active' : ''}`}>
       <div className="sidebar-top">
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
-          <span className="logo-text" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HRorbit</span>
+          <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+          <span className="logo-text" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
         <div className="profile-card">
           <img src={getAvatarUrl(user)} alt="Avatar" />

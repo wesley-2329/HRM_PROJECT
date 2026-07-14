@@ -1477,7 +1477,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       _id: 'mock-d1',
       senderName: 'Aditya',
       senderRole: 'CEO',
-      message: 'Welcome to the HRorbit central communication hub! Let\'s use this board for quick cross-functional updates.',
+      message: 'Welcome to the HR O central communication hub! Let\'s use this board for quick cross-functional updates.',
       time: '10:15 AM',
       senderAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
     },
@@ -2911,7 +2911,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 14px' }}><i className="fa-solid fa-paper-plane"></i></button>
                 </form>
               </div>
-              <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '8px', color: 'var(--text-secondary)' }}>AI Department Support — Powered by HRorbit AI™</div>
+              <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '8px', color: 'var(--text-secondary)' }}>AI Department Support — Powered by HR O AI™</div>
             </div>
           </div>
         </section>
@@ -3111,7 +3111,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="card-title">
                 <i className="fa-solid fa-gamepad" style={{ marginRight: '8px', color: 'hsl(var(--warning))' }}></i>
-                HRorbit Trivia Challenge
+                HR O Trivia Challenge
               </div>
               
               {!triviaComplete ? (
@@ -3221,7 +3221,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   </div>
                   <div style={{ background: 'hsl(var(--bg-main))', padding: '15px 25px', borderRadius: '10px', fontSize: '0.85rem' }}>
                     {triviaScore === triviaQuestions.length ? (
-                      <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are an HRorbit Expert!</span>
+                      <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are an HR O Expert!</span>
                     ) : triviaScore >= 3 ? (
                       <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>🌟 Great job! Excellent knowledge.</span>
                     ) : (

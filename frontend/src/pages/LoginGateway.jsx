@@ -166,8 +166,8 @@ const LoginGateway = () => {
 
           {/* Brand header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 5 }}>
-            <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 800, letterSpacing: '1px', color: '#0f172a' }}>HRorbit</span>
+            <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, letterSpacing: '1px', color: '#0f172a' }}>HR O</span>
           </div>
 
           {/* Dynamic Content Panel based on active Role */}
@@ -365,7 +365,7 @@ const LoginGateway = () => {
 
           {/* System Footer information */}
           <div style={{ fontSize: '0.75rem', color: '#64748b', zIndex: 5 }}>
-            HRorbit AI™ — Operational Security
+            HR O AI™ — Operational Security
           </div>
         </div>
 
@@ -381,8 +381,8 @@ const LoginGateway = () => {
         }}>
           {/* Brand header on form */}
           <div className="login-brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }} onClick={() => navigate('/')}>
-            <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, color: 'hsl(var(--primary))' }}>HRorbit</span>
+            <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, color: 'hsl(var(--primary))' }}>HR O</span>
           </div>
           
           <h1 className="login-title" style={{ color: '#0f172a', margin: '0 0 4px 0', fontSize: '1.8rem' }}>

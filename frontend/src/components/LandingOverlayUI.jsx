@@ -15,7 +15,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
     {
       id: "workspace",
       num: "01",
-      title: "HRorbit Workspace",
+      title: "HR O Workspace",
       badge: "Core Workforce Directory",
       desc: "Centralize your organization's records. Manage company branches, department lines, dynamic team maps, audit logs, and secure cloud credentials from one intuitive dashboard.",
       features: [
@@ -57,7 +57,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
     {
       id: "shifts",
       num: "04",
-      title: "HRorbit Shift Board",
+      title: "HR O Shift Board",
       badge: "Time & Attendance Planner",
       desc: "Coordinate operational coverage. Configure complex shift timings, map rosters to employee groups, balance leave request quotas, and verify daily timesheets.",
       features: [
@@ -195,7 +195,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
     transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] }
   };
 
-  // Text slide-in letters setup for HRorbit
+  // Text slide-in letters setup for HR O
   const brandLetters = "HR ORBIT".split("");
 
   const letterStagger = {
@@ -240,8 +240,8 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
           onClick={() => scrollToSection('hero-section')}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.25rem', fontWeight: 700, cursor: 'pointer' }}
         >
-          <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
-          <span style={{ letterSpacing: '1px', fontWeight: 800, color: '#0f172a' }}>HRorbit</span>
+          <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+          <span style={{ letterSpacing: '1px', fontWeight: 800, color: '#0f172a' }}>HR O</span>
         </div>
 
         {/* Desktop Navigation Links */}
@@ -621,7 +621,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
       }}>
         <div style={{ maxWidth: '650px', marginBottom: '60px' }}>
           <span style={{ fontSize: '0.8rem', color: '#4f46e5', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>Operational Anchors</span>
-          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginTop: '10px', color: '#0f172a' }}>The tenets of HRorbit architecture.</h2>
+          <h2 style={{ fontSize: '3rem', fontWeight: 800, marginTop: '10px', color: '#0f172a' }}>The tenets of HR O architecture.</h2>
           <p style={{ color: '#475569', marginTop: '16px', fontSize: '0.95rem', lineHeight: 1.6 }}>
             Our enterprise system operates under four core anchors to guarantee absolute data security, process autonomy, logs audit trail, and payroll accuracy.
           </p>
@@ -841,7 +841,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
               {/* Workspace Dashboard Preview */}
               <img
                 src="/src/assets/software_work_environment.png"
-                alt="HRorbit Dashboard"
+                alt="HR O Dashboard"
                 style={{
                   width: '100%',
                   height: 'auto',
@@ -976,7 +976,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            HRorbit
+            HR O
           </h1>
         </div>
 
@@ -995,11 +995,11 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
         }}>
           {/* Wordmark logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, color: '#0f172a', fontSize: '0.9rem' }}>
-            <span style={{ letterSpacing: '1px' }}>HRorbit</span>
+            <span style={{ letterSpacing: '1px' }}>HR O</span>
           </div>
           {/* Legal Links */}
           <div style={{ display: 'flex', gap: '24px' }}>
-            {["About HRorbit", "Products", "Privacy", "Terms"].map((text) => (
+            {["About HR O", "Products", "Privacy", "Terms"].map((text) => (
               <span key={text} style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-indigo-600">
                 {text}
               </span>

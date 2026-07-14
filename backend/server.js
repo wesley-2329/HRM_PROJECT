@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
 
 // Root path indicator
 app.get('/', (req, res) => {
-  res.send('HRorbit HRM API is running...');
+  res.send('HR O HRM API is running...');
 });
 
 // Register routes statically to ensure Vercel's bundler bundles all route files

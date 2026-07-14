@@ -60,8 +60,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     <header className={`emp-header theme-${navbarTheme}`}>
       <div className="emp-header-left">
         <div className="emp-logo" onClick={() => navigate(`/employee/${hashId}/emp-dashboard`)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <img src={hrorbitLogo} alt="HRorbit Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
-          <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HRorbit</span>
+          <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
         {/* Back and Forward Navigation Controls */}
