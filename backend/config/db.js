@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/');
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/', {
+      serverSelectionTimeoutMS: 2000
+    });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     const Employee = require('../models/Employee');
