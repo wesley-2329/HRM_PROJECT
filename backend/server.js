@@ -62,28 +62,57 @@ app.get('/', (req, res) => {
   res.send('HRorbit HRM API is running...');
 });
 
-// Register routes
-const loadRoute = (rPath) => {
-  const r = require(rPath);
-  return r.default || r;
-};
-app.use('/api/auth', loadRoute('./routes/auth'));
-app.use('/api/employees', loadRoute('./routes/employees'));
-app.use('/api/leaves', loadRoute('./routes/leaves'));
-app.use('/api/tasks', loadRoute('./routes/tasks'));
-app.use('/api/tickets', loadRoute('./routes/tickets'));
-app.use('/api/candidates', loadRoute('./routes/candidates'));
-app.use('/api/meetings', loadRoute('./routes/meetings'));
-app.use('/api/timesheet', loadRoute('./routes/timesheet'));
-app.use('/api/trainings', loadRoute('./routes/trainings'));
-app.use('/api/notifications', loadRoute('./routes/notifications'));
-app.use('/api/chat', loadRoute('./routes/chat'));
-app.use('/api/hr-notes', loadRoute('./routes/hrnotes'));
-app.use('/api/warning-letters', loadRoute('./routes/warnings'));
-app.use('/api/discussion', loadRoute('./routes/discussion'));
-app.use('/api/daily-reports', loadRoute('./routes/dailyreports'));
-app.use('/api/org', loadRoute('./routes/org'));
-app.use('/api/vault', loadRoute('./routes/vault'));
+// Register routes statically to ensure Vercel's bundler bundles all route files
+const authRoute = require('./routes/auth');
+app.use('/api/auth', authRoute.default || authRoute);
+
+const employeesRoute = require('./routes/employees');
+app.use('/api/employees', employeesRoute.default || employeesRoute);
+
+const leavesRoute = require('./routes/leaves');
+app.use('/api/leaves', leavesRoute.default || leavesRoute);
+
+const tasksRoute = require('./routes/tasks');
+app.use('/api/tasks', tasksRoute.default || tasksRoute);
+
+const ticketsRoute = require('./routes/tickets');
+app.use('/api/tickets', ticketsRoute.default || ticketsRoute);
+
+const candidatesRoute = require('./routes/candidates');
+app.use('/api/candidates', candidatesRoute.default || candidatesRoute);
+
+const meetingsRoute = require('./routes/meetings');
+app.use('/api/meetings', meetingsRoute.default || meetingsRoute);
+
+const timesheetRoute = require('./routes/timesheet');
+app.use('/api/timesheet', timesheetRoute.default || timesheetRoute);
+
+const trainingsRoute = require('./routes/trainings');
+app.use('/api/trainings', trainingsRoute.default || trainingsRoute);
+
+const notificationsRoute = require('./routes/notifications');
+app.use('/api/notifications', notificationsRoute.default || notificationsRoute);
+
+const chatRoute = require('./routes/chat');
+app.use('/api/chat', chatRoute.default || chatRoute);
+
+const hrNotesRoute = require('./routes/hrnotes');
+app.use('/api/hr-notes', hrNotesRoute.default || hrNotesRoute);
+
+const warningsRoute = require('./routes/warnings');
+app.use('/api/warning-letters', warningsRoute.default || warningsRoute);
+
+const discussionRoute = require('./routes/discussion');
+app.use('/api/discussion', discussionRoute.default || discussionRoute);
+
+const dailyReportsRoute = require('./routes/dailyreports');
+app.use('/api/daily-reports', dailyReportsRoute.default || dailyReportsRoute);
+
+const orgRoute = require('./routes/org');
+app.use('/api/org', orgRoute.default || orgRoute);
+
+const vaultRoute = require('./routes/vault');
+app.use('/api/vault', vaultRoute.default || vaultRoute);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
