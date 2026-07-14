@@ -42,8 +42,8 @@ const LoginGateway = () => {
       setEmail('hr@company.com');
       setPassword('admin123');
     } else {
-      setEmail('');
-      setPassword('');
+      setEmail('employee@company.com');
+      setPassword('employee123');
     }
   };
 
@@ -434,7 +434,8 @@ const LoginGateway = () => {
             {/* Left Box: Form fields */}
             <div style={{ flex: '1 1 340px' }}>
               {!isSignUp ? (
-                <form onSubmit={handleLoginSubmit}>
+                <>
+                  <form onSubmit={handleLoginSubmit}>
                   <div className="form-group" style={{ marginBottom: '16px' }}>
                     <label>Email Address</label>
                     <input
@@ -486,7 +487,67 @@ const LoginGateway = () => {
                     {authenticating ? 'Authenticating...' : 'Authenticate & Enter'}
                   </button>
                 </form>
-              ) : (
+                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px dashed hsl(var(--border))' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                    <span>⚡ DEMO QUICK ACCESS (For Team Testing)</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={async () => {
+                        setRole('hr');
+                        setEmail('hr@company.com');
+                        setPassword('admin123');
+                        setAuthError('');
+                        setAuthenticating(true);
+                        try {
+                          await login('hr@company.com', 'admin123', 'hr');
+                          showToast('HR Portal authenticated successfully.', 'success');
+                        } catch (err) {
+                          showToast('Quick login failed.', 'error');
+                        } finally {
+                          setAuthenticating(false);
+                        }
+                      }}
+                      style={{ padding: '6px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                    >
+                      <i className="fa-solid fa-user-tie" style={{ color: 'hsl(var(--primary))' }}></i>
+                      HR Director
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={async () => {
+                        setRole('employee');
+                        setEmail('employee@company.com');
+                        setPassword('employee123');
+                        setAuthError('');
+                        setAuthenticating(true);
+                        try {
+                          await login('employee@company.com', 'employee123', 'employee');
+                          showToast('Employee Portal authenticated successfully.', 'success');
+                        } catch (err) {
+                          showToast('Quick login failed.', 'error');
+                        } finally {
+                          setAuthenticating(false);
+                        }
+                      }}
+                      style={{ padding: '6px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                    >
+                      <i className="fa-solid fa-user-gear" style={{ color: 'hsl(var(--success))' }}></i>
+                      Employee (Aditya)
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '10px', lineHeight: 1.4 }}>
+                    💡 <strong>Note:</strong> Anyone on your team can create their own custom login! Toggle to <strong>Employee Portal</strong> above, click <strong>Create an account</strong>, and register with their own name/email.
+                  </p>
+                </div>
+              </> ) : (
                 <form onSubmit={handleSignUpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label>Full Name</label>
