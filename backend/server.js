@@ -81,6 +81,14 @@ app.use('/api/daily-reports', require('./routes/dailyReports'));
 app.use('/api/org', require('./routes/org'));
 app.use('/api/vault', require('./routes/vault'));
 
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

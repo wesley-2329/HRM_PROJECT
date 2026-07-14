@@ -433,7 +433,7 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const socket = io('/', {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || '/', {
       transports: ['websocket', 'polling']
     });
 
