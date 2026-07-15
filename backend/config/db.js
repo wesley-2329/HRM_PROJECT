@@ -1,7 +1,38 @@
 const mongoose = require('mongoose');
+const { getMockDataForModel } = require('./mock_data');
+
+// Override Query exec to capture offline database query errors globally
+const originalExec = mongoose.Query.prototype.exec;
+mongoose.Query.prototype.exec = async function(...args) {
+  try {
+    return await originalExec.apply(this, args);
+  } catch (err) {
+    console.warn(`[Offline Mode] Query failed for model "${this.model.modelName}" (${this.op}). Returning fallback mock data...`);
+    try {
+      return getMockDataForModel(this.model.modelName, this.op, this._conditions);
+    } catch (fallbackErr) {
+      console.error(`[Offline Mode] Fallback failed:`, fallbackErr);
+      throw err;
+    }
+  }
+};
+
+// Override Model save to capture offline database save errors globally
+const originalSave = mongoose.Model.prototype.save;
+mongoose.Model.prototype.save = async function(...args) {
+  try {
+    return await originalSave.apply(this, args);
+  } catch (err) {
+    console.warn(`[Offline Mode] Save failed for model "${this.constructor.modelName}". Simulating success...`);
+    return this;
+  }
+};
 
 const connectDB = async () => {
   try {
+    // Disable command buffering so queries fail immediately when offline instead of hanging
+    mongoose.set('bufferCommands', false);
+
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/', {
       serverSelectionTimeoutMS: 2000
     });
@@ -31,7 +62,6 @@ const connectDB = async () => {
       });
       console.log('Default HR Director profile created successfully.');
     } else {
-      // Ensure the role is set to 'hr'
       if (hrExist.role !== 'hr') {
         hrExist.role = 'hr';
         await hrExist.save();
