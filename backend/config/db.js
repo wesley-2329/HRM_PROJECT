@@ -24,7 +24,34 @@ mongoose.Model.prototype.save = async function(...args) {
     return await originalSave.apply(this, args);
   } catch (err) {
     console.warn(`[Offline Mode] Save failed for model "${this.constructor.modelName}". Simulating success...`);
+    try {
+      const { addMockDocument } = require('./mock_data');
+      addMockDocument(this.constructor.modelName, this.toObject ? this.toObject() : this);
+    } catch (e) {
+      console.error('Failed to add mock document during save:', e);
+    }
     return this;
+  }
+};
+
+// Override Model static create to capture offline database create errors globally
+const originalCreate = mongoose.Model.create;
+mongoose.Model.create = async function(...args) {
+  try {
+    return await originalCreate.apply(this, args);
+  } catch (err) {
+    console.warn(`[Offline Mode] Create failed for model "${this.modelName}". Simulating success...`);
+    try {
+      const { addMockDocument } = require('./mock_data');
+      if (Array.isArray(args[0])) {
+        args[0].forEach(doc => addMockDocument(this.modelName, doc));
+      } else if (args[0]) {
+        addMockDocument(this.modelName, args[0]);
+      }
+    } catch (e) {
+      console.error('Failed to add mock document during create:', e);
+    }
+    return args[0];
   }
 };
 
