@@ -1,4 +1,4 @@
-const mockEmployees = [
+let mockEmployees = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7890",
     id: "EMP-0001",
@@ -85,10 +85,11 @@ const mockEmployees = [
   }
 ];
 
-const mockLeaves = [
+let mockLeaves = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7901",
     employeeId: "EMP-0002",
+    empId: "EMP-0002",
     employeeName: "Aditya Kumar",
     leaveType: "Sick Leave",
     startDate: "2026-07-10",
@@ -99,6 +100,7 @@ const mockLeaves = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7902",
     employeeId: "EMP-0003",
+    empId: "EMP-0003",
     employeeName: "Priya Nair",
     leaveType: "Casual Leave",
     startDate: "2026-07-20",
@@ -108,7 +110,7 @@ const mockLeaves = [
   }
 ];
 
-const mockTasks = [
+let mockTasks = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7911",
     title: "Configure Vercel Routing",
@@ -131,7 +133,7 @@ const mockTasks = [
   }
 ];
 
-const mockTickets = [
+let mockTickets = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7921",
     ticketId: "TCK-1001",
@@ -141,12 +143,13 @@ const mockTickets = [
     priority: "High",
     status: "Open",
     employeeId: "EMP-0002",
+    empId: "EMP-0002",
     employeeName: "Aditya Kumar",
     createdAt: "2026-07-14T10:00:00.000Z"
   }
 ];
 
-const mockMeetings = [
+let mockMeetings = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7931",
     title: "Daily Standup Meeting",
@@ -159,7 +162,7 @@ const mockMeetings = [
   }
 ];
 
-const mockTrainings = [
+let mockTrainings = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7941",
     title: "Express and Serverless Deployments",
@@ -171,19 +174,19 @@ const mockTrainings = [
   }
 ];
 
-const mockTimesheets = [
+let mockTimesheets = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7951",
-    employeeId: "EMP-0002",
-    employeeName: "Aditya Kumar",
+    empId: "EMP-0002",
     date: "2026-07-14",
     clockIn: "09:05 AM",
     clockOut: "06:15 PM",
-    duration: "9h 10m"
+    hours: 9,
+    status: "Punctual"
   }
 ];
 
-const mockVaultDocs = [
+let mockVaultDocs = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7961",
     docName: "Aadhaar Card Copy",
@@ -196,7 +199,7 @@ const mockVaultDocs = [
   }
 ];
 
-const mockChats = [
+let mockChats = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7971",
     senderId: "EMP-0001",
@@ -206,7 +209,7 @@ const mockChats = [
   }
 ];
 
-const mockNotifications = [
+let mockNotifications = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7981",
     userId: "EMP-0002",
@@ -217,7 +220,7 @@ const mockNotifications = [
   }
 ];
 
-const mockDiscussions = [
+let mockDiscussions = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7991",
     title: "HR O Portal Release Notes",
@@ -229,175 +232,149 @@ const mockDiscussions = [
   }
 ];
 
-const mockWarnings = [];
+let mockWarnings = [];
 
-const mockCompany = [
+let mockCompany = [
   { _id: "60c72b2f9b1d8b2a3c9d7a01", name: "HR O Technologies", code: "HO-001", businessType: "Information Technology", status: "Active" }
 ];
 
-const mockBranches = [
+let mockBranches = [
   { _id: "60c72b2f9b1d8b2a3c9d7a11", name: "HQ Bangalore", code: "BLR-01", location: "Bangalore, KA", branchHead: "Venkat Raman", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a12", name: "Tech Park Pune", code: "PUN-02", location: "Pune, MH", branchHead: "Priya Nair", status: "Active" }
 ];
 
-const mockBUs = [
+let mockBUs = [
   { _id: "60c72b2f9b1d8b2a3c9d7a21", name: "Cloud Solutions", code: "BU-CS", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a22", name: "Enterprise Apps", code: "BU-EA", status: "Active" }
 ];
 
-const mockCCs = [
+let mockCCs = [
   { _id: "60c72b2f9b1d8b2a3c9d7a31", name: "Engineering CC", code: "CC-ENG", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a32", name: "HR Operations CC", code: "CC-HR", status: "Active" }
 ];
 
-const mockGradeBands = [
+let mockGradeBands = [
   { _id: "60c72b2f9b1d8b2a3c9d7a41", name: "L1", description: "Entry-level Analyst/Engineer", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a42", name: "L2", description: "Senior Consultant/Engineer", status: "Active" }
 ];
 
-const mockDesignations = [
+let mockDesignations = [
   { _id: "60c72b2f9b1d8b2a3c9d7a51", name: "Software Engineer", code: "SE", deptMapping: "Engineering", gradeMapping: "L1", positionLimit: 50, status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a52", name: "Senior Software Engineer", code: "SSE", deptMapping: "Engineering", gradeMapping: "L2", positionLimit: 30, status: "Active" }
 ];
 
-const mockDepts = [
+let mockDepts = [
   { _id: "60c72b2f9b1d8b2a3c9d7a61", name: "Engineering", code: "DEPT-ENG", description: "Software development and engineering", parentDept: "", managerId: "EMP-0002", businessUnit: "Cloud Solutions", location: "HQ Bangalore", costCenter: "Engineering CC", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a62", name: "Human Resources", code: "DEPT-HR", description: "People Ops and Payroll", parentDept: "", managerId: "EMP-0001", businessUnit: "Enterprise Apps", location: "HQ Bangalore", costCenter: "HR Operations CC", status: "Active" }
 ];
 
-const mockSubDepts = [
+let mockSubDepts = [
   { _id: "60c72b2f9b1d8b2a3c9d7a71", name: "Frontend Engineering", code: "SUB-FE", parentDept: "Engineering", managerId: "EMP-0002", status: "Active" },
   { _id: "60c72b2f9b1d8b2a3c9d7a72", name: "Backend Engineering", code: "SUB-BE", parentDept: "Engineering", managerId: "EMP-0002", status: "Active" }
 ];
 
-const mockFloors = [
+let mockFloors = [
   { _id: "60c72b2f9b1d8b2a3c9d7a81", name: "4th Floor", code: "FLR-04", building: "Building A", status: "Active" }
 ];
 
-const mockBuildings = [
+let mockBuildings = [
   { _id: "60c72b2f9b1d8b2a3c9d7a91", name: "Building A", code: "BLDG-A", status: "Active" }
 ];
 
-const mockRegions = [
+let mockRegions = [
   { _id: "60c72b2f9b1d8b2a3c9d7aa1", name: "India East", code: "REG-IE", status: "Active" }
 ];
 
-const mockTeams = [
+let mockTeams = [
   { _id: "60c72b2f9b1d8b2a3c9d7ab1", name: "Core Developers", code: "TM-DEV", status: "Active" }
 ];
 
-const mockPositions = [
+let mockPositions = [
   { _id: "60c72b2f9b1d8b2a3c9d7ac1", name: "Fullstack Engineer", code: "POS-FE", status: "Active" }
 ];
 
-const mockPolicies = [
+let mockPolicies = [
   { _id: "60c72b2f9b1d8b2a3c9d7ad1", title: "Information Security Policy", content: "Guidelines on data handling and system security.", status: "Active" }
 ];
 
-const mockOrgDocs = [];
-const mockSuccessionPlans = [];
-const mockHeadcountPlans = [];
-const mockAuditLogs = [];
-const mockCandidates = [];
+let mockOrgDocs = [];
+let mockSuccessionPlans = [];
+let mockHeadcountPlans = [];
+let mockAuditLogs = [];
+let mockCandidates = [];
+
+function getMockList(modelName) {
+  switch (modelName) {
+    case 'Employee': return mockEmployees;
+    case 'Leave': return mockLeaves;
+    case 'Task': return mockTasks;
+    case 'Ticket': return mockTickets;
+    case 'Meeting': return mockMeetings;
+    case 'Training': return mockTrainings;
+    case 'Timesheet': return mockTimesheets;
+    case 'VaultDocument': return mockVaultDocs;
+    case 'ChatMessage': return mockChats;
+    case 'Notification': return mockNotifications;
+    case 'DiscussionMessage': return mockDiscussions;
+    case 'WarningLetter': return mockWarnings;
+    case 'CompanyMaster': return mockCompany;
+    case 'BranchMaster': return mockBranches;
+    case 'BusinessUnitMaster': return mockBUs;
+    case 'CostCenterMaster': return mockCCs;
+    case 'GradeBandMaster': return mockGradeBands;
+    case 'DesignationMaster': return mockDesignations;
+    case 'Department': return mockDepts;
+    case 'SubDepartmentMaster': return mockSubDepts;
+    case 'FloorMaster': return mockFloors;
+    case 'BuildingMaster': return mockBuildings;
+    case 'RegionMaster': return mockRegions;
+    case 'TeamMaster': return mockTeams;
+    case 'PositionMaster': return mockPositions;
+    case 'OrgPolicy': return mockPolicies;
+    case 'OrgDocument': return mockOrgDocs;
+    case 'SuccessionPlan': return mockSuccessionPlans;
+    case 'HeadcountPlan': return mockHeadcountPlans;
+    case 'OrgAuditLog': return mockAuditLogs;
+    case 'Candidate': return mockCandidates;
+    default: return null;
+  }
+}
 
 function getMockDataForModel(modelName, op, conditions) {
-  let list = [];
-  switch (modelName) {
-    case 'Employee':
-      list = mockEmployees;
-      break;
-    case 'Leave':
-      list = mockLeaves;
-      break;
-    case 'Task':
-      list = mockTasks;
-      break;
-    case 'Ticket':
-      list = mockTickets;
-      break;
-    case 'Meeting':
-      list = mockMeetings;
-      break;
-    case 'Training':
-      list = mockTrainings;
-      break;
-    case 'Timesheet':
-      list = mockTimesheets;
-      break;
-    case 'VaultDocument':
-      list = mockVaultDocs;
-      break;
-    case 'ChatMessage':
-      list = mockChats;
-      break;
-    case 'Notification':
-      list = mockNotifications;
-      break;
-    case 'DiscussionMessage':
-      list = mockDiscussions;
-      break;
-    case 'WarningLetter':
-      list = mockWarnings;
-      break;
-    case 'CompanyMaster':
-      list = mockCompany;
-      break;
-    case 'BranchMaster':
-      list = mockBranches;
-      break;
-    case 'BusinessUnitMaster':
-      list = mockBUs;
-      break;
-    case 'CostCenterMaster':
-      list = mockCCs;
-      break;
-    case 'GradeBandMaster':
-      list = mockGradeBands;
-      break;
-    case 'DesignationMaster':
-      list = mockDesignations;
-      break;
-    case 'Department':
-      list = mockDepts;
-      break;
-    case 'SubDepartmentMaster':
-      list = mockSubDepts;
-      break;
-    case 'FloorMaster':
-      list = mockFloors;
-      break;
-    case 'BuildingMaster':
-      list = mockBuildings;
-      break;
-    case 'RegionMaster':
-      list = mockRegions;
-      break;
-    case 'TeamMaster':
-      list = mockTeams;
-      break;
-    case 'PositionMaster':
-      list = mockPositions;
-      break;
-    case 'OrgPolicy':
-      list = mockPolicies;
-      break;
-    case 'OrgDocument':
-      list = mockOrgDocs;
-      break;
-    case 'SuccessionPlan':
-      list = mockSuccessionPlans;
-      break;
-    case 'HeadcountPlan':
-      list = mockHeadcountPlans;
-      break;
-    case 'OrgAuditLog':
-      list = mockAuditLogs;
-      break;
-    case 'Candidate':
-      list = mockCandidates;
-      break;
-    default:
-      list = [];
+  let list = getMockList(modelName);
+  if (!list) return op === 'countDocuments' || op === 'count' ? 0 : [];
+
+  // Filter based on conditions
+  if (conditions && typeof conditions === 'object') {
+    list = list.filter(item => {
+      for (let key in conditions) {
+        let val = conditions[key];
+        
+        // Map database keys if they differ
+        let itemKey = key;
+        if (key === 'empId' && item.employeeId && !item.empId) {
+          itemKey = 'employeeId';
+        }
+        
+        let itemVal = item[itemKey];
+
+        // Handle Mongoose query operators or exact matching
+        if (val && typeof val === 'object') {
+          if ('$nin' in val) {
+            if (val.$nin.includes(itemVal)) return false;
+          }
+          if ('$in' in val) {
+            if (!val.$in.includes(itemVal)) return false;
+          }
+        } else if (val !== undefined) {
+          // Stringify both to match object IDs with strings
+          const strItemVal = itemVal !== null && itemVal !== undefined ? itemVal.toString() : '';
+          const strVal = val !== null && val !== undefined ? val.toString() : '';
+          if (strItemVal !== strVal) return false;
+        }
+      }
+      return true;
+    });
   }
 
   // Handle operations
@@ -406,26 +383,32 @@ function getMockDataForModel(modelName, op, conditions) {
   }
   
   if (op === 'findOne' || op === 'findById') {
-    // Attempt query filters matching
-    if (conditions && conditions._id) {
-      const match = list.find(item => item._id.toString() === conditions._id.toString());
-      if (match) return match;
-    }
-    if (conditions && conditions.email) {
-      const match = list.find(item => item.email === conditions.email);
-      if (match) return match;
-    }
-    if (conditions && conditions.id) {
-      const match = list.find(item => item.id === conditions.id);
-      if (match) return match;
-    }
     return list[0] || null;
   }
 
-  // Return list for find operations
   return list;
 }
 
+function addMockDocument(modelName, doc) {
+  let list = getMockList(modelName);
+  if (!list) return;
+
+  // Assign _id if missing
+  if (!doc._id) {
+    doc._id = 'mock_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // Check if it already exists to avoid duplicates (e.g. updating an existing document)
+  const existingIndex = list.findIndex(item => item._id && doc._id && item._id.toString() === doc._id.toString());
+  if (existingIndex !== -1) {
+    list[existingIndex] = { ...list[existingIndex], ...doc };
+  } else {
+    list.push(doc);
+  }
+  console.log(`[Offline Mode] Added document to ${modelName}. Total: ${list.length}`);
+}
+
 module.exports = {
-  getMockDataForModel
+  getMockDataForModel,
+  addMockDocument
 };
