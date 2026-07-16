@@ -492,7 +492,80 @@ function addMockDocument(modelName, doc) {
   console.log(`[Offline Mode] Added document to ${modelName}. Total: ${list.length}`);
 }
 
+function getMockState() {
+  return {
+    mockEmployees,
+    mockLeaves,
+    mockTasks,
+    mockTickets,
+    mockMeetings,
+    mockTrainings,
+    mockTimesheets,
+    mockVaultDocs,
+    mockChats,
+    mockNotifications,
+    mockDiscussions,
+    mockWarnings,
+    mockCompany,
+    mockBranches,
+    mockBUs,
+    mockCCs,
+    mockGradeBands,
+    mockDesignations,
+    mockDepts,
+    mockSubDepts,
+    mockFloors,
+    mockBuildings,
+    mockRegions,
+    mockTeams,
+    mockPositions,
+    mockPolicies,
+    mockOrgDocs,
+    mockSuccessionPlans,
+    mockHeadcountPlans,
+    mockAuditLogs,
+    mockCandidates
+  };
+}
+
+function setMockState(state) {
+  if (!state) return;
+  if (state.mockEmployees) mockEmployees = state.mockEmployees;
+  if (state.mockLeaves) mockLeaves = state.mockLeaves;
+  if (state.mockTasks) mockTasks = state.mockTasks;
+  if (state.mockTickets) mockTickets = state.mockTickets;
+  if (state.mockMeetings) mockMeetings = state.mockMeetings;
+  if (state.mockTrainings) mockTrainings = state.mockTrainings;
+  if (state.mockTimesheets) mockTimesheets = state.mockTimesheets;
+  if (state.mockVaultDocs) mockVaultDocs = state.mockVaultDocs;
+  if (state.mockChats) mockChats = state.mockChats;
+  if (state.mockNotifications) mockNotifications = state.mockNotifications;
+  if (state.mockDiscussions) mockDiscussions = state.mockDiscussions;
+  if (state.mockWarnings) mockWarnings = state.mockWarnings;
+  if (state.mockCompany) mockCompany = state.mockCompany;
+  if (state.mockBranches) mockBranches = state.mockBranches;
+  if (state.mockBUs) mockBUs = state.mockBUs;
+  if (state.mockCCs) mockCCs = state.mockCCs;
+  if (state.mockGradeBands) mockGradeBands = state.mockGradeBands;
+  if (state.mockDesignations) mockDesignations = state.mockDesignations;
+  if (state.mockDepts) mockDepts = state.mockDepts;
+  if (state.mockSubDepts) mockSubDepts = state.mockSubDepts;
+  if (state.mockFloors) mockFloors = state.mockFloors;
+  if (state.mockBuildings) mockBuildings = state.mockBuildings;
+  if (state.mockRegions) mockRegions = state.mockRegions;
+  if (state.mockTeams) mockTeams = state.mockTeams;
+  if (state.mockPositions) mockPositions = state.mockPositions;
+  if (state.mockPolicies) mockPolicies = state.mockPolicies;
+  if (state.mockOrgDocs) mockOrgDocs = state.mockOrgDocs;
+  if (state.mockSuccessionPlans) mockSuccessionPlans = state.mockSuccessionPlans;
+  if (state.mockHeadcountPlans) mockHeadcountPlans = state.mockHeadcountPlans;
+  if (state.mockAuditLogs) mockAuditLogs = state.mockAuditLogs;
+  if (state.mockCandidates) mockCandidates = state.mockCandidates;
+}
+
 module.exports = {
   getMockDataForModel,
-  addMockDocument
+  addMockDocument,
+  getMockState,
+  setMockState
 };

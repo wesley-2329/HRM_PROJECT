@@ -29,6 +29,34 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors());
 app.use(express.json());
 
+// Stateful Offline Mock Database Sync Middleware
+app.use((req, res, next) => {
+  const clientMockState = req.headers['x-mock-state'];
+  if (clientMockState) {
+    try {
+      const parsedState = JSON.parse(clientMockState);
+      const { setMockState } = require('./config/mock_data');
+      setMockState(parsedState);
+    } catch (e) {
+      console.error('Failed to parse client mock state:', e);
+    }
+  }
+  
+  const originalJson = res.json;
+  res.json = function(body) {
+    try {
+      const { getMockState } = require('./config/mock_data');
+      const currentState = getMockState();
+      res.setHeader('x-mock-state', JSON.stringify(currentState));
+      res.setHeader('Access-Control-Expose-Headers', 'x-mock-state');
+    } catch (e) {
+      console.error('Failed to set response mock state:', e);
+    }
+    return originalJson.call(this, body);
+  };
+  next();
+});
+
 // Pass Socket.io instance to request
 app.use((req, res, next) => {
   req.io = io;
