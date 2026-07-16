@@ -1,12 +1,12 @@
 let mockEmployees = [
   {
-    _id: "60c72b2f9b1d8b2a3c9d7890",
-    id: "EMP-0001",
-    name: "Venkat Raman",
+    _id: "60c72b2f9b1d8b2a3c9d8001",
+    id: "EMP-1001",
+    name: "Gara Nandini",
     role: "hr",
     dept: "Human Resources",
     joined: "2018-05-10",
-    email: "hr@company.com",
+    email: "garanandini067@gmail.com",
     status: "Approved",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
     aadhaar: "4567-8901-2345",
@@ -20,13 +20,73 @@ let mockEmployees = [
     costCenter: "HR Operations CC"
   },
   {
-    _id: "60c72b2f9b1d8b2a3c9d7891",
-    id: "EMP-0002",
-    name: "Aditya Kumar",
+    _id: "60c72b2f9b1d8b2a3c9d8002",
+    id: "EMP-1002",
+    name: "Akhil Sirivella",
+    role: "hr",
+    dept: "Human Resources",
+    joined: "2018-05-10",
+    email: "akhilsirivella510@gmail.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    aadhaar: "4567-8901-2345",
+    phone: "+91 98765 00001",
+    blood: "A+",
+    dob: "1980-04-15",
+    gender: "Male",
+    designation: "HR Manager",
+    branch: "HQ Bangalore",
+    businessUnit: "Enterprise Apps",
+    costCenter: "HR Operations CC"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d8003",
+    id: "EMP-1003",
+    name: "Karthik Potur",
+    role: "hr",
+    dept: "Human Resources",
+    joined: "2018-05-10",
+    email: "karthikpotur@gmail.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    aadhaar: "4567-8901-2345",
+    phone: "+91 98765 00001",
+    blood: "A+",
+    dob: "1980-04-15",
+    gender: "Male",
+    designation: "HR Manager",
+    branch: "HQ Bangalore",
+    businessUnit: "Enterprise Apps",
+    costCenter: "HR Operations CC"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d8004",
+    id: "EMP-1004",
+    name: "John Wesley",
+    role: "hr",
+    dept: "Human Resources",
+    joined: "2018-05-10",
+    email: "johnwesley.290305@gmail.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    aadhaar: "4567-8901-2345",
+    phone: "+91 98765 00001",
+    blood: "A+",
+    dob: "1980-04-15",
+    gender: "Male",
+    designation: "HR Manager",
+    branch: "HQ Bangalore",
+    businessUnit: "Enterprise Apps",
+    costCenter: "HR Operations CC"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d8005",
+    id: "EMP-2001",
+    name: "Priyanka",
     role: "employee",
     dept: "Engineering",
     joined: "2021-06-15",
-    email: "employee@company.com",
+    email: "priyanka@qbkartitsolutions.com",
     status: "Approved",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
     aadhaar: "1234-5678-9012",
@@ -38,59 +98,61 @@ let mockEmployees = [
     branch: "HQ Bangalore",
     businessUnit: "Cloud Solutions",
     costCenter: "Engineering CC",
-    teamLeadId: "EMP-0001",
+    teamLeadId: "EMP-1004",
     isTeamLead: true
   },
   {
-    _id: "60c72b2f9b1d8b2a3c9d7892",
-    id: "EMP-0003",
-    name: "Priya Nair",
+    _id: "60c72b2f9b1d8b2a3c9d8006",
+    id: "EMP-2002",
+    name: "Pranitha",
     role: "employee",
     dept: "Engineering",
-    joined: "2022-03-01",
-    email: "priya@company.com",
+    joined: "2021-06-15",
+    email: "pranitha@qbkartitsolutions.com",
     status: "Approved",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-    aadhaar: "1111-2222-3333",
-    phone: "+91 98765 00003",
-    blood: "B+",
-    dob: "1998-05-12",
-    gender: "Female",
-    designation: "Software Engineer",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    aadhaar: "1234-5678-9012",
+    phone: "+91 98765 00002",
+    blood: "O+",
+    dob: "1995-08-20",
+    gender: "Male",
+    designation: "Senior Software Engineer",
     branch: "HQ Bangalore",
     businessUnit: "Cloud Solutions",
     costCenter: "Engineering CC",
-    teamLeadId: "EMP-0002"
+    teamLeadId: "EMP-1004",
+    isTeamLead: true
   },
   {
-    _id: "60c72b2f9b1d8b2a3c9d7893",
-    id: "EMP-0004",
-    name: "Vikram Malhotra",
+    _id: "60c72b2f9b1d8b2a3c9d8007",
+    id: "EMP-2003",
+    name: "Dhanush Goud",
     role: "employee",
     dept: "Engineering",
-    joined: "2020-11-15",
-    email: "vikram@company.com",
+    joined: "2021-06-15",
+    email: "dhanushgoud58@gmail.com",
     status: "Approved",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-    aadhaar: "2222-3333-4444",
-    phone: "+91 98765 00004",
-    blood: "AB+",
-    dob: "1992-09-25",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    aadhaar: "1234-5678-9012",
+    phone: "+91 98765 00002",
+    blood: "O+",
+    dob: "1995-08-20",
     gender: "Male",
-    designation: "DevOps Engineer",
+    designation: "Senior Software Engineer",
     branch: "HQ Bangalore",
     businessUnit: "Cloud Solutions",
     costCenter: "Engineering CC",
-    teamLeadId: "EMP-0002"
+    teamLeadId: "EMP-1004",
+    isTeamLead: true
   }
 ];
 
 let mockLeaves = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7901",
-    employeeId: "EMP-0002",
-    empId: "EMP-0002",
-    employeeName: "Aditya Kumar",
+    employeeId: "EMP-2001",
+    empId: "EMP-2001",
+    employeeName: "Priyanka",
     leaveType: "Sick Leave",
     startDate: "2026-07-10",
     endDate: "2026-07-11",
@@ -99,9 +161,9 @@ let mockLeaves = [
   },
   {
     _id: "60c72b2f9b1d8b2a3c9d7902",
-    employeeId: "EMP-0003",
-    empId: "EMP-0003",
-    employeeName: "Priya Nair",
+    employeeId: "EMP-2002",
+    empId: "EMP-2002",
+    employeeName: "Pranitha",
     leaveType: "Casual Leave",
     startDate: "2026-07-20",
     endDate: "2026-07-22",
@@ -115,8 +177,8 @@ let mockTasks = [
     _id: "60c72b2f9b1d8b2a3c9d7911",
     title: "Configure Vercel Routing",
     description: "Revert multi-project setup to classic v2 builds format to resolve deployment crashes.",
-    assignedTo: "EMP-0002",
-    assignedToName: "Aditya Kumar",
+    assignedTo: "EMP-2001",
+    assignedToName: "Priyanka",
     dueDate: "2026-07-15",
     priority: "High",
     status: "Completed"
@@ -125,8 +187,8 @@ let mockTasks = [
     _id: "60c72b2f9b1d8b2a3c9d7912",
     title: "Implement Leave Balance Tracker",
     description: "Add leave balance updates inside client-side components.",
-    assignedTo: "EMP-0003",
-    assignedToName: "Priya Nair",
+    assignedTo: "EMP-2002",
+    assignedToName: "Pranitha",
     dueDate: "2026-07-18",
     priority: "Medium",
     status: "In Progress"
@@ -142,9 +204,9 @@ let mockTickets = [
     category: "IT Support",
     priority: "High",
     status: "Open",
-    employeeId: "EMP-0002",
-    empId: "EMP-0002",
-    employeeName: "Aditya Kumar",
+    employeeId: "EMP-2001",
+    empId: "EMP-2001",
+    employeeName: "Priyanka",
     createdAt: "2026-07-14T10:00:00.000Z"
   }
 ];
@@ -156,7 +218,7 @@ let mockMeetings = [
     date: "2026-07-15",
     time: "10:00 AM",
     duration: 30,
-    participants: ["EMP-0001", "EMP-0002", "EMP-0003"],
+    participants: ["EMP-1004", "EMP-2001", "EMP-2002"],
     description: "Discuss checklist deliverables and tasks.",
     link: "https://meet.hro.company/join/tck-standup"
   }
@@ -177,7 +239,7 @@ let mockTrainings = [
 let mockTimesheets = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7951",
-    empId: "EMP-0002",
+    empId: "EMP-2001",
     date: "2026-07-14",
     clockIn: "09:05 AM",
     clockOut: "06:15 PM",
@@ -191,8 +253,8 @@ let mockVaultDocs = [
     _id: "60c72b2f9b1d8b2a3c9d7961",
     docName: "Aadhaar Card Copy",
     docType: "Identification",
-    uploadedBy: "EMP-0002",
-    uploadedByName: "Aditya Kumar",
+    uploadedBy: "EMP-2001",
+    uploadedByName: "Priyanka",
     status: "Approved",
     currentVersion: 1,
     versions: [{ version: 1, path: "/tmp/uploads/emp2_aadhaar.pdf", date: "2026-07-14" }]
@@ -202,8 +264,8 @@ let mockVaultDocs = [
 let mockChats = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7971",
-    senderId: "EMP-0001",
-    senderName: "Venkat Raman",
+    senderId: "EMP-1004",
+    senderName: "John Wesley",
     message: "Hi Team, please ensure your checklists are updated.",
     timestamp: "2026-07-14T10:30:00.000Z"
   }
@@ -212,7 +274,7 @@ let mockChats = [
 let mockNotifications = [
   {
     _id: "60c72b2f9b1d8b2a3c9d7981",
-    userId: "EMP-0002",
+    userId: "EMP-2001",
     title: "Task Assigned",
     message: "You have been assigned: Configure Vercel Routing",
     read: false,
@@ -225,8 +287,8 @@ let mockDiscussions = [
     _id: "60c72b2f9b1d8b2a3c9d7991",
     title: "HR O Portal Release Notes",
     content: "Welcome to the new HR O communication board! Use this channel to post cross-functional updates.",
-    authorId: "EMP-0001",
-    authorName: "Venkat Raman",
+    authorId: "EMP-1004",
+    authorName: "John Wesley",
     createdAt: "2026-07-14T11:00:00.000Z",
     replies: []
   }
@@ -239,8 +301,8 @@ let mockCompany = [
 ];
 
 let mockBranches = [
-  { _id: "60c72b2f9b1d8b2a3c9d7a11", name: "HQ Bangalore", code: "BLR-01", location: "Bangalore, KA", branchHead: "Venkat Raman", status: "Active" },
-  { _id: "60c72b2f9b1d8b2a3c9d7a12", name: "Tech Park Pune", code: "PUN-02", location: "Pune, MH", branchHead: "Priya Nair", status: "Active" }
+  { _id: "60c72b2f9b1d8b2a3c9d7a11", name: "HQ Bangalore", code: "BLR-01", location: "Bangalore, KA", branchHead: "John Wesley", status: "Active" },
+  { _id: "60c72b2f9b1d8b2a3c9d7a12", name: "Tech Park Pune", code: "PUN-02", location: "Pune, MH", branchHead: "Pranitha", status: "Active" }
 ];
 
 let mockBUs = [
@@ -264,13 +326,13 @@ let mockDesignations = [
 ];
 
 let mockDepts = [
-  { _id: "60c72b2f9b1d8b2a3c9d7a61", name: "Engineering", code: "DEPT-ENG", description: "Software development and engineering", parentDept: "", managerId: "EMP-0002", businessUnit: "Cloud Solutions", location: "HQ Bangalore", costCenter: "Engineering CC", status: "Active" },
-  { _id: "60c72b2f9b1d8b2a3c9d7a62", name: "Human Resources", code: "DEPT-HR", description: "People Ops and Payroll", parentDept: "", managerId: "EMP-0001", businessUnit: "Enterprise Apps", location: "HQ Bangalore", costCenter: "HR Operations CC", status: "Active" }
+  { _id: "60c72b2f9b1d8b2a3c9d7a61", name: "Engineering", code: "DEPT-ENG", description: "Software development and engineering", parentDept: "", managerId: "EMP-2001", businessUnit: "Cloud Solutions", location: "HQ Bangalore", costCenter: "Engineering CC", status: "Active" },
+  { _id: "60c72b2f9b1d8b2a3c9d7a62", name: "Human Resources", code: "DEPT-HR", description: "People Ops and Payroll", parentDept: "", managerId: "EMP-1004", businessUnit: "Enterprise Apps", location: "HQ Bangalore", costCenter: "HR Operations CC", status: "Active" }
 ];
 
 let mockSubDepts = [
-  { _id: "60c72b2f9b1d8b2a3c9d7a71", name: "Frontend Engineering", code: "SUB-FE", parentDept: "Engineering", managerId: "EMP-0002", status: "Active" },
-  { _id: "60c72b2f9b1d8b2a3c9d7a72", name: "Backend Engineering", code: "SUB-BE", parentDept: "Engineering", managerId: "EMP-0002", status: "Active" }
+  { _id: "60c72b2f9b1d8b2a3c9d7a71", name: "Frontend Engineering", code: "SUB-FE", parentDept: "Engineering", managerId: "EMP-2001", status: "Active" },
+  { _id: "60c72b2f9b1d8b2a3c9d7a72", name: "Backend Engineering", code: "SUB-BE", parentDept: "Engineering", managerId: "EMP-2001", status: "Active" }
 ];
 
 let mockFloors = [

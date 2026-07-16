@@ -67,55 +67,34 @@ const connectDB = async () => {
     
     const Employee = require('../models/Employee');
     
-    // Ensure default HR Director profile exists
-    const hrExist = await Employee.findOne({ email: 'hr@company.com' });
-    if (!hrExist) {
-      console.log('Default HR Director profile not found. Initializing...');
-      await Employee.create({
-        id: "EMP-0001",
-        name: "Venkat Raman",
-        role: "hr",
-        dept: "Human Resources",
-        joined: "2018-05-10",
-        email: "hr@company.com",
-        password: "admin123",
-        status: "Approved",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-        aadhaar: "4567-8901-2345",
-        phone: "+91 98765 00001",
-        blood: "A+",
-        dob: "1980-04-15",
-        gender: "Male"
-      });
-      console.log('Default HR Director profile created successfully.');
-    } else {
-      if (hrExist.role !== 'hr') {
-        hrExist.role = 'hr';
-        await hrExist.save();
-      }
-    }
+    const seedHRs = [
+      { id: "EMP-1001", _id: "60c72b2f9b1d8b2a3c9d8001", name: "Gara Nandini", email: "garanandini067@gmail.com", role: "hr", dept: "Human Resources", password: "admin123" },
+      { id: "EMP-1002", _id: "60c72b2f9b1d8b2a3c9d8002", name: "Akhil Sirivella", email: "akhilsirivella510@gmail.com", role: "hr", dept: "Human Resources", password: "admin123" },
+      { id: "EMP-1003", _id: "60c72b2f9b1d8b2a3c9d8003", name: "Karthik Potur", email: "karthikpotur@gmail.com", role: "hr", dept: "Human Resources", password: "admin123" },
+      { id: "EMP-1004", _id: "60c72b2f9b1d8b2a3c9d8004", name: "John Wesley", email: "johnwesley.290305@gmail.com", role: "hr", dept: "Human Resources", password: "admin123" }
+    ];
 
-    // Ensure default Employee profile exists
-    const employeeExist = await Employee.findOne({ email: 'employee@company.com' });
-    if (!employeeExist) {
-      console.log('Default Employee profile not found. Initializing...');
-      await Employee.create({
-        id: "EMP-0002",
-        name: "Aditya Kumar",
-        role: "employee",
-        dept: "Engineering",
-        joined: "2021-06-15",
-        email: "employee@company.com",
-        password: "employee123",
-        status: "Approved",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-        aadhaar: "1234-5678-9012",
-        phone: "+91 98765 00002",
-        blood: "O+",
-        dob: "1995-08-20",
-        gender: "Male"
-      });
-      console.log('Default Employee profile created successfully.');
+    const seedEmployees = [
+      { id: "EMP-2001", _id: "60c72b2f9b1d8b2a3c9d8005", name: "Priyanka", email: "priyanka@qbkartitsolutions.com", role: "employee", dept: "Engineering", password: "employee123" },
+      { id: "EMP-2002", _id: "60c72b2f9b1d8b2a3c9d8006", name: "Pranitha", email: "pranitha@qbkartitsolutions.com", role: "employee", dept: "Engineering", password: "employee123" },
+      { id: "EMP-2003", _id: "60c72b2f9b1d8b2a3c9d8007", name: "Dhanush Goud", email: "dhanushgoud58@gmail.com", role: "employee", dept: "Engineering", password: "employee123" }
+    ];
+
+    for (const user of [...seedHRs, ...seedEmployees]) {
+      const exists = await Employee.findOne({ email: user.email });
+      if (!exists) {
+        console.log(`Seeding whitelisted user: ${user.email}`);
+        await Employee.create({
+          ...user,
+          status: "Approved",
+          joined: "2024-01-15",
+          avatar: user.role === 'hr' 
+            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+            : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          aadhaar: "1234-5678-9012",
+          phone: "+91 98765 00000"
+        });
+      }
     }
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);

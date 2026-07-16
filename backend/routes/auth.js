@@ -21,43 +21,101 @@ const generateToken = (id) => {
 router.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
 
-  // Master override for default accounts to prevent connection buffering hangs
-  if (
-    (email === 'hr@company.com' && password === 'admin123') ||
-    (email === 'employee@company.com' && password === 'employee123')
-  ) {
-    console.log('Master bypass login triggered for:', email);
-    const isHR = email === 'hr@company.com';
+  const hrEmails = [
+    'garanandini067@gmail.com',
+    'akhilsirivella510@gmail.com',
+    'karthikpotur@gmail.com',
+    'johnwesley.290305@gmail.com'
+  ];
 
-    // Verify portal selection compatibility for default accounts
-    if (role) {
-      if (role === 'hr' && !isHR) {
-        return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
-      }
-      if (role === 'employee' && isHR) {
-        return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
-      }
+  const employeeEmails = [
+    'priyanka@qbkartitsolutions.com',
+    'pranitha@qbkartitsolutions.com',
+    'dhanushgoud58@gmail.com'
+  ];
+
+  const lowerEmail = email ? email.toLowerCase().trim() : '';
+
+  // Check login credentials matching
+  const isHR = hrEmails.includes(lowerEmail);
+  const isEmployee = employeeEmails.includes(lowerEmail);
+
+  if (isHR) {
+    if (password !== 'admin123') {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    if (role && role !== 'hr') {
+      return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
+    }
+    
+    let name = 'John Wesley';
+    let id = 'EMP-1004';
+    let _id = '60c72b2f9b1d8b2a3c9d8004';
+    
+    if (lowerEmail === 'garanandini067@gmail.com') {
+      name = 'Gara Nandini';
+      id = 'EMP-1001';
+      _id = '60c72b2f9b1d8b2a3c9d8001';
+    } else if (lowerEmail === 'akhilsirivella510@gmail.com') {
+      name = 'Akhil Sirivella';
+      id = 'EMP-1002';
+      _id = '60c72b2f9b1d8b2a3c9d8002';
+    } else if (lowerEmail === 'karthikpotur@gmail.com') {
+      name = 'Karthik Potur';
+      id = 'EMP-1003';
+      _id = '60c72b2f9b1d8b2a3c9d8003';
     }
 
-    const mockUser = {
-      _id: isHR ? '60c72b2f9b1d8b2a3c9d7890' : '60c72b2f9b1d8b2a3c9d7891',
-      id: isHR ? 'EMP-0001' : 'EMP-0002',
-      name: isHR ? 'Venkat Raman' : 'Aditya Kumar',
-      email: email,
-      role: isHR ? 'hr' : 'employee',
-      status: 'Approved',
-      dept: isHR ? 'Human Resources' : 'Engineering'
-    };
-
+    console.log('Master HR bypass login triggered for:', lowerEmail);
     return res.json({
-      _id: mockUser._id,
-      id: mockUser.id,
-      name: mockUser.name,
-      email: mockUser.email,
-      role: mockUser.role,
-      dept: mockUser.dept,
-      token: generateToken(mockUser._id)
+      _id,
+      id,
+      name,
+      email: lowerEmail,
+      role: 'hr',
+      dept: 'Human Resources',
+      token: generateToken(_id)
     });
+  }
+
+  if (isEmployee) {
+    if (password !== 'employee123') {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    if (role && role !== 'employee') {
+      return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
+    }
+
+    let name = 'Dhanush Goud';
+    let id = 'EMP-2003';
+    let _id = '60c72b2f9b1d8b2a3c9d8007';
+
+    if (lowerEmail === 'priyanka@qbkartitsolutions.com') {
+      name = 'Priyanka';
+      id = 'EMP-2001';
+      _id = '60c72b2f9b1d8b2a3c9d8005';
+    } else if (lowerEmail === 'pranitha@qbkartitsolutions.com') {
+      name = 'Pranitha';
+      id = 'EMP-2002';
+      _id = '60c72b2f9b1d8b2a3c9d8006';
+    }
+
+    console.log('Master Employee bypass login triggered for:', lowerEmail);
+    return res.json({
+      _id,
+      id,
+      name,
+      email: lowerEmail,
+      role: 'employee',
+      dept: 'Engineering',
+      token: generateToken(_id)
+    });
+  }
+
+  // Fallback check: if DB is offline and not in whitelists, reject immediately
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(401).json({ message: 'Invalid credentials (offline mode)' });
   }
 
   try {
@@ -248,7 +306,7 @@ router.post('/register', async (req, res) => {
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
-    if (req.user._id.toString() === '60c72b2f9b1d8b2a3c9d7890' || req.user._id.toString() === '60c72b2f9b1d8b2a3c9d7891') {
+    if (req.user._id.toString().startsWith('60c72b2f9b1d8b2a3c9')) {
       return res.json(req.user);
     }
     const employee = await Employee.findById(req.user._id).select('-password');
