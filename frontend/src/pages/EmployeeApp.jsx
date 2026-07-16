@@ -361,7 +361,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const handleClockIn = async () => {
     try {
-      await api.post('/timesheet/clock-in');
+      const clockIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = new Date().toLocaleDateString('en-CA');
+      await api.post('/timesheet/clock-in', { clockIn, date });
       showToast('Successfully clocked in for today.', 'success');
       fetchTimesheets();
     } catch (err) {
@@ -372,7 +374,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const handleClockOut = async () => {
     try {
-      await api.post('/timesheet/clock-out');
+      const clockOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = new Date().toLocaleDateString('en-CA');
+      await api.post('/timesheet/clock-out', { clockOut, date });
       showToast('Successfully clocked out.', 'success');
       fetchTimesheets();
     } catch (err) {

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { getMockDataForModel } = require('./mock_data');
 
-// Override Query exec to capture offline database query errors globally
 const originalExec = mongoose.Query.prototype.exec;
 mongoose.Query.prototype.exec = async function(...args) {
   try {
@@ -9,7 +8,15 @@ mongoose.Query.prototype.exec = async function(...args) {
   } catch (err) {
     console.warn(`[Offline Mode] Query failed for model "${this.model.modelName}" (${this.op}). Returning fallback mock data...`);
     try {
-      return getMockDataForModel(this.model.modelName, this.op, this._conditions);
+      const mockData = getMockDataForModel(this.model.modelName, this.op, this._conditions);
+      if (!mockData) return mockData;
+      
+      // Hydrate plain objects into Mongoose Documents so document methods like .save() work
+      if (Array.isArray(mockData)) {
+        return mockData.map(item => this.model.hydrate(item));
+      } else {
+        return this.model.hydrate(mockData);
+      }
     } catch (fallbackErr) {
       console.error(`[Offline Mode] Fallback failed:`, fallbackErr);
       throw err;

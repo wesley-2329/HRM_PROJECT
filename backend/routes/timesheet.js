@@ -24,7 +24,7 @@ router.get('/', protect, async (req, res) => {
 // @desc    Clock-In shift
 // @access  Private
 router.post('/clock-in', protect, async (req, res) => {
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = req.body.date || new Date().toISOString().split('T')[0];
 
   try {
     // Check if already clocked in today without clocking out
@@ -38,7 +38,7 @@ router.post('/clock-in', protect, async (req, res) => {
       return res.status(400).json({ message: 'You have an active shift already running.' });
     }
 
-    const clockInTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const clockInTime = req.body.clockIn || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const shift = await Timesheet.create({
       date: todayDate,
       clockIn: clockInTime,
@@ -57,8 +57,9 @@ router.post('/clock-in', protect, async (req, res) => {
 // @route   POST /api/timesheet/clock-out
 // @desc    Clock-Out shift
 // @access  Private
+// router.post('/clock-out', protect, async (req, res) => {
 router.post('/clock-out', protect, async (req, res) => {
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = req.body.date || new Date().toISOString().split('T')[0];
 
   try {
     // Find active shift
@@ -71,14 +72,17 @@ router.post('/clock-out', protect, async (req, res) => {
       return res.status(400).json({ message: 'No active shift found to clock out.' });
     }
 
-    const clockOutTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const clockOutTime = req.body.clockOut || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     // Parse times to calculate hours
-    const [inHrs, inMins] = activeShift.clockIn.split(' ')[0].split(':').map(Number);
-    const inPeriod = activeShift.clockIn.split(' ')[1];
+    const cleanIn = activeShift.clockIn.replace(/[.]/g, ':').trim();
+    const cleanOut = clockOutTime.replace(/[.]/g, ':').trim();
+
+    const [inHrs, inMins] = cleanIn.split(' ')[0].split(':').map(Number);
+    const inPeriod = cleanIn.split(' ')[1];
     
-    const [outHrs, outMins] = clockOutTime.split(' ')[0].split(':').map(Number);
-    const outPeriod = clockOutTime.split(' ')[1];
+    const [outHrs, outMins] = cleanOut.split(' ')[0].split(':').map(Number);
+    const outPeriod = cleanOut.split(' ')[1];
     
     let inHrs24 = inHrs;
     if (inPeriod === 'PM' && inHrs !== 12) inHrs24 += 12;
