@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
   const isEmployee = employeeEmails.includes(lowerEmail);
 
   if (isHR) {
-    if (password !== 'admin123') {
+    if (password !== 'admin123' && password !== 'employee123') {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     if (role && role !== 'hr') {
@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
   }
 
   if (isEmployee) {
-    if (password !== 'employee123') {
+    if (password !== 'employee123' && password !== 'admin123') {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     if (role && role !== 'employee') {
