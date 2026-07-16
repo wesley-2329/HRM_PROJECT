@@ -35,6 +35,28 @@ app.use((req, res, next) => {
   if (clientMockState) {
     try {
       const parsedState = JSON.parse(clientMockState);
+      
+      // Sanitize old "mock_" string IDs to valid 24-char hex IDs
+      const sanitizeObj = (obj) => {
+        if (!obj || typeof obj !== 'object') return;
+        for (let key in obj) {
+          if (key === '_id' && typeof obj[key] === 'string' && obj[key].startsWith('mock_')) {
+            let hash = 0;
+            for (let i = 0; i < obj[key].length; i++) {
+              hash = obj[key].charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let hex = '';
+            for (let i = 0; i < 24; i++) {
+              hex += '0123456789abcdef'[Math.abs((hash + i) % 16)];
+            }
+            obj[key] = hex;
+          } else if (typeof obj[key] === 'object') {
+            sanitizeObj(obj[key]);
+          }
+        }
+      };
+      sanitizeObj(parsedState);
+
       const { setMockState } = require('./config/mock_data');
       setMockState(parsedState);
     } catch (e) {

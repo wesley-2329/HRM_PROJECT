@@ -479,7 +479,12 @@ function addMockDocument(modelName, doc) {
 
   // Assign _id if missing
   if (!doc._id) {
-    doc._id = 'mock_' + Math.random().toString(36).substr(2, 9);
+    const hex = '0123456789abcdef';
+    let mockId = '';
+    for (let i = 0; i < 24; i++) {
+      mockId += hex[Math.floor(Math.random() * 16)];
+    }
+    doc._id = mockId;
   }
 
   // Check if it already exists to avoid duplicates (e.g. updating an existing document)
