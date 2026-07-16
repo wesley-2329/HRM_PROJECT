@@ -67,6 +67,10 @@ const connectDB = async () => {
     // Disable command buffering so queries fail immediately when offline instead of hanging
     mongoose.set('bufferCommands', false);
 
+    if (process.env.FORCE_OFFLINE === 'true') {
+      throw new Error('FORCE_OFFLINE is enabled. Simulating disconnected database.');
+    }
+
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/', {
       serverSelectionTimeoutMS: 2000
     });
