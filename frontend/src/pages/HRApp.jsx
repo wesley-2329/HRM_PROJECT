@@ -733,7 +733,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </p>
             </div>
             <div className="welcome-banner-img-container">
-              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+              <img src="/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
             </div>
           </div>
           <div className="metric-grid">
@@ -2456,7 +2456,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                 Configure global settings, define automated payslip cycles, select header highlighting color themes, and update administrative credentials.
               </p>
-              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+              <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
             </div>
 
             {/* Right Forms Column */}

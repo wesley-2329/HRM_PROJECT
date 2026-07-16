@@ -77,11 +77,12 @@ const connectDB = async () => {
     const seedEmployees = [
       { id: "EMP-2001", _id: "60c72b2f9b1d8b2a3c9d8005", name: "Priyanka", email: "priyanka@qbkartitsolutions.com", role: "employee", dept: "Engineering", password: "employee123" },
       { id: "EMP-2002", _id: "60c72b2f9b1d8b2a3c9d8006", name: "Pranitha", email: "pranitha@qbkartitsolutions.com", role: "employee", dept: "Engineering", password: "employee123" },
-      { id: "EMP-2003", _id: "60c72b2f9b1d8b2a3c9d8007", name: "Dhanush Goud", email: "dhanushgoud58@gmail.com", role: "employee", dept: "Engineering", password: "employee123" }
+      { id: "EMP-2003", _id: "60c72b2f9b1d8b2a3c9d8007", name: "Dhanush Goud", email: "dhanushgoud58@gmail.com", role: "employee", dept: "Engineering", password: "employee123" },
+      { id: "EMP-2004", _id: "60c72b2f9b1d8b2a3c9d8008", name: "John Wesley", email: "johnwesley.290305@gmail.com", role: "employee", dept: "Engineering", password: "employee123" }
     ];
 
     for (const user of [...seedHRs, ...seedEmployees]) {
-      const exists = await Employee.findOne({ email: user.email });
+      const exists = await Employee.findOne({ email: user.email, role: user.role });
       if (!exists) {
         console.log(`Seeding whitelisted user: ${user.email}`);
         await Employee.create({

@@ -31,7 +31,8 @@ router.post('/login', async (req, res) => {
   const employeeEmails = [
     'priyanka@qbkartitsolutions.com',
     'pranitha@qbkartitsolutions.com',
-    'dhanushgoud58@gmail.com'
+    'dhanushgoud58@gmail.com',
+    'johnwesley.290305@gmail.com'
   ];
 
   const lowerEmail = email ? email.toLowerCase().trim() : '';
@@ -98,6 +99,10 @@ router.post('/login', async (req, res) => {
       name = 'Pranitha';
       id = 'EMP-2002';
       _id = '60c72b2f9b1d8b2a3c9d8006';
+    } else if (lowerEmail === 'johnwesley.290305@gmail.com') {
+      name = 'John Wesley';
+      id = 'EMP-2004';
+      _id = '60c72b2f9b1d8b2a3c9d8008';
     }
 
     console.log('Master Employee bypass login triggered for:', lowerEmail);

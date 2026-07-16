@@ -144,6 +144,28 @@ let mockEmployees = [
     costCenter: "Engineering CC",
     teamLeadId: "EMP-1004",
     isTeamLead: true
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d8008",
+    id: "EMP-2004",
+    name: "John Wesley",
+    role: "employee",
+    dept: "Engineering",
+    joined: "2021-06-15",
+    email: "johnwesley.290305@gmail.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    aadhaar: "1234-5678-9012",
+    phone: "+91 98765 00002",
+    blood: "O+",
+    dob: "1995-08-20",
+    gender: "Male",
+    designation: "Senior Software Engineer",
+    branch: "HQ Bangalore",
+    businessUnit: "Cloud Solutions",
+    costCenter: "Engineering CC",
+    teamLeadId: "EMP-1004",
+    isTeamLead: true
   }
 ];
 

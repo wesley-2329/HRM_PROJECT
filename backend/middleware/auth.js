@@ -46,6 +46,12 @@ const protect = async (req, res, next) => {
           email = 'dhanushgoud58@gmail.com';
           role = 'employee';
           dept = 'Engineering';
+        } else if (decoded.id === '60c72b2f9b1d8b2a3c9d8008') {
+          name = 'John Wesley';
+          id = 'EMP-2004';
+          email = 'johnwesley.290305@gmail.com';
+          role = 'employee';
+          dept = 'Engineering';
         } else if (decoded.id === '60c72b2f9b1d8b2a3c9d7890') {
           name = 'Venkat Raman';
           id = 'EMP-0001';

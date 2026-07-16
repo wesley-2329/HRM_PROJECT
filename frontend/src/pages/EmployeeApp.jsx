@@ -1527,7 +1527,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
             <div className="welcome-banner-img-container">
-              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+              <img src="/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
             </div>
           </div>
 
@@ -2953,7 +2953,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                 Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
               </p>
-              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+              <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
             </div>
 
             {/* Right Forms Column */}

@@ -840,7 +840,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
             }}>
               {/* Workspace Dashboard Preview */}
               <img
-                src="/src/assets/software_work_environment.png"
+                src="/software_work_environment.png"
                 alt="HR O Dashboard"
                 style={{
                   width: '100%',
