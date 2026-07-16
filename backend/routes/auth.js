@@ -41,80 +41,78 @@ router.post('/login', async (req, res) => {
   const isHR = hrEmails.includes(lowerEmail);
   const isEmployee = employeeEmails.includes(lowerEmail);
 
-  if (isHR) {
-    if (password !== 'admin123' && password !== 'employee123') {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    if (role && role !== 'hr') {
-      return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
-    }
-    
-    let name = 'John Wesley';
-    let id = 'EMP-1004';
-    let _id = '60c72b2f9b1d8b2a3c9d8004';
-    
-    if (lowerEmail === 'garanandini067@gmail.com') {
-      name = 'Gara Nandini';
-      id = 'EMP-1001';
-      _id = '60c72b2f9b1d8b2a3c9d8001';
-    } else if (lowerEmail === 'akhilsirivella510@gmail.com') {
-      name = 'Akhil Sirivella';
-      id = 'EMP-1002';
-      _id = '60c72b2f9b1d8b2a3c9d8002';
-    } else if (lowerEmail === 'karthikpotur@gmail.com') {
-      name = 'Karthik Potur';
-      id = 'EMP-1003';
-      _id = '60c72b2f9b1d8b2a3c9d8003';
-    }
+  // Match login based on role selection to avoid conflicts
+  if (role === 'employee') {
+    if (isEmployee) {
+      if (password !== 'employee123' && password !== 'admin123') {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+      
+      let name = 'Dhanush Goud';
+      let id = 'EMP-2003';
+      let _id = '60c72b2f9b1d8b2a3c9d8007';
 
-    console.log('Master HR bypass login triggered for:', lowerEmail);
-    return res.json({
-      _id,
-      id,
-      name,
-      email: lowerEmail,
-      role: 'hr',
-      dept: 'Human Resources',
-      token: generateToken(_id)
-    });
-  }
+      if (lowerEmail === 'priyanka@qbkartitsolutions.com') {
+        name = 'Priyanka';
+        id = 'EMP-2001';
+        _id = '60c72b2f9b1d8b2a3c9d8005';
+      } else if (lowerEmail === 'pranitha@qbkartitsolutions.com') {
+        name = 'Pranitha';
+        id = 'EMP-2002';
+        _id = '60c72b2f9b1d8b2a3c9d8006';
+      } else if (lowerEmail === 'johnwesley.290305@gmail.com') {
+        name = 'John Wesley';
+        id = 'EMP-2004';
+        _id = '60c72b2f9b1d8b2a3c9d8008';
+      }
 
-  if (isEmployee) {
-    if (password !== 'employee123' && password !== 'admin123') {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      console.log('Master Employee bypass login triggered for:', lowerEmail);
+      return res.json({
+        _id,
+        id,
+        name,
+        email: lowerEmail,
+        role: 'employee',
+        dept: 'Engineering',
+        token: generateToken(_id)
+      });
     }
-    if (role && role !== 'employee') {
-      return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
+  } else {
+    // Default to HR Portal lookup
+    if (isHR) {
+      if (password !== 'admin123' && password !== 'employee123') {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+      
+      let name = 'John Wesley';
+      let id = 'EMP-1004';
+      let _id = '60c72b2f9b1d8b2a3c9d8004';
+      
+      if (lowerEmail === 'garanandini067@gmail.com') {
+        name = 'Gara Nandini';
+        id = 'EMP-1001';
+        _id = '60c72b2f9b1d8b2a3c9d8001';
+      } else if (lowerEmail === 'akhilsirivella510@gmail.com') {
+        name = 'Akhil Sirivella';
+        id = 'EMP-1002';
+        _id = '60c72b2f9b1d8b2a3c9d8002';
+      } else if (lowerEmail === 'karthikpotur@gmail.com') {
+        name = 'Karthik Potur';
+        id = 'EMP-1003';
+        _id = '60c72b2f9b1d8b2a3c9d8003';
+      }
+
+      console.log('Master HR bypass login triggered for:', lowerEmail);
+      return res.json({
+        _id,
+        id,
+        name,
+        email: lowerEmail,
+        role: 'hr',
+        dept: 'Human Resources',
+        token: generateToken(_id)
+      });
     }
-
-    let name = 'Dhanush Goud';
-    let id = 'EMP-2003';
-    let _id = '60c72b2f9b1d8b2a3c9d8007';
-
-    if (lowerEmail === 'priyanka@qbkartitsolutions.com') {
-      name = 'Priyanka';
-      id = 'EMP-2001';
-      _id = '60c72b2f9b1d8b2a3c9d8005';
-    } else if (lowerEmail === 'pranitha@qbkartitsolutions.com') {
-      name = 'Pranitha';
-      id = 'EMP-2002';
-      _id = '60c72b2f9b1d8b2a3c9d8006';
-    } else if (lowerEmail === 'johnwesley.290305@gmail.com') {
-      name = 'John Wesley';
-      id = 'EMP-2004';
-      _id = '60c72b2f9b1d8b2a3c9d8008';
-    }
-
-    console.log('Master Employee bypass login triggered for:', lowerEmail);
-    return res.json({
-      _id,
-      id,
-      name,
-      email: lowerEmail,
-      role: 'employee',
-      dept: 'Engineering',
-      token: generateToken(_id)
-    });
   }
 
   // Fallback check: if DB is offline and not in whitelists, reject immediately
