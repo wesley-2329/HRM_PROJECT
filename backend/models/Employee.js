@@ -50,16 +50,16 @@ const EmployeeSchema = new mongoose.Schema({
     required: true
   },
   address: {
-    door: { type: String, default: 'N/A' },
-    street: { type: String, default: 'N/A' },
-    city: { type: String, default: 'N/A' },
-    state: { type: String, default: 'N/A' },
-    pin: { type: String, default: '000000' }
+    door: { type: String, default: '' },
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    pin: { type: String, default: '' }
   },
   emergency: {
-    name: { type: String, default: 'N/A' },
-    relation: { type: String, default: 'N/A' },
-    phone: { type: String, default: 'N/A' }
+    name: { type: String, default: '' },
+    relation: { type: String, default: '' },
+    phone: { type: String, default: '' }
   },
   blood: {
     type: String,

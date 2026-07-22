@@ -106,52 +106,51 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const setPayload = {};
+
     if (isHr) {
-      // HR can edit anything
-      if (req.body.name !== undefined) employee.name = req.body.name;
-      if (req.body.email !== undefined) employee.email = req.body.email;
-      if (req.body.dept !== undefined) employee.dept = req.body.dept;
-      if (req.body.role !== undefined) employee.role = req.body.role;
-      if (req.body.aadhaar !== undefined) employee.aadhaar = req.body.aadhaar;
-      if (req.body.joined !== undefined) employee.joined = req.body.joined;
-      if (req.body.phone !== undefined) employee.phone = req.body.phone;
-      if (req.body.isTeamLead !== undefined) employee.isTeamLead = req.body.isTeamLead;
-      if (req.body.teamLeadId !== undefined) employee.teamLeadId = req.body.teamLeadId;
+      if (req.body.name !== undefined) setPayload.name = req.body.name;
+      if (req.body.email !== undefined) setPayload.email = req.body.email;
+      if (req.body.dept !== undefined) setPayload.dept = req.body.dept;
+      if (req.body.role !== undefined) setPayload.role = req.body.role;
+      if (req.body.aadhaar !== undefined) setPayload.aadhaar = req.body.aadhaar;
+      if (req.body.joined !== undefined) setPayload.joined = req.body.joined;
+      if (req.body.phone !== undefined) setPayload.phone = req.body.phone;
+      if (req.body.isTeamLead !== undefined) setPayload.isTeamLead = req.body.isTeamLead;
+      if (req.body.teamLeadId !== undefined) setPayload.teamLeadId = req.body.teamLeadId;
     }
 
-    // Both HR and Self can update personal fields safely
     if (req.body.address) {
-      const currentAddr = employee.address || {};
-      employee.address = {
-        door: req.body.address.door !== undefined ? req.body.address.door : (currentAddr.door || ''),
-        street: req.body.address.street !== undefined ? req.body.address.street : (currentAddr.street || ''),
-        city: req.body.address.city !== undefined ? req.body.address.city : (currentAddr.city || ''),
-        state: req.body.address.state !== undefined ? req.body.address.state : (currentAddr.state || ''),
-        pin: req.body.address.pin !== undefined ? req.body.address.pin : (currentAddr.pin || '')
-      };
+      if (req.body.address.door !== undefined) setPayload['address.door'] = req.body.address.door;
+      if (req.body.address.street !== undefined) setPayload['address.street'] = req.body.address.street;
+      if (req.body.address.city !== undefined) setPayload['address.city'] = req.body.address.city;
+      if (req.body.address.state !== undefined) setPayload['address.state'] = req.body.address.state;
+      if (req.body.address.pin !== undefined) setPayload['address.pin'] = req.body.address.pin;
     }
 
     if (req.body.emergency) {
-      const currentEmg = employee.emergency || {};
-      employee.emergency = {
-        name: req.body.emergency.name !== undefined ? req.body.emergency.name : (currentEmg.name || ''),
-        relation: req.body.emergency.relation !== undefined ? req.body.emergency.relation : (currentEmg.relation || ''),
-        phone: req.body.emergency.phone !== undefined ? req.body.emergency.phone : (currentEmg.phone || '')
-      };
+      if (req.body.emergency.name !== undefined) setPayload['emergency.name'] = req.body.emergency.name;
+      if (req.body.emergency.relation !== undefined) setPayload['emergency.relation'] = req.body.emergency.relation;
+      if (req.body.emergency.phone !== undefined) setPayload['emergency.phone'] = req.body.emergency.phone;
     }
 
-    if (req.body.blood !== undefined) employee.blood = req.body.blood;
-    if (req.body.dob !== undefined) employee.dob = req.body.dob;
-    if (req.body.gender !== undefined) employee.gender = req.body.gender;
-    if (req.body.phone !== undefined) employee.phone = req.body.phone;
-    if (req.body.name !== undefined) employee.name = req.body.name;
-    if (req.body.email !== undefined) employee.email = req.body.email;
-    if (req.body.parentStatus !== undefined) employee.parentStatus = req.body.parentStatus;
-    if (req.body.licenseNumber !== undefined) employee.licenseNumber = req.body.licenseNumber;
-    if (req.body.licenseExpiry !== undefined) employee.licenseExpiry = req.body.licenseExpiry;
-    if (req.body.certifications !== undefined) employee.certifications = req.body.certifications;
+    if (req.body.blood !== undefined) setPayload.blood = req.body.blood;
+    if (req.body.dob !== undefined) setPayload.dob = req.body.dob;
+    if (req.body.gender !== undefined) setPayload.gender = req.body.gender;
+    if (req.body.phone !== undefined) setPayload.phone = req.body.phone;
+    if (req.body.name !== undefined) setPayload.name = req.body.name;
+    if (req.body.email !== undefined) setPayload.email = req.body.email;
+    if (req.body.parentStatus !== undefined) setPayload.parentStatus = req.body.parentStatus;
+    if (req.body.licenseNumber !== undefined) setPayload.licenseNumber = req.body.licenseNumber;
+    if (req.body.licenseExpiry !== undefined) setPayload.licenseExpiry = req.body.licenseExpiry;
+    if (req.body.certifications !== undefined) setPayload.certifications = req.body.certifications;
 
-    const updatedEmployee = await employee.save();
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      employee._id,
+      { $set: setPayload },
+      { new: true, runValidators: false }
+    );
+
     res.json(updatedEmployee);
   } catch (error) {
     console.error('Error updating employee record:', error);
