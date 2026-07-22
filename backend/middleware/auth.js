@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
 
 const protect = async (req, res, next) => {
@@ -9,16 +10,16 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345');
       
-      const mongoose = require('mongoose');
-      if (mongoose.connection.readyState === 1) {
+      // Look up user in MongoDB Atlas
+      if (mongoose.connection.readyState >= 1) {
         req.user = await Employee.findById(decoded.id).select('-password');
         if (req.user) {
           return next();
         }
-        // Database is online but user document was not found (e.g. user was deleted from MongoDB Atlas)
         return res.status(401).json({ message: 'User account no longer exists.' });
       }
 
+      // Offline mode fallback for mock IDs
       if (decoded.id && decoded.id.startsWith('60c72b2f9b1d8b2a3c9')) {
         let name = 'John Wesley';
         let id = 'EMP-1004';
@@ -86,21 +87,14 @@ const protect = async (req, res, next) => {
         return next();
       }
 
-      // Get employee from the token (exclude password)
-      req.user = await Employee.findById(decoded.id).select('-password');
-      if (!req.user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-      next();
+      return res.status(401).json({ message: 'User not found.' });
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error('Auth protect error:', error.message);
+      return res.status(401).json({ message: 'Not authorized, token invalid' });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
-  }
+  return res.status(401).json({ message: 'Not authorized, no token provided' });
 };
 
 const adminOnly = (req, res, next) => {
