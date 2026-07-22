@@ -22,140 +22,90 @@ router.post('/login', async (req, res) => {
   const { email, password, role } = req.body;
   const lowerEmail = email ? email.toLowerCase().trim() : '';
 
-  // 1. Prioritize authenticating real user document from MongoDB Atlas
+  if (!lowerEmail || !password) {
+    return res.status(400).json({ message: 'Please provide email and password.' });
+  }
+
   try {
-    const employee = await Employee.findOne({ email: lowerEmail });
+    // 1. Try to find the user in MongoDB Atlas
+    let employee = await Employee.findOne({ email: lowerEmail });
 
-    if (employee) {
-      // Validate password (bcrypt, plain text, or demo master passwords)
-      const isBcryptMatch = await employee.matchPassword(password).catch(() => false);
-      const isPlainTextMatch = (password === employee.password);
-      const isMasterPass = (password === 'admin123' || password === 'employee123' || password === 'password123');
+    // 2. On-demand self-healing creation for known demo accounts if missing in database
+    if (!employee) {
+      const demoAccountMap = {
+        'garanandini067@gmail.com': { id: 'EMP-1001', _id: '60c72b2f9b1d8b2a3c9d8001', name: 'Gara Nandini', role: 'hr', dept: 'Human Resources' },
+        'akhilsirivella510@gmail.com': { id: 'EMP-1002', _id: '60c72b2f9b1d8b2a3c9d8002', name: 'Akhil Sirivella', role: 'hr', dept: 'Human Resources' },
+        'karthikpotur@gmail.com': { id: 'EMP-1003', _id: '60c72b2f9b1d8b2a3c9d8003', name: 'Karthik Potur', role: 'hr', dept: 'Human Resources' },
+        'hr@company.com': { id: 'EMP-0001', _id: '60c72b2f9b1d8b2a3c9d7890', name: 'Venkat Raman', role: 'hr', dept: 'Human Resources' },
+        'priyanka@qbkartitsolutions.com': { id: 'EMP-2001', _id: '60c72b2f9b1d8b2a3c9d8005', name: 'Priyanka', role: 'employee', dept: 'Engineering' },
+        'pranitha@qbkartitsolutions.com': { id: 'EMP-2002', _id: '60c72b2f9b1d8b2a3c9d8006', name: 'Pranitha', role: 'employee', dept: 'Engineering' },
+        'dhanushgoud58@gmail.com': { id: 'EMP-2003', _id: '60c72b2f9b1d8b2a3c9d8007', name: 'Dhanush Goud', role: 'employee', dept: 'Engineering' },
+        'employee@company.com': { id: 'EMP-0002', _id: '60c72b2f9b1d8b2a3c9d7891', name: 'Aditya Kumar', role: 'employee', dept: 'Engineering' },
+        'johnwesley.290305@gmail.com': {
+          id: role === 'hr' ? 'EMP-1004' : 'EMP-2004',
+          _id: role === 'hr' ? '60c72b2f9b1d8b2a3c9d8004' : '60c72b2f9b1d8b2a3c9d8008',
+          name: 'John Wesley',
+          role: role === 'hr' ? 'hr' : 'employee',
+          dept: role === 'hr' ? 'Human Resources' : 'Engineering'
+        }
+      };
 
-      const isPassCorrect = isBcryptMatch || isPlainTextMatch || isMasterPass;
-
-      if (!isPassCorrect) {
-        return res.status(401).json({ message: 'Invalid email or password' });
+      const demoInfo = demoAccountMap[lowerEmail];
+      if (demoInfo && (password === 'admin123' || password === 'employee123' || password === 'password123')) {
+        console.log(`[Self-Healing] Creating missing demo account in MongoDB Atlas: ${lowerEmail}`);
+        employee = await Employee.create({
+          _id: demoInfo._id,
+          id: demoInfo.id,
+          name: demoInfo.name,
+          email: lowerEmail,
+          password: password === 'admin123' ? 'admin123' : 'employee123',
+          role: demoInfo.role,
+          dept: demoInfo.dept,
+          status: 'Approved',
+          joined: '2024-01-15',
+          aadhaar: '1234-5678-9012',
+          phone: '+91 98765 00000',
+          address: { door: '101', street: 'Tech Park Rd', city: 'Hyderabad', state: 'Telangana', pin: '500081' },
+          emergency: { name: 'Guardian', relation: 'Parent', phone: '+91 98765 43210' }
+        });
       }
-
-      if (employee.status !== 'Approved') {
-        return res.status(403).json({ message: `Access denied. Your profile status is: ${employee.status}` });
-      }
-
-      console.log(`[MongoDB Auth Success] Authenticated ${employee.email} (${employee.name}) with _id: ${employee._id}`);
-
-      return res.json({
-        _id: employee._id,
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        role: employee.role,
-        dept: employee.dept,
-        avatar: employee.avatar,
-        token: generateToken(employee._id)
-      });
-    }
-  } catch (dbErr) {
-    console.warn('[Offline Mode] Database lookup failed during login:', dbErr.message);
-  }
-
-  // 2. Offline Fallback OR Seed Account Fallback (only if user not found in database)
-  const hrEmails = [
-    'garanandini067@gmail.com',
-    'akhilsirivella510@gmail.com',
-    'karthikpotur@gmail.com',
-    'johnwesley.290305@gmail.com',
-    'hr@company.com'
-  ];
-
-  const employeeEmails = [
-    'priyanka@qbkartitsolutions.com',
-    'pranitha@qbkartitsolutions.com',
-    'dhanushgoud58@gmail.com',
-    'johnwesley.290305@gmail.com',
-    'employee@company.com'
-  ];
-
-  const isHR = hrEmails.includes(lowerEmail);
-  const isEmployee = employeeEmails.includes(lowerEmail);
-
-  if (role === 'employee' && isEmployee) {
-    if (password !== 'employee123' && password !== 'admin123') {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    
-    let name = 'Dhanush Goud';
-    let id = 'EMP-2003';
-    let _id = '60c72b2f9b1d8b2a3c9d8007';
-
-    if (lowerEmail === 'priyanka@qbkartitsolutions.com') {
-      name = 'Priyanka';
-      id = 'EMP-2001';
-      _id = '60c72b2f9b1d8b2a3c9d8005';
-    } else if (lowerEmail === 'pranitha@qbkartitsolutions.com') {
-      name = 'Pranitha';
-      id = 'EMP-2002';
-      _id = '60c72b2f9b1d8b2a3c9d8006';
-    } else if (lowerEmail === 'johnwesley.290305@gmail.com') {
-      name = 'John Wesley';
-      id = 'EMP-2004';
-      _id = '60c72b2f9b1d8b2a3c9d8008';
-    } else if (lowerEmail === 'employee@company.com') {
-      name = 'Aditya Kumar';
-      id = 'EMP-0002';
-      _id = '60c72b2f9b1d8b2a3c9d7891';
     }
 
-    console.log('Master Employee fallback login triggered for:', lowerEmail);
+    if (!employee) {
+      return res.status(401).json({ message: 'Account not found. Please Sign Up first.' });
+    }
+
+    // 3. Validate password (bcrypt, plain text match, or demo master pass)
+    const isBcryptMatch = await employee.matchPassword(password).catch(() => false);
+    const isPlainTextMatch = (password === employee.password);
+    const isMasterPass = (password === 'admin123' || password === 'employee123' || password === 'password123');
+
+    const isPassCorrect = isBcryptMatch || isPlainTextMatch || isMasterPass;
+
+    if (!isPassCorrect) {
+      return res.status(401).json({ message: 'Invalid password. Please check your credentials.' });
+    }
+
+    if (employee.status !== 'Approved') {
+      return res.status(403).json({ message: `Access denied. Profile status: ${employee.status}` });
+    }
+
+    console.log(`[MongoDB Auth Success] ${employee.email} (${employee.name}) authenticated with _id: ${employee._id}`);
+
     return res.json({
-      _id,
-      id,
-      name,
-      email: lowerEmail,
-      role: 'employee',
-      dept: 'Engineering',
-      token: generateToken(_id)
+      _id: employee._id,
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+      dept: employee.dept,
+      avatar: employee.avatar,
+      token: generateToken(employee._id)
     });
-  } else if (role !== 'employee' && isHR) {
-    if (password !== 'admin123' && password !== 'employee123') {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    
-    let name = 'John Wesley';
-    let id = 'EMP-1004';
-    let _id = '60c72b2f9b1d8b2a3c9d8004';
-    
-    if (lowerEmail === 'garanandini067@gmail.com') {
-      name = 'Gara Nandini';
-      id = 'EMP-1001';
-      _id = '60c72b2f9b1d8b2a3c9d8001';
-    } else if (lowerEmail === 'akhilsirivella510@gmail.com') {
-      name = 'Akhil Sirivella';
-      id = 'EMP-1002';
-      _id = '60c72b2f9b1d8b2a3c9d8002';
-    } else if (lowerEmail === 'karthikpotur@gmail.com') {
-      name = 'Karthik Potur';
-      id = 'EMP-1003';
-      _id = '60c72b2f9b1d8b2a3c9d8003';
-    } else if (lowerEmail === 'hr@company.com') {
-      name = 'Venkat Raman';
-      id = 'EMP-0001';
-      _id = '60c72b2f9b1d8b2a3c9d7890';
-    }
-
-    console.log('Master HR fallback login triggered for:', lowerEmail);
-    return res.json({
-      _id,
-      id,
-      name,
-      email: lowerEmail,
-      role: 'hr',
-      dept: 'Human Resources',
-      token: generateToken(_id)
-    });
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ message: 'Server error during login: ' + error.message });
   }
-
-  res.status(401).json({ message: 'Invalid email or password' });
 });
 
 // @route   POST /api/auth/register
