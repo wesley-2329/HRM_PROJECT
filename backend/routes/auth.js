@@ -25,14 +25,16 @@ router.post('/login', async (req, res) => {
     'garanandini067@gmail.com',
     'akhilsirivella510@gmail.com',
     'karthikpotur@gmail.com',
-    'johnwesley.290305@gmail.com'
+    'johnwesley.290305@gmail.com',
+    'hr@company.com'
   ];
 
   const employeeEmails = [
     'priyanka@qbkartitsolutions.com',
     'pranitha@qbkartitsolutions.com',
     'dhanushgoud58@gmail.com',
-    'johnwesley.290305@gmail.com'
+    'johnwesley.290305@gmail.com',
+    'employee@company.com'
   ];
 
   const lowerEmail = email ? email.toLowerCase().trim() : '';
@@ -64,6 +66,10 @@ router.post('/login', async (req, res) => {
         name = 'John Wesley';
         id = 'EMP-2004';
         _id = '60c72b2f9b1d8b2a3c9d8008';
+      } else if (lowerEmail === 'employee@company.com') {
+        name = 'Aditya Kumar';
+        id = 'EMP-0002';
+        _id = '60c72b2f9b1d8b2a3c9d7891';
       }
 
       console.log('Master Employee bypass login triggered for:', lowerEmail);
@@ -100,6 +106,10 @@ router.post('/login', async (req, res) => {
         name = 'Karthik Potur';
         id = 'EMP-1003';
         _id = '60c72b2f9b1d8b2a3c9d8003';
+      } else if (lowerEmail === 'hr@company.com') {
+        name = 'Venkat Raman';
+        id = 'EMP-0001';
+        _id = '60c72b2f9b1d8b2a3c9d7890';
       }
 
       console.log('Master HR bypass login triggered for:', lowerEmail);
@@ -309,16 +319,19 @@ router.post('/register', async (req, res) => {
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
-    if (req.user._id.toString().startsWith('60c72b2f9b1d8b2a3c9')) {
-      return res.json(req.user);
-    }
     const employee = await Employee.findById(req.user._id).select('-password');
     if (employee) {
-      res.json(employee);
-    } else {
-      res.status(404).json({ message: 'User not found' });
+      return res.json(employee);
     }
+    if (req.user && req.user._id && req.user._id.toString().startsWith('60c72b2f9b1d8b2a3c9')) {
+      return res.json(req.user);
+    }
+    res.status(404).json({ message: 'User not found' });
   } catch (error) {
+    if (req.user && req.user._id && req.user._id.toString().startsWith('60c72b2f9b1d8b2a3c9')) {
+      console.warn('[Offline Mode] Database query failed for /me. Returning fallback mock user.');
+      return res.json(req.user);
+    }
     res.status(500).json({ message: error.message });
   }
 });

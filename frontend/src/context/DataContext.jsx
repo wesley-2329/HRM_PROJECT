@@ -433,7 +433,13 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || '/', {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL;
+    if (!socketUrl) {
+      console.log('Real-time WebSockets disabled (VITE_SOCKET_URL not configured). Falling back to REST polling.');
+      return;
+    }
+
+    const socket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 

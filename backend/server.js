@@ -14,6 +14,16 @@ const socketIo = require('socket.io');
 const path = require('path');
 
 const app = express();
+
+// Database connection middleware for serverless environments
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (error) {
+    // Handled in connectDB, proceed to route fallback
+  }
+  next();
+});
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {

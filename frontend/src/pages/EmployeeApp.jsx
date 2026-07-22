@@ -200,6 +200,24 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [profileEmgRel, setProfileEmgRel] = useState(user?.emergency?.relation || '');
   const [profileEmgPhone, setProfileEmgPhone] = useState(user?.emergency?.phone || '');
 
+  // Synchronize state when user details are loaded or updated from database
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileParentStatus(user.parentStatus || 'No');
+      setProfileDoor(user.address?.door || '');
+      setProfileStreet(user.address?.street || '');
+      setProfileCity(user.address?.city || '');
+      setProfileState(user.address?.state || '');
+      setProfilePin(user.address?.pin || '');
+      setProfileEmgName(user.emergency?.name || '');
+      setProfileEmgRel(user.emergency?.relation || '');
+      setProfileEmgPhone(user.emergency?.phone || '');
+    }
+  }, [user]);
+
   const [aadhaarMasked, setAadhaarMasked] = useState(true);
   const [profileTab, setProfileTab] = useState('personal'); // 'personal' or 'professional'
 
