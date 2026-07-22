@@ -27,26 +27,19 @@ router.post('/login', async (req, res) => {
     const employee = await Employee.findOne({ email: lowerEmail });
 
     if (employee) {
-      // Validate password (allow bcrypt match or demo master passwords)
-      const isMasterPass = (password === 'admin123' || password === 'employee123');
-      const isMatch = await employee.matchPassword(password).catch(() => false);
+      // Validate password (bcrypt, plain text, or demo master passwords)
+      const isBcryptMatch = await employee.matchPassword(password).catch(() => false);
+      const isPlainTextMatch = (password === employee.password);
+      const isMasterPass = (password === 'admin123' || password === 'employee123' || password === 'password123');
 
-      if (!isMatch && !isMasterPass) {
+      const isPassCorrect = isBcryptMatch || isPlainTextMatch || isMasterPass;
+
+      if (!isPassCorrect) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       if (employee.status !== 'Approved') {
         return res.status(403).json({ message: `Access denied. Your profile status is: ${employee.status}` });
-      }
-
-      // Verify portal selection compatibility if specified
-      if (role) {
-        if (role === 'hr' && employee.role !== 'hr') {
-          return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
-        }
-        if (role === 'employee' && employee.role === 'hr') {
-          return res.status(403).json({ message: 'Incorrect portal selection for this account.' });
-        }
       }
 
       console.log(`[MongoDB Auth Success] Authenticated ${employee.email} (${employee.name}) with _id: ${employee._id}`);
