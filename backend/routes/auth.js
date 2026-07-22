@@ -26,7 +26,7 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ message: 'Please provide email and password.' });
   }
 
-  const isDBConnected = (mongoose.connection.readyState >= 1);
+  const isDBConnected = (mongoose.connection.readyState === 1);
   let employee = null;
 
   // 1. If MongoDB Atlas is connected, attempt Atlas query
