@@ -59,6 +59,24 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const [profileEmgRel, setProfileEmgRel] = useState(user?.emergency?.relation || '');
   const [profileEmgPhone, setProfileEmgPhone] = useState(user?.emergency?.phone || '');
 
+  // Synchronize HR profile states when user context updates
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileParentStatus(user.parentStatus || 'No');
+      setProfileDoor(user.address?.door || '');
+      setProfileStreet(user.address?.street || '');
+      setProfileCity(user.address?.city || '');
+      setProfileState(user.address?.state || '');
+      setProfilePin(user.address?.pin || '');
+      setProfileEmgName(user.emergency?.name || '');
+      setProfileEmgRel(user.emergency?.relation || '');
+      setProfileEmgPhone(user.emergency?.phone || '');
+    }
+  }, [user]);
+
   // Modals state
   const [addEmpActive, setAddEmpActive] = useState(false);
   const [selectedEmpForEdit, setSelectedEmpForEdit] = useState(null);

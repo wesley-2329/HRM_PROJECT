@@ -89,14 +89,18 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @access  Private
 router.put('/:id', protect, async (req, res) => {
   try {
-    const employee = await Employee.findOne({ id: req.params.id });
+    const mongoose = require('mongoose');
+    let employee = await Employee.findOne({ id: req.params.id });
+    if (!employee && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      employee = await Employee.findById(req.params.id);
+    }
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
     // Check if HR or self
     const isHr = req.user.role === 'hr';
-    const isSelf = req.user.id === req.params.id;
+    const isSelf = req.user.id === req.params.id || req.user._id?.toString() === employee._id?.toString();
 
     if (!isHr && !isSelf) {
       return res.status(403).json({ message: 'Not authorized' });
@@ -104,42 +108,44 @@ router.put('/:id', protect, async (req, res) => {
 
     if (isHr) {
       // HR can edit anything
-      employee.name = req.body.name || employee.name;
-      employee.email = req.body.email || employee.email;
-      employee.dept = req.body.dept || employee.dept;
-      employee.role = req.body.role || employee.role;
-      employee.aadhaar = req.body.aadhaar || employee.aadhaar;
-      employee.joined = req.body.joined || employee.joined;
-      employee.phone = req.body.phone || employee.phone;
+      if (req.body.name !== undefined) employee.name = req.body.name;
+      if (req.body.email !== undefined) employee.email = req.body.email;
+      if (req.body.dept !== undefined) employee.dept = req.body.dept;
+      if (req.body.role !== undefined) employee.role = req.body.role;
+      if (req.body.aadhaar !== undefined) employee.aadhaar = req.body.aadhaar;
+      if (req.body.joined !== undefined) employee.joined = req.body.joined;
+      if (req.body.phone !== undefined) employee.phone = req.body.phone;
       if (req.body.isTeamLead !== undefined) employee.isTeamLead = req.body.isTeamLead;
       if (req.body.teamLeadId !== undefined) employee.teamLeadId = req.body.teamLeadId;
     }
 
-    // Both HR and Self can update personal fields
+    // Both HR and Self can update personal fields safely
     if (req.body.address) {
+      const currentAddr = employee.address || {};
       employee.address = {
-        door: req.body.address.door || employee.address.door,
-        street: req.body.address.street || employee.address.street,
-        city: req.body.address.city || employee.address.city,
-        state: req.body.address.state || employee.address.state,
-        pin: req.body.address.pin || employee.address.pin
+        door: req.body.address.door !== undefined ? req.body.address.door : (currentAddr.door || ''),
+        street: req.body.address.street !== undefined ? req.body.address.street : (currentAddr.street || ''),
+        city: req.body.address.city !== undefined ? req.body.address.city : (currentAddr.city || ''),
+        state: req.body.address.state !== undefined ? req.body.address.state : (currentAddr.state || ''),
+        pin: req.body.address.pin !== undefined ? req.body.address.pin : (currentAddr.pin || '')
       };
     }
 
     if (req.body.emergency) {
+      const currentEmg = employee.emergency || {};
       employee.emergency = {
-        name: req.body.emergency.name || employee.emergency.name,
-        relation: req.body.emergency.relation || employee.emergency.relation,
-        phone: req.body.emergency.phone || employee.emergency.phone
+        name: req.body.emergency.name !== undefined ? req.body.emergency.name : (currentEmg.name || ''),
+        relation: req.body.emergency.relation !== undefined ? req.body.emergency.relation : (currentEmg.relation || ''),
+        phone: req.body.emergency.phone !== undefined ? req.body.emergency.phone : (currentEmg.phone || '')
       };
     }
 
-    employee.blood = req.body.blood || employee.blood;
-    employee.dob = req.body.dob || employee.dob;
-    employee.gender = req.body.gender || employee.gender;
-    employee.phone = req.body.phone || employee.phone;
-    employee.name = req.body.name || employee.name;
-    employee.email = req.body.email || employee.email;
+    if (req.body.blood !== undefined) employee.blood = req.body.blood;
+    if (req.body.dob !== undefined) employee.dob = req.body.dob;
+    if (req.body.gender !== undefined) employee.gender = req.body.gender;
+    if (req.body.phone !== undefined) employee.phone = req.body.phone;
+    if (req.body.name !== undefined) employee.name = req.body.name;
+    if (req.body.email !== undefined) employee.email = req.body.email;
     if (req.body.parentStatus !== undefined) employee.parentStatus = req.body.parentStatus;
     if (req.body.licenseNumber !== undefined) employee.licenseNumber = req.body.licenseNumber;
     if (req.body.licenseExpiry !== undefined) employee.licenseExpiry = req.body.licenseExpiry;
@@ -148,6 +154,7 @@ router.put('/:id', protect, async (req, res) => {
     const updatedEmployee = await employee.save();
     res.json(updatedEmployee);
   } catch (error) {
+    console.error('Error updating employee record:', error);
     res.status(500).json({ message: error.message });
   }
 });
