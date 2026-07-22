@@ -9,13 +9,14 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345');
       
-      try {
+      const mongoose = require('mongoose');
+      if (mongoose.connection.readyState === 1) {
         req.user = await Employee.findById(decoded.id).select('-password');
         if (req.user) {
           return next();
         }
-      } catch (dbErr) {
-        console.warn('[Offline Mode] Database lookup failed in protect middleware:', dbErr.message);
+        // Database is online but user document was not found (e.g. user was deleted from MongoDB Atlas)
+        return res.status(401).json({ message: 'User account no longer exists.' });
       }
 
       if (decoded.id && decoded.id.startsWith('60c72b2f9b1d8b2a3c9')) {
