@@ -60,6 +60,26 @@ let mockEmployees = [
     costCenter: "HR Operations CC"
   },
   {
+    _id: "60c72b2f9b1d8b2a3c9d8009",
+    id: "EMP-1005",
+    name: "Sujatha Subramani",
+    role: "hr",
+    dept: "Human Resources",
+    joined: "2024-01-15",
+    email: "sujatha.subramani98@gmail.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    aadhaar: "4567-8901-2345",
+    phone: "+91 98765 00001",
+    blood: "A+",
+    dob: "1985-06-20",
+    gender: "Female",
+    designation: "HR Manager",
+    branch: "HQ Bangalore",
+    businessUnit: "Enterprise Apps",
+    costCenter: "HR Operations CC"
+  },
+  {
     _id: "60c72b2f9b1d8b2a3c9d8004",
     id: "EMP-1004",
     name: "John Wesley",

@@ -45,6 +45,7 @@ router.post('/login', async (req, res) => {
       'garanandini067@gmail.com': { id: 'EMP-1001', _id: '60c72b2f9b1d8b2a3c9d8001', name: 'Gara Nandini', role: 'hr', dept: 'Human Resources' },
       'akhilsirivella510@gmail.com': { id: 'EMP-1002', _id: '60c72b2f9b1d8b2a3c9d8002', name: 'Akhil Sirivella', role: 'hr', dept: 'Human Resources' },
       'karthikpotur@gmail.com': { id: 'EMP-1003', _id: '60c72b2f9b1d8b2a3c9d8003', name: 'Karthik Potur', role: 'hr', dept: 'Human Resources' },
+      'sujatha.subramani98@gmail.com': { id: 'EMP-1005', _id: '60c72b2f9b1d8b2a3c9d8009', name: 'Sujatha Subramani', role: 'hr', dept: 'Human Resources' },
       'hr@company.com': { id: 'EMP-0001', _id: '60c72b2f9b1d8b2a3c9d7890', name: 'Venkat Raman', role: 'hr', dept: 'Human Resources' },
       'priyanka@qbkartitsolutions.com': { id: 'EMP-2001', _id: '60c72b2f9b1d8b2a3c9d8005', name: 'Priyanka', role: 'employee', dept: 'Engineering' },
       'pranitha@qbkartitsolutions.com': { id: 'EMP-2002', _id: '60c72b2f9b1d8b2a3c9d8006', name: 'Pranitha', role: 'employee', dept: 'Engineering' },
