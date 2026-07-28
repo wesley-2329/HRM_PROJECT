@@ -6,6 +6,13 @@ import { useToast } from '../components/Toast';
 import api from '../api';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
+import EmployeePoliciesPage from './governance/EmployeePoliciesPage';
+import ApprovalsInbox from '../components/ApprovalsInbox';
+import ProbationManagement from '../components/ProbationManagement';
+import TransferManagement from '../components/TransferManagement';
+import PromotionManagement from '../components/PromotionManagement';
+import GradeManagement from '../components/GradeManagement';
+import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
 import {
   RaiseTicketModal,
   JoinMeetingModal,
@@ -102,6 +109,32 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const { showToast } = useToast();
   const [selectedEmpForPayslip, setSelectedEmpForPayslip] = useState(user);
   const [localTheme, setLocalTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
+
+  const [complianceData, setComplianceData] = useState({ policies: [], pendingCount: 0, onboardingCompleted: true });
+  const [showMobilePush, setShowMobilePush] = useState(false);
+
+  useEffect(() => {
+    if (complianceData.pendingCount > 0) {
+      setShowMobilePush(true);
+      const timer = setTimeout(() => setShowMobilePush(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [complianceData.pendingCount]);
+
+  const fetchComplianceStatus = async () => {
+    try {
+      const res = await api.get('/policies/employee-status');
+      setComplianceData(res.data);
+    } catch (err) {
+      console.error('Error fetching compliance status:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (authUser && authUser.role !== 'hr') {
+      fetchComplianceStatus();
+    }
+  }, [notifications, currentModule]);
 
   const getDuration = (startStr, endStr) => {
     if (!startStr || !endStr) return 0;
@@ -1501,12 +1534,56 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const activeTasksCount = displayTasks.filter(t => t.status !== 'done').length;
 
+  const showOnboardingLock = authUser && authUser.role !== 'hr' && !complianceData.onboardingCompleted && complianceData.pendingCount > 0;
+
+  if (showOnboardingLock) {
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'hsl(var(--bg-main))', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '1000px', width: '100%', margin: '40px auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
+            <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))', fontSize: '1.4rem' }}>
+              <i className="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Mandatory Onboarding: Company Policies Acceptance</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>You must read and accept the mandatory company policies below to complete your onboarding setup and unlock the portal.</p>
+            </div>
+          </div>
+          <div className="card animate-fade-in-up" style={{ padding: '24px' }}>
+            <EmployeePoliciesPage onStatusChange={(status) => {
+              setComplianceData(prev => ({ ...prev, ...status }));
+              if (status.onboardingCompleted) {
+                loadUser();
+              }
+            }} inlineMode={true} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="portal-container animate-fade-in-up">
       {/* 1. Dashboard View */}
       {currentModule === 'emp-dashboard' && (
         <section id="emp-mod-emp-dashboard" className="emp-module">
+          {complianceData.pendingCount > 0 && complianceData.onboardingCompleted && (
+            <div className="card" style={{ border: '1px solid rgba(245,158,11,0.3)', backgroundColor: 'rgba(245,158,11,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--amber-500)', fontSize: '1.2rem' }}></i>
+                <div>
+                  <h4 style={{ fontWeight: 700, fontSize: '0.9rem' }}>Pending Policy Acknowledgement Required</h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    HR has published a new or updated company policy. Please review and accept to remain compliant.
+                  </p>
+                </div>
+              </div>
+              <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: 'var(--amber-500)', color: '#fff', border: 'none' }} onClick={() => setCurrentModule('emp-policies')}>
+                Review Policies ({complianceData.pendingCount})
+              </button>
+            </div>
+          )}
           <div className="welcome-card-banner">
             <div className="welcome-banner-text">
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--text-primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -1748,6 +1825,48 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* Approvals Inbox Module */}
+      {currentModule === 'approvals-inbox' && (
+        <section id="emp-mod-approvals-inbox" className="emp-module">
+          <ApprovalsInbox />
+        </section>
+      )}
+
+      {/* Probation Management Module */}
+      {currentModule === 'probation-management' && (
+        <section id="emp-mod-probation-management" className="emp-module">
+          <ProbationManagement />
+        </section>
+      )}
+
+      {/* Transfer Management Module */}
+      {currentModule === 'transfer-management' && (
+        <section id="emp-mod-transfer-management" className="emp-module">
+          <TransferManagement />
+        </section>
+      )}
+
+      {/* Promotion Management Module */}
+      {currentModule === 'promotion-management' && (
+        <section id="emp-mod-promotion-management" className="emp-module">
+          <PromotionManagement />
+        </section>
+      )}
+
+      {/* Grade Management Module */}
+      {currentModule === 'grade-management' && (
+        <section id="emp-mod-grade-management" className="emp-module">
+          <GradeManagement />
+        </section>
+      )}
+
+      {/* Salary Revision Management Module */}
+      {currentModule === 'salary-revision-management' && (
+        <section id="emp-mod-salary-revision-management" className="emp-module">
+          <SalaryRevisionManagement />
         </section>
       )}
 
@@ -2917,29 +3036,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         </section>
       )}
 
-      {/* 12. Company Policies Accordion View */}
+      {/* 12. Policy Repository Module */}
       {currentModule === 'emp-policies' && (
         <section id="emp-mod-emp-policies" className="emp-module">
-          <div className="policy-accordion">
-            {[
-              { title: 'Holiday Calendar', icon: 'fa-calendar-days', details: 'Full List of 15 Holidays: Republic Day: 26 Jan, Holi: 14 Mar, Good Friday: 18 Apr, Ambedkar Jayanti: 14 Apr, Labour Day: 1 May, Eid: 31 Mar, Independence Day: 15 Aug, Janmashtami: 16 Aug, Gandhi Jayanti: 2 Oct, Dussehra: 2 Oct, Diwali: 20 Oct, Diwali (Laxmi Puja): 21 Oct, Christmas: 25 Dec, New Year: 1 Jan, Regional Holiday (Pongal): 14 Jan.' },
-              { title: 'Leave Policies', icon: 'fa-umbrella-beach', details: 'Casual Leave: 12 days/year, Sick Leave: 12 days/year, Earned Leave: 15 days/year, Maternity: 26 weeks, Paternity: 5 days, Compensatory Off: as earned.' },
-              { title: 'Working Hours & Flex', icon: 'fa-clock', details: 'Standard Shift: Mon-Fri 9:00 AM - 6:00 PM (9 hrs including 1 hr lunch). Optional Saturday: 9:00 AM - 1:00 PM. Remote work policy: Up to 2 days/week WFH upon approval.' },
-              { title: 'Employee Handbook', icon: 'fa-book', details: 'Contains full HR code of conduct guidelines. Click "Download" to fetch the complete PDF book from corporate repository.' },
-              { title: 'Company Guidelines', icon: 'fa-scale-balanced', details: 'Dress Code, Device Usage security policies, Confidentiality & NDAs, Anti-Harassment workplace regulations, Conflict of interest policies.' },
-              { title: 'Common Company Policies', icon: 'fa-building', details: 'Probation Period: 3 months, Notice Period: 30 days (junior) / 60 days (senior), Travel & Expense Reimbursement rules, Performance reviews (bi-annual), Increment Cycle (April).' }
-            ].map((p, idx) => (
-              <div key={idx} className={`policy-item ${activePolicies[idx] ? 'active' : ''}`}>
-                <div className="policy-trigger" onClick={() => togglePolicyAccordion(idx)}>
-                  <span><i className={`fa-solid ${p.icon}`} style={{ marginRight: '12px', color: 'hsl(var(--primary))' }}></i> {p.title}</span>
-                  <i className="fa-solid fa-chevron-down"></i>
-                </div>
-                <div className="policy-content" style={activePolicies[idx] ? { maxHeight: '600px', padding: '0 24px 20px 24px', overflowY: 'auto' } : {}}>
-                  <p>{p.details}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <EmployeePoliciesPage onStatusChange={(status) => {
+            setComplianceData(prev => ({ ...prev, ...status }));
+          }} />
         </section>
       )}
 
@@ -3484,6 +3586,66 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       month={payslipMonth}
       onPrint={() => { showToast('Payslip invoice sent to printer!', 'success'); setPayslipActive(false); }}
     />
+
+    {/* Simulated Mobile Notification Alert */}
+    {showMobilePush && (
+      <div 
+        className="animate-fade-in-up" 
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '340px',
+          backgroundColor: 'hsl(var(--bg-card))',
+          borderLeft: '4px solid hsl(var(--warning))',
+          borderRadius: '12px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+          padding: '16px',
+          zIndex: 10000,
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'flex-start',
+          border: '1px solid hsl(var(--border) / 0.8)',
+          backdropFilter: 'blur(12px)'
+        }}
+      >
+        <div style={{
+          backgroundColor: 'hsla(var(--warning), 0.1)',
+          color: 'hsl(var(--warning))',
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.2rem',
+          flexShrink: 0
+        }}>
+          <i className="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '0.85rem', color: 'hsl(var(--text-primary))' }}>Mobile Sync Alert</strong>
+            <button 
+              onClick={() => setShowMobilePush(false)} 
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'hsl(var(--text-secondary))', fontSize: '0.9rem', padding: 0 }}
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '6px', lineHeight: 1.4 }}>
+            <strong>TalentSphere Notification:</strong> A new or updated policy requires your acknowledgement. Please sign to remain compliant.
+          </p>
+          <button 
+            onClick={() => { setCurrentModule('emp-policies'); setShowMobilePush(false); }} 
+            className="btn btn-primary"
+            style={{ padding: '6px 12px', fontSize: '0.75rem', marginTop: '10px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            <i className="fa-solid fa-file-signature"></i> Go to Policy Repository
+          </button>
+        </div>
+      </div>
+    )}
   </>
 );
 };

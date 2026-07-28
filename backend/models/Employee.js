@@ -165,6 +165,20 @@ const EmployeeSchema = new mongoose.Schema({
   positionCode: {
     type: String,
     default: ''
+  },
+  onboardingCompleted: {
+    type: Boolean,
+    default: false
+  },
+  employeeCategory: {
+    type: String,
+    enum: ['Permanent', 'Probationer', 'Trainee', 'Contract', 'Consultant'],
+    default: 'Probationer'
+  },
+  probationStatus: {
+    type: String,
+    enum: ['Under Probation', 'Review Pending', 'Confirmed', 'Extended', 'Separated', 'N/A'],
+    default: 'Under Probation'
   }
 }, { timestamps: true, id: false });
 

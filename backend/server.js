@@ -80,6 +80,18 @@ app.use('/api/discussion', require('./routes/discussion'));
 app.use('/api/daily-reports', require('./routes/dailyReports'));
 app.use('/api/org', require('./routes/org'));
 app.use('/api/vault', require('./routes/vault'));
+app.use('/api/policies', require('./routes/policies'));
+app.use('/api/audits', require('./routes/audits'));
+app.use('/api/approval-matrix', require('./routes/approvalMatrix'));
+app.use('/api/observations', require('./routes/observations'));
+app.use('/api/action-closures', require('./routes/actionClosures'));
+app.use('/api/probation', require('./routes/probation'));
+app.use('/api/confirmation', require('./routes/probation'));
+app.use('/api/transfers', require('./routes/transfers'));
+app.use('/api/department-transfers', require('./routes/transfers'));
+app.use('/api/promotions', require('./routes/promotions'));
+app.use('/api/grades', require('./routes/grades'));
+app.use('/api/salary-revisions', require('./routes/salaryRevisions'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -94,11 +94,11 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
           </div>
 
-          {/* Directory Dropdown */}
+          {/* Directory / Governance Dropdown */}
           <div className="emp-menu-item">
             <a className={`emp-menu-link ${isGroupActive(['org-structure', 'emp-policies']) ? 'active' : ''}`}>
-              <i className="fa-solid fa-sitemap"></i>
-              Directory
+              <i className="fa-solid fa-shield-halved"></i>
+              HR Governance
               <i className="fa-solid fa-chevron-down"></i>
             </a>
             <div className="emp-dropdown-panel">
@@ -106,7 +106,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
                 className={`emp-dropdown-item ${isTabActive('org-structure') ? 'active' : ''}`}
                 onClick={() => handleNavClick('org-structure')}
               >
-                <i className="fa-solid fa-hierarchy"></i>
+                <i className="fa-solid fa-sitemap"></i>
                 <div>
                   Org Structure
                   <span className="emp-dropdown-item-desc">Browse reporting charts and direct reports</span>
@@ -118,8 +118,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-building-columns"></i>
                 <div>
-                  Company Policies
-                  <span className="emp-dropdown-item-desc">Read code of conduct guidelines and manuals</span>
+                  Policy Repository
+                  <span className="emp-dropdown-item-desc">Read and accept company policies to ensure compliance</span>
                 </div>
               </a>
             </div>
