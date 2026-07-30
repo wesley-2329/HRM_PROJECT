@@ -196,5 +196,4 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Trigger fresh Vercel build deployment to resolve routing cached state
 module.exports = app;

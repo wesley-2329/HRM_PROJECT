@@ -179,24 +179,95 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             </div>
           </div>
 
-          {/* Governance & Support Dropdown */}
+          {/* HR Governance & Compliance Dropdown */}
           <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['compliance-management', 'hr-tickets', 'reports-analytics']) ? 'active' : ''}`}>
+            <a className={`hr-menu-link ${isGroupActive(['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit']) ? 'active' : ''}`}>
               <i className="fa-solid fa-shield-halved"></i>
-              Compliance & Support
+              Governance & Compliance
               <i className="fa-solid fa-chevron-down"></i>
             </a>
             <div className="hr-dropdown-panel" style={{ minWidth: '320px' }}>
               <a
-                className={`hr-dropdown-item ${isTabActive('compliance-management') ? 'active' : ''}`}
-                onClick={() => handleNavClick('compliance-management')}
+                className={`hr-dropdown-item ${isTabActive('hr-audit') ? 'active' : ''}`}
+                onClick={() => handleNavClick('hr-audit')}
               >
-                <i className="fa-solid fa-circle-check"></i>
+                <i className="fa-solid fa-clipboard-check"></i>
                 <div>
-                  Compliance Hub
-                  <span className="hr-dropdown-item-desc">Monitor statutory PF/ESI metrics and audit items</span>
+                  HR Audit
+                  <span className="hr-dropdown-item-desc">Statutory audits and compliance registry</span>
                 </div>
               </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('compliance-calendar') ? 'active' : ''}`}
+                onClick={() => handleNavClick('compliance-calendar')}
+              >
+                <i className="fa-solid fa-calendar-days"></i>
+                <div>
+                  Compliance Calendar
+                  <span className="hr-dropdown-item-desc">PF, ESI, TDS filing schedules</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('approval-matrix') ? 'active' : ''}`}
+                onClick={() => handleNavClick('approval-matrix')}
+              >
+                <i className="fa-solid fa-sitemap"></i>
+                <div>
+                  Approval Matrix
+                  <span className="hr-dropdown-item-desc">Multi-level authorization workflows</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('policy-repository') ? 'active' : ''}`}
+                onClick={() => handleNavClick('policy-repository')}
+              >
+                <i className="fa-solid fa-book-bookmark"></i>
+                <div>
+                  Policy Repository
+                  <span className="hr-dropdown-item-desc">Publish policies and track acknowledgements</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('observation-tracker') ? 'active' : ''}`}
+                onClick={() => handleNavClick('observation-tracker')}
+              >
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <div>
+                  HR Observation Tracker
+                  <span className="hr-dropdown-item-desc">Track and resolve audit observations</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('action-closure') ? 'active' : ''}`}
+                onClick={() => handleNavClick('action-closure')}
+              >
+                <i className="fa-solid fa-square-check"></i>
+                <div>
+                  Action Closure Tracker
+                  <span className="hr-dropdown-item-desc">CAPA closure checklist and status</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('internal-audit') ? 'active' : ''}`}
+                onClick={() => handleNavClick('internal-audit')}
+              >
+                <i className="fa-solid fa-file-invoice"></i>
+                <div>
+                  Internal Audit Reports
+                  <span className="hr-dropdown-item-desc">Quarterly audit logs and analytics</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          {/* Support Dropdown */}
+          <div className="hr-menu-item">
+            <a className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics']) ? 'active' : ''}`}>
+              <i className="fa-solid fa-circle-info"></i>
+              Support Hub
+              <i className="fa-solid fa-chevron-down"></i>
+            </a>
+            <div className="hr-dropdown-panel" style={{ minWidth: '280px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('hr-tickets') ? 'active' : ''}`}
                 onClick={() => handleNavClick('hr-tickets')}

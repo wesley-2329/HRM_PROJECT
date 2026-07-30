@@ -14,13 +14,19 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
   const hrMenu = [
     { id: 'dashboard', label: 'Overview', icon: 'fa-chart-line' },
     { id: 'hr-profile', label: 'My Profile', icon: 'fa-circle-user' },
+    { id: 'approvals-inbox', label: 'Approvals Inbox', icon: 'fa-stamp' },
     { id: 'employee-management', label: 'Employee Directory', icon: 'fa-user-group' },
+    { id: 'probation-management', label: 'Probation Hub', icon: 'fa-user-clock' },
+    { id: 'transfer-management', label: 'Transfer Hub', icon: 'fa-right-left' },
+    { id: 'promotion-management', label: 'Promotion Hub', icon: 'fa-angles-up' },
+    { id: 'grade-management', label: 'Grade & Band Hub', icon: 'fa-layer-group' },
+    { id: 'salary-revision-management', label: 'Salary Revision Hub', icon: 'fa-money-bill-trend-up' },
     { id: 'org-structure', label: 'Org Structure', icon: 'fa-sitemap' },
     { id: 'document-vault', label: 'Document Vault', icon: 'fa-vault' },
     { id: 'attendance-leave', label: 'Attendance & Shift', icon: 'fa-calendar-check' },
     { id: 'payroll-management', label: 'Payroll Hub', icon: 'fa-wallet' },
     { id: 'recruitment-ats', label: 'Recruitment ATS', icon: 'fa-magnifying-glass-chart' },
-    { id: 'compliance-management', label: 'Compliance Hub', icon: 'fa-shield-halved' },
+    { id: 'policy-repository', label: 'HR Governance', icon: 'fa-shield-halved' },
     { id: 'hr-tickets', label: 'Support Tickets', icon: 'fa-headset' },
     { id: 'reports-analytics', label: 'Reports & Audits', icon: 'fa-chart-pie' },
     { id: 'notification-system', label: 'Alert Center', icon: 'fa-bell' },
@@ -29,6 +35,12 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
 
   const empMenu = [
     { id: 'emp-dashboard', label: 'My Dashboard', icon: 'fa-gauge-high' },
+    { id: 'approvals-inbox', label: 'Approvals Inbox', icon: 'fa-stamp' },
+    { id: 'probation-management', label: 'My Probation Tracker', icon: 'fa-user-clock' },
+    { id: 'transfer-management', label: 'My Transfer Hub', icon: 'fa-right-left' },
+    { id: 'promotion-management', label: 'My Promotion Tracker', icon: 'fa-angles-up' },
+    { id: 'grade-management', label: 'My Grade & Band Info', icon: 'fa-layer-group' },
+    { id: 'salary-revision-management', label: 'My Salary Revisions', icon: 'fa-money-bill-trend-up' },
     { id: 'org-structure', label: 'Org Structure', icon: 'fa-sitemap' },
     { id: 'emp-profile', label: 'My Profile', icon: 'fa-circle-user' },
     { id: 'emp-documents', label: 'My Document Vault', icon: 'fa-vault' },
@@ -42,7 +54,7 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
     { id: 'emp-reports', label: 'Daily Reports', icon: 'fa-clipboard-list' },
     { id: 'emp-notifications', label: 'Notifications', icon: 'fa-bell' },
     { id: 'emp-helpdesk', label: 'Helpdesk / Support', icon: 'fa-headset' },
-    { id: 'emp-policies', label: 'Company Policies', icon: 'fa-building-columns' },
+    { id: 'emp-policies', label: 'Policy Repository', icon: 'fa-building-columns' },
     { id: 'emp-settings', label: 'Settings', icon: 'fa-gear' },
   ];
 

@@ -6,6 +6,13 @@ import api from '../api';
 import { getAvatarUrl } from '../App';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
+import HRCompliancePage from './governance/HRCompliancePage';
+import ApprovalsInbox from '../components/ApprovalsInbox';
+import ProbationManagement from '../components/ProbationManagement';
+import TransferManagement from '../components/TransferManagement';
+import PromotionManagement from '../components/PromotionManagement';
+import GradeManagement from '../components/GradeManagement';
+import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
 import {
   AddEmployeeModal,
   LedgerModal,
@@ -2157,6 +2164,13 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         </section>
       )}
 
+      {/* HR Governance & Compliance Modules */}
+      {['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit'].includes(currentModule) && (
+        <section id="hr-mod-governance-compliance" className="hr-module">
+          <HRCompliancePage currentSubModule={currentModule} />
+        </section>
+      )}
+
       {/* Support Tickets Module */}
       {currentModule === 'hr-tickets' && (
         <section id="hr-mod-support-tickets" className="hr-module">
@@ -2461,6 +2475,48 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </table>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* Approvals Inbox Module */}
+      {currentModule === 'approvals-inbox' && (
+        <section id="hr-mod-approvals-inbox" className="hr-module">
+          <ApprovalsInbox />
+        </section>
+      )}
+
+      {/* Probation Management Module */}
+      {currentModule === 'probation-management' && (
+        <section id="hr-mod-probation-management" className="hr-module">
+          <ProbationManagement />
+        </section>
+      )}
+
+      {/* Transfer Management Module */}
+      {currentModule === 'transfer-management' && (
+        <section id="hr-mod-transfer-management" className="hr-module">
+          <TransferManagement />
+        </section>
+      )}
+
+      {/* Promotion Management Module */}
+      {currentModule === 'promotion-management' && (
+        <section id="hr-mod-promotion-management" className="hr-module">
+          <PromotionManagement />
+        </section>
+      )}
+
+      {/* Grade Management Module */}
+      {currentModule === 'grade-management' && (
+        <section id="hr-mod-grade-management" className="hr-module">
+          <GradeManagement />
+        </section>
+      )}
+
+      {/* Salary Revision Management Module */}
+      {currentModule === 'salary-revision-management' && (
+        <section id="hr-mod-salary-revision-management" className="hr-module">
+          <SalaryRevisionManagement />
         </section>
       )}
 
