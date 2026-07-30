@@ -52,8 +52,8 @@ async function seed() {
   console.log('Creating Company, Branch, BU, and Cost Center masters...');
   // Company
   const company = await CompanyMaster.create({
-    name: 'TalentSphere Technologies',
-    code: 'TS-001',
+    name: 'HR O Technologies',
+    code: 'HO-001',
     businessType: 'Information Technology',
     status: 'Active'
   });
@@ -357,7 +357,7 @@ async function seed() {
   });
   await Task.create({
     title: 'Update project standup logs',
-    project: 'TalentSphere Portal',
+    project: 'HR O Portal',
     priority: 'Low',
     due: '2026-06-24',
     progress: 100,
@@ -394,7 +394,7 @@ async function seed() {
     senderId: 'EMP-0001',
     senderName: 'Venkat Raman',
     senderRole: 'hr',
-    message: 'Welcome to TalentSphere portal. Please ensure all your profile details and documents are updated in the Vault by end of week!',
+    message: 'Welcome to HR O portal. Please ensure all your profile details and documents are updated in the Vault by end of week!',
     time: '21:30'
   });
   await DiscussionMessage.create({

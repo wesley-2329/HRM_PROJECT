@@ -9,9 +9,16 @@ const Notification = require('../models/Notification');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Multer Storage Configuration for Document Vault
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, '../uploads');
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('Warning: Could not create upload directory:', err.message);
 }
 
 const storage = multer.diskStorage({
@@ -373,7 +380,7 @@ router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
         doc.auditTrail.push({
           action: 'Expire',
           userId: 'system',
-          userName: 'TalentSphere System',
+          userName: 'HR O System',
           details: `Document auto-marked as 'Expired' due to date passing: ${doc.expiryDate}`
         });
 
@@ -396,7 +403,7 @@ router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
         doc.auditTrail.push({
           action: 'Expiry Alert Triggered',
           userId: 'system',
-          userName: 'TalentSphere System',
+          userName: 'HR O System',
           details: `Expiry alert triggered (Expiring soon on ${doc.expiryDate})`
         });
 

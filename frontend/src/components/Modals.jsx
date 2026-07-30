@@ -278,7 +278,7 @@ export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
       <div id="payslip-modal-body" style={{ background: '#fff', color: '#0f172a', padding: '20px', borderRadius: '8px' }}>
         <div style={{ borderBottom: '2px solid hsl(var(--primary))', paddingBottom: '15px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 700 }}>TalentSphere Corp</h2>
+            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 700 }}>HR O Corp</h2>
             <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Bengaluru Office, India</p>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -501,10 +501,10 @@ export const JoinMeetingModal = ({ active, onClose, onJoin }) => {
         <i className="fa-solid fa-video" style={{ fontSize: '3rem', color: 'hsl(var(--primary))', marginBottom: '16px' }}></i>
         <p style={{ fontSize: '0.95rem', marginBottom: '16px' }}>You are about to join the team video session.</p>
         <div className="form-group">
-          <input type="text" className="form-control" value="https://meet.talentsphere.company/join/tck-standup" readOnly />
+          <input type="text" className="form-control" value="https://meet.hrorbit.company/join/tck-standup" readOnly />
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={() => { navigator.clipboard.writeText("https://meet.talentsphere.company/join/tck-standup"); }}>Copy Link</button>
+          <button className="btn btn-secondary" onClick={() => { navigator.clipboard.writeText("https://meet.hrorbit.company/join/tck-standup"); }}>Copy Link</button>
           <button className="btn btn-primary" onClick={onJoin}>Join Meeting</button>
         </div>
       </div>

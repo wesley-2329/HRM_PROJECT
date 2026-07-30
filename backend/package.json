@@ -1,7 +1,7 @@
 {
-  "name": "talentsphere-backend",
+  "name": "hrorbit-backend",
   "version": "1.0.0",
-  "description": "TalentSphere HRM API backend",
+  "description": "HRorbit HRM API backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

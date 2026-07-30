@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { motion } from 'framer-motion';
+import hrorbitLogo from '../assets/hrorbit_logo.png';
 
 const LoginGateway = () => {
   const { login, register } = useContext(AuthContext);
@@ -41,8 +42,8 @@ const LoginGateway = () => {
       setEmail('hr@company.com');
       setPassword('admin123');
     } else {
-      setEmail('');
-      setPassword('');
+      setEmail('employee@company.com');
+      setPassword('employee123');
     }
   };
 
@@ -165,21 +166,8 @@ const LoginGateway = () => {
 
           {/* Brand header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 5 }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              background: role === 'hr'
-                ? 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)'
-                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.5s ease'
-            }}>
-              <i className="fa-solid fa-compass" style={{ fontSize: '0.8rem', color: '#ffffff' }} />
-            </div>
-            <span style={{ fontSize: '0.9rem', fontWeight: 800, letterSpacing: '1px', color: '#0f172a' }}>TALENT SPHERE</span>
+            <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '24px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, letterSpacing: '1px', color: '#0f172a' }}>HR O</span>
           </div>
 
           {/* Dynamic Content Panel based on active Role */}
@@ -377,7 +365,7 @@ const LoginGateway = () => {
 
           {/* System Footer information */}
           <div style={{ fontSize: '0.75rem', color: '#64748b', zIndex: 5 }}>
-            Talent Sphere AI™ — Operational Security
+            HR O AI™ — Operational Security
           </div>
         </div>
 
@@ -393,8 +381,8 @@ const LoginGateway = () => {
         }}>
           {/* Brand header on form */}
           <div className="login-brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }} onClick={() => navigate('/')}>
-            <i className="fa-solid fa-cube" style={{ color: '#4f46e5' }}></i>
-            <span>Talent Sphere</span>
+            <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, color: 'hsl(var(--primary))' }}>HR O</span>
           </div>
           
           <h1 className="login-title" style={{ color: '#0f172a', margin: '0 0 4px 0', fontSize: '1.8rem' }}>
@@ -446,7 +434,8 @@ const LoginGateway = () => {
             {/* Left Box: Form fields */}
             <div style={{ flex: '1 1 340px' }}>
               {!isSignUp ? (
-                <form onSubmit={handleLoginSubmit}>
+                <>
+                  <form onSubmit={handleLoginSubmit}>
                   <div className="form-group" style={{ marginBottom: '16px' }}>
                     <label>Email Address</label>
                     <input
@@ -498,7 +487,7 @@ const LoginGateway = () => {
                     {authenticating ? 'Authenticating...' : 'Authenticate & Enter'}
                   </button>
                 </form>
-              ) : (
+              </> ) : (
                 <form onSubmit={handleSignUpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label>Full Name</label>

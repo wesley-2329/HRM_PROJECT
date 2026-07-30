@@ -108,7 +108,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const { showToast } = useToast();
   const [selectedEmpForPayslip, setSelectedEmpForPayslip] = useState(user);
-  const [localTheme, setLocalTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
+  const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
   const [complianceData, setComplianceData] = useState({ policies: [], pendingCount: 0, onboardingCompleted: true });
   const [showMobilePush, setShowMobilePush] = useState(false);
@@ -232,6 +232,24 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [profileEmgName, setProfileEmgName] = useState(user?.emergency?.name || '');
   const [profileEmgRel, setProfileEmgRel] = useState(user?.emergency?.relation || '');
   const [profileEmgPhone, setProfileEmgPhone] = useState(user?.emergency?.phone || '');
+
+  // Synchronize state when user details are loaded or updated from database
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileParentStatus(user.parentStatus || 'No');
+      setProfileDoor(user.address?.door || '');
+      setProfileStreet(user.address?.street || '');
+      setProfileCity(user.address?.city || '');
+      setProfileState(user.address?.state || '');
+      setProfilePin(user.address?.pin || '');
+      setProfileEmgName(user.emergency?.name || '');
+      setProfileEmgRel(user.emergency?.relation || '');
+      setProfileEmgPhone(user.emergency?.phone || '');
+    }
+  }, [user]);
 
   const [aadhaarMasked, setAadhaarMasked] = useState(true);
   const [profileTab, setProfileTab] = useState('personal'); // 'personal' or 'professional'
@@ -394,7 +412,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const handleClockIn = async () => {
     try {
-      await api.post('/timesheet/clock-in');
+      const clockIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = new Date().toLocaleDateString('en-CA');
+      await api.post('/timesheet/clock-in', { clockIn, date });
       showToast('Successfully clocked in for today.', 'success');
       fetchTimesheets();
     } catch (err) {
@@ -405,7 +425,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const handleClockOut = async () => {
     try {
-      await api.post('/timesheet/clock-out');
+      const clockOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = new Date().toLocaleDateString('en-CA');
+      await api.post('/timesheet/clock-out', { clockOut, date });
       showToast('Successfully clocked out.', 'success');
       fetchTimesheets();
     } catch (err) {
@@ -1234,7 +1256,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       return;
     }
 
-    const link = m.link || "https://meet.talentsphere.company/join/tck-standup";
+    const link = m.link || "https://meet.hrorbit.company/join/tck-standup";
     showToast(`Joining meeting: ${m.title}...`, 'success');
     window.open(link, '_blank');
   };
@@ -1272,7 +1294,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       return;
     }
 
-    const link = newMeetLink.trim() || `https://meet.talentsphere.company/join/sync-${Math.random().toString(36).substring(7)}`;
+    const link = newMeetLink.trim() || `https://meet.hrorbit.company/join/sync-${Math.random().toString(36).substring(7)}`;
 
     let durationHours = 0;
     if (newMeetFromTime && newMeetToTime) {
@@ -1510,7 +1532,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       _id: 'mock-d1',
       senderName: 'Aditya',
       senderRole: 'CEO',
-      message: 'Welcome to the TalentSphere central communication hub! Let\'s use this board for quick cross-functional updates.',
+      message: 'Welcome to the HR O central communication hub! Let\'s use this board for quick cross-functional updates.',
       time: '10:15 AM',
       senderAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
     },
@@ -1604,7 +1626,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
             <div className="welcome-banner-img-container">
-              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+              <img src="/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
             </div>
           </div>
 
@@ -3030,7 +3052,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 14px' }}><i className="fa-solid fa-paper-plane"></i></button>
                 </form>
               </div>
-              <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '8px', color: 'var(--text-secondary)' }}>AI Department Support — Powered by TalentSphere AI™</div>
+              <div style={{ fontSize: '0.75rem', textAlign: 'center', marginTop: '8px', color: 'var(--text-secondary)' }}>AI Department Support — Powered by HR O AI™</div>
             </div>
           </div>
         </section>
@@ -3055,7 +3077,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                 Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
               </p>
-              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+              <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
             </div>
 
             {/* Right Forms Column */}
@@ -3115,7 +3137,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                           key={t}
                           type="button"
                           onClick={() => {
-                            localStorage.setItem('talentsphere-navbar-theme', t);
+                            localStorage.setItem('hrorbit-navbar-theme', t);
                             if (window.changeNavbarTheme) window.changeNavbarTheme(t);
                             setLocalTheme(t);
                             showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');
@@ -3213,7 +3235,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="card-title">
                 <i className="fa-solid fa-gamepad" style={{ marginRight: '8px', color: 'hsl(var(--warning))' }}></i>
-                TalentSphere Trivia Challenge
+                HR O Trivia Challenge
               </div>
               
               {!triviaComplete ? (
@@ -3323,7 +3345,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   </div>
                   <div style={{ background: 'hsl(var(--bg-main))', padding: '15px 25px', borderRadius: '10px', fontSize: '0.85rem' }}>
                     {triviaScore === triviaQuestions.length ? (
-                      <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are a TalentSphere Expert!</span>
+                      <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are an HR O Expert!</span>
                     ) : triviaScore >= 3 ? (
                       <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>🌟 Great job! Excellent knowledge.</span>
                     ) : (

@@ -46,7 +46,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   // Expanded employee details dropdowns
   const [expandedEmpIds, setExpandedEmpIds] = useState({});
   const [ticketReplies, setTicketReplies] = useState({});
-  const [localTheme, setLocalTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
+  const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
   // Profile states (for HR profile tab)
   const [profileTab, setProfileTab] = useState('personal');
@@ -65,6 +65,24 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const [profileEmgName, setProfileEmgName] = useState(user?.emergency?.name || '');
   const [profileEmgRel, setProfileEmgRel] = useState(user?.emergency?.relation || '');
   const [profileEmgPhone, setProfileEmgPhone] = useState(user?.emergency?.phone || '');
+
+  // Synchronize HR profile states when user context updates
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileParentStatus(user.parentStatus || 'No');
+      setProfileDoor(user.address?.door || '');
+      setProfileStreet(user.address?.street || '');
+      setProfileCity(user.address?.city || '');
+      setProfileState(user.address?.state || '');
+      setProfilePin(user.address?.pin || '');
+      setProfileEmgName(user.emergency?.name || '');
+      setProfileEmgRel(user.emergency?.relation || '');
+      setProfileEmgPhone(user.emergency?.phone || '');
+    }
+  }, [user]);
 
   // Modals state
   const [addEmpActive, setAddEmpActive] = useState(false);
@@ -740,7 +758,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </p>
             </div>
             <div className="welcome-banner-img-container">
-              <img src="/src/assets/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+              <img src="/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
             </div>
           </div>
           <div className="metric-grid">
@@ -795,7 +813,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             </div>
             <div className="lg:col-span-1">
               <div className="card" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)', color: '#fff', border: 'none' }}>
-                <div className="card-title" style={{ color: '#fff' }}>TalentSphere AI™ Insights</div>
+                <div className="card-title" style={{ color: '#fff' }}>HR O AI™ Insights</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.875rem' }}>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#a5b4fc', fontSize: '1.2rem', marginTop: '3px' }}></i>
@@ -901,7 +919,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', fontSize: '0.85rem' }}>
               <div>
-                <h4 style={{ fontWeight: 700, marginBottom: '10px' }}>TalentSphere vs Market Leaders</h4>
+                <h4 style={{ fontWeight: 700, marginBottom: '10px' }}>HR O vs Market Leaders</h4>
                 <p style={{ color: 'var(--text-secondary)', lineHeight: '1.4', marginBottom: '12px' }}>
                   Comparing core structures against leading HRMS platforms (Workday, BambooHR, Rippling, Gusto, and Personio).
                 </p>
@@ -2512,7 +2530,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                 Configure global settings, define automated payslip cycles, select header highlighting color themes, and update administrative credentials.
               </p>
-              <img src="/src/assets/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+              <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
             </div>
 
             {/* Right Forms Column */}
@@ -2522,7 +2540,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                 <form onSubmit={(e) => { e.preventDefault(); showToast('Settings saved successfully.', 'success'); }}>
                   <div className="form-group">
                     <label>Portal Primary Access Name</label>
-                    <input type="text" className="form-control" defaultValue="TalentSphere HR Portal" />
+                    <input type="text" className="form-control" defaultValue="HR O HR Portal" />
                   </div>
                   <div className="form-group" style={{ marginTop: '16px' }}>
                     <label>Automatic Payslip Release Date</label>
@@ -2541,7 +2559,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                             key={t}
                             type="button"
                             onClick={() => {
-                              localStorage.setItem('talentsphere-navbar-theme', t);
+                              localStorage.setItem('hrorbit-navbar-theme', t);
                               if (window.changeNavbarTheme) window.changeNavbarTheme(t);
                               setLocalTheme(t);
                               showToast(`Navbar theme changed to ${t.toUpperCase()}`, 'success');

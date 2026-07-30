@@ -1,66 +1,61 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    
-    const Employee = require('../models/Employee');
-    
-    // Ensure default HR Director profile exists
-    const hrExist = await Employee.findOne({ email: 'hr@company.com' });
-    if (!hrExist) {
-      console.log('Default HR Director profile not found. Initializing...');
-      await Employee.create({
-        id: "EMP-0001",
-        name: "Venkat Raman",
-        role: "hr",
-        dept: "Human Resources",
-        joined: "2018-05-10",
-        email: "hr@company.com",
-        password: "admin123",
-        status: "Approved",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-        aadhaar: "4567-8901-2345",
-        phone: "+91 98765 00001",
-        blood: "A+",
-        dob: "1980-04-15",
-        gender: "Male"
-      });
-      console.log('Default HR Director profile created successfully.');
-    } else {
-      // Ensure the role is set to 'hr'
-      if (hrExist.role !== 'hr') {
-        hrExist.role = 'hr';
-        await hrExist.save();
-      }
-    }
+// Disable Mongoose command buffering so queries fail instantly when offline instead of hanging 10000ms
+mongoose.set('bufferCommands', false);
 
-    // Ensure default Employee profile exists
-    const employeeExist = await Employee.findOne({ email: 'employee@company.com' });
-    if (!employeeExist) {
-      console.log('Default Employee profile not found. Initializing...');
-      await Employee.create({
-        id: "EMP-0002",
-        name: "Aditya Kumar",
-        role: "employee",
-        dept: "Engineering",
-        joined: "2021-06-15",
-        email: "employee@company.com",
-        password: "employee123",
-        status: "Approved",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-        aadhaar: "1234-5678-9012",
-        phone: "+91 98765 00002",
-        blood: "O+",
-        dob: "1995-08-20",
-        gender: "Male"
-      });
-      console.log('Default Employee profile created successfully.');
+let cachedConn = null;
+let cachedPromise = null;
+
+const cleanUri = (rawUri) => {
+  if (!rawUri) return '';
+  let uri = rawUri.trim();
+  // Strip duplicate variable prefix if present
+  while (uri.startsWith('MONGODB_URI=')) {
+    uri = uri.substring(12).trim();
+  }
+  // Strip surrounding quotes
+  uri = uri.replace(/^["']|["']$/g, '').trim();
+  // Strip angle brackets around password if user copied template literal <password>
+  uri = uri.replace(/<([^>]+)>/g, '$1');
+  return uri;
+};
+
+const connectDB = async () => {
+  if (cachedConn && mongoose.connection.readyState === 1) {
+    return cachedConn;
+  }
+
+  if (cachedPromise) {
+    try {
+      cachedConn = await cachedPromise;
+      return cachedConn;
+    } catch (e) {
+      cachedPromise = null;
     }
+  }
+
+  const rawUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hrorbit';
+  const connUri = cleanUri(rawUri);
+
+  if (!connUri) {
+    console.warn('[DB Warning] MONGODB_URI environment variable is missing.');
+    return null;
+  }
+
+  cachedPromise = mongoose.connect(connUri, {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 5000,
+  });
+
+  try {
+    cachedConn = await cachedPromise;
+    console.log(`[MongoDB Connected] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
+    return cachedConn;
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    process.exit(1);
+    cachedPromise = null;
+    cachedConn = null;
+    console.error(`[MongoDB Connection Error] ${error.message}`);
+    return null;
   }
 };
 

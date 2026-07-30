@@ -57,7 +57,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
   const [mobileActive, setMobileActive] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [navbarTheme, setNavbarTheme] = useState(localStorage.getItem('talentsphere-navbar-theme') || 'indigo');
+  const [navbarTheme, setNavbarTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
   useEffect(() => {
     window.changeNavbarTheme = (theme) => {

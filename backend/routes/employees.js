@@ -89,65 +89,71 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @access  Private
 router.put('/:id', protect, async (req, res) => {
   try {
-    const employee = await Employee.findOne({ id: req.params.id });
+    const mongoose = require('mongoose');
+    let employee = await Employee.findOne({ id: req.params.id });
+    if (!employee && mongoose.Types.ObjectId.isValid(req.params.id)) {
+      employee = await Employee.findById(req.params.id);
+    }
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
     // Check if HR or self
     const isHr = req.user.role === 'hr';
-    const isSelf = req.user.id === req.params.id;
+    const isSelf = req.user.id === req.params.id || req.user._id?.toString() === employee._id?.toString();
 
     if (!isHr && !isSelf) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const setPayload = {};
+
     if (isHr) {
-      // HR can edit anything
-      employee.name = req.body.name || employee.name;
-      employee.email = req.body.email || employee.email;
-      employee.dept = req.body.dept || employee.dept;
-      employee.role = req.body.role || employee.role;
-      employee.aadhaar = req.body.aadhaar || employee.aadhaar;
-      employee.joined = req.body.joined || employee.joined;
-      employee.phone = req.body.phone || employee.phone;
-      if (req.body.isTeamLead !== undefined) employee.isTeamLead = req.body.isTeamLead;
-      if (req.body.teamLeadId !== undefined) employee.teamLeadId = req.body.teamLeadId;
+      if (req.body.name !== undefined) setPayload.name = req.body.name;
+      if (req.body.email !== undefined) setPayload.email = req.body.email;
+      if (req.body.dept !== undefined) setPayload.dept = req.body.dept;
+      if (req.body.role !== undefined) setPayload.role = req.body.role;
+      if (req.body.aadhaar !== undefined) setPayload.aadhaar = req.body.aadhaar;
+      if (req.body.joined !== undefined) setPayload.joined = req.body.joined;
+      if (req.body.phone !== undefined) setPayload.phone = req.body.phone;
+      if (req.body.isTeamLead !== undefined) setPayload.isTeamLead = req.body.isTeamLead;
+      if (req.body.teamLeadId !== undefined) setPayload.teamLeadId = req.body.teamLeadId;
     }
 
-    // Both HR and Self can update personal fields
     if (req.body.address) {
-      employee.address = {
-        door: req.body.address.door || employee.address.door,
-        street: req.body.address.street || employee.address.street,
-        city: req.body.address.city || employee.address.city,
-        state: req.body.address.state || employee.address.state,
-        pin: req.body.address.pin || employee.address.pin
-      };
+      if (req.body.address.door !== undefined) setPayload['address.door'] = req.body.address.door;
+      if (req.body.address.street !== undefined) setPayload['address.street'] = req.body.address.street;
+      if (req.body.address.city !== undefined) setPayload['address.city'] = req.body.address.city;
+      if (req.body.address.state !== undefined) setPayload['address.state'] = req.body.address.state;
+      if (req.body.address.pin !== undefined) setPayload['address.pin'] = req.body.address.pin;
     }
 
     if (req.body.emergency) {
-      employee.emergency = {
-        name: req.body.emergency.name || employee.emergency.name,
-        relation: req.body.emergency.relation || employee.emergency.relation,
-        phone: req.body.emergency.phone || employee.emergency.phone
-      };
+      if (req.body.emergency.name !== undefined) setPayload['emergency.name'] = req.body.emergency.name;
+      if (req.body.emergency.relation !== undefined) setPayload['emergency.relation'] = req.body.emergency.relation;
+      if (req.body.emergency.phone !== undefined) setPayload['emergency.phone'] = req.body.emergency.phone;
     }
 
-    employee.blood = req.body.blood || employee.blood;
-    employee.dob = req.body.dob || employee.dob;
-    employee.gender = req.body.gender || employee.gender;
-    employee.phone = req.body.phone || employee.phone;
-    employee.name = req.body.name || employee.name;
-    employee.email = req.body.email || employee.email;
-    if (req.body.parentStatus !== undefined) employee.parentStatus = req.body.parentStatus;
-    if (req.body.licenseNumber !== undefined) employee.licenseNumber = req.body.licenseNumber;
-    if (req.body.licenseExpiry !== undefined) employee.licenseExpiry = req.body.licenseExpiry;
-    if (req.body.certifications !== undefined) employee.certifications = req.body.certifications;
+    if (req.body.blood !== undefined) setPayload.blood = req.body.blood;
+    if (req.body.dob !== undefined) setPayload.dob = req.body.dob;
+    if (req.body.gender !== undefined) setPayload.gender = req.body.gender;
+    if (req.body.phone !== undefined) setPayload.phone = req.body.phone;
+    if (req.body.name !== undefined) setPayload.name = req.body.name;
+    if (req.body.email !== undefined) setPayload.email = req.body.email;
+    if (req.body.parentStatus !== undefined) setPayload.parentStatus = req.body.parentStatus;
+    if (req.body.licenseNumber !== undefined) setPayload.licenseNumber = req.body.licenseNumber;
+    if (req.body.licenseExpiry !== undefined) setPayload.licenseExpiry = req.body.licenseExpiry;
+    if (req.body.certifications !== undefined) setPayload.certifications = req.body.certifications;
 
-    const updatedEmployee = await employee.save();
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      employee._id,
+      { $set: setPayload },
+      { new: true, runValidators: false }
+    );
+
     res.json(updatedEmployee);
   } catch (error) {
+    console.error('Error updating employee record:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -198,9 +204,16 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, '../uploads');
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('Warning: Could not create upload directory:', err.message);
 }
 
 const storage = multer.diskStorage({
