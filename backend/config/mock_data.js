@@ -870,7 +870,304 @@ let mockIncrements = [
   }
 ];
 
+let mockSuggestions = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7001",
+    suggestionId: "SUG-1001",
+    title: "AI-Powered Automated Resume Parsing",
+    category: "Process Improvement",
+    description: "Automate resume screening using AI models to reduce hiring turnaround time by 40%.",
+    businessImpact: "Saves 15 HR hours per requisition and improves candidate match score accuracy.",
+    estimatedBenefit: "₹4,50,000 / Year",
+    attachment: "",
+    status: "Approved",
+    priority: "High",
+    submittedBy: { id: "EMP-1001", name: "Gara Nandini", email: "garanandini067@gmail.com", dept: "Human Resources" },
+    reviewerComments: "Approved during Q3 Innovation Council meeting.",
+    rewardBadge: "💡 Innovator of the Month",
+    rewardPoints: 500,
+    history: [{ action: "Approved", performedBy: "Akhil Sirivella", role: "hr", timestamp: new Date(), comments: "Approved for Q4 roadmap" }]
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7002",
+    suggestionId: "SUG-1002",
+    title: "Flexible Work from Anywhere Policy",
+    category: "Policy & Welfare",
+    description: "Allow 4 remote days per month for high-performing engineering & product teams.",
+    businessImpact: "Boosts employee retention and satisfaction score.",
+    estimatedBenefit: "Employee Wellbeing Boost",
+    attachment: "",
+    status: "Under Review",
+    priority: "Medium",
+    submittedBy: { id: "EMP-1004", name: "Divya Teja", email: "divya@hrorbit.com", dept: "Engineering" },
+    history: [{ action: "Submitted", performedBy: "Divya Teja", role: "employee", timestamp: new Date() }]
+  }
+];
+
+let mockGrievances = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7010",
+    grievanceId: "GRV-1001",
+    category: "Workplace Ergonomics",
+    subject: "Substandard Standing Desk Monitors in Wing B",
+    description: "Flickering monitors causing eye strain during extended development sessions.",
+    severity: "Medium",
+    isConfidential: false,
+    raisedBy: { id: "EMP-1002", name: "Akhil Sirivella", dept: "Human Resources" },
+    assignedOfficer: { id: "EMP-1001", name: "Gara Nandini", role: "HR Manager" },
+    status: "Assigned",
+    investigationNotes: "IT & Admin team requested replacement 4K monitors.",
+    resolution: "Replacement monitors dispatched on Aug 12.",
+    closureDate: null,
+    history: [{ status: "Assigned", actionBy: "Gara Nandini", role: "hr", notes: "Assigned to Admin IT lead" }]
+  }
+];
+
+let mockHelpdeskTickets = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7020",
+    ticketId: "HD-1001",
+    category: "IT Support",
+    subcategory: "VPN & Network Access",
+    subject: "VPN Authentication Timeout on Mac M2",
+    description: "GlobalProtect client disconnects every 20 minutes when connected to Bangalore SG-1 gateway.",
+    priority: "High",
+    raisedBy: { id: "EMP-1003", name: "Karthik Potur", dept: "Software Engineering", email: "karthikpotur@gmail.com" },
+    assignedTo: { id: "EMP-1001", name: "IT Helpdesk Team" },
+    slaHours: 12,
+    dueDate: new Date(Date.now() + 12 * 3600000),
+    resolutionNotes: "Updated VPN profile configuration and re-issued client certificate.",
+    rating: 5,
+    status: "Resolved",
+    history: [{ action: "Resolved", actor: "IT Helpdesk Team", comment: "Certificate re-issued" }]
+  }
+];
+
+let mockWelfareRequests = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7030",
+    requestId: "WEL-1001",
+    welfareType: "Emergency Fund",
+    description: "Emergency medical advance for immediate family surgery hospitalization.",
+    amount: 50000,
+    documents: [{ name: "Hospital_Estimate.pdf", url: "#", uploadedAt: new Date() }],
+    requestedBy: { id: "EMP-1002", name: "Akhil Sirivella", dept: "Human Resources" },
+    status: "Benefit Issued",
+    approvalRemarks: "Sanctioned under Special Corporate Welfare Fund.",
+    verifier: "Gara Nandini",
+    approver: "Management Board",
+    history: [{ status: "Benefit Issued", updatedBy: "Finance Lead", remarks: "Funds transferred to bank account" }]
+  }
+];
+
+let mockRecognitionPosts = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7040",
+    recognitionId: "REC-1001",
+    recipient: { id: "EMP-1003", name: "Karthik Potur", dept: "Engineering", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" },
+    recognizedBy: { id: "EMP-1001", name: "Gara Nandini", dept: "Human Resources", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" },
+    category: "Spot Award",
+    badge: "🏆 Outstanding Execution",
+    appreciationMessage: "Karthik delivered the module migration single-handedly with zero downtime! Exceptional effort!",
+    date: new Date(),
+    visibility: "Company-wide",
+    likes: ["EMP-1001", "EMP-1002"],
+    comments: [
+      { id: "EMP-1002", userName: "Akhil Sirivella", commentText: "Kudos Karthik! Well deserved!", createdAt: new Date() }
+    ]
+  }
+];
+
+let mockCommunications = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7050",
+    communicationId: "COM-1001",
+    title: "HR orbit Q3 All-Hands Meeting & Annual Hackathon Announcement",
+    category: "Announcement",
+    content: "We are thrilled to announce our Q3 All-Hands townhall on Aug 20th followed by the annual 48-hour Innovation Hackathon!",
+    targetAudience: "All Employees",
+    publishDate: new Date(),
+    expiryDate: null,
+    attachment: "",
+    acknowledgementRequired: true,
+    status: "Published",
+    author: { id: "EMP-1001", name: "Gara Nandini" }
+  }
+];
+
+let mockCommunicationReadLogs = [];
+let mockEngagementCategories = [];
+let mockEngagementAuditLogs = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9e7060",
+    moduleName: "Employee Experience & Engagement",
+    entityType: "Communication",
+    entityId: "COM-1001",
+    action: "Published",
+    performedBy: { id: "EMP-1001", name: "Gara Nandini", role: "hr" },
+    previousState: "Draft",
+    newState: "Published",
+    comments: "Published Q3 Townhall announcement",
+    timestamp: new Date()
+  }
+];
+
+let mockTna = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8001",
+    tnaId: "TNA-1001",
+    employee: { id: "EMP-1002", name: "Akhil Sirivella", dept: "Human Resources", designation: "HR Manager" },
+    skillGapCategory: "Technical & Cloud",
+    requestedSkill: "AWS Solutions Architecture & Kubernetes Ops",
+    currentProficiency: 2,
+    targetProficiency: 4,
+    priority: "High",
+    targetQuarter: "Q3-2026",
+    justification: "Critical for enterprise cloud infrastructure migration.",
+    status: "HR Approved",
+    managerComments: "Approved. Essential for Q3 DevOps roadmap.",
+    hrComments: "Budget allocated under Corporate Learning Fund."
+  }
+];
+
+let mockAnnualPlans = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8010",
+    planId: "ATP-2026",
+    year: 2026,
+    title: "FY2026 Enterprise Capability & Digital Transformation Plan",
+    allocatedBudget: 750000,
+    utilizedBudget: 280000,
+    targetDepartments: ["Engineering", "Product", "Human Resources", "Finance"],
+    plannedCoursesCount: 8,
+    status: "In Execution",
+    approvedBy: "Board of Directors"
+  }
+];
+
+let mockTrainingPrograms = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8020",
+    programId: "TRN-1001",
+    title: "Microservices Architecture & High Performance Node.js",
+    category: "Technical & Engineering",
+    mode: "Classroom",
+    durationHours: 16,
+    trainer: { id: "TRN-VAL-01", name: "Dr. Rajesh Kumar (External SME)", type: "External" },
+    venue: { name: "Auditorium Hall A", location: "HQ Bangalore", link: "" },
+    capacity: 30,
+    enrolledEmployees: [
+      { id: "EMP-1002", name: "Akhil Sirivella", dept: "Human Resources", status: "Confirmed" },
+      { id: "EMP-1003", name: "Karthik Potur", dept: "Engineering", status: "Completed" }
+    ],
+    scheduleDate: new Date(Date.now() + 5 * 86400000),
+    status: "Scheduled"
+  }
+];
+
+let mockTrainerVenues = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8030",
+    type: "Trainer",
+    name: "Dr. Rajesh Kumar",
+    category: "External Cloud SME",
+    location: "Bangalore",
+    contactEmail: "rajesh.kumar@cloudexpert.io",
+    rating: 4.9,
+    specialization: "Distributed Systems & Kubernetes",
+    isActive: true
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8031",
+    type: "Venue",
+    name: "Auditorium Hall A",
+    category: "Executive Training Facility",
+    location: "HQ Bangalore - Floor 4",
+    capacity: 50,
+    rating: 4.8,
+    specialization: "A/V Equipment, 4K Projection & Hybrid Streaming",
+    isActive: true
+  }
+];
+
+let mockSkillMatrix = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8040",
+    skillId: "SKL-1001",
+    skillName: "Distributed Systems Architecture",
+    category: "Core Technical",
+    department: "Engineering",
+    employee: { id: "EMP-1003", name: "Karthik Potur", designation: "Staff Engineer" },
+    requiredLevel: 5,
+    currentLevel: 4,
+    gapScore: 1,
+    lastEvaluatedAt: new Date(),
+    evaluatorName: "VP of Engineering"
+  }
+];
+
+let mockCompetencyMatrix = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8050",
+    competencyId: "CMP-1001",
+    competencyName: "Architectural Decision Making & Governance",
+    frameworkType: "Functional Excellence",
+    targetRole: "Senior Software Engineer / Tech Lead",
+    targetGrade: "L5",
+    benchmarkScore: 4.5,
+    assessmentMethod: "Peer Architecture Review + Hands-on Exam",
+    description: "Evaluates ability to design resilient, fault-tolerant enterprise software."
+  }
+];
+
+let mockAssessments = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8060",
+    assessmentId: "ASM-1001",
+    title: "Microservices Security & Performance Certification Exam",
+    programId: "TRN-1001",
+    totalQuestions: 20,
+    passingMarks: 75,
+    certificateName: "Certified Enterprise Microservices Specialist",
+    issuedCertificates: [
+      { employeeId: "EMP-1003", employeeName: "Karthik Potur", score: 92, issueDate: new Date(), certificateUrl: "https://hrorbit.cert.verify/ASM-1001/EMP-1003" }
+    ]
+  }
+];
+
+let mockLearningHistory = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8070",
+    employeeId: "EMP-1003",
+    employeeName: "Karthik Potur",
+    programId: "TRN-1001",
+    programTitle: "Microservices Architecture & High Performance Node.js",
+    category: "Technical",
+    completionDate: new Date(),
+    scoreObtained: 92,
+    status: "Passed with Distinction",
+    certificateUrl: "https://hrorbit.cert.verify/ASM-1001/EMP-1003"
+  }
+];
+
+let mockTrainingAuditLogs = [
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8080",
+    moduleName: "Training & Competency Evaluation",
+    entityType: "Program",
+    entityId: "TRN-1001",
+    action: "Scheduled",
+    performedBy: { id: "EMP-1001", name: "Gara Nandini", role: "hr" },
+    previousState: "Draft",
+    newState: "Scheduled",
+    comments: "Scheduled Microservices Architecture workshop",
+    timestamp: new Date()
+  }
+];
+
 function getMockList(modelName) {
+
+
   switch (modelName) {
     case 'Employee': return mockEmployees;
     case 'Leave': return mockLeaves;
@@ -934,9 +1231,29 @@ function getMockList(modelName) {
     case 'RecruitmentCost': return mockRecruitmentCosts;
     case 'RecruitmentAuditLog': return mockRecruitmentAuditLogs;
     case 'RecruitmentMaster': return mockRecruitmentMasters;
+    case 'Suggestion': return mockSuggestions;
+    case 'Grievance': return mockGrievances;
+    case 'HelpdeskTicket': return mockHelpdeskTickets;
+    case 'WelfareRequest': return mockWelfareRequests;
+    case 'RecognitionPost': return mockRecognitionPosts;
+    case 'Communication': return mockCommunications;
+    case 'CommunicationReadLog': return mockCommunicationReadLogs;
+    case 'EngagementCategoryMaster': return mockEngagementCategories;
+    case 'EngagementAuditLog': return mockEngagementAuditLogs;
+    case 'TrainingNeedsAnalysis': return mockTna;
+    case 'AnnualTrainingPlan': return mockAnnualPlans;
+    case 'TrainingProgram': return mockTrainingPrograms;
+    case 'TrainerVenue': return mockTrainerVenues;
+    case 'SkillMatrix': return mockSkillMatrix;
+    case 'CompetencyMatrix': return mockCompetencyMatrix;
+    case 'AssessmentCertification': return mockAssessments;
+    case 'LearningHistory': return mockLearningHistory;
+    case 'TrainingAuditLog': return mockTrainingAuditLogs;
     default: return null;
   }
 }
+
+
 
 function getMockDataForModel(modelName, op, conditions) {
   let list = getMockList(modelName);

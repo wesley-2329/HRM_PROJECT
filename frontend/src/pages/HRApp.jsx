@@ -15,6 +15,10 @@ import GradeManagement from '../components/GradeManagement';
 import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
 import RecruitmentModule from './recruitment/RecruitmentModule';
 import PerformanceModule from './performance/PerformanceModule';
+import EngagementModule from './engagement/EngagementModule';
+import TrainingModule from './learning/TrainingModule';
+
+
 
 import {
   AddEmployeeModal,
@@ -2501,6 +2505,22 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <PerformanceModule searchQuery={searchQuery} />
         </section>
       )}
+
+      {/* Employee Experience & Engagement Module */}
+      {(currentModule === 'employee-experience' || currentModule === 'emp-engagement' || currentModule === 'engagement') && (
+        <section id="hr-mod-employee-experience" className="hr-module">
+          <EngagementModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Training & Competency Evaluation Module (M8) */}
+      {(currentModule === 'training-competency' || currentModule === 'emp-learning' || currentModule === 'training') && (
+        <section id="hr-mod-training-competency" className="hr-module">
+          <TrainingModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+
 
       {/* Probation Management Module */}
       {currentModule === 'probation-management' && (

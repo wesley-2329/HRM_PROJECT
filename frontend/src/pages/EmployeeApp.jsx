@@ -15,6 +15,10 @@ import GradeManagement from '../components/GradeManagement';
 import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
 import RecruitmentModule from './recruitment/RecruitmentModule';
 import PerformanceModule from './performance/PerformanceModule';
+import EngagementModule from './engagement/EngagementModule';
+import TrainingModule from './learning/TrainingModule';
+
+
 import {
   RaiseTicketModal,
   JoinMeetingModal,
@@ -3595,6 +3599,22 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <PerformanceModule />
           </section>
         )}
+
+        {/* Employee Experience & Engagement Module */}
+        {(currentModule === 'emp-engagement' || currentModule === 'emp-helpdesk' || currentModule === 'employee-experience') && (
+          <section id="emp-mod-engagement" className="emp-module">
+            <EngagementModule />
+          </section>
+        )}
+
+        {/* Training & Competency Evaluation Module (M8) */}
+        {(currentModule === 'emp-learning' || currentModule === 'training-competency' || currentModule === 'training') && (
+          <section id="emp-mod-training" className="emp-module">
+            <TrainingModule />
+          </section>
+        )}
+
+
       </div>
 
       {/* Modals Mounting */}

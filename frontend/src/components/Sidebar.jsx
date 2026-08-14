@@ -27,6 +27,8 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
     { id: 'payroll-management', label: 'Payroll Hub', icon: 'fa-wallet' },
     { id: 'recruitment-ats', label: 'Recruitment ATS', icon: 'fa-magnifying-glass-chart' },
     { id: 'performance-appraisal', label: 'Performance & Appraisal', icon: 'fa-award' },
+    { id: 'employee-experience', label: 'Employee Experience & Engagement', icon: 'fa-heart-pulse' },
+    { id: 'training-competency', label: 'Training & Competency Hub', icon: 'fa-graduation-cap' },
     { id: 'policy-repository', label: 'HR Governance', icon: 'fa-shield-halved' },
     { id: 'hr-tickets', label: 'Support Tickets', icon: 'fa-headset' },
     { id: 'reports-analytics', label: 'Reports & Audits', icon: 'fa-chart-pie' },

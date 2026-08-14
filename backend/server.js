@@ -180,6 +180,14 @@ app.use('/api/recruitment', recruitmentRoute.default || recruitmentRoute);
 const performanceRoute = require('./routes/performance');
 app.use('/api/performance', performanceRoute.default || performanceRoute);
 
+const engagementRoute = require('./routes/engagement');
+app.use('/api/engagement', engagementRoute.default || engagementRoute);
+
+const trainingRoute = require('./routes/training');
+app.use('/api/training', trainingRoute.default || trainingRoute);
+
+
+
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
