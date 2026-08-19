@@ -9,6 +9,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   const { user, logout } = useContext(AuthContext);
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,6 +19,9 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       if (!e.target.closest('.user-dropdown-btn') && !e.target.closest('.dropdown-menu')) {
         setProfileDropdownActive(false);
       }
+      if (!e.target.closest('.emp-menu-item')) {
+        setActiveDropdown(null);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -24,16 +29,17 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
   if (!user) return null;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications ? notifications.filter(n => !n.read).length : 0;
   const hashId = encodeId(user.id);
 
   const handleNavClick = (mod) => {
+    setActiveDropdown(null);
+    setProfileDropdownActive(false);
     if (mod === 'org-structure') {
       navigate('/organization');
     } else {
       navigate(`/employee/${hashId}/${mod}`);
     }
-    setProfileDropdownActive(false);
   };
 
   const isTabActive = (modId) => {
@@ -45,6 +51,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
   const isGroupActive = (modules) => {
     return modules.some(mod => isTabActive(mod));
+  };
+
+  const toggleDropdown = (name) => {
+    setActiveDropdown(prev => prev === name ? null : name);
   };
 
   const openFunZone = () => {
@@ -59,13 +69,14 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   return (
     <header className={`emp-header theme-${navbarTheme}`}>
       <div className="emp-header-left">
-        <div className="emp-logo" onClick={() => navigate(`/employee/${hashId}/emp-dashboard`)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        {/* Brand Logo */}
+        <div className="emp-logo" onClick={() => navigate(`/employee/${hashId}/emp-dashboard`)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
           <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
           <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
-        {/* Back and Forward Navigation Controls */}
-        <div style={{ display: 'flex', gap: '8px', marginRight: '16px', marginLeft: '8px' }}>
+        {/* Navigation Controls */}
+        <div style={{ display: 'flex', gap: '6px', marginRight: '8px', marginLeft: '4px', flexShrink: 0 }}>
           <button 
             onClick={() => navigate(-1)} 
             className="btn btn-secondary"
@@ -84,7 +95,9 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </button>
         </div>
 
+        {/* Navigation Menu */}
         <nav className="emp-nav-menu">
+          
           {/* Dashboard Link */}
           <div className="emp-menu-item">
             <a
@@ -96,22 +109,25 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
           </div>
 
-          {/* Directory / Governance Dropdown */}
-          <div className="emp-menu-item">
-            <a className={`emp-menu-link ${isGroupActive(['org-structure', 'emp-policies']) ? 'active' : ''}`}>
+          {/* Directory & Governance Dropdown */}
+          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('governance')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`emp-menu-link ${isGroupActive(['org-structure', 'emp-policies']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('governance')}
+            >
               <i className="fa-solid fa-shield-halved"></i>
-              HR Governance
-              <i className="fa-solid fa-chevron-down"></i>
+              Governance
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'governance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="emp-dropdown-panel">
+            <div className={`emp-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} style={{ minWidth: '300px' }}>
               <a
                 className={`emp-dropdown-item ${isTabActive('org-structure') ? 'active' : ''}`}
                 onClick={() => handleNavClick('org-structure')}
               >
                 <i className="fa-solid fa-sitemap"></i>
                 <div>
-                  Org Structure
-                  <span className="emp-dropdown-item-desc">Browse reporting charts and direct reports</span>
+                  <div className="emp-dropdown-title">Org Structure</div>
+                  <span className="emp-dropdown-item-desc">Browse reporting hierarchy and direct reports</span>
                 </div>
               </a>
               <a
@@ -120,7 +136,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-building-columns"></i>
                 <div>
-                  Policy Repository
+                  <div className="emp-dropdown-title">Policy Repository</div>
                   <span className="emp-dropdown-item-desc">Read and accept company policies to ensure compliance</span>
                 </div>
               </a>
@@ -128,20 +144,23 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* My Operations Dropdown */}
-          <div className="emp-menu-item">
-            <a className={`emp-menu-link ${isGroupActive(['emp-attendance', 'emp-payroll', 'emp-documents']) ? 'active' : ''}`}>
+          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('operations')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`emp-menu-link ${isGroupActive(['emp-attendance', 'emp-payroll', 'emp-documents']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('operations')}
+            >
               <i className="fa-solid fa-briefcase"></i>
               Operations
-              <i className="fa-solid fa-chevron-down"></i>
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'operations' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="emp-dropdown-panel" style={{ minWidth: '320px' }}>
+            <div className={`emp-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-attendance') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-attendance')}
               >
                 <i className="fa-solid fa-calendar-days"></i>
                 <div>
-                  Attendance
+                  <div className="emp-dropdown-title">Attendance & Shifts</div>
                   <span className="emp-dropdown-item-desc">Log your work shifts and check leave schedules</span>
                 </div>
               </a>
@@ -151,7 +170,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-indian-rupee-sign"></i>
                 <div>
-                  Payroll & Salary
+                  <div className="emp-dropdown-title">Payroll & Salary</div>
                   <span className="emp-dropdown-item-desc">Download payslips and verify benefits payouts</span>
                 </div>
               </a>
@@ -161,28 +180,31 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-vault"></i>
                 <div>
-                  My Document Vault
+                  <div className="emp-dropdown-title">My Document Vault</div>
                   <span className="emp-dropdown-item-desc">Securely access credentials, IDs and agreements</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* Growth Dropdown */}
-          <div className="emp-menu-item">
-            <a className={`emp-menu-link ${isGroupActive(['emp-pip', 'emp-learning']) ? 'active' : ''}`}>
+          {/* Growth & Performance Dropdown */}
+          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('growth')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`emp-menu-link ${isGroupActive(['emp-pip', 'emp-learning', 'recruitment', 'emp-engagement']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('growth')}
+            >
               <i className="fa-solid fa-graduation-cap"></i>
-              Growth
-              <i className="fa-solid fa-chevron-down"></i>
+              Growth & Talent
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'growth' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="emp-dropdown-panel">
+            <div className={`emp-dropdown-panel ${activeDropdown === 'growth' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-pip') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-pip')}
               >
                 <i className="fa-solid fa-star-half-stroke"></i>
                 <div>
-                  Performance & PIP
+                  <div className="emp-dropdown-title">Performance & PIP</div>
                   <span className="emp-dropdown-item-desc">Check appraisal reviews and feedback metrics</span>
                 </div>
               </a>
@@ -192,28 +214,95 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-book-open"></i>
                 <div>
-                  Learning & Dev
+                  <div className="emp-dropdown-title">Learning & Dev</div>
                   <span className="emp-dropdown-item-desc">Access training courses and build career skills</span>
+                </div>
+              </a>
+              <a
+                className={`emp-dropdown-item ${isTabActive('recruitment') ? 'active' : ''}`}
+                onClick={() => handleNavClick('recruitment')}
+              >
+                <i className="fa-solid fa-user-plus"></i>
+                <div>
+                  <div className="emp-dropdown-title">Career Portal</div>
+                  <span className="emp-dropdown-item-desc">Internal job postings and referral tracking</span>
+                </div>
+              </a>
+              <a
+                className={`emp-dropdown-item ${isTabActive('emp-engagement') ? 'active' : ''}`}
+                onClick={() => handleNavClick('emp-engagement')}
+              >
+                <i className="fa-solid fa-heart-pulse"></i>
+                <div>
+                  <div className="emp-dropdown-title">Engagement & Welfare</div>
+                  <span className="emp-dropdown-item-desc">Recognitions, employee benefits & surveys</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* Workplace Dropdown */}
-          <div className="emp-menu-item">
-            <a className={`emp-menu-link ${isGroupActive(['emp-tasks', 'emp-meetings', 'emp-reports']) ? 'active' : ''}`}>
+          {/* Finance & Exit Dropdown */}
+          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('finance')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`emp-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('finance')}
+            >
+              <i className="fa-solid fa-calculator"></i>
+              Finance & Exit
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'finance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
+            </a>
+            <div className={`emp-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+              <a
+                className={`emp-dropdown-item ${isTabActive('hr-budgeting') ? 'active' : ''}`}
+                onClick={() => handleNavClick('hr-budgeting')}
+              >
+                <i className="fa-solid fa-coins"></i>
+                <div>
+                  <div className="emp-dropdown-title">HR Budgeting</div>
+                  <span className="emp-dropdown-item-desc">Department headcount costs & budget insights</span>
+                </div>
+              </a>
+              <a
+                className={`emp-dropdown-item ${isTabActive('statutory-compliance') ? 'active' : ''}`}
+                onClick={() => handleNavClick('statutory-compliance')}
+              >
+                <i className="fa-solid fa-scale-balanced"></i>
+                <div>
+                  <div className="emp-dropdown-title">Statutory Compliance</div>
+                  <span className="emp-dropdown-item-desc">PF, ESI, PT, and compliance details</span>
+                </div>
+              </a>
+              <a
+                className={`emp-dropdown-item ${isTabActive('exit-management') ? 'active' : ''}`}
+                onClick={() => handleNavClick('exit-management')}
+              >
+                <i className="fa-solid fa-door-open"></i>
+                <div>
+                  <div className="emp-dropdown-title">Exit & F&F Portal</div>
+                  <span className="emp-dropdown-item-desc">Resignations, clearances, & No Due Certificate</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          {/* Workplace & Hub Dropdown */}
+          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('workplace')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`emp-menu-link ${isGroupActive(['emp-tasks', 'emp-meetings', 'emp-reports', 'emp-helpdesk']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('workplace')}
+            >
               <i className="fa-solid fa-desktop"></i>
               Workplace
-              <i className="fa-solid fa-chevron-down"></i>
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'workplace' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="emp-dropdown-panel" style={{ minWidth: '320px' }}>
+            <div className={`emp-dropdown-panel ${activeDropdown === 'workplace' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-tasks') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-tasks')}
               >
                 <i className="fa-solid fa-list-check"></i>
                 <div>
-                  Tasks
+                  <div className="emp-dropdown-title">Tasks</div>
                   <span className="emp-dropdown-item-desc">Organize, schedule, and mark daily checklist cards</span>
                 </div>
               </a>
@@ -223,7 +312,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-video"></i>
                 <div>
-                  Meetings
+                  <div className="emp-dropdown-title">Meetings</div>
                   <span className="emp-dropdown-item-desc">View calendar appointments and join online rooms</span>
                 </div>
               </a>
@@ -233,29 +322,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-clipboard-list"></i>
                 <div>
-                  Daily Reports
+                  <div className="emp-dropdown-title">Daily Reports</div>
                   <span className="emp-dropdown-item-desc">Submit timesheets and verify log activity reviews</span>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          {/* Hub Dropdown */}
-          <div className="emp-menu-item">
-            <a className={`emp-menu-link ${isGroupActive(['emp-engagement', 'emp-helpdesk']) ? 'active' : ''}`}>
-              <i className="fa-solid fa-comments"></i>
-              Hub
-              <i className="fa-solid fa-chevron-down"></i>
-            </a>
-            <div className="emp-dropdown-panel">
-              <a
-                className={`emp-dropdown-item ${isTabActive('emp-engagement') ? 'active' : ''}`}
-                onClick={() => handleNavClick('emp-engagement')}
-              >
-                <i className="fa-solid fa-gamepad"></i>
-                <div>
-                  Engagement Hub
-                  <span className="emp-dropdown-item-desc">Participate in team events and check announcements</span>
                 </div>
               </a>
               <a
@@ -264,7 +332,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               >
                 <i className="fa-solid fa-headset"></i>
                 <div>
-                  Helpdesk Support
+                  <div className="emp-dropdown-title">Helpdesk Support</div>
                   <span className="emp-dropdown-item-desc">Open tickets for technical or facilities assistance</span>
                 </div>
               </a>
@@ -289,6 +357,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           className="nav-icon-btn"
           onClick={() => handleNavClick('emp-notifications')}
           style={{ position: 'relative' }}
+          title="Notifications"
         >
           <i className="fa-solid fa-bell"></i>
           {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
@@ -326,7 +395,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </svg>
         </button>
 
-        {/* User Dropdown */}
+        {/* User Profile Dropdown */}
         <div style={{ position: 'relative' }}>
           <div className="user-dropdown-btn" onClick={() => setProfileDropdownActive(prev => !prev)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
             <img src={getAvatarUrl(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />

@@ -174,6 +174,26 @@ app.use('/api/org', orgRoute.default || orgRoute);
 const vaultRoute = require('./routes/vault');
 app.use('/api/vault', vaultRoute.default || vaultRoute);
 
+const recruitmentRoute = require('./routes/recruitment');
+app.use('/api/recruitment', recruitmentRoute.default || recruitmentRoute);
+
+const performanceRoute = require('./routes/performance');
+app.use('/api/performance', performanceRoute.default || performanceRoute);
+
+const engagementRoute = require('./routes/engagement');
+app.use('/api/engagement', engagementRoute.default || engagementRoute);
+
+const trainingRoute = require('./routes/training');
+app.use('/api/training', trainingRoute.default || trainingRoute);
+
+const budgetRoute = require('./routes/budget');
+app.use('/api/budget', budgetRoute.default || budgetRoute);
+
+const complianceRoute = require('./routes/compliance');
+app.use('/api/compliance', complianceRoute.default || complianceRoute);
+
+const exitRoute = require('./routes/exit');
+app.use('/api/exit', exitRoute.default || exitRoute);
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
