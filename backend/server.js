@@ -194,6 +194,38 @@ app.use('/api/compliance', complianceRoute.default || complianceRoute);
 
 const exitRoute = require('./routes/exit');
 app.use('/api/exit', exitRoute.default || exitRoute);
+
+const policiesRoute = require('./routes/policies');
+app.use('/api/policies', policiesRoute.default || policiesRoute);
+
+const auditsRoute = require('./routes/audits');
+app.use('/api/audits', auditsRoute.default || auditsRoute);
+
+const approvalMatrixRoute = require('./routes/approvalMatrix');
+app.use('/api/approval-matrix', approvalMatrixRoute.default || approvalMatrixRoute);
+
+const observationsRoute = require('./routes/observations');
+app.use('/api/observations', observationsRoute.default || observationsRoute);
+
+const actionClosuresRoute = require('./routes/actionClosures');
+app.use('/api/action-closures', actionClosuresRoute.default || actionClosuresRoute);
+
+const probationRoute = require('./routes/probation');
+app.use('/api/probation', probationRoute.default || probationRoute);
+app.use('/api/confirmation', probationRoute.default || probationRoute);
+
+const transfersRoute = require('./routes/transfers');
+app.use('/api/transfers', transfersRoute.default || transfersRoute);
+app.use('/api/department-transfers', transfersRoute.default || transfersRoute);
+
+const promotionsRoute = require('./routes/promotions');
+app.use('/api/promotions', promotionsRoute.default || promotionsRoute);
+
+const gradesRoute = require('./routes/grades');
+app.use('/api/grades', gradesRoute.default || gradesRoute);
+
+const salaryRevisionsRoute = require('./routes/salaryRevisions');
+app.use('/api/salary-revisions', salaryRevisionsRoute.default || salaryRevisionsRoute);
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
