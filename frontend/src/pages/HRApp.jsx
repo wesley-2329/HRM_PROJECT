@@ -13,6 +13,16 @@ import TransferManagement from '../components/TransferManagement';
 import PromotionManagement from '../components/PromotionManagement';
 import GradeManagement from '../components/GradeManagement';
 import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
+import RecruitmentModule from './recruitment/RecruitmentModule';
+import PerformanceModule from './performance/PerformanceModule';
+import EngagementModule from './engagement/EngagementModule';
+import TrainingModule from './learning/TrainingModule';
+import BudgetingModule from './budgeting/BudgetingModule';
+import StatutoryComplianceModule from './compliance/StatutoryComplianceModule';
+import ExitModule from './exit/ExitModule';
+
+
+
 import {
   AddEmployeeModal,
   LedgerModal,
@@ -1742,138 +1752,12 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Recruitment ATS Module */}
-      {currentModule === 'recruitment-ats' && (
+      {['recruitment-ats', 'recruitment', 'recruitment-module'].includes(currentModule) && (
         <section id="hr-mod-recruitment-ats" className="hr-module">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {['All Sources', 'Job Portals', 'Career Page', 'Walk-In', 'Referrals'].map(src => {
-                let count;
-                if (src === 'All Sources') count = candidates.length;
-                else if (src === 'Job Portals') count = candidates.filter(c => c.source === 'Job Portal').length;
-                else if (src === 'Referrals') count = candidates.filter(c => c.source === 'Referral').length;
-                else count = candidates.filter(c => c.source === src).length;
-                
-                return (
-                  <button key={src} className={`btn ${selectedAtsSource === src ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSelectedAtsSource(src)}>
-                    {src} <span className={`badge ${selectedAtsSource === src ? 'badge-info' : 'badge-primary'}`}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={() => setWalkinActive(true)}><i className="fa-solid fa-walking"></i> + Add Walk-In Candidate</button>
-            </div>
-          </div>
-
-          <h3 style={{ marginBottom: '16px' }}>Corporate ATS Pipelines</h3>
-          <div className="ats-pipeline">
-            {['applied', 'screening', 'interview', 'offered', 'selected', 'rejected'].map(col => {
-              let colCandidates = candidates.filter(c => c.stage === col);
-              if (selectedAtsSource !== 'All Sources') {
-                let filterValue = selectedAtsSource;
-                if (filterValue === 'Job Portals') filterValue = 'Job Portal';
-                if (filterValue === 'Referrals') filterValue = 'Referral';
-                colCandidates = colCandidates.filter(c => c.source === filterValue);
-              }
-
-              return (
-                <div key={col} className="ats-col">
-                  <div className="ats-col-header">
-                    <span>{col}</span>
-                    <span className="badge badge-primary">{colCandidates.length}</span>
-                  </div>
-                  <div className="ats-card-list">
-                    {colCandidates.map(cand => (
-                      <div key={cand._id} className="ats-cand-card">
-                        <h5>{cand.name}</h5>
-                        <p>{cand.role}</p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className={`badge ${cand.source === 'Walk-In' ? 'badge-success' : cand.source === 'Referral' ? 'badge-warning' : 'badge-info'}`}>{cand.source}</span>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{cand.experience}</span>
-                        </div>
-                        {col === 'interview' && cand.interviewStage && (
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}><i className="fa-solid fa-clock"></i> {cand.interviewStage}</div>
-                        )}
-                        <div className="ats-cand-actions">
-                          {col !== 'selected' && col !== 'rejected' && <a onClick={() => handleMoveCandidate(cand._id, cand.stage)}>Move Forward →</a>}
-                          {col !== 'rejected' && col !== 'selected' && <a className="reject-link" onClick={() => handleRejectCandidate(cand._id, cand.stage)}>Reject</a>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="card">
-            <div className="card-title">ATS Pipeline Selections</div>
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Candidate</th>
-                    <th>Role</th>
-                    <th>Source</th>
-                    <th>Stage</th>
-                    <th>Offer Status</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.filter(c => c.stage === 'selected').map(cand => (
-                    <tr key={cand._id}>
-                      <td><strong>{cand.name}</strong></td>
-                      <td>{cand.role}</td>
-                      <td>{cand.source}</td>
-                      <td>Final HR & Offer</td>
-                      <td>
-                        <span className={`badge ${cand.offerReleased === 'Yes' ? 'badge-success' : 'badge-warning'}`}>{cand.offerReleased === 'Yes' ? 'Released' : 'Pending'}</span>
-                        {cand.offerReleased !== 'Yes' && <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', marginLeft: '10px' }} onClick={() => handleReleaseOffer(cand._id)}>Release Offer</button>}
-                      </td>
-                      <td>{cand.notes || '--'}</td>
-                    </tr>
-                  ))}
-                  {candidates.filter(c => c.stage === 'selected').length === 0 && (
-                    <tr><td colSpan="6" style={{ textAlign: 'center' }}>No selected candidates.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-title">ATS Pipeline Rejections</div>
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Candidate</th>
-                    <th>Role</th>
-                    <th>Source</th>
-                    <th>Rejected At</th>
-                    <th>Reason</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.filter(c => c.stage === 'rejected').map(cand => (
-                    <tr key={cand._id}>
-                      <td><strong>{cand.name}</strong></td>
-                      <td>{cand.role}</td>
-                      <td>{cand.source}</td>
-                      <td>{cand.stageRejectedAt || 'Screening'}</td>
-                      <td>{cand.rejectionReason || 'Under-qualified'}</td>
-                    </tr>
-                  ))}
-                  {candidates.filter(c => c.stage === 'rejected').length === 0 && (
-                    <tr><td colSpan="5" style={{ textAlign: 'center' }}>No rejected candidates.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <RecruitmentModule />
         </section>
       )}
+
 
       {/* Reports & Audits Module */}
       {currentModule === 'reports-analytics' && (
@@ -2484,6 +2368,57 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <ApprovalsInbox />
         </section>
       )}
+
+      {/* Recruitment & Onboarding Module */}
+      {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding') && (
+        <section id="hr-mod-recruitment-ats" className="hr-module">
+          <RecruitmentModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Performance & Appraisal Module */}
+      {(currentModule === 'performance-appraisal' || currentModule === 'performance' || currentModule === 'pip-management') && (
+        <section id="hr-mod-performance-appraisal" className="hr-module">
+          <PerformanceModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Employee Experience & Engagement Module */}
+      {(currentModule === 'employee-experience' || currentModule === 'emp-engagement' || currentModule === 'engagement') && (
+        <section id="hr-mod-employee-experience" className="hr-module">
+          <EngagementModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Training & Competency Evaluation Module (M8) */}
+      {(currentModule === 'training-competency' || currentModule === 'emp-learning' || currentModule === 'training') && (
+        <section id="hr-mod-training-competency" className="hr-module">
+          <TrainingModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* HR Budgeting & Cost Analytics Module (Module 9) */}
+      {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
+        <section id="hr-mod-budgeting" className="hr-module">
+          <BudgetingModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Statutory Compliance Monitor (Module 10) */}
+      {(currentModule === 'statutory-compliance' || currentModule === 'compliance' || currentModule === 'statutory') && (
+        <section id="hr-mod-compliance" className="hr-module">
+          <StatutoryComplianceModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+      {/* Exit Workflow & Full & Final (F&F) (Module 11) */}
+      {(currentModule === 'exit-management' || currentModule === 'exit-workflow' || currentModule === 'exit-ff' || currentModule === 'exit') && (
+        <section id="hr-mod-exit" className="hr-module">
+          <ExitModule searchQuery={searchQuery} />
+        </section>
+      )}
+
+
 
       {/* Probation Management Module */}
       {currentModule === 'probation-management' && (

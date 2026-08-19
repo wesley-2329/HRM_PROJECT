@@ -200,3 +200,224 @@ CREATE INDEX idx_departments_code ON departments(code);
 CREATE INDEX idx_teams_code ON teams(code);
 CREATE INDEX idx_designations_code ON designations(code);
 CREATE INDEX idx_positions_status ON positions(status);
+
+-- ==========================================
+-- MODULE 7: EMPLOYEE EXPERIENCE & ENGAGEMENT
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS suggestion_master (
+    id VARCHAR(36) PRIMARY KEY,
+    suggestion_id VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    business_impact TEXT,
+    estimated_benefit VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'Submitted',
+    priority VARCHAR(20) DEFAULT 'Medium',
+    submitted_by_id VARCHAR(36) NOT NULL,
+    submitted_by_name VARCHAR(150) NOT NULL,
+    reward_badge VARCHAR(100),
+    reward_points INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS grievance_master (
+    id VARCHAR(36) PRIMARY KEY,
+    grievance_id VARCHAR(50) UNIQUE NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    severity VARCHAR(20) DEFAULT 'Medium',
+    is_confidential BOOLEAN DEFAULT FALSE,
+    raised_by_id VARCHAR(36) NOT NULL,
+    raised_by_name VARCHAR(150) NOT NULL,
+    assigned_officer_id VARCHAR(36),
+    assigned_officer_name VARCHAR(150),
+    status VARCHAR(50) DEFAULT 'Submitted',
+    investigation_notes TEXT,
+    resolution TEXT,
+    closure_date TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS helpdesk_ticket (
+    id VARCHAR(36) PRIMARY KEY,
+    ticket_id VARCHAR(50) UNIQUE NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    subcategory VARCHAR(100) DEFAULT 'General',
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    priority VARCHAR(20) DEFAULT 'Medium',
+    raised_by_id VARCHAR(36) NOT NULL,
+    raised_by_name VARCHAR(150) NOT NULL,
+    assigned_to_id VARCHAR(36),
+    assigned_to_name VARCHAR(150),
+    sla_hours INT DEFAULT 24,
+    due_date TIMESTAMP NULL,
+    resolution_notes TEXT,
+    rating INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'Open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS welfare_request (
+    id VARCHAR(36) PRIMARY KEY,
+    request_id VARCHAR(50) UNIQUE NOT NULL,
+    welfare_type VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    amount DECIMAL(12,2) DEFAULT 0.00,
+    requested_by_id VARCHAR(36) NOT NULL,
+    requested_by_name VARCHAR(150) NOT NULL,
+    status VARCHAR(50) DEFAULT 'Submitted',
+    approval_remarks TEXT,
+    verifier VARCHAR(150),
+    approver VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS recognition_post (
+    id VARCHAR(36) PRIMARY KEY,
+    recognition_id VARCHAR(50) UNIQUE NOT NULL,
+    recipient_id VARCHAR(36) NOT NULL,
+    recipient_name VARCHAR(150) NOT NULL,
+    recognized_by_id VARCHAR(36) NOT NULL,
+    recognized_by_name VARCHAR(150) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    badge VARCHAR(100) DEFAULT '⭐ Star Performer',
+    appreciation_message TEXT NOT NULL,
+    visibility VARCHAR(50) DEFAULT 'Company-wide',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS communication_master (
+    id VARCHAR(36) PRIMARY KEY,
+    communication_id VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    target_audience VARCHAR(100) DEFAULT 'All Employees',
+    publish_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiry_date TIMESTAMP NULL,
+    acknowledgement_required BOOLEAN DEFAULT FALSE,
+    status VARCHAR(50) DEFAULT 'Published',
+    author_id VARCHAR(36),
+    author_name VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_suggestion_status ON suggestion_master(status);
+CREATE INDEX idx_grievance_status ON grievance_master(status);
+CREATE INDEX idx_helpdesk_status ON helpdesk_ticket(status);
+CREATE INDEX idx_welfare_status ON welfare_request(status);
+CREATE INDEX idx_communication_category ON communication_master(category);
+
+-- ==========================================
+-- MODULE 8: TRAINING & COMPETENCY EVALUATION
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS training_needs_analysis (
+    id VARCHAR(36) PRIMARY KEY,
+    tna_id VARCHAR(50) UNIQUE NOT NULL,
+    employee_id VARCHAR(36) NOT NULL,
+    employee_name VARCHAR(150) NOT NULL,
+    department VARCHAR(100),
+    skill_gap_category VARCHAR(100) NOT NULL,
+    requested_skill VARCHAR(255) NOT NULL,
+    current_proficiency INT DEFAULT 2,
+    target_proficiency INT DEFAULT 4,
+    priority VARCHAR(20) DEFAULT 'Medium',
+    target_quarter VARCHAR(20) DEFAULT 'Q3-2026',
+    justification TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'Requested',
+    manager_comments TEXT,
+    hr_comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS annual_training_plan (
+    id VARCHAR(36) PRIMARY KEY,
+    plan_id VARCHAR(50) UNIQUE NOT NULL,
+    year INT NOT NULL DEFAULT 2026,
+    title VARCHAR(255) NOT NULL,
+    allocated_budget DECIMAL(12,2) DEFAULT 500000.00,
+    utilized_budget DECIMAL(12,2) DEFAULT 0.00,
+    planned_courses_count INT DEFAULT 5,
+    status VARCHAR(50) DEFAULT 'Approved',
+    approved_by VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS training_program (
+    id VARCHAR(36) PRIMARY KEY,
+    program_id VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    mode VARCHAR(50) DEFAULT 'Classroom',
+    duration_hours INT DEFAULT 8,
+    trainer_name VARCHAR(150) NOT NULL,
+    venue_name VARCHAR(150) DEFAULT 'Conference Room Alpha',
+    capacity INT DEFAULT 25,
+    schedule_date TIMESTAMP NOT NULL,
+    status VARCHAR(50) DEFAULT 'Scheduled',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS skill_matrix (
+    id VARCHAR(36) PRIMARY KEY,
+    skill_id VARCHAR(50) UNIQUE NOT NULL,
+    skill_name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    employee_id VARCHAR(36) NOT NULL,
+    employee_name VARCHAR(150) NOT NULL,
+    required_level INT DEFAULT 4,
+    current_level INT DEFAULT 2,
+    gap_score INT DEFAULT 2,
+    last_evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS competency_matrix (
+    id VARCHAR(36) PRIMARY KEY,
+    competency_id VARCHAR(50) UNIQUE NOT NULL,
+    competency_name VARCHAR(255) NOT NULL,
+    framework_type VARCHAR(100) DEFAULT 'Functional Excellence',
+    target_role VARCHAR(150) NOT NULL,
+    target_grade VARCHAR(20) DEFAULT 'L4',
+    benchmark_score DECIMAL(3,2) DEFAULT 4.00,
+    assessment_method VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS assessment_certification (
+    id VARCHAR(36) PRIMARY KEY,
+    assessment_id VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    program_id VARCHAR(50),
+    total_questions INT DEFAULT 10,
+    passing_marks INT DEFAULT 70,
+    certificate_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS learning_history (
+    id VARCHAR(36) PRIMARY KEY,
+    employee_id VARCHAR(36) NOT NULL,
+    employee_name VARCHAR(150) NOT NULL,
+    program_id VARCHAR(50) NOT NULL,
+    program_title VARCHAR(255) NOT NULL,
+    completion_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    score_obtained INT DEFAULT 85,
+    status VARCHAR(50) DEFAULT 'Completed',
+    certificate_url TEXT
+);
+
+CREATE INDEX idx_tna_status ON training_needs_analysis(status);
+CREATE INDEX idx_program_status ON training_program(status);
+CREATE INDEX idx_skill_gap ON skill_matrix(gap_score);
+
+
