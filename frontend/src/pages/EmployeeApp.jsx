@@ -17,6 +17,9 @@ import RecruitmentModule from './recruitment/RecruitmentModule';
 import PerformanceModule from './performance/PerformanceModule';
 import EngagementModule from './engagement/EngagementModule';
 import TrainingModule from './learning/TrainingModule';
+import BudgetingModule from './budgeting/BudgetingModule';
+import StatutoryComplianceModule from './compliance/StatutoryComplianceModule';
+import ExitModule from './exit/ExitModule';
 
 
 import {
@@ -3613,6 +3616,35 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <TrainingModule />
           </section>
         )}
+
+        {/* HR Budgeting & Cost Analytics Module (Module 9) */}
+        {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
+          <section id="emp-mod-budgeting" className="emp-module">
+            <BudgetingModule />
+          </section>
+        )}
+
+        {/* Statutory Compliance Monitor (Module 10) */}
+        {(currentModule === 'statutory-compliance' || currentModule === 'compliance' || currentModule === 'statutory') && (
+          <section id="emp-mod-compliance" className="emp-module">
+            <StatutoryComplianceModule />
+          </section>
+        )}
+
+        {/* Exit Workflow & Full & Final (F&F) (Module 11) */}
+        {(currentModule === 'exit-management' || currentModule === 'exit-workflow' || currentModule === 'exit-ff' || currentModule === 'exit') && (
+          <section id="emp-mod-exit" className="emp-module">
+            <ExitModule />
+          </section>
+        )}
+
+        {/* Recruitment & Onboarding Module (M5) */}
+        {(currentModule === 'recruitment' || currentModule === 'recruitment-ats' || currentModule === 'career-portal') && (
+          <section id="emp-mod-recruitment" className="emp-module">
+            <RecruitmentModule />
+          </section>
+        )}
+
 
 
       </div>

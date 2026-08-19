@@ -9,6 +9,8 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,6 +19,9 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       if (!e.target.closest('.user-dropdown-btn') && !e.target.closest('.dropdown-menu')) {
         setProfileDropdownActive(false);
       }
+      if (!e.target.closest('.hr-menu-item')) {
+        setActiveDropdown(null);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -24,15 +29,16 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
   if (!user) return null;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications ? notifications.filter(n => !n.read).length : 0;
 
   const handleNavClick = (mod) => {
+    setActiveDropdown(null);
+    setProfileDropdownActive(false);
     if (mod === 'org-structure') {
       navigate('/organization');
     } else {
       navigate(`/hr/${mod}`);
     }
-    setProfileDropdownActive(false);
   };
 
   const isTabActive = (modId) => {
@@ -46,16 +52,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     return modules.some(mod => isTabActive(mod));
   };
 
+  const toggleDropdown = (name) => {
+    setActiveDropdown(prev => prev === name ? null : name);
+  };
+
   return (
     <header className="hr-header">
       <div className="hr-header-left">
-        <div className="hr-logo" onClick={() => navigate('/hr/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        {/* Brand Logo */}
+        <div className="hr-logo" onClick={() => navigate('/hr/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
           <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
           <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
-        {/* Back and Forward Navigation Controls */}
-        <div style={{ display: 'flex', gap: '8px', marginRight: '16px', marginLeft: '8px' }}>
+        {/* Navigation Back / Forward */}
+        <div style={{ display: 'flex', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
           <button 
             onClick={() => navigate(-1)} 
             className="btn btn-secondary"
@@ -74,8 +85,10 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </button>
         </div>
 
+        {/* Navigation Menu */}
         <nav className="hr-nav-menu">
-          {/* Overview Link */}
+          
+          {/* 1. Overview */}
           <div className="hr-menu-item">
             <a
               className={`hr-menu-link ${isTabActive('dashboard') ? 'active' : ''}`}
@@ -86,21 +99,24 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             </a>
           </div>
 
-          {/* Workforce Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['employee-management', 'org-structure']) ? 'active' : ''}`}>
+          {/* 2. Workforce Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('workforce')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['employee-management', 'org-structure']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('workforce')}
+            >
               <i className="fa-solid fa-user-gear"></i>
               Workforce
-              <i className="fa-solid fa-chevron-down"></i>
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'workforce' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="hr-dropdown-panel">
+            <div className={`hr-dropdown-panel ${activeDropdown === 'workforce' ? 'open' : ''}`} style={{ minWidth: '300px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('employee-management') ? 'active' : ''}`}
                 onClick={() => handleNavClick('employee-management')}
               >
                 <i className="fa-solid fa-user-group"></i>
                 <div>
-                  Employee Directory
+                  <div className="hr-dropdown-title">Employee Directory</div>
                   <span className="hr-dropdown-item-desc">Manage employee profiles and document sets</span>
                 </div>
               </a>
@@ -110,29 +126,32 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-sitemap"></i>
                 <div>
-                  Org Structure
-                  <span className="hr-dropdown-item-desc">Visualize reporting charts and design divisions</span>
+                  <div className="hr-dropdown-title">Org Structure</div>
+                  <span className="hr-dropdown-item-desc">Visualize reporting hierarchy and organizational design</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* Core HR Operations Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['attendance-leave', 'payroll-management', 'document-vault']) ? 'active' : ''}`}>
+          {/* 3. Operations Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('operations')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['attendance-leave', 'payroll-management', 'document-vault']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('operations')}
+            >
               <i className="fa-solid fa-gears"></i>
               Operations
-              <i className="fa-solid fa-chevron-down"></i>
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'operations' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="hr-dropdown-panel" style={{ minWidth: '320px' }}>
+            <div className={`hr-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('attendance-leave') ? 'active' : ''}`}
                 onClick={() => handleNavClick('attendance-leave')}
               >
                 <i className="fa-solid fa-calendar-check"></i>
                 <div>
-                  Attendance & Shift
-                  <span className="hr-dropdown-item-desc">Monitor shift logs, leave approvals and roster calendars</span>
+                  <div className="hr-dropdown-title">Attendance & Shift</div>
+                  <span className="hr-dropdown-item-desc">Monitor shift logs, leave approvals and rosters</span>
                 </div>
               </a>
               <a
@@ -141,7 +160,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-wallet"></i>
                 <div>
-                  Payroll Hub
+                  <div className="hr-dropdown-title">Payroll Hub</div>
                   <span className="hr-dropdown-item-desc">Handle payouts, tax deductions, and salary sheets</span>
                 </div>
               </a>
@@ -151,70 +170,139 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-vault"></i>
                 <div>
-                  Document Vault
+                  <div className="hr-dropdown-title">Document Vault</div>
                   <span className="hr-dropdown-item-desc">Access encrypted document records and certificates</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* Recruitment Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['recruitment-ats']) ? 'active' : ''}`}>
-              <i className="fa-solid fa-user-plus"></i>
-              Recruitment
-              <i className="fa-solid fa-chevron-down"></i>
+          {/* 4. Talent & Growth Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('talent')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['recruitment-ats', 'performance-appraisal', 'training-competency', 'employee-experience']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('talent')}
+            >
+              <i className="fa-solid fa-award"></i>
+              Talent & Growth
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'talent' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="hr-dropdown-panel">
+            <div className={`hr-dropdown-panel ${activeDropdown === 'talent' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('recruitment-ats') ? 'active' : ''}`}
                 onClick={() => handleNavClick('recruitment-ats')}
               >
                 <i className="fa-solid fa-magnifying-glass-chart"></i>
                 <div>
-                  Recruitment ATS
-                  <span className="hr-dropdown-item-desc">Track role requisitions and applicant screenings</span>
+                  <div className="hr-dropdown-title">Recruitment ATS</div>
+                  <span className="hr-dropdown-item-desc">Role requisitions, applicant tracking and interviews</span>
                 </div>
               </a>
-            </div>
-          </div>
-
-          {/* Performance & Appraisal Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['performance-appraisal', 'performance']) ? 'active' : ''}`}>
-              <i className="fa-solid fa-award"></i>
-              Performance & Appraisal
-              <i className="fa-solid fa-chevron-down"></i>
-            </a>
-            <div className="hr-dropdown-panel" style={{ minWidth: '320px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('performance-appraisal') ? 'active' : ''}`}
                 onClick={() => handleNavClick('performance-appraisal')}
               >
                 <i className="fa-solid fa-chart-line"></i>
                 <div>
-                  Performance Hub
-                  <span className="hr-dropdown-item-desc">Appraisals, KRAs, Increments & PIP Lifecycle</span>
+                  <div className="hr-dropdown-title">Performance & Appraisal</div>
+                  <span className="hr-dropdown-item-desc">Appraisals, KRAs, increments & PIP management</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('training-competency') ? 'active' : ''}`}
+                onClick={() => handleNavClick('training-competency')}
+              >
+                <i className="fa-solid fa-graduation-cap"></i>
+                <div>
+                  <div className="hr-dropdown-title">Training & Competency</div>
+                  <span className="hr-dropdown-item-desc">Skills matrix, course enrollments and certifications</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('employee-experience') ? 'active' : ''}`}
+                onClick={() => handleNavClick('employee-experience')}
+              >
+                <i className="fa-solid fa-heart-pulse"></i>
+                <div>
+                  <div className="hr-dropdown-title">Employee Experience</div>
+                  <span className="hr-dropdown-item-desc">Survey analytics, recognitions, and welfare programs</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* HR Governance & Compliance Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit']) ? 'active' : ''}`}>
-              <i className="fa-solid fa-shield-halved"></i>
-              Governance & Compliance
-              <i className="fa-solid fa-chevron-down"></i>
+          {/* 5. Finance & Separation Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('finance')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('finance')}
+            >
+              <i className="fa-solid fa-calculator"></i>
+              Finance & Exit
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'finance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="hr-dropdown-panel" style={{ minWidth: '320px' }}>
+            <div className={`hr-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+              <a
+                className={`hr-dropdown-item ${isTabActive('hr-budgeting') ? 'active' : ''}`}
+                onClick={() => handleNavClick('hr-budgeting')}
+              >
+                <i className="fa-solid fa-coins"></i>
+                <div>
+                  <div className="hr-dropdown-title">HR Budgeting & Cost Analytics</div>
+                  <span className="hr-dropdown-item-desc">Workforce cost planning, allocations and forecasts</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('statutory-compliance') ? 'active' : ''}`}
+                onClick={() => handleNavClick('statutory-compliance')}
+              >
+                <i className="fa-solid fa-scale-balanced"></i>
+                <div>
+                  <div className="hr-dropdown-title">Statutory Compliance</div>
+                  <span className="hr-dropdown-item-desc">PF, ESI, PT, LWF, challans, notices and returns</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('exit-management') ? 'active' : ''}`}
+                onClick={() => handleNavClick('exit-management')}
+              >
+                <i className="fa-solid fa-door-open"></i>
+                <div>
+                  <div className="hr-dropdown-title">Exit Workflow & F&F</div>
+                  <span className="hr-dropdown-item-desc">Resignations, clearances, F&F settlements & letters</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          {/* 6. HR Governance & Audit Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('governance')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('governance')}
+            >
+              <i className="fa-solid fa-shield-halved"></i>
+              Governance
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'governance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
+            </a>
+            <div className={`hr-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+              <a
+                className={`hr-dropdown-item ${isTabActive('policy-repository') ? 'active' : ''}`}
+                onClick={() => handleNavClick('policy-repository')}
+              >
+                <i className="fa-solid fa-book-bookmark"></i>
+                <div>
+                  <div className="hr-dropdown-title">Policy Repository</div>
+                  <span className="hr-dropdown-item-desc">Publish policies and track acknowledgements</span>
+                </div>
+              </a>
               <a
                 className={`hr-dropdown-item ${isTabActive('hr-audit') ? 'active' : ''}`}
                 onClick={() => handleNavClick('hr-audit')}
               >
                 <i className="fa-solid fa-clipboard-check"></i>
                 <div>
-                  HR Audit
+                  <div className="hr-dropdown-title">Statutory & HR Audit</div>
                   <span className="hr-dropdown-item-desc">Statutory audits and compliance registry</span>
                 </div>
               </a>
@@ -224,7 +312,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-calendar-days"></i>
                 <div>
-                  Compliance Calendar
+                  <div className="hr-dropdown-title">Compliance Calendar</div>
                   <span className="hr-dropdown-item-desc">PF, ESI, TDS filing schedules</span>
                 </div>
               </a>
@@ -234,18 +322,8 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-sitemap"></i>
                 <div>
-                  Approval Matrix
+                  <div className="hr-dropdown-title">Approval Matrix</div>
                   <span className="hr-dropdown-item-desc">Multi-level authorization workflows</span>
-                </div>
-              </a>
-              <a
-                className={`hr-dropdown-item ${isTabActive('policy-repository') ? 'active' : ''}`}
-                onClick={() => handleNavClick('policy-repository')}
-              >
-                <i className="fa-solid fa-book-bookmark"></i>
-                <div>
-                  Policy Repository
-                  <span className="hr-dropdown-item-desc">Publish policies and track acknowledgements</span>
                 </div>
               </a>
               <a
@@ -254,7 +332,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-magnifying-glass"></i>
                 <div>
-                  HR Observation Tracker
+                  <div className="hr-dropdown-title">HR Observation Tracker</div>
                   <span className="hr-dropdown-item-desc">Track and resolve audit observations</span>
                 </div>
               </a>
@@ -264,7 +342,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-square-check"></i>
                 <div>
-                  Action Closure Tracker
+                  <div className="hr-dropdown-title">Action Closure Tracker</div>
                   <span className="hr-dropdown-item-desc">CAPA closure checklist and status</span>
                 </div>
               </a>
@@ -274,28 +352,31 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-file-invoice"></i>
                 <div>
-                  Internal Audit Reports
+                  <div className="hr-dropdown-title">Internal Audit Reports</div>
                   <span className="hr-dropdown-item-desc">Quarterly audit logs and analytics</span>
                 </div>
               </a>
             </div>
           </div>
 
-          {/* Support Dropdown */}
-          <div className="hr-menu-item">
-            <a className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics']) ? 'active' : ''}`}>
+          {/* 7. Support & Analytics Dropdown */}
+          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('support')} onMouseLeave={() => setActiveDropdown(null)}>
+            <a 
+              className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics', 'notification-system']) ? 'active' : ''}`}
+              onClick={() => toggleDropdown('support')}
+            >
               <i className="fa-solid fa-circle-info"></i>
-              Support Hub
-              <i className="fa-solid fa-chevron-down"></i>
+              Support & Reports
+              <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'support' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className="hr-dropdown-panel" style={{ minWidth: '280px' }}>
+            <div className={`hr-dropdown-panel ${activeDropdown === 'support' ? 'open' : ''}`} style={{ minWidth: '280px' }}>
               <a
                 className={`hr-dropdown-item ${isTabActive('hr-tickets') ? 'active' : ''}`}
                 onClick={() => handleNavClick('hr-tickets')}
               >
                 <i className="fa-solid fa-headset"></i>
                 <div>
-                  Support Tickets
+                  <div className="hr-dropdown-title">Support Tickets</div>
                   <span className="hr-dropdown-item-desc">Resolve employee issues and manage SLA tickets</span>
                 </div>
               </a>
@@ -305,8 +386,18 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               >
                 <i className="fa-solid fa-chart-pie"></i>
                 <div>
-                  Reports & Audits
+                  <div className="hr-dropdown-title">Reports & Audits</div>
                   <span className="hr-dropdown-item-desc">View department cost indices and compliance summaries</span>
+                </div>
+              </a>
+              <a
+                className={`hr-dropdown-item ${isTabActive('notification-system') ? 'active' : ''}`}
+                onClick={() => handleNavClick('notification-system')}
+              >
+                <i className="fa-solid fa-bell"></i>
+                <div>
+                  <div className="hr-dropdown-title">Alert Center</div>
+                  <span className="hr-dropdown-item-desc">System notifications, broadcast alerts & logs</span>
                 </div>
               </a>
             </div>
@@ -330,6 +421,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           className="nav-icon-btn"
           onClick={() => handleNavClick('notification-system')}
           style={{ position: 'relative' }}
+          title="Notifications"
         >
           <i className="fa-solid fa-bell"></i>
           {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
@@ -367,10 +459,10 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </svg>
         </button>
 
-        {/* User Dropdown */}
+        {/* User Profile Dropdown */}
         <div style={{ position: 'relative' }}>
           <div className="user-dropdown-btn" onClick={() => setProfileDropdownActive(prev => !prev)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <img src={getAvatarUrl(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: 'full' }} />
+            <img src={getAvatarUrl(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
             <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
               {user.name.split(' ')[0]}
             </span>
