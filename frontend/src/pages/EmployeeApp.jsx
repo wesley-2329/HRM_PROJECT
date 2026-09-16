@@ -1635,7 +1635,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </div>
               </div>
               <div className="welcome-banner-img-container">
-                <img src="/welcome_banner_workspace.jpg" alt="Workspace Illustration" className="welcome-banner-img" />
+                <img 
+                  src="/welcome_banner_workspace.jpg" 
+                  alt="Workspace Illustration" 
+                  className="welcome-banner-img"
+                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&h=200&q=80"; }}
+                />
               </div>
             </div>
 

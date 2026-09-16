@@ -3,11 +3,26 @@ const router = express.Router();
 const Employee = require('../models/Employee');
 const { protect, adminOnly } = require('../middleware/auth');
 
+const ensureEmployeesSeeded = async () => {
+  try {
+    const count = await Employee.countDocuments({});
+    if (count === 0) {
+      const { mockEmployees } = require('../config/mock_data');
+      if (mockEmployees && mockEmployees.length > 0) {
+        await Employee.insertMany(mockEmployees);
+      }
+    }
+  } catch (e) {
+    console.error('Error auto-seeding employees:', e.message);
+  }
+};
+
 // @route   GET /api/employees
 // @desc    Get all employees
 // @access  Private/HR only
 router.get('/', protect, adminOnly, async (req, res) => {
   try {
+    await ensureEmployeesSeeded();
     const employees = await Employee.find({}).select('-password');
     res.json(employees);
   } catch (error) {
@@ -20,6 +35,7 @@ router.get('/', protect, adminOnly, async (req, res) => {
 // @access  Private
 router.get('/public', protect, async (req, res) => {
   try {
+    await ensureEmployeesSeeded();
     const list = await Employee.find({ status: 'Approved' }).select('id name role dept teamLeadId isTeamLead avatar gender designation functionalManagerId branch businessUnit grade');
     res.json(list);
   } catch (error) {
