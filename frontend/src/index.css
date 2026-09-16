@@ -1523,15 +1523,9 @@ body.dark-mode .emp-header {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.hr-nav-menu::-webkit-scrollbar,
-.emp-nav-menu::-webkit-scrollbar {
-  display: none;
+  overflow: visible !important;
+  position: relative;
+  z-index: 10001;
 }
 
 .hr-menu-item,
