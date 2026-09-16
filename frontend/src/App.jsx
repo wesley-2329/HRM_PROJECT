@@ -35,7 +35,7 @@ export const decodeId = (hash) => {
 };
 
 export const getAvatarUrl = (emp) => {
-  if (emp?.avatar && emp.avatar.trim() !== '' && !emp.avatar.includes('unsplash.com')) {
+  if (emp?.avatar && typeof emp.avatar === 'string' && emp.avatar.trim() !== '') {
     return emp.avatar;
   }
   const gender = (emp?.gender || 'Male').toLowerCase();

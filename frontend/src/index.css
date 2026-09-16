@@ -623,7 +623,7 @@ body.dark-mode {
 
 /* Toast alert elements */
 .toast-container {
-  @apply fixed top-5 right-5 z-[1100] flex flex-col gap-2.5;
+  @apply fixed top-20 right-5 z-[99999] flex flex-col gap-2.5;
 }
 
 .toast {
@@ -1518,12 +1518,20 @@ body.dark-mode .emp-header {
 .emp-nav-menu {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   list-style: none;
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hr-nav-menu::-webkit-scrollbar,
+.emp-nav-menu::-webkit-scrollbar {
+  display: none;
 }
 
 .hr-menu-item,

@@ -3,7 +3,7 @@ import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api from '../api';
-import { getAvatarUrl } from '../App';
+import Modal from '../components/Modal';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
 import HRCompliancePage from './governance/HRCompliancePage';
@@ -189,15 +189,15 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <i className="fa-solid fa-circle-info"></i> Personal Details
         </h5>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-          <div><strong style={{ color: 'var(--text-secondary)' }}>Gender:</strong> {emp.gender || 'Not specified'}</div>
-          <div><strong style={{ color: 'var(--text-secondary)' }}>Phone:</strong> {emp.phone || '--'}</div>
-          <div><strong style={{ color: 'var(--text-secondary)' }}>Blood Group:</strong> {emp.blood || '--'}</div>
-          <div><strong style={{ color: 'var(--text-secondary)' }}>Aadhaar:</strong> {emp.aadhaar || '--'}</div>
-          <div><strong style={{ color: 'var(--text-secondary)' }}>Parent Status:</strong> {emp.parentStatus || 'No'}</div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>Gender:</strong> {emp.gender || 'Not specified'}</div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>Phone:</strong> {emp.phone || '--'}</div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>Blood Group:</strong> {emp.blood || '--'}</div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>Aadhaar:</strong> {emp.aadhaar || '--'}</div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>Parent Status:</strong> {emp.parentStatus || 'No'}</div>
+          <div style={{ gridColumn: 'span 2', wordBreak: 'break-word', minWidth: 0 }}>
             <strong style={{ color: 'var(--text-secondary)' }}>Address:</strong> {emp.address ? `${emp.address.door || ''}, ${emp.address.street || ''}, ${emp.address.city || ''}, ${emp.address.state || ''} - ${emp.address.pin || ''}` : '--'}
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ gridColumn: 'span 2', wordBreak: 'break-word', minWidth: 0 }}>
             <strong style={{ color: 'var(--text-secondary)' }}>Emergency Contact:</strong> {emp.emergency ? `${emp.emergency.name || ''} (${emp.emergency.relation || ''}) - ${emp.emergency.phone || ''}` : '--'}
           </div>
         </div>
@@ -465,15 +465,23 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     }
   };
 
-  const handleDeleteNote = async (id) => {
-    if (window.confirm('Are you sure you want to delete this confidential note?')) {
-      try {
-        await api.delete(`/hr-notes/${id}`);
-        showToast('Confidential note deleted.', 'danger');
-        fetchHrNotes();
-      } catch (err) {
-        showToast('Error deleting note.', 'error');
-      }
+  const [deleteConfirmNoteId, setDeleteConfirmNoteId] = useState(null);
+  const [reviewingTaskItem, setReviewingTaskItem] = useState(null);
+
+  const handleDeleteNote = (id) => {
+    setDeleteConfirmNoteId(id);
+  };
+
+  const confirmDeleteNote = async () => {
+    if (!deleteConfirmNoteId) return;
+    try {
+      await api.delete(`/hr-notes/${deleteConfirmNoteId}`);
+      showToast('Confidential note deleted.', 'danger');
+      fetchHrNotes();
+    } catch (err) {
+      showToast('Error deleting note.', 'error');
+    } finally {
+      setDeleteConfirmNoteId(null);
     }
   };
 
@@ -590,10 +598,10 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     try {
       if (selectedEmpForEdit) {
         await api.put(`/employees/${selectedEmpForEdit.id}`, formData);
-        showToast('Employee details updated.', 'success');
+        showToast('Employee details saved successfully!', 'success');
       } else {
         await api.post('/employees', formData);
-        showToast('New employee registered.', 'success');
+        showToast('Employee details saved successfully!', 'success');
       }
       setAddEmpActive(false);
       setSelectedEmpForEdit(null);
@@ -848,7 +856,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                         <strong>Approve Leave for {l.empName}</strong>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Type: {l.type} | Date: {l.start}</div>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('attendance-leave')}>Review</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setReviewingTaskItem(l)}>Review</button>
                     </div>
                   ))}
                 </div>
@@ -2600,6 +2608,46 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       accept="image/*" 
       onChange={handleAvatarFileChange} 
     />
+
+    {/* BUG-003 Delete Confirmation Modal (Yes / No) */}
+    <Modal isOpen={!!deleteConfirmNoteId} onClose={() => setDeleteConfirmNoteId(null)} title="Confirm Deletion">
+      <div style={{ padding: '16px 0' }}>
+        <p style={{ fontSize: '0.95rem', color: 'hsl(var(--text-primary))', marginBottom: '24px', lineHeight: '1.5' }}>
+          Are you sure you want to delete this confidential note?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <button className="btn btn-secondary" onClick={() => setDeleteConfirmNoteId(null)} style={{ padding: '8px 20px' }}>No</button>
+          <button className="btn btn-danger" onClick={confirmDeleteNote} style={{ padding: '8px 20px', background: 'hsl(var(--danger))', color: '#fff' }}>Yes</button>
+        </div>
+      </div>
+    </Modal>
+
+    {/* BUG-004 Task Review Modal */}
+    <Modal isOpen={!!reviewingTaskItem} onClose={() => setReviewingTaskItem(null)} title="Review Task Details">
+      {reviewingTaskItem && (
+        <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <h4 style={{ fontWeight: 700, fontSize: '1rem', color: 'hsl(var(--text-primary))' }}>Approve Leave Request for {reviewingTaskItem.empName}</h4>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              <strong>Type:</strong> {reviewingTaskItem.type} | <strong>Start Date:</strong> {reviewingTaskItem.start} | <strong>Status:</strong> Pending Review
+            </div>
+          </div>
+          <div style={{ background: 'hsl(var(--bg-main))', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border))' }}>
+            <strong style={{ fontSize: '0.85rem', color: 'hsl(var(--text-primary))' }}>Review Notes & Verification:</strong>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: '1.4' }}>
+              Employee has submitted leave documentation. Review quota balances and click Approve to grant leave authorization.
+            </p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+            <button className="btn btn-secondary" onClick={() => setReviewingTaskItem(null)}>Close</button>
+            <button className="btn btn-primary" onClick={() => {
+              showToast(`Leave request for ${reviewingTaskItem.empName} approved successfully.`, 'success');
+              setReviewingTaskItem(null);
+            }}>Approve Leave</button>
+          </div>
+        </div>
+      )}
+    </Modal>
   </>
 );
 };

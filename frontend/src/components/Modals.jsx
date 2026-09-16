@@ -50,6 +50,18 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
   const [joined, setJoined] = useState(employee?.joined || '');
   const [parentStatus, setParentStatus] = useState(employee?.parentStatus || 'No');
 
+  // Address States (BUG-010)
+  const [door, setDoor] = useState(employee?.address?.door || '');
+  const [street, setStreet] = useState(employee?.address?.street || '');
+  const [city, setCity] = useState(employee?.address?.city || '');
+  const [stateName, setStateName] = useState(employee?.address?.state || '');
+  const [pin, setPin] = useState(employee?.address?.pin || '');
+
+  // Emergency Contact States (BUG-010)
+  const [emgName, setEmgName] = useState(employee?.emergency?.name || '');
+  const [emgRelation, setEmgRelation] = useState(employee?.emergency?.relation || '');
+  const [emgPhone, setEmgPhone] = useState(employee?.emergency?.phone || '');
+
   React.useEffect(() => {
     setName(employee?.name || '');
     setEmail(employee?.email || '');
@@ -60,20 +72,65 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
     setGender(employee?.gender || 'Male');
     setJoined(employee?.joined || '');
     setParentStatus(employee?.parentStatus || 'No');
+
+    setDoor(employee?.address?.door || '');
+    setStreet(employee?.address?.street || '');
+    setCity(employee?.address?.city || '');
+    setStateName(employee?.address?.state || '');
+    setPin(employee?.address?.pin || '');
+
+    setEmgName(employee?.emergency?.name || '');
+    setEmgRelation(employee?.emergency?.relation || '');
+    setEmgPhone(employee?.emergency?.phone || '');
   }, [employee]);
+
+  // BUG-007 Phone validation (max 10 numeric digits)
+  const handlePhoneChange = (e) => {
+    const numeric = e.target.value.replace(/\D/g, '');
+    if (numeric.length <= 10) {
+      setPhone(numeric);
+    }
+  };
+
+  // BUG-006 Aadhaar validation (max 12 numeric digits)
+  const handleAadhaarChange = (e) => {
+    const numeric = e.target.value.replace(/\D/g, '');
+    if (numeric.length <= 12) {
+      setAadhaar(numeric);
+    }
+  };
+
+  const handleEmgPhoneChange = (e) => {
+    const numeric = e.target.value.replace(/\D/g, '');
+    if (numeric.length <= 10) {
+      setEmgPhone(numeric);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name, email, dept, role, aadhaar, phone, gender, joined, parentStatus });
+    onSubmit({
+      name,
+      email,
+      dept,
+      role,
+      aadhaar,
+      phone,
+      gender,
+      joined,
+      parentStatus,
+      address: { door, street, city, state: stateName, pin },
+      emergency: { name: emgName, relation: emgRelation, phone: emgPhone }
+    });
   };
 
   return (
     <ModalWrapper id="add-employee-modal" active={active} onClose={onClose}>
       <div className="modal-header">
-        <h3 className="modal-title">{employee ? 'Edit Employee' : 'Add Employee'}</h3>
+        <h3 className="modal-title">{employee ? 'Edit Employee Details' : 'Add New Employee'}</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ maxHeight: '75vh', overflowY: 'auto', paddingRight: '4px' }}>
         <div className="form-group">
           <label>Full Name</label>
           <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -100,12 +157,12 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div className="form-group">
-            <label>Phone Number</label>
-            <input type="text" className="form-control" placeholder="+91 XXXXX XXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            <label>Phone Number (10 Digits)</label>
+            <input type="text" className="form-control" placeholder="10-digit mobile number" value={phone} onChange={handlePhoneChange} maxLength={10} required />
           </div>
           <div className="form-group">
-            <label>Aadhaar Card Number</label>
-            <input type="text" className="form-control" placeholder="XXXX-XXXX-XXXX" value={aadhaar} onChange={(e) => setAadhaar(e.target.value)} required />
+            <label>Aadhaar Card Number (12 Digits)</label>
+            <input type="text" className="form-control" placeholder="12-digit Aadhaar number" value={aadhaar} onChange={handleAadhaarChange} maxLength={12} required />
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -126,7 +183,56 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
           <label>Parent Status</label>
           <input type="text" className="form-control" placeholder="e.g. Yes (2 Children) or No" value={parentStatus} onChange={(e) => setParentStatus(e.target.value)} />
         </div>
-        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Save Employee Record</button>
+
+        {/* BUG-010: Address Fields */}
+        <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'hsl(var(--primary))', marginTop: '12px', marginBottom: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+          Residential Address
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label>Door / Flat No</label>
+            <input type="text" className="form-control" placeholder="Door No" value={door} onChange={(e) => setDoor(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Street / Area</label>
+            <input type="text" className="form-control" placeholder="Street Name" value={street} onChange={(e) => setStreet(e.target.value)} />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          <div className="form-group">
+            <label>City</label>
+            <input type="text" className="form-control" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>State</label>
+            <input type="text" className="form-control" placeholder="State" value={stateName} onChange={(e) => setStateName(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>PIN Code</label>
+            <input type="text" className="form-control" placeholder="PIN Code" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} maxLength={6} />
+          </div>
+        </div>
+
+        {/* BUG-010: Emergency Contact Fields */}
+        <h4 style={{ fontWeight: 700, fontSize: '0.9rem', color: 'hsl(var(--primary))', marginTop: '12px', marginBottom: '8px', borderTop: '1px solid hsl(var(--border))', paddingTop: '10px' }}>
+          Emergency Contact Details
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          <div className="form-group">
+            <label>Contact Name</label>
+            <input type="text" className="form-control" placeholder="Emergency Contact Name" value={emgName} onChange={(e) => setEmgName(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Relationship</label>
+            <input type="text" className="form-control" placeholder="e.g. Spouse / Parent" value={emgRelation} onChange={(e) => setEmgRelation(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Contact Phone</label>
+            <input type="text" className="form-control" placeholder="10-digit Phone" value={emgPhone} onChange={handleEmgPhoneChange} maxLength={10} />
+          </div>
+        </div>
+
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '16px' }}>Save Employee Record</button>
       </form>
     </ModalWrapper>
   );

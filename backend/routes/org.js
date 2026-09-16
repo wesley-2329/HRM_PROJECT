@@ -71,10 +71,28 @@ router.get('/companies', protect, async (req, res) => {
 router.post('/companies', protect, adminOnly, async (req, res) => {
   const { name, code, logo, businessType, status } = req.body;
   try {
-    const exists = await CompanyMaster.findOne({ code });
-    if (exists) return res.status(400).json({ message: 'Company code already exists' });
-    const rec = await CompanyMaster.create({ name, code, logo, businessType, status });
-    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_COMPANY', details: `Created Company Master: ${name} (${code})` });
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+    if (!cleanCode || !cleanName) return res.status(400).json({ message: 'Company name and code are required' });
+
+    let rec = await CompanyMaster.findOne({ 
+      $or: [{ code: { $regex: `^${cleanCode}$`, $options: 'i' } }, { name: { $regex: `^${cleanName}$`, $options: 'i' } }] 
+    });
+
+    if (rec) {
+      // Update existing record cleanly (BUG-013 retry / upsert fix)
+      rec.name = cleanName;
+      rec.code = cleanCode;
+      rec.logo = logo || rec.logo;
+      rec.businessType = businessType || rec.businessType;
+      rec.status = status || 'Inactive';
+      await rec.save();
+      await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'UPDATE_COMPANY', details: `Saved Company Master with status '${rec.status}': ${cleanName} (${cleanCode})` });
+      return res.status(200).json(rec);
+    }
+
+    rec = await CompanyMaster.create({ name: cleanName, code: cleanCode, logo, businessType, status: status || 'Inactive' });
+    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_COMPANY', details: `Created Company Master with status '${status}': ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -111,10 +129,22 @@ router.get('/branches', protect, async (req, res) => {
 router.post('/branches', protect, adminOnly, async (req, res) => {
   const { name, code, location, branchHead, status } = req.body;
   try {
-    const exists = await BranchMaster.findOne({ code });
-    if (exists) return res.status(400).json({ message: 'Branch code already exists' });
-    const rec = await BranchMaster.create({ name, code, location, branchHead, status });
-    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_BRANCH', details: `Created Branch Master: ${name} (${code})` });
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+    let rec = await BranchMaster.findOne({ 
+      $or: [{ code: { $regex: `^${cleanCode}$`, $options: 'i' } }, { name: { $regex: `^${cleanName}$`, $options: 'i' } }] 
+    });
+    if (rec) {
+      rec.name = cleanName;
+      rec.code = cleanCode;
+      rec.location = location || rec.location;
+      rec.branchHead = branchHead || rec.branchHead;
+      rec.status = status || 'Inactive';
+      await rec.save();
+      return res.status(200).json(rec);
+    }
+    rec = await BranchMaster.create({ name: cleanName, code: cleanCode, location, branchHead, status: status || 'Inactive' });
+    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_BRANCH', details: `Created Branch Master: ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -182,12 +212,37 @@ router.get('/business-units', protect, async (req, res) => {
 router.post('/business-units', protect, adminOnly, async (req, res) => {
   const { name, code, status, parentCompany, description, headOfUnit, email, phone, costCenter } = req.body;
   try {
-    const exists = await BusinessUnitMaster.findOne({ code });
-    if (exists) return res.status(400).json({ message: 'Business Unit code already exists' });
-    const rec = await BusinessUnitMaster.create({
-      name,
-      code,
-      status,
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+
+    let rec = await BusinessUnitMaster.findOne({ 
+      $or: [{ code: { $regex: `^${cleanCode}$`, $options: 'i' } }, { name: { $regex: `^${cleanName}$`, $options: 'i' } }] 
+    });
+
+    if (rec) {
+      // Restore / Update existing record cleanly (BUG-014 fix)
+      rec.name = cleanName;
+      rec.code = cleanCode;
+      rec.status = status || 'Inactive';
+      rec.is_active = (status || 'Inactive') === 'Active';
+      rec.parentCompany = parentCompany || rec.parentCompany;
+      rec.description = description || rec.description;
+      rec.headOfUnit = headOfUnit || rec.headOfUnit;
+      rec.email = email || rec.email;
+      rec.phone = phone || rec.phone;
+      rec.costCenter = costCenter || rec.costCenter;
+      rec.deletedAt = null;
+      rec.updated_by = req.user.name;
+      await rec.save();
+      await createAuditLog(req, 'UPDATE_BU', `Saved Business Unit: ${cleanName} (${cleanCode})`, null, rec);
+      return res.status(200).json(rec);
+    }
+
+    rec = await BusinessUnitMaster.create({
+      name: cleanName,
+      code: cleanCode,
+      status: status || 'Inactive',
+      is_active: (status || 'Inactive') === 'Active',
       parentCompany: parentCompany || null,
       description,
       headOfUnit,
@@ -197,7 +252,7 @@ router.post('/business-units', protect, adminOnly, async (req, res) => {
       created_by: req.user.name,
       updated_by: req.user.name
     });
-    await createAuditLog(req, 'CREATE_BU', `Created Business Unit: ${name} (${code})`, null, rec);
+    await createAuditLog(req, 'CREATE_BU', `Created Business Unit: ${cleanName} (${cleanCode})`, null, rec);
     res.status(201).json(rec);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -307,10 +362,20 @@ router.get('/cost-centers', protect, async (req, res) => {
 router.post('/cost-centers', protect, adminOnly, async (req, res) => {
   const { name, code, status } = req.body;
   try {
-    const exists = await CostCenterMaster.findOne({ code });
-    if (exists) return res.status(400).json({ message: 'Cost Center code already exists' });
-    const rec = await CostCenterMaster.create({ name, code, status });
-    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_CC', details: `Created Cost Center: ${name} (${code})` });
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+    let rec = await CostCenterMaster.findOne({ 
+      $or: [{ code: { $regex: `^${cleanCode}$`, $options: 'i' } }, { name: { $regex: `^${cleanName}$`, $options: 'i' } }] 
+    });
+    if (rec) {
+      rec.name = cleanName;
+      rec.code = cleanCode;
+      rec.status = status || 'Inactive';
+      await rec.save();
+      return res.status(200).json(rec);
+    }
+    rec = await CostCenterMaster.create({ name: cleanName, code: cleanCode, status: status || 'Inactive' });
+    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_CC', details: `Created Cost Center: ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -343,10 +408,26 @@ router.get('/departments', protect, async (req, res) => {
 router.post('/departments', protect, adminOnly, async (req, res) => {
   const { name, code, description, parentDept, managerId, businessUnit, location, costCenter, status } = req.body;
   try {
-    const exists = await Department.findOne({ code });
-    if (exists) return res.status(400).json({ message: 'Department code already exists' });
-    const rec = await Department.create({ name, code, description, parentDept, managerId, businessUnit, location, costCenter, status });
-    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_DEPT', details: `Created Department: ${name} (${code})` });
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+    let rec = await Department.findOne({ 
+      $or: [{ code: { $regex: `^${cleanCode}$`, $options: 'i' } }, { name: { $regex: `^${cleanName}$`, $options: 'i' } }] 
+    });
+    if (rec) {
+      rec.name = cleanName;
+      rec.code = cleanCode;
+      rec.description = description || rec.description;
+      rec.parentDept = parentDept || rec.parentDept;
+      rec.managerId = managerId || rec.managerId;
+      rec.businessUnit = businessUnit || rec.businessUnit;
+      rec.location = location || rec.location;
+      rec.costCenter = costCenter || rec.costCenter;
+      rec.status = status || 'Inactive';
+      await rec.save();
+      return res.status(200).json(rec);
+    }
+    rec = await Department.create({ name: cleanName, code: cleanCode, description, parentDept, managerId, businessUnit, location, costCenter, status: status || 'Inactive' });
+    await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_DEPT', details: `Created Department: ${cleanName} (${cleanCode})` });
     
     // Notification: Notify HR on Department Creation
     const hrNotif = await Notification.create({

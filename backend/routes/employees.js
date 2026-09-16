@@ -52,22 +52,34 @@ router.get('/:id', protect, async (req, res) => {
 // @desc    Add employee manually
 // @access  Private/HR only
 router.post('/', protect, adminOnly, async (req, res) => {
-  const { name, email, dept, role, aadhaar, phone, joined, gender } = req.body;
+  const { name, email, dept, role, aadhaar, phone, joined, gender, address, emergency, parentStatus } = req.body;
 
   try {
-    const userExists = await Employee.findOne({ email });
+    const userExists = await Employee.findOne({ email: email.trim().toLowerCase() });
     if (userExists) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Employee with this email address already exists' });
     }
 
     const employeeCount = await Employee.countDocuments();
-    const newEmpId = `EMP-${1000 + employeeCount + 1}`;
+    let newEmpId;
+    let isUnique = false;
+    let suffix = employeeCount + 1;
+    while (!isUnique) {
+      const candidateId = `EMP-${1000 + suffix}`;
+      const existing = await Employee.findOne({ id: candidateId });
+      if (!existing) {
+        newEmpId = candidateId;
+        isUnique = true;
+      } else {
+        suffix++;
+      }
+    }
 
     // Set default password as defaultPass123
     const employee = await Employee.create({
       id: newEmpId,
       name,
-      email,
+      email: email.trim().toLowerCase(),
       password: 'defaultPass123',
       dept,
       role,
@@ -75,6 +87,9 @@ router.post('/', protect, adminOnly, async (req, res) => {
       aadhaar,
       phone,
       gender: gender || 'Male',
+      parentStatus: parentStatus || 'No',
+      address: address || {},
+      emergency: emergency || {},
       status: 'Approved'
     });
 

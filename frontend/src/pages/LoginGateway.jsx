@@ -17,9 +17,9 @@ const LoginGateway = () => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Login States
-  const [email, setEmail] = useState('hr@company.com');
-  const [password, setPassword] = useState('admin123');
-  const [rememberMe, setRememberMe] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Sign Up States
   const [signupName, setSignupName] = useState('');
@@ -38,13 +38,8 @@ const LoginGateway = () => {
     setRole(selectedRole);
     setAuthError('');
     setIsSignUp(false);
-    if (selectedRole === 'hr') {
-      setEmail('hr@company.com');
-      setPassword('admin123');
-    } else {
-      setEmail('employee@company.com');
-      setPassword('employee123');
-    }
+    setEmail('');
+    setPassword('');
   };
 
   const handleLoginSubmit = async (e) => {
