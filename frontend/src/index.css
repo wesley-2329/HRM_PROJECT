@@ -1479,14 +1479,25 @@ body.dark-mode .emp-header {
   gap: 12px;
   flex: 1;
   min-width: 0;
+  height: 100%;
+}
+
+/* Dedicated Scroll Container ONLY for Navigation Options */
+.hr-nav-scroll-wrapper,
+.emp-nav-scroll-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.hr-header-left::-webkit-scrollbar,
-.emp-header-left::-webkit-scrollbar {
+.hr-nav-scroll-wrapper::-webkit-scrollbar,
+.emp-nav-scroll-wrapper::-webkit-scrollbar {
   display: none;
 }
 

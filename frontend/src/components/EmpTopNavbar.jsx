@@ -95,8 +95,9 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </button>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="emp-nav-menu">
+        {/* Navigation Menu Wrapper (Only options scroll) */}
+        <div className="emp-nav-scroll-wrapper">
+          <nav className="emp-nav-menu">
           
           {/* Dashboard Link */}
           <div className="emp-menu-item">
@@ -339,6 +340,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </div>
           </div>
         </nav>
+        </div>
       </div>
 
       <div className="emp-header-right">

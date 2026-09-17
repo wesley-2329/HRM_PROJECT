@@ -85,8 +85,9 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </button>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="hr-nav-menu">
+        {/* Navigation Menu Wrapper (Only options scroll) */}
+        <div className="hr-nav-scroll-wrapper">
+          <nav className="hr-nav-menu">
           
           {/* 1. Overview */}
           <div className="hr-menu-item">
@@ -403,6 +404,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             </div>
           </div>
         </nav>
+        </div>
       </div>
 
       <div className="hr-header-right">
