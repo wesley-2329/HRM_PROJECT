@@ -390,44 +390,48 @@ export const DataProvider = ({ children }) => {
 
   const fetchAllData = async () => {
     if (!user) return;
-    await Promise.all([
-      fetchLeaves(),
-      fetchTasks(),
-      fetchTickets(),
-      fetchMeetings(),
-      fetchTrainings(),
-      fetchTimesheets(),
-      fetchNotifications(),
-      fetchDiscussionMessages(),
-      fetchWarningLetters(),
-      fetchDepartments(),
-      fetchVacancies(),
-      fetchVaultDocuments(),
-      fetchCompanies(),
-      fetchBranches(),
-      fetchBusinessUnits(),
-      fetchCostCenters(),
-      fetchSubDepartments(),
-      fetchDesignations(),
-      fetchGradeBands(),
-      fetchReportingHistory(),
-      fetchTransferHistory(),
-      fetchDesignationHistory(),
-      fetchLegalEntities(),
-      fetchRegions(),
-      fetchBuildings(),
-      fetchFloors(),
-      fetchTeams(),
-      fetchPositions(),
-      fetchPolicies(),
-      fetchDocuments(),
-      fetchSuccessionPlans(),
-      fetchHeadcountPlans(),
-      user.role === 'hr' ? fetchEmployees() : Promise.resolve(),
-      user.role === 'hr' ? fetchCandidates() : Promise.resolve(),
-      user.role === 'hr' ? fetchOrgAuditLogs() : Promise.resolve(),
-      user.role !== 'hr' ? fetchChatMessages() : Promise.resolve()
-    ]);
+    const tasks = [
+      fetchLeaves,
+      fetchTasks,
+      fetchTickets,
+      fetchMeetings,
+      fetchTrainings,
+      fetchTimesheets,
+      fetchNotifications,
+      fetchDiscussionMessages,
+      fetchWarningLetters,
+      fetchDepartments,
+      fetchVacancies,
+      fetchVaultDocuments,
+      fetchCompanies,
+      fetchBranches,
+      fetchBusinessUnits,
+      fetchCostCenters,
+      fetchSubDepartments,
+      fetchDesignations,
+      fetchGradeBands,
+      fetchReportingHistory,
+      fetchTransferHistory,
+      fetchDesignationHistory,
+      fetchLegalEntities,
+      fetchRegions,
+      fetchBuildings,
+      fetchFloors,
+      fetchTeams,
+      fetchPositions,
+      fetchPolicies,
+      fetchDocuments,
+      fetchSuccessionPlans,
+      fetchHeadcountPlans,
+      ...(user.role === 'hr' ? [fetchEmployees, fetchCandidates, fetchOrgAuditLogs] : [fetchChatMessages])
+    ];
+
+    // Execute in staggered chunks of 6 matching standard browser concurrent connection limits
+    const chunkSize = 6;
+    for (let i = 0; i < tasks.length; i += chunkSize) {
+      const chunk = tasks.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(fn => fn().catch(err => console.error('Error in batch fetch item:', err))));
+    }
   };
   // Socket Connection and Event Listeners
   useEffect(() => {

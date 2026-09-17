@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
+const connectDB = require('../config/db');
 
 const protect = async (req, res, next) => {
   let token;
@@ -10,6 +11,11 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345');
       
+      // Ensure DB connection is active before inspecting user record
+      if (mongoose.connection.readyState !== 1) {
+        await connectDB();
+      }
+
       // Look up user in MongoDB Atlas
       if (mongoose.connection.readyState >= 1) {
         req.user = await Employee.findById(decoded.id).select('-password');
