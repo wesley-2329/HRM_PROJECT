@@ -1494,7 +1494,7 @@ body.dark-mode .emp-header {
   height: 100%;
 }
 
-/* Dedicated Scroll Container ONLY for Navigation Options */
+/* Navigation Options Container (Overflow visible so dropdown mega menus render without clipping) */
 .hr-options-scroll-section,
 .emp-options-scroll-section,
 .hr-nav-scroll-wrapper,
@@ -1504,8 +1504,7 @@ body.dark-mode .emp-header {
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -1564,6 +1563,7 @@ body.dark-mode .emp-header {
   white-space: nowrap;
   position: relative;
   z-index: 10001;
+  overflow: visible;
 }
 
 .hr-menu-item,
