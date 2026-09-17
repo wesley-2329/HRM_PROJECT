@@ -12,9 +12,10 @@ router.use(protect, adminOnly);
 router.get('/', async (req, res) => {
   try {
     const notes = await ConfidentialNote.find({}).sort({ createdAt: -1 });
-    res.json(notes);
+    res.json(notes || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching HR notes:', error.message);
+    res.json([]);
   }
 });
 

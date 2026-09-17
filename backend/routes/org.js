@@ -517,8 +517,11 @@ router.delete('/departments/:id', protect, adminOnly, async (req, res) => {
 router.get('/sub-departments', protect, async (req, res) => {
   try {
     const list = await SubDepartmentMaster.find({});
-    res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+    res.json(list || []);
+  } catch (err) {
+    console.error('Error fetching sub-departments:', err.message);
+    res.json([]);
+  }
 });
 
 router.post('/sub-departments', protect, adminOnly, async (req, res) => {
@@ -553,8 +556,11 @@ router.delete('/sub-departments/:id', protect, adminOnly, async (req, res) => {
 router.get('/designations', protect, async (req, res) => {
   try {
     const list = await DesignationMaster.find({});
-    res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+    res.json(list || []);
+  } catch (err) {
+    console.error('Error fetching designations:', err.message);
+    res.json([]);
+  }
 });
 
 router.post('/designations', protect, adminOnly, async (req, res) => {
@@ -903,8 +909,11 @@ router.put('/designation-transfer', protect, adminOnly, async (req, res) => {
 router.get('/reporting-history', protect, async (req, res) => {
   try {
     const list = await EmployeeReportingHistory.find({}).sort({ createdAt: -1 });
-    res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+    res.json(list || []);
+  } catch (err) {
+    console.error('Error fetching reporting history:', err.message);
+    res.json([]);
+  }
 });
 
 router.get('/transfer-history', protect, async (req, res) => {
@@ -1368,9 +1377,18 @@ router.get('/floors', protect, async (req, res) => {
   try {
     const filter = {};
     if (req.query.buildingId) filter.buildingId = req.query.buildingId;
-    const list = await FloorMaster.find(filter).populate('buildingId').sort({ floorNumber: 1 });
-    res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+    require('../models/BuildingMaster');
+    let list = [];
+    try {
+      list = await FloorMaster.find(filter).populate('buildingId').sort({ floorNumber: 1 });
+    } catch (popErr) {
+      list = await FloorMaster.find(filter).sort({ floorNumber: 1 });
+    }
+    res.json(list || []);
+  } catch (err) {
+    console.error('Error fetching floors:', err.message);
+    res.json([]);
+  }
 });
 
 router.post('/floors', protect, adminOnly, async (req, res) => {
@@ -1956,8 +1974,11 @@ router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
 router.get('/audit-logs', protect, adminOnly, async (req, res) => {
   try {
     const logs = await OrgAuditLog.find({}).sort({ timestamp: -1 });
-    res.json(logs);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+    res.json(logs || []);
+  } catch (err) {
+    console.error('Error fetching audit logs:', err.message);
+    res.json([]);
+  }
 });
 
 module.exports = router;

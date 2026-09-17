@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-// Disable Mongoose command buffering so queries fail instantly when offline instead of hanging 10000ms
-mongoose.set('bufferCommands', false);
+// Enable command buffering (default) so queries wait for cold start connection instead of throwing MongooseError 500
+mongoose.set('bufferCommands', true);
 
 let cachedConn = null;
 let cachedPromise = null;
@@ -28,7 +28,9 @@ const connectDB = async () => {
   if (cachedPromise) {
     try {
       cachedConn = await cachedPromise;
-      return cachedConn;
+      if (mongoose.connection.readyState === 1) {
+        return cachedConn;
+      }
     } catch (e) {
       cachedPromise = null;
     }

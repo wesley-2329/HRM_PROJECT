@@ -8,21 +8,26 @@ const { protect } = require('../middleware/auth');
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    let meetings;
-    if (req.user.role === 'hr') {
+    let meetings = [];
+    if (req.user && req.user.role === 'hr') {
       meetings = await Meeting.find({});
-    } else {
+    } else if (req.user) {
+      const rawId = String(req.user.id || req.user._id || '');
+      const safeId = rawId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const userName = req.user.name || '';
+      
       meetings = await Meeting.find({
         $or: [
-          { host: req.user.name },
-          { empId: { $regex: new RegExp(`\\b${req.user.id}\\b`, 'i') } },
-          { empId: req.user.id }
+          ...(userName ? [{ host: userName }] : []),
+          ...(safeId ? [{ empId: { $regex: new RegExp(`\\b${safeId}\\b`, 'i') } }] : []),
+          ...(rawId ? [{ empId: rawId }] : [])
         ]
       });
     }
-    res.json(meetings);
+    res.json(meetings || []);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching meetings:', error.message);
+    res.json([]);
   }
 });
 
