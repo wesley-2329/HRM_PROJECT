@@ -1476,9 +1476,18 @@ body.dark-mode .emp-header {
 .emp-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex: 1;
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hr-header-left::-webkit-scrollbar,
+.emp-header-left::-webkit-scrollbar {
+  display: none;
 }
 
 .hr-logo {
@@ -1488,6 +1497,7 @@ body.dark-mode .emp-header {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .hr-logo i {
@@ -1518,12 +1528,13 @@ body.dark-mode .emp-header {
 .emp-nav-menu {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   list-style: none;
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: visible !important;
+  flex-shrink: 0;
+  white-space: nowrap;
   position: relative;
   z-index: 10001;
 }
@@ -1669,10 +1680,16 @@ body.dark-mode .emp-dropdown-panel {
   color: var(--hr-primary, #6366f1);
 }
 
-.hr-header-right {
+.hr-header-right,
+.emp-header-right {
   display: flex;
   align-items: center;
   gap: 16px;
+  position: relative;
+  z-index: 10005;
+  flex-shrink: 0;
+  background: inherit;
+  padding-left: 12px;
 }
 
 .hr-search {
