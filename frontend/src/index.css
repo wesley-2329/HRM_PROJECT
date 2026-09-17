@@ -1472,6 +1472,18 @@ body.dark-mode .emp-header {
   border-bottom: 1px solid rgba(30, 41, 59, 0.8);
 }
 
+.hr-brand-section,
+.emp-brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10005;
+  background: inherit;
+  margin-right: 12px;
+}
+
 .hr-header-left,
 .emp-header-left {
   display: flex;
@@ -1483,6 +1495,8 @@ body.dark-mode .emp-header {
 }
 
 /* Dedicated Scroll Container ONLY for Navigation Options */
+.hr-options-scroll-section,
+.emp-options-scroll-section,
 .hr-nav-scroll-wrapper,
 .emp-nav-scroll-wrapper {
   display: flex;
@@ -1496,6 +1510,8 @@ body.dark-mode .emp-header {
   -ms-overflow-style: none;
 }
 
+.hr-options-scroll-section::-webkit-scrollbar,
+.emp-options-scroll-section::-webkit-scrollbar,
 .hr-nav-scroll-wrapper::-webkit-scrollbar,
 .emp-nav-scroll-wrapper::-webkit-scrollbar {
   display: none;

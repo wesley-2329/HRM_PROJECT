@@ -68,14 +68,13 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
   return (
     <header className={`emp-header theme-${navbarTheme}`}>
-      <div className="emp-header-left">
-        {/* Brand Logo */}
+      {/* 1. Fixed Brand Logo & Navigation Arrows (Never Scrolls) */}
+      <div className="emp-brand-section">
         <div className="emp-logo" onClick={() => navigate(`/employee/${hashId}/emp-dashboard`)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
           <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
           <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
-        {/* Navigation Controls */}
         <div style={{ display: 'flex', gap: '6px', marginRight: '8px', marginLeft: '4px', flexShrink: 0 }}>
           <button 
             onClick={() => navigate(-1)} 
@@ -94,10 +93,11 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
           </button>
         </div>
+      </div>
 
-        {/* Navigation Menu Wrapper (Only options scroll) */}
-        <div className="emp-nav-scroll-wrapper">
-          <nav className="emp-nav-menu">
+      {/* 2. Scrollable Navigation Options ONLY */}
+      <div className="emp-options-scroll-section">
+        <nav className="emp-nav-menu">
           
           {/* Dashboard Link */}
           <div className="emp-menu-item">
@@ -340,7 +340,6 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </div>
           </div>
         </nav>
-        </div>
       </div>
 
       <div className="emp-header-right">

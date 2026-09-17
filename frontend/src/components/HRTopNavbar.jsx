@@ -58,14 +58,13 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
   return (
     <header className="hr-header">
-      <div className="hr-header-left">
-        {/* Brand Logo */}
+      {/* 1. Fixed Brand Logo & Navigation Arrows (Never Scrolls) */}
+      <div className="hr-brand-section">
         <div className="hr-logo" onClick={() => navigate('/hr/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
           <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
           <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
-        {/* Navigation Back / Forward */}
         <div style={{ display: 'flex', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
           <button 
             onClick={() => navigate(-1)} 
@@ -84,10 +83,11 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
           </button>
         </div>
+      </div>
 
-        {/* Navigation Menu Wrapper (Only options scroll) */}
-        <div className="hr-nav-scroll-wrapper">
-          <nav className="hr-nav-menu">
+      {/* 2. Scrollable Navigation Options ONLY */}
+      <div className="hr-options-scroll-section">
+        <nav className="hr-nav-menu">
           
           {/* 1. Overview */}
           <div className="hr-menu-item">
@@ -404,7 +404,6 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             </div>
           </div>
         </nav>
-        </div>
       </div>
 
       <div className="hr-header-right">
