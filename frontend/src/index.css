@@ -1399,12 +1399,17 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  overflow: visible;
 }
 
 .hr-top-layout .main-content {
-  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   width: 100%;
+  overflow: visible;
+  position: relative;
 }
 
 .hr-header,
@@ -1777,12 +1782,17 @@ body.dark-mode .hr-search:focus-within {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  overflow: visible;
 }
 
 .emp-top-layout .main-content {
-  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   width: 100%;
+  overflow: visible;
+  position: relative;
 }
 
 .emp-header {
