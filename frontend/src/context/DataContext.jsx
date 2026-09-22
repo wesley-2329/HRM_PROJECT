@@ -437,58 +437,73 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || (typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? 'http://localhost:5001' : window.location.origin) : null);
+    const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    const customSocketUrl = import.meta.env.VITE_SOCKET_URL;
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+    // On Vercel serverless deployments without a dedicated socket server, skip wss:// to prevent browser console errors
+    if (isVercel && !customSocketUrl) {
+      const pollInterval = setInterval(() => {
+        fetchNotifications();
+      }, 30000);
+      return () => clearInterval(pollInterval);
+    }
+
+    const socketUrl = customSocketUrl || (isLocalhost ? 'http://localhost:5001' : null);
     if (!socketUrl) return;
 
-    const socket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 3,
-      timeout: 5000
-    });
-
-    socket.on('connect', () => {
-      console.log('WebSocket connected successfully');
-      socket.emit('join', { userId: user.id, role: user.role });
-    });
-
-    socket.on('notification', (notif) => {
-      console.log('Notification socket message received:', notif);
-      showToast(`${notif.title}: ${notif.desc}`, 'info');
-      fetchNotifications();
-      if (notif.type === 'leave') {
-        fetchLeaves();
-      } else if (notif.type === 'meeting') {
-        fetchMeetings();
-      } else if (notif.type === 'reminder') {
-        fetchTasks();
-        fetchTickets();
-        fetchWarningLetters();
-        fetchVaultDocuments();
-        fetchOrgAuditLogs();
-        fetchDepartments();
-        fetchVacancies();
-      }
-    });
-
-    socket.on('discussion_message', (msg) => {
-      setDiscussionMessages(prev => {
-        if (prev.some(m => m._id === msg._id)) return prev;
-        return [...prev, msg];
+    let socket;
+    try {
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 2,
+        timeout: 4000
       });
-    });
 
-    socket.on('org_update', (data) => {
-      console.log('Real-time Org Update socket trigger received:', data);
-      showToast(`Structure Update: ${data.details}`, 'info');
-      fetchAllData();
-    });
+      socket.on('connect', () => {
+        socket.emit('join', { userId: user.id, role: user.role });
+      });
 
-    socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-    });
+      socket.on('notification', (notif) => {
+        showToast(`${notif.title}: ${notif.desc}`, 'info');
+        fetchNotifications();
+        if (notif.type === 'leave') {
+          fetchLeaves();
+        } else if (notif.type === 'meeting') {
+          fetchMeetings();
+        } else if (notif.type === 'reminder') {
+          fetchTasks();
+          fetchTickets();
+          fetchWarningLetters();
+          fetchVaultDocuments();
+          fetchOrgAuditLogs();
+          fetchDepartments();
+          fetchVacancies();
+        }
+      });
+
+      socket.on('discussion_message', (msg) => {
+        setDiscussionMessages(prev => {
+          if (prev.some(m => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+      });
+
+      socket.on('org_update', (data) => {
+        showToast(`Structure Update: ${data.details}`, 'info');
+        fetchAllData();
+      });
+
+      socket.on('connect_error', () => {
+        // Silently close socket on serverless or unreachable socket endpoint
+        socket.close();
+      });
+    } catch (e) {
+      // Ignore socket setup error
+    }
 
     return () => {
-      socket.disconnect();
+      if (socket) socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
