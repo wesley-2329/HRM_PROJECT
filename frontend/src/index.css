@@ -1637,6 +1637,18 @@ body.dark-mode .emp-header {
   z-index: 999999;
 }
 
+/* Invisible hover bridge connecting navbar menu item to dropdown panel */
+.hr-dropdown-panel::before,
+.emp-dropdown-panel::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: transparent;
+}
+
 body.dark-mode .hr-dropdown-panel,
 body.dark-mode .emp-dropdown-panel {
   background: #0f172a !important;

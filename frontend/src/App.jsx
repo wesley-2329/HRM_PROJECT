@@ -81,10 +81,10 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
   useEffect(() => {
     if (!user) return;
     if (role === 'hr' && user.role !== 'hr') {
-      navigate(`/employee/${encodeId(user.id)}/emp-dashboard`);
+      navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
     } else if (role === 'employee' && overrideModule !== 'org-structure') {
       if (user.role !== 'hr' && user.id !== id) {
-        navigate(`/employee/${encodeId(user.id)}/emp-dashboard`);
+        navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
       }
     }
   }, [user, role, id, navigate, overrideModule]);
@@ -163,7 +163,7 @@ const AppContent = () => {
     if (!user) {
       const isProtectedRoute = location.pathname.startsWith('/hr') || location.pathname.startsWith('/employee') || location.pathname.startsWith('/organization');
       if (isProtectedRoute) {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     }
   }, [user, loading, location.pathname, navigate]);
@@ -184,11 +184,11 @@ const AppContent = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} />} />
+      <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />
       <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
       <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
       <Route path="/organization/*" element={<MainLayoutWrapper role={user?.role === 'hr' ? 'hr' : 'employee'} overrideModule="org-structure" />} />
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
