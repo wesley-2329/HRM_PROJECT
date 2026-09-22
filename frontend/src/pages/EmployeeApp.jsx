@@ -120,6 +120,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
   const [complianceData, setComplianceData] = useState({ policies: [], pendingCount: 0, onboardingCompleted: true });
+  const [dismissedLock, setDismissedLock] = useState(false);
   const [showMobilePush, setShowMobilePush] = useState(false);
 
   useEffect(() => {
@@ -1565,20 +1566,30 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const activeTasksCount = displayTasks.filter(t => t.status !== 'done').length;
 
-  const showOnboardingLock = authUser && authUser.role !== 'hr' && !complianceData.onboardingCompleted && complianceData.pendingCount > 0;
+  const showOnboardingLock = authUser && authUser.role !== 'hr' && !complianceData.onboardingCompleted && complianceData.pendingCount > 0 && !dismissedLock;
 
   if (showOnboardingLock) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'hsl(var(--bg-main))', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto' }}>
-        <div style={{ maxWidth: '1000px', width: '100%', margin: '40px auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
-            <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))', fontSize: '1.4rem' }}>
-              <i className="fa-solid fa-lock"></i>
+        <div style={{ maxWidth: '1000px', width: '100%', margin: '20px auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))', fontSize: '1.4rem', flexShrink: 0 }}>
+                <i className="fa-solid fa-lock"></i>
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Mandatory Onboarding: Company Policies Acceptance</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>You must read and accept mandatory company policies below to complete your onboarding setup.</p>
+              </div>
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Mandatory Onboarding: Company Policies Acceptance</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>You must read and accept the mandatory company policies below to complete your onboarding setup and unlock the portal.</p>
-            </div>
+            <button 
+              className="btn btn-secondary"
+              onClick={() => setDismissedLock(true)}
+              style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+            >
+              <span>Remind Me Later (Proceed to Dashboard)</span>
+              <i className="fa-solid fa-arrow-right"></i>
+            </button>
           </div>
           <div className="card animate-fade-in-up" style={{ padding: '24px' }}>
             <EmployeePoliciesPage onStatusChange={(status) => {

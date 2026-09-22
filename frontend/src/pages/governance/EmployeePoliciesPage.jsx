@@ -20,7 +20,14 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
     setLoading(true);
     try {
       const res = await api.get('/policies/employee-status');
-      setPolicies(res.data.policies);
+      const fetchedPolicies = res.data.policies || [];
+      setPolicies(fetchedPolicies);
+
+      const firstPending = fetchedPolicies.find(p => p.status === 'Pending') || fetchedPolicies[0];
+      if (firstPending) {
+        setSelectedPolicy(firstPending);
+      }
+
       if (onStatusChange) {
         onStatusChange({
           pendingCount: res.data.pendingCount,
@@ -86,7 +93,7 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
   // 2. New Policies: Active & Pending & Version = 1
   // 3. Updated Policies: Active & Pending & Version > 1 (Needs re-acceptance)
   const acceptedPolicies = policies.filter(p => p.status === 'Accepted');
-  const newPolicies = policies.filter(p => p.status === 'Pending' && p.version === 1);
+  const newPolicies = policies.filter(p => p.status === 'Pending' && (p.version === 1 || !p.version));
   const updatedPolicies = policies.filter(p => p.status === 'Pending' && p.version > 1);
 
   return (
@@ -136,7 +143,7 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
                       width: '100%'
                     }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{p.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{p.name}</div>
                     <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                       Effective: {new Date(p.effectiveDate).toLocaleDateString()}
                     </div>
@@ -176,7 +183,7 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
                       width: '100%'
                     }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{p.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{p.name}</div>
                     <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                       Effective: {new Date(p.effectiveDate).toLocaleDateString()}
                     </div>
@@ -214,7 +221,7 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
                       width: '100%'
                     }}
                   >
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{p.name}</div>
                     <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                       Effective: {new Date(p.effectiveDate).toLocaleDateString()}
                     </div>

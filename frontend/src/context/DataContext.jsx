@@ -437,14 +437,13 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL;
-    if (!socketUrl) {
-      console.log('Real-time WebSockets disabled (VITE_SOCKET_URL not configured). Falling back to REST polling.');
-      return;
-    }
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || (typeof window !== 'undefined' ? (window.location.hostname === 'localhost' ? 'http://localhost:5001' : window.location.origin) : null);
+    if (!socketUrl) return;
 
     const socket = io(socketUrl, {
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+      timeout: 5000
     });
 
     socket.on('connect', () => {
