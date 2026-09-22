@@ -24,14 +24,13 @@ router.get('/', protect, async (req, res) => {
 // @desc    Clock-In shift
 // @access  Private
 router.post('/clock-in', protect, async (req, res) => {
-  const todayDate = req.body.date || new Date().toISOString().split('T')[0];
+  const todayDate = req.body.date || new Date().toLocaleDateString('en-CA');
 
   try {
-    // Check if already clocked in today without clocking out
+    // Check if already clocked in (active shift without clockOut)
     const activeShift = await Timesheet.findOne({
       empId: req.user.id,
-      date: todayDate,
-      clockOut: ''
+      $or: [{ clockOut: '' }, { clockOut: { $exists: false } }, { status: 'Active Shift' }]
     });
 
     if (activeShift) {
@@ -57,15 +56,12 @@ router.post('/clock-in', protect, async (req, res) => {
 // @route   POST /api/timesheet/clock-out
 // @desc    Clock-Out shift
 // @access  Private
-// router.post('/clock-out', protect, async (req, res) => {
 router.post('/clock-out', protect, async (req, res) => {
-  const todayDate = req.body.date || new Date().toISOString().split('T')[0];
-
   try {
     // Find active shift
     const activeShift = await Timesheet.findOne({
       empId: req.user.id,
-      clockOut: ''
+      $or: [{ clockOut: '' }, { clockOut: { $exists: false } }, { status: 'Active Shift' }]
     });
 
     if (!activeShift) {
@@ -74,34 +70,37 @@ router.post('/clock-out', protect, async (req, res) => {
 
     const clockOutTime = req.body.clockOut || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
-    // Parse times to calculate hours
-    const cleanIn = activeShift.clockIn.replace(/[.]/g, ':').trim();
-    const cleanOut = clockOutTime.replace(/[.]/g, ':').trim();
+    let hoursWorked = 0;
+    if (activeShift.createdAt) {
+      const diffMs = new Date() - new Date(activeShift.createdAt);
+      hoursWorked = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+    } else {
+      const cleanIn = activeShift.clockIn.replace(/[.]/g, ':').trim();
+      const cleanOut = clockOutTime.replace(/[.]/g, ':').trim();
 
-    const [inHrs, inMins] = cleanIn.split(' ')[0].split(':').map(Number);
-    const inPeriod = cleanIn.split(' ')[1];
-    
-    const [outHrs, outMins] = cleanOut.split(' ')[0].split(':').map(Number);
-    const outPeriod = cleanOut.split(' ')[1];
-    
-    let inHrs24 = inHrs;
-    if (inPeriod === 'PM' && inHrs !== 12) inHrs24 += 12;
-    if (inPeriod === 'AM' && inHrs === 12) inHrs24 = 0;
-    
-    let outHrs24 = outHrs;
-    if (outPeriod === 'PM' && outHrs !== 12) outHrs24 += 12;
-    if (outPeriod === 'AM' && outHrs === 12) outHrs24 = 0;
-    
-    const inMinutesTotal = inHrs24 * 60 + inMins;
-    const outMinutesTotal = outHrs24 * 60 + outMins;
-    
-    let diffMinutes = outMinutesTotal - inMinutesTotal;
-    if (diffMinutes < 0) {
-      // Shift spanned across midnight
-      diffMinutes += 24 * 60;
+      const matchIn = cleanIn.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
+      const matchOut = cleanOut.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
+
+      if (matchIn && matchOut) {
+        let inHrs = parseInt(matchIn[1], 10);
+        const inMins = parseInt(matchIn[2], 10);
+        if (matchIn[4]) {
+          if (matchIn[4].toUpperCase() === 'PM' && inHrs !== 12) inHrs += 12;
+          if (matchIn[4].toUpperCase() === 'AM' && inHrs === 12) inHrs = 0;
+        }
+
+        let outHrs = parseInt(matchOut[1], 10);
+        const outMins = parseInt(matchOut[2], 10);
+        if (matchOut[4]) {
+          if (matchOut[4].toUpperCase() === 'PM' && outHrs !== 12) outHrs += 12;
+          if (matchOut[4].toUpperCase() === 'AM' && outHrs === 12) outHrs = 0;
+        }
+
+        let diffMinutes = (outHrs * 60 + outMins) - (inHrs * 60 + inMins);
+        if (diffMinutes < 0) diffMinutes += 24 * 60;
+        hoursWorked = parseFloat((diffMinutes / 60).toFixed(2));
+      }
     }
-    
-    const hoursWorked = parseFloat((diffMinutes / 60).toFixed(2));
 
     activeShift.clockOut = clockOutTime;
     activeShift.hours = hoursWorked;

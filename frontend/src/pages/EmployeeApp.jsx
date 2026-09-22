@@ -374,23 +374,29 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [activePolicies, setActivePolicies] = useState({});
 
   // Live Punch Clock Timer
-  const activeShift = timesheets.find(t => t.clockOut === '');
+  const activeShift = timesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift') || timesheets.find(t => !t.clockOut || t.clockOut === '');
   const [elapsedTimeStr, setElapsedTimeStr] = useState('00:00:00');
 
   const getClockInDateTime = (shift) => {
-    if (!shift || !shift.date || !shift.clockIn) return null;
+    if (!shift) return null;
+    if (shift.createdAt) {
+      const created = new Date(shift.createdAt);
+      if (!isNaN(created.getTime())) return created;
+    }
+    if (!shift.date || !shift.clockIn) return null;
     const [year, month, day] = shift.date.split('-').map(Number);
     const cleanTime = shift.clockIn.replace(/[.]/g, ':').trim();
-    const match = cleanTime.match(/^(\d+):(\d+)(?:\s*(AM|PM))?$/i);
+    const match = cleanTime.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
     if (!match) return new Date(shift.date);
     let hours = parseInt(match[1], 10);
     const minutes = parseInt(match[2], 10);
-    const ampm = match[3];
+    const seconds = match[3] ? parseInt(match[3], 10) : 0;
+    const ampm = match[4];
     if (ampm) {
       if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
       if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
     }
-    return new Date(year, month - 1, day, hours, minutes, 0);
+    return new Date(year, month - 1, day, hours, minutes, seconds);
   };
 
   useEffect(() => {
