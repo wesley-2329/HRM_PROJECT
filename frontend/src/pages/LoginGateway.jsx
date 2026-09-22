@@ -223,17 +223,9 @@ const LoginGateway = () => {
                     <circle cx="118" cy="52" r="7.5" fill="#fdba74" />
                     <path d="M 111 52 C 111 45 125 45 125 52 Z" fill="#0f172a" />
                     
-                    {/* Typing Arms Animation */}
-                    <motion.path 
-                      stroke="#312e81" strokeWidth="3.5" fill="none" strokeLinecap="round"
-                      animate={{ d: ["M 128 66 Q 112 70 100 92", "M 128 66 Q 112 68 100 91", "M 128 66 Q 112 70 100 92"] }}
-                      transition={{ duration: 0.2, repeat: Infinity, ease: 'linear' }}
-                    />
-                    <motion.path 
-                      stroke="#312e81" strokeWidth="3.5" fill="none" strokeLinecap="round"
-                      animate={{ d: ["M 128 66 Q 115 72 102 92", "M 128 66 Q 115 74 102 93", "M 128 66 Q 115 72 102 92"] }}
-                      transition={{ duration: 0.25, repeat: Infinity, ease: 'linear' }}
-                    />
+                    {/* Typing Arms */}
+                    <path d="M 128 66 Q 112 70 100 92" stroke="#312e81" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                    <path d="M 128 66 Q 115 72 102 92" stroke="#312e81" strokeWidth="3.5" fill="none" strokeLinecap="round" />
 
                     {/* Laptop Screen & Glowing Rays */}
                     <rect x="80" y="96" width="28" height="4" rx="1" fill="#94a3b8" />
