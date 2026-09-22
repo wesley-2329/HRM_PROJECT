@@ -34,7 +34,15 @@ router.post('/clock-in', protect, async (req, res) => {
     });
 
     if (activeShift) {
-      return res.status(400).json({ message: 'You have an active shift already running.' });
+      if (activeShift.date === todayDate) {
+        return res.status(400).json({ message: 'You have an active shift already running for today.' });
+      } else {
+        // Auto-close stale active shift from a previous calendar day
+        activeShift.clockOut = '06:00 PM';
+        activeShift.hours = 8;
+        activeShift.status = 'Logged Out';
+        await activeShift.save();
+      }
     }
 
     const clockInTime = req.body.clockIn || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

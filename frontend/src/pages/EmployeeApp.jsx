@@ -94,6 +94,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     meetings,
     trainings,
     timesheets,
+    setTimesheets,
     chatMessages,
     notifications,
     discussionMessages,
@@ -376,6 +377,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // Live Punch Clock Timer
   const activeShift = timesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift') || timesheets.find(t => !t.clockOut || t.clockOut === '');
   const [elapsedTimeStr, setElapsedTimeStr] = useState('00:00:00');
+  const [isPunching, setIsPunching] = useState(false);
 
   const getClockInDateTime = (shift) => {
     if (!shift) return null;
@@ -408,11 +410,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     const updateTimer = () => {
       const clockInDate = getClockInDateTime(activeShift);
       if (!clockInDate) return;
-      const diffMs = new Date() - clockInDate;
-      if (diffMs < 0) {
-        setElapsedTimeStr('00:00:00');
-        return;
-      }
+      let diffMs = new Date() - clockInDate;
+      if (diffMs < 0) diffMs = 0;
       const diffSecs = Math.floor(diffMs / 1000);
       const hrs = Math.floor(diffSecs / 3600);
       const mins = Math.floor((diffSecs % 3600) / 60);
@@ -427,28 +426,42 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   }, [activeShift]);
 
   const handleClockIn = async () => {
+    if (isPunching) return;
+    setIsPunching(true);
     try {
       const clockIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const date = new Date().toLocaleDateString('en-CA');
-      await api.post('/timesheet/clock-in', { clockIn, date });
+      const res = await api.post('/timesheet/clock-in', { clockIn, date });
       showToast('Successfully clocked in for today.', 'success');
+      if (res.data) {
+        setTimesheets(prev => [res.data, ...prev.filter(t => t._id !== res.data._id)]);
+      }
       fetchTimesheets();
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || 'Error clocking in.', 'error');
+    } finally {
+      setIsPunching(false);
     }
   };
 
   const handleClockOut = async () => {
+    if (isPunching) return;
+    setIsPunching(true);
     try {
       const clockOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const date = new Date().toLocaleDateString('en-CA');
-      await api.post('/timesheet/clock-out', { clockOut, date });
+      const res = await api.post('/timesheet/clock-out', { clockOut, date });
       showToast('Successfully clocked out.', 'success');
+      if (res.data) {
+        setTimesheets(prev => prev.map(t => t._id === res.data._id ? res.data : t));
+      }
       fetchTimesheets();
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || 'Error clocking out.', 'error');
+    } finally {
+      setIsPunching(false);
     }
   };
 
@@ -491,18 +504,20 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         <button
           className="btn btn-primary"
           style={{ flex: 1, padding: '12px' }}
-          disabled={!!activeShift}
+          disabled={!!activeShift || isPunching}
           onClick={handleClockIn}
         >
-          <i className="fa-solid fa-fingerprint" style={{ marginRight: '8px' }}></i> Punch In
+          <i className={isPunching ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-fingerprint"} style={{ marginRight: '8px' }}></i>
+          {isPunching && !activeShift ? 'Clocking In...' : 'Punch In'}
         </button>
         <button
           className="btn btn-danger"
           style={{ flex: 1, padding: '12px' }}
-          disabled={!activeShift}
+          disabled={!activeShift || isPunching}
           onClick={handleClockOut}
         >
-          <i className="fa-solid fa-arrow-right-from-bracket" style={{ marginRight: '8px' }}></i> Punch Out
+          <i className={isPunching ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-arrow-right-from-bracket"} style={{ marginRight: '8px' }}></i>
+          {isPunching && activeShift ? 'Clocking Out...' : 'Punch Out'}
         </button>
       </div>
     </div>
