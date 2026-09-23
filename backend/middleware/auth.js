@@ -18,11 +18,14 @@ const protect = async (req, res, next) => {
 
       // Look up user in MongoDB Atlas
       if (mongoose.connection.readyState >= 1) {
-        req.user = await Employee.findById(decoded.id).select('-password');
-        if (req.user) {
-          return next();
+        try {
+          req.user = await Employee.findById(decoded.id).select('-password');
+          if (req.user) {
+            return next();
+          }
+        } catch (e) {
+          console.warn('[Auth Middleware Warning] Atlas findById failed:', e.message);
         }
-        return res.status(401).json({ message: 'User account no longer exists.' });
       }
 
       // Offline mode fallback for mock IDs

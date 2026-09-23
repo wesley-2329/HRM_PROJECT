@@ -16,11 +16,14 @@ const path = require('path');
 const app = express();
 
 // Database connection middleware for serverless environments
+const mongoose = require('mongoose');
 app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-  } catch (error) {
-    // Handled in connectDB, proceed to route fallback
+  if (mongoose.connection.readyState < 1) {
+    try {
+      await connectDB();
+    } catch (error) {
+      // Handled in connectDB, proceed to route fallback
+    }
   }
   next();
 });
@@ -39,14 +42,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors());
 app.use(express.json());
 
-// Stateful Offline Mock Database Sync Middleware
+// Stateful Offline Mock Database Sync Middleware (only used when offline)
 app.use((req, res, next) => {
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+
   const clientMockState = req.headers['x-mock-state'];
   if (clientMockState) {
     try {
       const parsedState = JSON.parse(clientMockState);
       
-      // Sanitize old "mock_" string IDs to valid 24-char hex IDs
       const sanitizeObj = (obj) => {
         if (!obj || typeof obj !== 'object') return;
         for (let key in obj) {

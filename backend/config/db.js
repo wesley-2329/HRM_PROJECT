@@ -21,6 +21,10 @@ const cleanUri = (rawUri) => {
 };
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
+  }
+
   if (cachedConn && mongoose.connection.readyState === 1) {
     return cachedConn;
   }
@@ -28,7 +32,7 @@ const connectDB = async () => {
   if (cachedPromise) {
     try {
       cachedConn = await cachedPromise;
-      if (mongoose.connection.readyState === 1) {
+      if (mongoose.connection.readyState >= 1) {
         return cachedConn;
       }
     } catch (e) {
@@ -45,6 +49,9 @@ const connectDB = async () => {
   }
 
   cachedPromise = mongoose.connect(connUri, {
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 10000,
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 5000,
   });

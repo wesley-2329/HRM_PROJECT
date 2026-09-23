@@ -34,9 +34,11 @@ import {
 const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const {
     employees,
+    setEmployees,
     leaves,
     timesheets,
     candidates,
+    setCandidates,
     notifications,
     tickets,
     warningLetters,
@@ -597,11 +599,17 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const handleAddOrEditEmployee = async (formData) => {
     try {
       if (selectedEmpForEdit) {
-        await api.put(`/employees/${selectedEmpForEdit.id}`, formData);
+        const res = await api.put(`/employees/${selectedEmpForEdit.id}`, formData);
         showToast('Employee details saved successfully!', 'success');
+        if (res.data) {
+          setEmployees(prev => prev.map(e => (e.id === res.data.id || e._id === res.data._id) ? res.data : e));
+        }
       } else {
-        await api.post('/employees', formData);
+        const res = await api.post('/employees', formData);
         showToast('Employee details saved successfully!', 'success');
+        if (res.data) {
+          setEmployees(prev => [res.data, ...prev.filter(e => e.id !== res.data.id && e._id !== res.data._id)]);
+        }
       }
       setAddEmpActive(false);
       setSelectedEmpForEdit(null);
@@ -720,8 +728,11 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
 
   const handleAddWalkinCandidate = async (formData) => {
     try {
-      await api.post('/candidates', formData);
+      const res = await api.post('/candidates', formData);
       showToast('Walk-in candidate added.', 'success');
+      if (res.data) {
+        setCandidates(prev => [res.data, ...prev.filter(c => c._id !== res.data._id)]);
+      }
       setWalkinActive(false);
       fetchCandidates();
     } catch (err) {

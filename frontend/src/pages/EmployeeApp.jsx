@@ -89,9 +89,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const {
     employees,
     leaves,
+    setLeaves,
     tasks,
+    setTasks,
     tickets,
+    setTickets,
     meetings,
+    setMeetings,
     trainings,
     timesheets,
     setTimesheets,
@@ -1202,13 +1206,16 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const handleApplyLeave = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/leaves', {
+      const res = await api.post('/leaves', {
         type: leaveType,
         start: leaveFrom,
         end: leaveTo,
         reason: leaveReason
       });
       showToast('Leave request submitted successfully.', 'success');
+      if (res.data) {
+        setLeaves(prev => [res.data, ...prev.filter(l => l._id !== res.data._id)]);
+      }
       setLeaveFrom(''); setLeaveTo(''); setLeaveReason('');
       fetchLeaves();
       setAttSubTab('history');
@@ -1221,6 +1228,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     try {
       await api.delete(`/leaves/${id}`);
       showToast('Leave request cancelled.', 'info');
+      setLeaves(prev => prev.filter(l => l._id !== id));
       fetchLeaves();
     } catch (err) {
       showToast('Error cancelling leave request.', 'error');
@@ -1231,13 +1239,16 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const handleRaiseTicketSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/tickets', {
+      const res = await api.post('/tickets', {
         title: ticketTitle,
         category: ticketCategory,
         priority: ticketPriority,
         description: ticketDesc
       });
       showToast('Support ticket raised.', 'success');
+      if (res.data) {
+        setTickets(prev => [res.data, ...prev.filter(t => t._id !== res.data._id)]);
+      }
       setTicketTitle(''); setTicketDesc('');
       setRaiseTicketActive(false);
       setTicketSubmitted(true);
@@ -1338,7 +1349,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     }
 
     try {
-      await api.post('/meetings', {
+      const res = await api.post('/meetings', {
         title,
         host: user?.name || 'Employee',
         date,
@@ -1356,6 +1367,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       });
 
       showToast(meetingMode === 'instant' ? 'Instant meeting started successfully.' : 'Meeting scheduled successfully.', 'success');
+      if (res.data) {
+        setMeetings(prev => [res.data, ...prev.filter(m => m._id !== res.data._id)]);
+      }
 
       // Reset form
       setNewMeetTitle('');
@@ -1399,8 +1413,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // Task Kanban Status Update (Drag & Drop mock or click move)
   const handleMoveTaskStatus = async (id, status) => {
     try {
-      await api.put(`/tasks/${id}`, { status });
+      const res = await api.put(`/tasks/${id}`, { status });
       showToast(`Task status updated to ${status.toUpperCase()}`, 'success');
+      if (res.data) {
+        setTasks(prev => prev.map(t => (t._id === res.data._id || t.id === res.data.id) ? res.data : t));
+      }
       fetchTasks();
     } catch (err) {
       showToast('Error updating task status.', 'error');
@@ -1409,8 +1426,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const handleAddTaskSubmit = async (formData) => {
     try {
-      await api.post('/tasks', formData);
+      const res = await api.post('/tasks', formData);
       showToast('New task added.', 'success');
+      if (res.data) {
+        setTasks(prev => [res.data, ...prev.filter(t => t._id !== res.data._id)]);
+      }
       setAddTaskActive(false);
       fetchTasks();
     } catch (err) {
