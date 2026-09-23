@@ -45,21 +45,31 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
     fetchEmployeePolicies();
   }, []);
 
-  // When policy changes, reset state
+  // Auto-detect if selected policy content fits without scrolling
+  useEffect(() => {
+    if (selectedPolicy) {
+      setCheckbox1(false);
+      setCheckbox2(false);
+      setHasScrolledToBottom(false);
+
+      const checkScroll = () => {
+        if (policyTextRef.current) {
+          const el = policyTextRef.current;
+          if (el.scrollHeight <= el.clientHeight + 15) {
+            setHasScrolledToBottom(true);
+          }
+        }
+      };
+
+      checkScroll();
+      const timer = setTimeout(checkScroll, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPolicy]);
+
+  // When policy changes, select policy
   const handlePolicySelect = (p) => {
     setSelectedPolicy(p);
-    setCheckbox1(false);
-    setCheckbox2(false);
-    setHasScrolledToBottom(false);
-    // Self-healing scroll check: if content fits without scrolling, set true
-    setTimeout(() => {
-      if (policyTextRef.current) {
-        const el = policyTextRef.current;
-        if (el.scrollHeight <= el.clientHeight) {
-          setHasScrolledToBottom(true);
-        }
-      }
-    }, 100);
   };
 
   // Scroll to bottom verification
@@ -253,7 +263,7 @@ const EmployeePoliciesPage = ({ onStatusChange, inlineMode = false }) => {
               {/* Policy Header / View Info & Close Lock */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '14px' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{selectedPolicy.name}</h3>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{selectedPolicy.name}</h3>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '6px', flexWrap: 'wrap' }}>
                     <span><strong>Version:</strong> v{selectedPolicy.version}</span>
                     <span><strong>Effective Date:</strong> {new Date(selectedPolicy.effectiveDate).toLocaleDateString()}</span>
