@@ -170,26 +170,28 @@ const HRCompliancePage = ({ currentSubModule }) => {
   const fetchObservations = async () => {
     try {
       const res = await api.get('/observations');
-      setObsList(res.data.data);
-      setObsSummary(res.data.summary);
+      setObsList(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+      setObsSummary(res.data?.summary || { total: 0, open: 0, closed: 0, underReview: 0, overdue: 0 });
 
       const repRes = await api.get('/observations/reports');
-      setObsReportsData(repRes.data);
+      setObsReportsData(repRes.data || {});
     } catch (err) {
       console.error('Error fetching observations:', err);
+      setObsList([]);
     }
   };
 
   const fetchActionClosures = async () => {
     try {
       const res = await api.get('/action-closures');
-      setActionList(res.data.data);
-      setActionSummary(res.data.summary);
+      setActionList(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+      setActionSummary(res.data?.summary || { total: 0, open: 0, closed: 0, verified: 0, overdue: 0 });
 
       const repRes = await api.get('/action-closures/reports');
-      setActionReportsData(repRes.data);
+      setActionReportsData(repRes.data || {});
     } catch (err) {
       console.error('Error fetching action closures:', err);
+      setActionList([]);
     }
   };
 
