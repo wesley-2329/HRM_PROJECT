@@ -48,6 +48,8 @@ export const getAvatarUrl = (emp) => {
   return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>';
 };
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 const MainLayoutWrapper = ({ role, overrideModule }) => {
   const { user } = useContext(AuthContext);
   const { id: hashId, module } = useParams();
@@ -136,16 +138,18 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
         )}
 
         <div className="module-viewport">
-          {role === 'hr' ? (
-            <HRApp
-              currentModule={overrideModule || module}
-              searchQuery={searchQuery}
-            />
-          ) : (
-            <EmployeeApp
-              currentModule={overrideModule || module}
-            />
-          )}
+          <ErrorBoundary resetKey={overrideModule || module}>
+            {role === 'hr' ? (
+              <HRApp
+                currentModule={overrideModule || module}
+                searchQuery={searchQuery}
+              />
+            ) : (
+              <EmployeeApp
+                currentModule={overrideModule || module}
+              />
+            )}
+          </ErrorBoundary>
         </div>
       </main>
     </div>

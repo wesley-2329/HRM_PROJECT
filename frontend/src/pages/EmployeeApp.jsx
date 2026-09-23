@@ -29,6 +29,7 @@ import {
   PayslipModal
 } from '../components/Modals';
 import { getAvatarUrl, encodeId } from '../App';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const SubjectSparkline = ({ progress }) => {
   const canvasRef = useRef(null);

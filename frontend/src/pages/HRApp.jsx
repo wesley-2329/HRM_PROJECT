@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import api from '../api';
 import Modal from '../components/Modal';
 import { getAvatarUrl } from '../App';
+import ErrorBoundary from '../components/ErrorBoundary';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
 import HRCompliancePage from './governance/HRCompliancePage';
