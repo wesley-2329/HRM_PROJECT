@@ -63,48 +63,44 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
   const [emgPhone, setEmgPhone] = useState(employee?.emergency?.phone || '');
 
   React.useEffect(() => {
-    setName(employee?.name || '');
-    setEmail(employee?.email || '');
-    setDept(employee?.dept || 'Engineering');
-    setRole(employee?.role || '');
-    setAadhaar(employee?.aadhaar || '');
-    setPhone(employee?.phone || '');
-    setGender(employee?.gender || 'Male');
-    setJoined(employee?.joined || '');
-    setParentStatus(employee?.parentStatus || 'No');
+    if (active) {
+      setName(employee?.name || '');
+      setEmail(employee?.email || '');
+      setDept(employee?.dept || 'Engineering');
+      setRole(employee?.role || '');
+      setAadhaar(employee?.aadhaar || '');
+      setPhone(employee?.phone || '');
+      setGender(employee?.gender || 'Male');
+      setJoined(employee?.joined || '');
+      setParentStatus(employee?.parentStatus || 'No');
 
-    setDoor(employee?.address?.door || '');
-    setStreet(employee?.address?.street || '');
-    setCity(employee?.address?.city || '');
-    setStateName(employee?.address?.state || '');
-    setPin(employee?.address?.pin || '');
+      setDoor(employee?.address?.door || '');
+      setStreet(employee?.address?.street || '');
+      setCity(employee?.address?.city || '');
+      setStateName(employee?.address?.state || '');
+      setPin(employee?.address?.pin || '');
 
-    setEmgName(employee?.emergency?.name || '');
-    setEmgRelation(employee?.emergency?.relation || '');
-    setEmgPhone(employee?.emergency?.phone || '');
-  }, [employee]);
-
-  // BUG-007 Phone validation (max 10 numeric digits)
-  const handlePhoneChange = (e) => {
-    const numeric = e.target.value.replace(/\D/g, '');
-    if (numeric.length <= 10) {
-      setPhone(numeric);
+      setEmgName(employee?.emergency?.name || '');
+      setEmgRelation(employee?.emergency?.relation || '');
+      setEmgPhone(employee?.emergency?.phone || '');
     }
+  }, [employee, active]);
+
+  // Phone validation (max 10 numeric digits, auto-trimmed)
+  const handlePhoneChange = (e) => {
+    const numeric = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(numeric);
   };
 
-  // BUG-006 Aadhaar validation (max 12 numeric digits)
+  // Aadhaar validation (max 12 numeric digits, auto-trimmed)
   const handleAadhaarChange = (e) => {
-    const numeric = e.target.value.replace(/\D/g, '');
-    if (numeric.length <= 12) {
-      setAadhaar(numeric);
-    }
+    const numeric = e.target.value.replace(/\D/g, '').slice(0, 12);
+    setAadhaar(numeric);
   };
 
   const handleEmgPhoneChange = (e) => {
-    const numeric = e.target.value.replace(/\D/g, '');
-    if (numeric.length <= 10) {
-      setEmgPhone(numeric);
-    }
+    const numeric = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setEmgPhone(numeric);
   };
 
   const handleSubmit = (e) => {
