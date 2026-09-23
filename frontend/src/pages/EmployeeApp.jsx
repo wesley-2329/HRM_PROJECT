@@ -125,7 +125,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
   const [complianceData, setComplianceData] = useState({ policies: [], pendingCount: 0, onboardingCompleted: true });
-  const [dismissedLock, setDismissedLock] = useState(false);
+  const [dismissedLock, setDismissedLock] = useState(() => localStorage.getItem('hrorbit_dismissed_policy_onboarding') === 'true');
   const [showMobilePush, setShowMobilePush] = useState(false);
 
   useEffect(() => {
@@ -1625,7 +1625,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             </div>
             <button 
               className="btn btn-secondary"
-              onClick={() => setDismissedLock(true)}
+              onClick={() => {
+                localStorage.setItem('hrorbit_dismissed_policy_onboarding', 'true');
+                setDismissedLock(true);
+              }}
               style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
             >
               <span>Remind Me Later (Proceed to Dashboard)</span>
