@@ -9,6 +9,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
 
   const handleMouseEnter = (name) => {
