@@ -110,8 +110,12 @@ const ExitModule = ({ searchQuery = '' }) => {
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCreateResignation = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const res = await api.post('/exit/resignations', newResignation);
       showToast('Resignation submitted successfully. Exit request generated.', 'success');
@@ -134,11 +138,15 @@ const ExitModule = ({ searchQuery = '' }) => {
       setResignations([mockItem, ...resignations]);
       showToast('Resignation submitted (offline mode).', 'success');
       setShowResignModal(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCreateInterview = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const res = await api.post('/exit/interview', newInterview);
       showToast('Exit interview feedback recorded successfully.', 'success');
@@ -159,11 +167,15 @@ const ExitModule = ({ searchQuery = '' }) => {
       setInterviews([mockItem, ...interviews]);
       showToast('Exit interview submitted (offline mode).', 'success');
       setShowInterviewModal(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCreateFfs = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const res = await api.post('/exit/settlement/calculate', newFfs);
       showToast('Full & Final Settlement calculated and approved.', 'success');
@@ -192,6 +204,8 @@ const ExitModule = ({ searchQuery = '' }) => {
       setSettlements([mockItem, ...settlements]);
       showToast('F&F Settlement calculated (offline mode).', 'success');
       setShowFfsModal(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -666,7 +680,36 @@ const ExitModule = ({ searchQuery = '' }) => {
               </div>
               <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem' }}>Employee: <strong>Anil Kumar (EMP-1004)</strong></p>
               <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>All 8 department clearance checklists & asset returns verified and authorized.</p>
-              <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.82rem' }} onClick={() => showToast('Downloading Official No Due Certificate (NDC) PDF...', 'success')}>
+              <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.82rem' }} onClick={() => {
+                showToast('Downloading Official No Due Certificate (NDC) PDF...', 'info');
+                const content = `====================================================
+NO DUE CERTIFICATE (NDC) - OFFICIAL CLEARANCE
+====================================================
+Company: HR O Corp
+Employee Name: Anil Kumar
+Employee ID: EMP-1004
+Department: Engineering
+Designation: Software Engineer
+Last Working Day: 2026-10-31
+
+STATUS: FULLY CLEARED & AUTHORIZED
+All department clearance checklists (IT, HR, Finance, Admin, Legal) and asset returns have been verified.
+
+Authorized Signatory:
+Gara Nandini (Head of HR Governance)
+Date: ${new Date().toLocaleDateString()}
+====================================================`;
+                const blob = new Blob([content], { type: 'application/pdf' });
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.setAttribute('download', 'No_Due_Certificate_Anil_Kumar_EMP1004.pdf');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+                showToast('No Due Certificate (NDC) downloaded successfully.', 'success');
+              }}>
                 <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download Official NDC PDF
               </button>
             </div>
@@ -688,7 +731,34 @@ const ExitModule = ({ searchQuery = '' }) => {
                       <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{doc.desc}</div>
                     </div>
                   </div>
-                  <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => showToast(`Generating official ${doc.type}...`, 'success')}>
+                  <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => {
+                    showToast(`Generating official ${doc.type}...`, 'info');
+                    const content = `====================================================
+OFFICIAL DOCUMENT: ${doc.type.toUpperCase()}
+====================================================
+Company: HR O Corp
+Recipient: Anil Kumar (EMP-1004)
+Department: Engineering
+Designation: Software Engineer
+Issue Date: ${new Date().toLocaleDateString()}
+
+This is an official ${doc.type} issued by HR O Corp.
+All contractual terms, clearances, and Full & Final settlements have been completed.
+
+Authorized HR Signatory
+HR O Corp Management
+====================================================`;
+                    const blob = new Blob([content], { type: 'application/pdf' });
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.setAttribute('download', `${doc.type.replace(/\s+/g, '_')}_Anil_Kumar.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                    showToast(`${doc.type} generated and downloaded.`, 'success');
+                  }}>
                     Generate
                   </button>
                 </div>
@@ -827,7 +897,9 @@ const ExitModule = ({ searchQuery = '' }) => {
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowFfsModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Approve & Lock F&F</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Processing...</> : 'Approve & Lock F&F'}
+                </button>
               </div>
             </form>
           </div>

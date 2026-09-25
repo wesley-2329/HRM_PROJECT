@@ -40,3 +40,5 @@ index.html.backup
 *.zip
 mingit/
 
+.vercel
+.env*

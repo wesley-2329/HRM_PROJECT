@@ -623,7 +623,7 @@ body.dark-mode {
 
 /* Toast alert elements */
 .toast-container {
-  @apply fixed top-20 right-5 z-[99999] flex flex-col gap-2.5;
+  @apply fixed top-20 right-5 z-[999999] flex flex-col gap-2.5;
 }
 
 .toast {
@@ -2157,4 +2157,56 @@ body.dark-mode .welcome-card-banner {
   max-height: 160px;
   object-fit: contain;
   margin-top: 16px;
+}
+
+/* ======================================================== */
+/* PRINT STYLESHEET: CLEAN REPORT-ONLY PRINT LAYOUT        */
+/* ======================================================== */
+@media print {
+  .hr-header,
+  .emp-header,
+  .sidebar,
+  .sub-tabs,
+  .sub-nav-tabs,
+  .btn,
+  button,
+  .modal-backdrop,
+  .toast-container,
+  .theme-toggle-btn,
+  .hr-brand-section,
+  .hr-search {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .main-content,
+  .page-container,
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .table-responsive,
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px !important;
+    font-size: 10pt !important;
+    color: #000000 !important;
+  }
 }

@@ -5,6 +5,7 @@ import { useToast } from '../../components/Toast';
 import { OrganizationToolbar } from './components/SharedComponents';
 import Modal from '../../components/Modal';
 import api from '../../api';
+import { getAvatarUrl } from '../../App';
 
 const ReportingStructurePage = ({ mode }) => {
   const {
@@ -106,10 +107,7 @@ const ReportingStructurePage = ({ mode }) => {
     .filter(h => h.employeeId === selectedEmp?.id)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-  const getAvatarUrl = (emp) => {
-    if (!emp) return 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&h=100&q=80';
-    return emp.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(emp.name)}`;
-  };
+
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>

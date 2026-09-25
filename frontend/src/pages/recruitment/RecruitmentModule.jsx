@@ -244,9 +244,13 @@ const RecruitmentModule = () => {
     }
   }, [activeTab]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Handlers
   const handleCreateRequisition = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await api.post('/recruitment/requisitions', reqForm);
       showToast('Manpower Requisition submitted successfully.', 'success');
@@ -254,6 +258,8 @@ const RecruitmentModule = () => {
       fetchAllRecruitmentData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Error submitting requisition', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -311,6 +317,8 @@ const RecruitmentModule = () => {
 
   const handleCreateBudget = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await api.post('/recruitment/budgets', budgetForm);
       showToast('Vacancy budget request created.', 'success');
@@ -318,6 +326,8 @@ const RecruitmentModule = () => {
       fetchAllRecruitmentData();
     } catch (err) {
       showToast('Error creating budget request', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -425,6 +435,8 @@ const RecruitmentModule = () => {
 
   const handleCreateCost = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await api.post('/recruitment/costs', costForm);
       showToast('Recruitment expense recorded.', 'success');
@@ -432,6 +444,8 @@ const RecruitmentModule = () => {
       fetchAllRecruitmentData();
     } catch (err) {
       showToast('Error saving recruitment cost', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1006,7 +1020,17 @@ const RecruitmentModule = () => {
                   {candidates.filter(c => {
                     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.role.toLowerCase().includes(searchQuery.toLowerCase());
                     const matchesStage = filterStage === 'All' || c.stage === filterStage;
-                    return matchesSearch && matchesStage;
+                    let matchesRole = true;
+                    if (selectedRole === 'department_head' || selectedRole === 'reporting_manager' || selectedRole === 'hiring_manager') {
+                      matchesRole = !c.department || c.department.toLowerCase().includes('eng') || (user?.dept && c.department === user.dept);
+                    } else if (selectedRole === 'finance' || selectedRole === 'payroll') {
+                      matchesRole = ['offered', 'selected', 'joined'].includes((c.stage || '').toLowerCase());
+                    } else if (selectedRole === 'employee') {
+                      matchesRole = (c.source || '').toLowerCase().includes('referral');
+                    } else if (selectedRole === 'candidate') {
+                      matchesRole = c.email === user?.email || (c.stage || '').toLowerCase() === 'applied';
+                    }
+                    return matchesSearch && matchesStage && matchesRole;
                   }).map(cand => (
                     <tr key={cand._id}>
                       <td>
@@ -1399,7 +1423,9 @@ const RecruitmentModule = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Requisition</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Requisition'}
+                </button>
               </div>
             </form>
           </div>
@@ -1703,7 +1729,9 @@ const RecruitmentModule = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCostModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Expense Entry</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Saving...</> : 'Save Expense Entry'}
+                </button>
               </div>
             </form>
           </div>
@@ -1791,7 +1819,9 @@ const RecruitmentModule = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowBudgetModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Budget Request</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Budget Request'}
+                </button>
               </div>
             </form>
           </div>

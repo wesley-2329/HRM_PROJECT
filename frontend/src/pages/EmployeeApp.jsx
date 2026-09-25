@@ -117,7 +117,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     fetchWarningLetters
   } = useContext(DataContext);
 
-  const { user: authUser, loadUser } = useContext(AuthContext);
+  const { user: authUser, loadUser, setUser } = useContext(AuthContext);
   const { id } = useParams();
   const user = (authUser?.role === 'hr' && id) ? (employees.find(e => e.id === id) || authUser) : authUser;
 
@@ -1488,16 +1488,21 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
     try {
       showToast('Uploading profile picture...', 'info');
-      await api.post('/employees/upload-avatar', formData, {
+      const res = await api.post('/employees/upload-avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
       showToast('Profile picture uploaded successfully.', 'success');
+      if (res.data?.avatar && setUser) {
+        setUser(prev => prev ? ({ ...prev, avatar: res.data.avatar }) : prev);
+      }
       if (loadUser) {
         await loadUser(); // refresh navbar and context user
       }
-      fetchAllData(); // refresh employee records
+      if (fetchAllData) {
+        fetchAllData(); // refresh employee records
+      }
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || 'Failed to upload profile picture.', 'error');

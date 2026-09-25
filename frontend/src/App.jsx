@@ -36,7 +36,13 @@ export const decodeId = (hash) => {
 
 export const getAvatarUrl = (emp) => {
   if (emp?.avatar && typeof emp.avatar === 'string' && emp.avatar.trim() !== '') {
-    return emp.avatar;
+    const avatar = emp.avatar.trim();
+    if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:')) {
+      return avatar;
+    }
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+    const origin = apiBase ? apiBase.replace(/\/api\/?$/, '') : '';
+    return `${origin}${avatar.startsWith('/') ? '' : '/'}${avatar}`;
   }
   const gender = (emp?.gender || 'Male').toLowerCase();
   if (gender === 'female') {

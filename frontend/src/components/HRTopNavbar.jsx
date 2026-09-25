@@ -9,7 +9,19 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownTimeout, setDropdownTimeout] = useState(null);
+
+  const handleMouseEnter = (name) => {
+    if (dropdownTimeout) clearTimeout(dropdownTimeout);
+    setActiveDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150);
+    setDropdownTimeout(timeout);
+  };
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,7 +113,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 2. Workforce Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('workforce')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('workforce')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['employee-management', 'org-structure']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('workforce')}
@@ -135,7 +147,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 3. Operations Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('operations')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['attendance-leave', 'payroll-management', 'document-vault']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('operations')}
@@ -179,7 +191,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 4. Talent & Growth Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('talent')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('talent')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['recruitment-ats', 'performance-appraisal', 'training-competency', 'employee-experience']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('talent')}
@@ -233,7 +245,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 5. Finance & Separation Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('finance')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('finance')}
@@ -277,7 +289,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 6. HR Governance & Audit Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('governance')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('governance')}
@@ -361,7 +373,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 7. Support & Analytics Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => setActiveDropdown('support')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('support')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics', 'notification-system']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('support')}

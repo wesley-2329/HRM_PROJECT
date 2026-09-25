@@ -907,12 +907,12 @@ const EngagementModule = ({ searchQuery = '' }) => {
             <form onSubmit={handleCreateWelfare}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Welfare Type</label>
-                <select className="input" value={newWelfare.welfareType} onChange={e => setNewWelfare({ ...newWelfare, welfareType: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px' }}>
-                  <option>Medical Assistance</option>
-                  <option>Education Support</option>
-                  <option>Travel Support</option>
-                  <option>Emergency Fund</option>
-                  <option>Festival Benefits</option>
+                <select className="input" value={newWelfare.welfareType} onChange={e => setNewWelfare({ ...newWelfare, welfareType: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>
+                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Medical Assistance</option>
+                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Education Support</option>
+                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Travel Support</option>
+                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Emergency Fund</option>
+                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Festival Benefits</option>
                 </select>
               </div>
               <div style={{ marginBottom: '12px' }}>

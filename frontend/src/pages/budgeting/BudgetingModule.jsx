@@ -756,7 +756,27 @@ const BudgetingModule = ({ searchQuery = '' }) => {
               <div key={rep.title} style={{ padding: '16px', border: '1px solid hsl(var(--border))', borderRadius: '8px', background: 'hsl(var(--bg-card))' }}>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700 }}>{rep.title}</h4>
                 <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>{rep.desc}</p>
-                <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }} onClick={() => showToast(`Generating ${rep.title}...`, 'success')}>
+                <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }} onClick={() => {
+                  showToast(`Generating ${rep.title}...`, 'info');
+                  const isCsv = rep.format.includes('XLSX') || rep.format.includes('CSV');
+                  let content = `HRM_PROJECT - ${rep.title.toUpperCase()}\nExport Date: ${new Date().toLocaleDateString()}\n\n`;
+                  content += `Department,Planned Budget (INR),Actual Spent (INR),Variance (INR),Status\n`;
+                  content += `Engineering,5000000,4800000,+200000,Under Budget\n`;
+                  content += `Human Resources,1500000,1450000,+50000,Under Budget\n`;
+                  content += `Finance,1200000,1220000,-20000,Over Budget\n`;
+                  content += `Sales & Marketing,3000000,2950000,+50000,Under Budget\n`;
+
+                  const blob = new Blob([content], { type: isCsv ? 'text/csv;charset=utf-8;' : 'application/pdf' });
+                  const blobUrl = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = blobUrl;
+                  link.setAttribute('download', `${rep.title.replace(/[^a-zA-Z0-9]/g, '_')}_2026.${isCsv ? 'csv' : 'pdf'}`);
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  window.URL.revokeObjectURL(blobUrl);
+                  showToast(`${rep.title} exported and downloaded successfully.`, 'success');
+                }}>
                   <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Export ({rep.format})
                 </button>
               </div>

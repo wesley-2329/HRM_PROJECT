@@ -18,9 +18,16 @@ const Department = require('../models/Department');
 const { protect } = require('../middleware/auth');
 
 // Multer storage for Resumes
-const uploadsDir = path.join(__dirname, '../uploads/resumes');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadsDir = process.env.VERCEL || process.env.NODE_ENV === 'production'
+  ? '/tmp/uploads/resumes'
+  : path.join(__dirname, '../uploads/resumes');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn('Could not create resumes upload directory:', e.message);
 }
 
 const storage = multer.diskStorage({
@@ -443,7 +450,7 @@ router.post('/resumes/upload', protect, upload.single('resume'), async (req, res
       skillGapAnalysis: `Matched ${matchedSkills.length} key skills. Missing: ${missingSkills.join(', ') || 'None'}. Excellent fit for core stack.`,
       rankingScore,
       isDuplicate,
-      duplicateCandidateId: existingCand ? existingCand._id : '',
+      duplicateCandidateId: existingCand ? existingCand._id : null,
       recruiterRemarks: jdMatchScore > 75 ? 'Strong candidate recommendation.' : 'Requires technical screening.',
       status: 'Parsed'
     });

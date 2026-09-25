@@ -47,8 +47,12 @@ const DocumentVault = ({ mode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employees]);
 
+  const [isScanning, setIsScanning] = useState(false);
+
   // Expiry Compliance Checker Sweep
   const triggerComplianceScan = async () => {
+    if (isScanning) return;
+    setIsScanning(true);
     try {
       showToast('Running compliance and expiry monitoring scan...', 'info');
       const res = await api.post('/vault/trigger-expiry-checks');
@@ -56,6 +60,8 @@ const DocumentVault = ({ mode }) => {
       fetchVaultDocuments();
     } catch (err) {
       showToast('Failed to run compliance scan.', 'error');
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -279,8 +285,8 @@ const DocumentVault = ({ mode }) => {
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {isHr && (
-            <button className="btn btn-secondary" onClick={triggerComplianceScan}>
-              <i className="fa-solid fa-shield-halved"></i> Run Expiry Scan
+            <button className="btn btn-secondary" onClick={triggerComplianceScan} disabled={isScanning}>
+              <i className={`fa-solid ${isScanning ? 'fa-spinner fa-spin' : 'fa-shield-halved'}`}></i> {isScanning ? 'Scanning...' : 'Run Expiry Scan'}
             </button>
           )}
           <button className="btn btn-primary" onClick={() => { resetUploadForm(); setShowUploadModal(true); }}>
@@ -320,7 +326,9 @@ const DocumentVault = ({ mode }) => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {myVaultDocs.map((item, idx) => {
             const isUploaded = !!item.record;
-            const currentVer = isUploaded ? item.record.versions[item.record.versions.length - 1] : null;
+            const currentVer = (isUploaded && item.record.versions && item.record.versions.length > 0) 
+              ? item.record.versions[item.record.versions.length - 1] 
+              : { versionNumber: 1, fileName: item.name || 'document.pdf' };
             
             let statusBadge = <span className="badge badge-secondary">Pending Upload</span>;
             if (isUploaded) {
@@ -423,7 +431,9 @@ const DocumentVault = ({ mode }) => {
               <tbody>
                 {pendingDocs.length > 0 ? (
                   pendingDocs.map(doc => {
-                    const currentVer = doc.versions[doc.versions.length - 1];
+                    const currentVer = (doc.versions && doc.versions.length > 0)
+                      ? doc.versions[doc.versions.length - 1]
+                      : { versionNumber: 1, fileName: doc.documentName || 'document.pdf', uploadedAt: new Date(), changeSummary: 'Initial Document' };
                     return (
                       <tr key={doc._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
                         <td style={{ padding: '12px', fontWeight: 600 }}>{doc.employeeName} ({doc.employeeId})</td>
@@ -506,7 +516,9 @@ const DocumentVault = ({ mode }) => {
               <tbody>
                 {allFilteredDocs.length > 0 ? (
                   allFilteredDocs.map(doc => {
-                    const currentVer = doc.versions[doc.versions.length - 1];
+                    const currentVer = (doc.versions && doc.versions.length > 0)
+                      ? doc.versions[doc.versions.length - 1]
+                      : { versionNumber: 1, fileName: doc.documentName || 'document.pdf' };
                     let statusBadge = <span className="badge badge-info">{doc.status}</span>;
                     if (doc.status === 'Approved') statusBadge = <span className="badge badge-success">Approved</span>;
                     if (doc.status === 'Pending Approval') statusBadge = <span className="badge badge-warning">Pending Review</span>;

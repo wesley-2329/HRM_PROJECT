@@ -3588,7 +3588,34 @@ const HRCompliancePage = ({ currentSubModule }) => {
                 <button
                   className="btn btn-secondary w-full"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                  onClick={() => showToast(`Initiating download: ${rep.filename}`, 'info')}
+                  onClick={() => {
+                    showToast(`Downloading report: ${rep.filename}`, 'info');
+                    const content = `====================================================
+REGULATORY AUDIT REPORT ARCHIVE: ${rep.title ? rep.title.toUpperCase() : 'AUDIT REPORT'}
+====================================================
+Filename: ${rep.filename}
+Filing Date: ${new Date(rep.date).toLocaleDateString()}
+Prepared By: ${rep.author || 'Compliance Auditor'}
+Compliance Standard: Statutory & ISO Standards
+
+AUDIT SUMMARY FINDINGS:
+1. All regulatory filings verified & compliant.
+2. Zero penalty notices or non-conformance observations recorded.
+3. Systemic audit verification complete.
+
+HR O Corp Compliance Office
+====================================================`;
+                    const blob = new Blob([content], { type: 'application/pdf' });
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.setAttribute('download', rep.filename || 'Audit_Report.pdf');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                    showToast(`${rep.filename} downloaded successfully.`, 'success');
+                  }}
                 >
                   <i className="fa-solid fa-download"></i> Download Report
                 </button>

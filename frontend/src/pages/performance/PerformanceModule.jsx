@@ -274,15 +274,24 @@ const PerformanceModule = ({ searchQuery = '' }) => {
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCreateGoal = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await api.post('/performance/goals', { ...goalForm, appraisalCycleId: cycles[0]?._id || '60c72b2f9b1d8b2a3c9e0001' });
+      const res = await api.post('/performance/goals', { ...goalForm, appraisalCycleId: cycles[0]?._id || '60c72b2f9b1d8b2a3c9e0001' });
+      if (res.data) {
+        setGoals(prev => [...prev, res.data]);
+      }
       showToast('Employee Goal assigned successfully.', 'success');
       setShowGoalModal(false);
       fetchAllPerformanceData();
     } catch (err) {
       showToast('Error assigning goal', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -367,13 +376,20 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreatePromotion = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await api.post('/performance/promotions', promoForm);
+      const res = await api.post('/performance/promotions', promoForm);
+      if (res.data) {
+        setPromotions(prev => [...prev, res.data]);
+      }
       showToast('Promotion recommendation submitted.', 'success');
       setShowPromoModal(false);
       fetchAllPerformanceData();
     } catch (err) {
       showToast('Error submitting promotion recommendation', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -389,23 +405,30 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreateIncrement = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const current = Number(incForm.currentCtc);
     const pct = Number(incForm.incrementPercentage);
     const incAmt = Math.round((current * pct) / 100);
     const revCtc = current + incAmt;
     try {
-      await api.post('/performance/increments', {
+      const res = await api.post('/performance/increments', {
         ...incForm,
         incrementAmount: incAmt,
         revisedCtc: revCtc,
         revisedGross: Math.round(revCtc * 0.75),
         revisedBasic: Math.round(revCtc * 0.50)
       });
+      if (res.data) {
+        setIncrements(prev => [...prev, res.data]);
+      }
       showToast('Increment recommendation submitted.', 'success');
       setShowIncModal(false);
       fetchAllPerformanceData();
     } catch (err) {
       showToast('Error submitting increment recommendation', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -421,19 +444,26 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreatePip = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await api.post('/performance/pip', {
+      const res = await api.post('/performance/pip', {
         ...pipForm,
         objectives: [
           { objectiveName: 'Primary Performance Quota Target', target: pipForm.expectedPerformance, weightage: 50, achievementPct: 0, dueDate: pipForm.endDate },
           { objectiveName: 'Daily Operational Compliance', target: '100% Compliance', weightage: 50, achievementPct: 0, dueDate: pipForm.endDate }
         ]
       });
+      if (res.data) {
+        setPips(prev => [...prev, res.data]);
+      }
       showToast('PIP initiated for employee.', 'success');
       setShowPipModal(false);
       fetchAllPerformanceData();
     } catch (err) {
       showToast('Error creating PIP', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -702,49 +732,53 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       {/* TAB 3: FRAMEWORK & TEMPLATES */}
       {activeTab === 'framework' && (
         <div className="animate-fade-in-up">
-          <div className="dashboard-layout" style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             
             {/* Rating Scales */}
             <div className="card">
               <div className="card-title"><i className="fa-solid fa-star"></i> Configurable Rating Scales</div>
-              <table className="custom-table">
-                <thead>
-                  <tr><th>Rating</th><th>Label</th><th>Min Score</th><th>Max Score</th><th>Category</th></tr>
-                </thead>
-                <tbody>
-                  {ratingScales.map(rs => (
-                    <tr key={rs._id}>
-                      <td><strong style={{ color: 'hsl(var(--primary))' }}>{rs.ratingValue}.0 ★</strong></td>
-                      <td>{rs.ratingLabel}</td>
-                      <td>{rs.minScore}%</td>
-                      <td>{rs.maxScore}%</td>
-                      <td><span className="badge badge-primary">{rs.performanceCategory}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-responsive">
+                <table className="custom-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr><th>Rating</th><th>Label</th><th>Min Score</th><th>Max Score</th><th>Category</th></tr>
+                  </thead>
+                  <tbody>
+                    {ratingScales.map(rs => (
+                      <tr key={rs._id}>
+                        <td><strong style={{ color: 'hsl(var(--primary))' }}>{rs.ratingValue}.0 ★</strong></td>
+                        <td>{rs.ratingLabel}</td>
+                        <td>{rs.minScore}%</td>
+                        <td>{rs.maxScore}%</td>
+                        <td><span className="badge badge-primary">{rs.performanceCategory}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Performance Templates */}
             <div className="card">
               <div className="card-title"><i className="fa-solid fa-sliders"></i> Performance Template Breakdown</div>
-              <table className="custom-table">
-                <thead>
-                  <tr><th>Template</th><th>KRA %</th><th>KPI %</th><th>Competency %</th><th>Behaviour %</th><th>Total</th></tr>
-                </thead>
-                <tbody>
-                  {templates.map(pt => (
-                    <tr key={pt._id}>
-                      <td><strong>{pt.templateName}</strong></td>
-                      <td>{pt.kraWeightage}%</td>
-                      <td>{pt.kpiWeightage}%</td>
-                      <td>{pt.competencyWeightage}%</td>
-                      <td>{pt.behaviourWeightage}%</td>
-                      <td><span className="badge badge-success">100%</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-responsive">
+                <table className="custom-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr><th>Template</th><th>KRA %</th><th>KPI %</th><th>Competency %</th><th>Behaviour %</th><th>Total</th></tr>
+                  </thead>
+                  <tbody>
+                    {templates.map(pt => (
+                      <tr key={pt._id}>
+                        <td><strong>{pt.templateName}</strong></td>
+                        <td>{pt.kraWeightage}%</td>
+                        <td>{pt.kpiWeightage}%</td>
+                        <td>{pt.competencyWeightage}%</td>
+                        <td>{pt.behaviourWeightage}%</td>
+                        <td><span className="badge badge-success">100%</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -1315,7 +1349,9 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowGoalModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Assign Goal</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Assigning...</> : 'Assign Goal'}
+                </button>
               </div>
             </form>
           </div>
@@ -1513,7 +1549,9 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPromoModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Recommendation</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Recommendation'}
+                </button>
               </div>
             </form>
           </div>
@@ -1548,7 +1586,9 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowIncModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Increment</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Increment'}
+                </button>
               </div>
             </form>
           </div>
@@ -1584,7 +1624,9 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPipModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Initiate PIP</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Initiating...</> : 'Initiate PIP'}
+                </button>
               </div>
             </form>
           </div>

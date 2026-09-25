@@ -430,6 +430,7 @@ const LoginGateway = () => {
                       className="form-control"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="off"
                       required
                     />
                   </div>
@@ -442,6 +443,7 @@ const LoginGateway = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setIsPasswordFocused(true)}
                       onBlur={() => setIsPasswordFocused(false)}
+                      autoComplete="new-password"
                       required
                     />
                   </div>

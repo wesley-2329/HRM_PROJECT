@@ -233,27 +233,27 @@ const TrainingModule = ({ searchQuery = '' }) => {
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #10b981' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>SCHEDULED PROGRAMS</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>SCHEDULED PROGRAMS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#10b981' }}>{metrics.totalTrainingPrograms}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>{metrics.completedPrograms} Completed this month</div>
+              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #3b82f6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>TNA REQUESTS</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>TNA REQUESTS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#3b82f6' }}>{metrics.tnaRequestsTotal}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>{metrics.approvedTnaRequests} HR Approved</div>
+              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.approvedTnaRequests} HR Approved</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #8b5cf6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>ISSUED CERTIFICATES</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>ISSUED CERTIFICATES</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#8b5cf6' }}>{metrics.issuedCertificates}</div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>Avg Score: {metrics.averageAssessmentScore}</div>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #f59e0b' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>SKILL GAP CLOSURE</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>SKILL GAP CLOSURE</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#f59e0b' }}>{metrics.skillGapClosurePercentage}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
+              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
             </div>
           </div>
 

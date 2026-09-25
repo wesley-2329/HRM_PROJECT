@@ -185,7 +185,14 @@ router.post('/programs', protect, async (req, res) => {
 
 router.post('/programs/:id/enroll', protect, async (req, res) => {
   try {
-    const prog = await TrainingProgram.findById(req.params.id);
+    let prog;
+    const mongoose = require('mongoose');
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      prog = await TrainingProgram.findById(req.params.id);
+    }
+    if (!prog) {
+      prog = await TrainingProgram.findOne({ programId: req.params.id });
+    }
     if (!prog) return res.status(404).json({ message: 'Program not found' });
 
     const exists = prog.enrolledEmployees.some(e => e.id === req.user.id);

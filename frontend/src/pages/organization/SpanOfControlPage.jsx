@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import { OrganizationToolbar } from './components/SharedComponents';
 import api from '../../api';
+import { getAvatarUrl } from '../../App';
 
 const SpanOfControlPage = ({ mode }) => {
   const {
@@ -40,9 +41,7 @@ const SpanOfControlPage = ({ mode }) => {
     }
   };
 
-  const getAvatarUrl = (mgr) => {
-    return mgr.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(mgr.name)}`;
-  };
+
 
   const toggleExpand = (id) => {
     setExpandedManagers(prev => ({ ...prev, [id]: !prev[id] }));

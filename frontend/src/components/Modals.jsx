@@ -430,7 +430,41 @@ export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
       </div>
       <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
         <button className="btn btn-secondary" onClick={onClose}>Close</button>
-        <button className="btn btn-primary" onClick={onPrint}>Print / Download PDF</button>
+        <button className="btn btn-primary" onClick={() => {
+          const content = `====================================================
+HR O CORP - OFFICIAL PAYSLIP INVOICE
+====================================================
+Cycle: ${month || 'May 2026'}
+Employee Name: ${employee.name}
+Employee ID: ${employee.id}
+Department: ${employee.dept}
+Role: ${employee.role}
+
+EARNINGS:
+- Basic Salary: INR ${salary.basic.toLocaleString()}
+- HRA Reimbursement: INR ${salary.hra.toLocaleString()}
+- Other Allowance: INR ${salary.other.toLocaleString()}
+TOTAL EARNINGS: INR ${salary.gross.toLocaleString()}
+
+DEDUCTIONS:
+- Provident Fund (PF): INR ${salary.pf.toLocaleString()}
+- Professional Tax: INR ${salary.profTax.toLocaleString()}
+- TDS Deduction: INR ${salary.tds.toLocaleString()}
+TOTAL DEDUCTIONS: INR ${salary.deductions.toLocaleString()}
+
+NET DISBURSED AMOUNT: INR ${salary.net.toLocaleString()}
+====================================================`;
+          const blob = new Blob([content], { type: 'application/pdf' });
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', `Payslip_${employee.name.replace(/\s+/g, '_')}_${(month || 'May_2026').replace(/\s+/g, '_')}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+          if (onPrint) onPrint();
+        }}>Print / Download PDF</button>
       </div>
     </ModalWrapper>
   );

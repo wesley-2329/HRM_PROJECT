@@ -56,22 +56,32 @@ const AuditTrailsPage = ({ mode }) => {
     );
   }
 
+  const formatVal = (val) => {
+    if (val === undefined || val === null || val === '') return 'N/A';
+    if (typeof val === 'boolean') return val ? 'True' : 'False';
+    if (typeof val === 'object') {
+      if (Array.isArray(val)) return val.map(formatVal).join(', ');
+      return Object.entries(val).map(([k, v]) => `${k}: ${formatVal(v)}`).join(' | ');
+    }
+    return String(val);
+  };
+
   const renderJsonDiff = (oldVal, newVal) => {
-    if (!oldVal && !newVal) return <p>No detailed diff available.</p>;
+    if (!oldVal && !newVal) return <p style={{ margin: 0, padding: '4px 0', color: 'var(--text-secondary)' }}>No detailed diff available.</p>;
     
     const keys = new Set([...Object.keys(oldVal || {}), ...Object.keys(newVal || {})]);
     const filteredKeys = Array.from(keys).filter(k => k !== 'createdAt' && k !== 'updatedAt' && k !== '__v');
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', fontWeight: 700, paddingBottom: '6px', borderBottom: '2px solid hsl(var(--border))' }}>
           <div>Property</div>
           <div style={{ color: 'hsl(var(--text-secondary))' }}>Old Value</div>
           <div style={{ color: 'hsl(var(--primary))' }}>New Value</div>
         </div>
         {filteredKeys.map(k => {
-          const oldStr = oldVal?.[k] !== undefined ? JSON.stringify(oldVal[k]) : 'N/A';
-          const newStr = newVal?.[k] !== undefined ? JSON.stringify(newVal[k]) : 'N/A';
+          const oldStr = formatVal(oldVal?.[k]);
+          const newStr = formatVal(newVal?.[k]);
           const isChanged = oldStr !== newStr;
 
           return (
