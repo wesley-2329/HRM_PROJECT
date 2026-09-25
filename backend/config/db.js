@@ -5,6 +5,8 @@ mongoose.set('bufferCommands', true);
 
 let cachedConn = null;
 let cachedPromise = null;
+let lastFailedTime = 0;
+const FAIL_COOLDOWN_MS = 15000; // 15-second cooldown if connection failed to prevent blocking subsequent HTTP requests
 
 const cleanUri = (rawUri) => {
   if (!rawUri) return '';
@@ -27,6 +29,11 @@ const connectDB = async () => {
 
   if (cachedConn && mongoose.connection.readyState === 1) {
     return cachedConn;
+  }
+
+  // Skip waiting for timeout if connection failed recently
+  if (Date.now() - lastFailedTime < FAIL_COOLDOWN_MS) {
+    return null;
   }
 
   if (cachedPromise) {
@@ -52,8 +59,8 @@ const connectDB = async () => {
     maxPoolSize: 10,
     minPoolSize: 1,
     maxIdleTimeMS: 10000,
-    serverSelectionTimeoutMS: 5000,
-    connectTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 1500,
+    connectTimeoutMS: 1500,
   });
 
   try {
@@ -63,6 +70,7 @@ const connectDB = async () => {
   } catch (error) {
     cachedPromise = null;
     cachedConn = null;
+    lastFailedTime = Date.now();
     console.error(`[MongoDB Connection Error] ${error.message}`);
     return null;
   }
