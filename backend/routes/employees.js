@@ -71,9 +71,22 @@ router.post('/', protect, adminOnly, async (req, res) => {
   const { name, email, dept, role, aadhaar, phone, joined, gender, address, emergency, parentStatus } = req.body;
 
   try {
-    const userExists = await Employee.findOne({ email: email.trim().toLowerCase() });
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+    const cleanAadhaar = (aadhaar || '').replace(/\D/g, '');
+
+    if (cleanPhone && cleanPhone.length !== 10) {
+      return res.status(400).json({ message: 'Phone number must be exactly 10 numeric digits' });
+    }
+    if (cleanAadhaar && cleanAadhaar.length !== 12) {
+      return res.status(400).json({ message: 'Aadhaar number must be exactly 12 numeric digits' });
+    }
+
+    const userExists = await Employee.findOne({ 
+      email: email.trim().toLowerCase(),
+      status: { $ne: 'Deleted' }
+    });
     if (userExists) {
-      return res.status(400).json({ message: 'Employee with this email address already exists' });
+      return res.status(400).json({ message: 'Active employee with this email address already exists' });
     }
 
     const employeeCount = await Employee.countDocuments();

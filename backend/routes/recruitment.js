@@ -164,6 +164,17 @@ router.get('/requisitions', protect, async (req, res) => {
 
 router.post('/requisitions', protect, async (req, res) => {
   try {
+    // Idempotency check: prevent rapid duplicate creation within 5 seconds
+    const existingDuplicate = await ManpowerRequisition.findOne({
+      jobTitle: req.body.jobTitle,
+      department: req.body.department,
+      created_by: req.user?.name || 'User',
+      createdAt: { $gte: new Date(Date.now() - 5000) }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
     const count = await ManpowerRequisition.countDocuments();
     const reqNumber = `REQ-2026-${String(count + 1).padStart(4, '0')}`;
 

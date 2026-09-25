@@ -496,6 +496,15 @@ router.get('/promotions', protect, async (req, res) => {
 
 router.post('/promotions', protect, async (req, res) => {
   try {
+    const existingDuplicate = await PromotionRequest.findOne({
+      employeeId: req.body.employeeId,
+      proposedDesignation: req.body.proposedDesignation,
+      createdAt: { $gte: new Date(Date.now() - 5000) }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
     const count = await PromotionRequest.countDocuments();
     const requestId = `PRM-2026-${String(count + 1).padStart(4, '0')}`;
 
@@ -569,6 +578,15 @@ router.get('/increments', protect, async (req, res) => {
 
 router.post('/increments', protect, async (req, res) => {
   try {
+    const existingDuplicate = await SalaryRevisionRequest.findOne({
+      employeeId: req.body.employeeId,
+      newSalary: req.body.newSalary,
+      createdAt: { $gte: new Date(Date.now() - 5000) }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
     const count = await SalaryRevisionRequest.countDocuments();
     const requestId = `SRV-2026-${String(count + 1).padStart(4, '0')}`;
 
