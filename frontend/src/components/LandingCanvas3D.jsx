@@ -86,11 +86,11 @@ const LandingCanvas3D = ({ scrollProgress }) => {
 
     // --- 7. Animation & Physics Loop ---
     let frameId;
-    const clock = new THREE.Clock();
+    const startTime = performance.now();
 
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = (performance.now() - startTime) / 1000;
 
       // Smooth mouse follow
       mouse.x += (mouse.targetX - mouse.x) * 0.08;
