@@ -85,36 +85,29 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
     }
   }, [darkMode]);
 
+  const isHRUser = user && (user.role === 'hr' || user.role === 'hr_admin' || user.role === 'super_admin' || user.role === 'recruiter' || user.role === 'hr_executive');
+
   // Authorization checks
   useEffect(() => {
     if (!user) return;
-    if (role === 'hr' && user.role !== 'hr') {
+    if (role === 'hr' && !isHRUser) {
       navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
     } else if (role === 'employee' && overrideModule !== 'org-structure') {
-      if (user.role !== 'hr' && user.id !== id) {
+      if (!isHRUser && user.id !== id) {
         navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
       }
     }
-  }, [user, role, id, navigate, overrideModule]);
+  }, [user, role, id, navigate, overrideModule, isHRUser]);
 
-  if (!user) return null;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-  const isHR = user && user.role === 'hr';
-  const isEmployee = user && user.role === 'employee';
+  const isHR = isHRUser;
+  const isEmployee = !isHR;
 
   return (
-    <div className={isHR ? 'hr-top-layout' : isEmployee ? 'emp-top-layout' : `app-layout ${mobileActive ? 'mobile-active' : ''}`}>
-      {/* Sidebar navigation */}
-      {!isHR && !isEmployee && (
-        <Sidebar
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-          currentModule={overrideModule || module}
-          mobileActive={mobileActive}
-          setMobileActive={setMobileActive}
-        />
-      )}
-
+    <div className={isHR ? 'hr-top-layout' : 'emp-top-layout'}>
       {/* Main dashboard viewport */}
       <main className="main-content">
         {isHR ? (
@@ -125,7 +118,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
             navbarTheme={navbarTheme}
             onSearch={setSearchQuery}
           />
-        ) : isEmployee ? (
+        ) : (
           <EmpTopNavbar
             currentModule={overrideModule || module}
             darkMode={darkMode}
@@ -133,19 +126,11 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
             navbarTheme={navbarTheme}
             onSearch={setSearchQuery}
           />
-        ) : (
-          <TopNavbar
-            currentModule={overrideModule || module}
-            setMobileActive={setMobileActive}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            onSearch={setSearchQuery}
-          />
         )}
 
         <div className="module-viewport">
           <ErrorBoundary resetKey={overrideModule || module}>
-            {role === 'hr' ? (
+            {isHR ? (
               <HRApp
                 currentModule={overrideModule || module}
                 searchQuery={searchQuery}
@@ -189,7 +174,8 @@ const AppContent = () => {
     );
   }
 
-  const defaultDashboard = user?.role === 'hr' ? '/hr/dashboard' : `/employee/${encodeId(user?.id)}/emp-dashboard`;
+  const isHRUser = user && (user.role === 'hr' || user.role === 'hr_admin' || user.role === 'super_admin' || user.role === 'recruiter' || user.role === 'hr_executive');
+  const defaultDashboard = isHRUser ? '/hr/dashboard' : `/employee/${encodeId(user?.id)}/emp-dashboard`;
 
   return (
     <Routes>
@@ -197,7 +183,7 @@ const AppContent = () => {
       <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />
       <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
       <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
-      <Route path="/organization/*" element={<MainLayoutWrapper role={user?.role === 'hr' ? 'hr' : 'employee'} overrideModule="org-structure" />} />
+      <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
