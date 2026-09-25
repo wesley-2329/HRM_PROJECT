@@ -1332,11 +1332,19 @@ router.delete('/regions/:id', protect, adminOnly, async (req, res) => {
 // ================= Building Management =================
 router.get('/buildings', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const filter = {};
     if (req.query.branchId) filter.branchId = req.query.branchId;
     const list = await BuildingMaster.find(filter).populate('branchId').sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/buildings', protect, adminOnly, async (req, res) => {
@@ -1425,6 +1433,11 @@ router.delete('/floors/:id', protect, adminOnly, async (req, res) => {
 // ================= Team Management =================
 router.get('/teams', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const { page, limit, search = '', status = '', parentDeptId = '', sortBy = 'name', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
     const query = includeDeleted === 'true' ? {} : { deletedAt: null };
 
@@ -1458,7 +1471,10 @@ router.get('/teams', protect, async (req, res) => {
 
     const list = await TeamMaster.find(query).populate('parentDeptId').sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/teams', protect, adminOnly, async (req, res) => {
@@ -1570,6 +1586,11 @@ router.put('/teams/bulk-status', protect, adminOnly, async (req, res) => {
 // ================= Position Management =================
 router.get('/positions', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const { page, limit, search = '', status = '', department = '', grade = '', employmentType = '', sortBy = 'positionCode', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
     const query = includeDeleted === 'true' ? {} : { deletedAt: null };
 
@@ -1608,7 +1629,10 @@ router.get('/positions', protect, async (req, res) => {
 
     const list = await PositionMaster.find(query).sort({ positionCode: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/positions', protect, adminOnly, async (req, res) => {
@@ -1707,9 +1731,17 @@ router.put('/positions/bulk-status', protect, adminOnly, async (req, res) => {
 // ================= Organization Policies =================
 router.get('/policies', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const list = await OrgPolicy.find({}).sort({ category: 1, name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/policies', protect, adminOnly, async (req, res) => {
@@ -1758,9 +1790,17 @@ router.delete('/policies/:id', protect, adminOnly, async (req, res) => {
 // ================= Organization Documents =================
 router.get('/documents', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const list = await OrgDocument.find({}).sort({ category: 1, title: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/documents', protect, adminOnly, async (req, res) => {
@@ -1814,9 +1854,17 @@ router.delete('/documents/:id', protect, adminOnly, async (req, res) => {
 // ================= Succession Planning =================
 router.get('/succession-plans', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const list = await SuccessionPlan.find({}).populate('positionId').sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/succession-plans', protect, adminOnly, async (req, res) => {
@@ -1854,9 +1902,17 @@ router.delete('/succession-plans/:id', protect, adminOnly, async (req, res) => {
 // ================= Headcount Planning =================
 router.get('/headcount-plans', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     const list = await HeadcountPlan.find({}).populate('deptId').sort({ year: -1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
+  }
 });
 
 router.post('/headcount-plans', protect, adminOnly, async (req, res) => {

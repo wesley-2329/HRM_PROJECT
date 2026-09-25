@@ -8,6 +8,11 @@ const { protect } = require('../middleware/auth');
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      res.setHeader('X-Data-Source', 'fallback');
+      return res.json([]);
+    }
     let notifications;
     if (req.user.role === 'hr') {
       notifications = await Notification.find({
@@ -20,7 +25,8 @@ router.get('/', protect, async (req, res) => {
     }
     res.json(notifications);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.setHeader('X-Data-Source', 'fallback');
+    res.json([]);
   }
 });
 
