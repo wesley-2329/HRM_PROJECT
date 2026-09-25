@@ -24,32 +24,36 @@ router.get('/', protect, async (req, res) => {
 // @desc    Clock-In shift
 // @access  Private
 router.post('/clock-in', protect, async (req, res) => {
-  const todayDate = req.body.date || new Date().toLocaleDateString('en-CA');
+  const now = new Date();
+  const todayDate = req.body.date || now.toISOString().split('T')[0];
 
   try {
-    // Check if already clocked in (active shift without clockOut)
+    // Check if already clocked in (active shift)
     const activeShift = await Timesheet.findOne({
       empId: req.user.id,
-      $or: [{ clockOut: '' }, { clockOut: { $exists: false } }, { status: 'Active Shift' }]
+      status: 'Active Shift'
     });
 
     if (activeShift) {
       if (activeShift.date === todayDate) {
-        return res.status(400).json({ message: 'You have an active shift already running for today.' });
+        return res.status(409).json({
+          message: 'You have an active shift already running for today.',
+          activeShift
+        });
       } else {
         // Auto-close stale active shift from a previous calendar day
-        activeShift.clockOut = '06:00 PM';
+        const autoOutTime = new Date(new Date(activeShift.clockIn).getTime() + 8 * 60 * 60 * 1000);
+        activeShift.clockOut = autoOutTime;
         activeShift.hours = 8;
         activeShift.status = 'Logged Out';
         await activeShift.save();
       }
     }
 
-    const clockInTime = req.body.clockIn || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const shift = await Timesheet.create({
       date: todayDate,
-      clockIn: clockInTime,
-      clockOut: '',
+      clockIn: now,
+      clockOut: null,
       hours: 0,
       status: 'Active Shift',
       empId: req.user.id
@@ -57,6 +61,21 @@ router.post('/clock-in', protect, async (req, res) => {
 
     res.status(201).json(shift);
   } catch (error) {
+    // Catch MongoDB E11000 duplicate key error on partial unique index { empId: 1, status: 'Active Shift' }
+    if (error.code === 11000 || error.name === 'MongoServerError') {
+      try {
+        const existingShift = await Timesheet.findOne({
+          empId: req.user.id,
+          status: 'Active Shift'
+        });
+        return res.status(409).json({
+          message: 'You have an active shift already running for today.',
+          activeShift: existingShift
+        });
+      } catch (e) {
+        return res.status(409).json({ message: 'You have an active shift already running for today.' });
+      }
+    }
     res.status(500).json({ message: error.message });
   }
 });
@@ -69,48 +88,23 @@ router.post('/clock-out', protect, async (req, res) => {
     // Find active shift
     const activeShift = await Timesheet.findOne({
       empId: req.user.id,
-      $or: [{ clockOut: '' }, { clockOut: { $exists: false } }, { status: 'Active Shift' }]
+      status: 'Active Shift'
     });
 
     if (!activeShift) {
       return res.status(400).json({ message: 'No active shift found to clock out.' });
     }
 
-    const clockOutTime = req.body.clockOut || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = new Date();
+    const clockInDate = new Date(activeShift.clockIn);
     
     let hoursWorked = 0;
-    if (activeShift.createdAt) {
-      const diffMs = new Date() - new Date(activeShift.createdAt);
-      hoursWorked = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
-    } else {
-      const cleanIn = activeShift.clockIn.replace(/[.]/g, ':').trim();
-      const cleanOut = clockOutTime.replace(/[.]/g, ':').trim();
-
-      const matchIn = cleanIn.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
-      const matchOut = cleanOut.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
-
-      if (matchIn && matchOut) {
-        let inHrs = parseInt(matchIn[1], 10);
-        const inMins = parseInt(matchIn[2], 10);
-        if (matchIn[4]) {
-          if (matchIn[4].toUpperCase() === 'PM' && inHrs !== 12) inHrs += 12;
-          if (matchIn[4].toUpperCase() === 'AM' && inHrs === 12) inHrs = 0;
-        }
-
-        let outHrs = parseInt(matchOut[1], 10);
-        const outMins = parseInt(matchOut[2], 10);
-        if (matchOut[4]) {
-          if (matchOut[4].toUpperCase() === 'PM' && outHrs !== 12) outHrs += 12;
-          if (matchOut[4].toUpperCase() === 'AM' && outHrs === 12) outHrs = 0;
-        }
-
-        let diffMinutes = (outHrs * 60 + outMins) - (inHrs * 60 + inMins);
-        if (diffMinutes < 0) diffMinutes += 24 * 60;
-        hoursWorked = parseFloat((diffMinutes / 60).toFixed(2));
-      }
+    if (!isNaN(clockInDate.getTime())) {
+      const diffMs = now.getTime() - clockInDate.getTime();
+      hoursWorked = parseFloat(Math.max(0, diffMs / (1000 * 60 * 60)).toFixed(2));
     }
 
-    activeShift.clockOut = clockOutTime;
+    activeShift.clockOut = now;
     activeShift.hours = hoursWorked;
     activeShift.status = hoursWorked >= 8 ? 'Punctual' : 'Early Out';
     

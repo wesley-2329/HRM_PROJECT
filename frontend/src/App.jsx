@@ -151,6 +151,20 @@ const AppContent = () => {
   const { user, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [isOfflineFallback, setIsOfflineFallback] = useState(false);
+
+  useEffect(() => {
+    const handleOffline = () => setIsOfflineFallback(true);
+    const handleLive = () => setIsOfflineFallback(false);
+
+    window.addEventListener('offline-fallback-detected', handleOffline);
+    window.addEventListener('offline-fallback-cleared', handleLive);
+
+    return () => {
+      window.removeEventListener('offline-fallback-detected', handleOffline);
+      window.removeEventListener('offline-fallback-cleared', handleLive);
+    };
+  }, []);
 
   // Redirect unauthenticated users away from protected paths
   useEffect(() => {
@@ -178,14 +192,37 @@ const AppContent = () => {
   const defaultDashboard = isHRUser ? '/hr/dashboard' : `/employee/${encodeId(user?.id)}/emp-dashboard`;
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />
-      <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
-      <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
-      <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      {isOfflineFallback && (
+        <div style={{
+          background: '#f59e0b',
+          color: '#000000',
+          padding: '8px 16px',
+          textAlign: 'center',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          zIndex: 99999,
+          position: 'sticky',
+          top: 0,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <i className="fa-solid fa-triangle-exclamation"></i>
+          <span>Database Disconnected — Showing cached offline data</span>
+        </div>
+      )}
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />
+        <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
+        <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
+        <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 

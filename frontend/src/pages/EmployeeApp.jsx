@@ -4,6 +4,7 @@ import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api from '../api';
+import { formatTimeString, formatDateString, formatDateTimeString } from '../utils/dateUtils';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
 import EmployeePoliciesPage from './governance/EmployeePoliciesPage';
@@ -386,24 +387,15 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const getClockInDateTime = (shift) => {
     if (!shift) return null;
+    if (shift.clockIn) {
+      const parsed = new Date(shift.clockIn);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
     if (shift.createdAt) {
       const created = new Date(shift.createdAt);
       if (!isNaN(created.getTime())) return created;
     }
-    if (!shift.date || !shift.clockIn) return null;
-    const [year, month, day] = shift.date.split('-').map(Number);
-    const cleanTime = shift.clockIn.replace(/[.]/g, ':').trim();
-    const match = cleanTime.match(/^(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?$/i);
-    if (!match) return new Date(shift.date);
-    let hours = parseInt(match[1], 10);
-    const minutes = parseInt(match[2], 10);
-    const seconds = match[3] ? parseInt(match[3], 10) : 0;
-    const ampm = match[4];
-    if (ampm) {
-      if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
-      if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-    }
-    return new Date(year, month - 1, day, hours, minutes, seconds);
+    return null;
   };
 
   useEffect(() => {
@@ -434,9 +426,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (isPunching) return;
     setIsPunching(true);
     try {
-      const clockIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const date = new Date().toLocaleDateString('en-CA');
-      const res = await api.post('/timesheet/clock-in', { clockIn, date });
+      const res = await api.post('/timesheet/clock-in');
       showToast('Successfully clocked in for today.', 'success');
       if (res.data) {
         setTimesheets(prev => [res.data, ...prev.filter(t => t._id !== res.data._id)]);
@@ -444,7 +434,14 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       fetchTimesheets();
     } catch (err) {
       console.error(err);
-      showToast(err.response?.data?.message || 'Error clocking in.', 'error');
+      const activeShiftData = err.response?.data?.activeShift;
+      if (activeShiftData) {
+        const timeStr = formatTimeString(activeShiftData.clockIn, activeShiftData.legacyTimezoneUncertain);
+        showToast(`Already clocked in since ${timeStr}`, 'info');
+        setTimesheets(prev => [activeShiftData, ...prev.filter(t => t._id !== activeShiftData._id)]);
+      } else {
+        showToast(err.response?.data?.message || 'Error clocking in.', 'error');
+      }
     } finally {
       setIsPunching(false);
     }
@@ -454,9 +451,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (isPunching) return;
     setIsPunching(true);
     try {
-      const clockOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const date = new Date().toLocaleDateString('en-CA');
-      const res = await api.post('/timesheet/clock-out', { clockOut, date });
+      const res = await api.post('/timesheet/clock-out');
       showToast('Successfully clocked out.', 'success');
       if (res.data) {
         setTimesheets(prev => prev.map(t => t._id === res.data._id ? res.data : t));
@@ -501,7 +496,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
       {activeShift && (
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '-5px' }}>
-          <i className="fa-solid fa-arrow-right-to-bracket" style={{ marginRight: '6px' }}></i> Clocked in at {activeShift.clockIn}
+          <i className="fa-solid fa-arrow-right-to-bracket" style={{ marginRight: '6px' }}></i> Clocked in at {formatTimeString(activeShift.clockIn, activeShift.legacyTimezoneUncertain)}
         </div>
       )}
 
@@ -2376,8 +2371,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         {timesheets.map((t, idx) => (
                           <tr key={idx}>
                             <td>{t.date}</td>
-                            <td>{t.clockIn}</td>
-                            <td>{t.clockOut || 'Active Shift'}</td>
+                            <td>{formatTimeString(t.clockIn, t.legacyTimezoneUncertain)}</td>
+                            <td>{t.clockOut ? formatTimeString(t.clockOut, t.legacyTimezoneUncertain) : 'Active Shift'}</td>
                             <td>{t.hours} Hrs</td>
                             <td><span className={`badge ${t.status === 'Punctual' ? 'badge-success' : 'badge-warning'}`}>{t.status}</span></td>
                           </tr>

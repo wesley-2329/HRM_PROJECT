@@ -23,9 +23,16 @@ api.interceptors.request.use(
   }
 );
 
-// Intercept response to capture state changes sent back from the backend
+// Intercept response to capture state changes and DB connection health events
 api.interceptors.response.use(
   (response) => {
+    const dataSource = response.headers['x-data-source'];
+    if (dataSource === 'fallback') {
+      window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+    } else if (dataSource === 'live') {
+      window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+    }
+
     const mockState = response.headers['x-mock-state'];
     if (mockState) {
       localStorage.setItem('mock_database_state', mockState);
@@ -33,6 +40,13 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const dataSource = error.response?.headers?.['x-data-source'];
+    if (dataSource === 'fallback') {
+      window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+    } else if (dataSource === 'live') {
+      window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+    }
+
     const mockState = error.response?.headers?.['x-mock-state'];
     if (mockState) {
       localStorage.setItem('mock_database_state', mockState);

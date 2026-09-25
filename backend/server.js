@@ -42,11 +42,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors());
 app.use(express.json());
 
-// Stateful Offline Mock Database Sync Middleware (only used when offline)
+// Stateful Offline Mock Database Sync Middleware (used when offline)
 app.use((req, res, next) => {
   if (mongoose.connection.readyState === 1) {
+    res.setHeader('X-Data-Source', 'live');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
     return next();
   }
+
+  res.setHeader('X-Data-Source', 'fallback');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
 
   const clientMockState = req.headers['x-mock-state'];
   if (clientMockState) {
@@ -83,10 +88,16 @@ app.use((req, res, next) => {
   const originalJson = res.json;
   res.json = function(body) {
     try {
+      if (body && typeof body === 'object') {
+        if (Array.isArray(body)) {
+          // Attaching property to array for object responses if needed
+        } else {
+          body._degraded = true;
+        }
+      }
       const { getMockState } = require('./config/mock_data');
       const currentState = getMockState();
       res.setHeader('x-mock-state', JSON.stringify(currentState));
-      res.setHeader('Access-Control-Expose-Headers', 'x-mock-state');
     } catch (e) {
       console.error('Failed to set response mock state:', e);
     }

@@ -3,6 +3,7 @@ import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api from '../api';
+import { formatTimeString, formatDateString } from '../utils/dateUtils';
 import Modal from '../components/Modal';
 import { getAvatarUrl } from '../App';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -402,40 +403,55 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   }, [currentModule, employees]);
 
   // Clock in/out Shift Stopwatch
+  const [isPunching, setIsPunching] = useState(false);
   const handleClockToggle = async () => {
-    if (!clockRunning) {
-      try {
-        const res = await api.post('/timesheet/clock-in');
-        setClockInTime(res.data.clockIn);
-        setClockRunning(true);
-        setTimeSeconds(0);
-        showToast('Clocked In successfully.', 'success');
+    if (isPunching) return;
+    setIsPunching(true);
+    try {
+      if (!clockRunning) {
+        try {
+          const res = await api.post('/timesheet/clock-in');
+          setClockInTime(formatTimeString(res.data.clockIn, res.data.legacyTimezoneUncertain));
+          setClockRunning(true);
+          setTimeSeconds(0);
+          showToast('Clocked In successfully.', 'success');
 
-        timerRef.current = setInterval(() => {
-          setTimeSeconds(prev => {
-            const nextSecs = prev + 1;
-            const hrs = String(Math.floor(nextSecs / 3600)).padStart(2, '0');
-            const mins = String(Math.floor((nextSecs % 3600) / 60)).padStart(2, '0');
-            const secs = String(nextSecs % 60).padStart(2, '0');
-            setStopwatchVal(`${hrs}:${mins}:${secs}`);
-            return nextSecs;
-          });
-        }, 1000);
-      } catch (err) {
-        showToast(err.response?.data?.message || 'Error clocking in', 'error');
+          timerRef.current = setInterval(() => {
+            setTimeSeconds(prev => {
+              const nextSecs = prev + 1;
+              const hrs = String(Math.floor(nextSecs / 3600)).padStart(2, '0');
+              const mins = String(Math.floor((nextSecs % 3600) / 60)).padStart(2, '0');
+              const secs = String(nextSecs % 60).padStart(2, '0');
+              setStopwatchVal(`${hrs}:${mins}:${secs}`);
+              return nextSecs;
+            });
+          }, 1000);
+        } catch (err) {
+          const activeShiftData = err.response?.data?.activeShift;
+          if (activeShiftData) {
+            const timeStr = formatTimeString(activeShiftData.clockIn, activeShiftData.legacyTimezoneUncertain);
+            showToast(`Already clocked in since ${timeStr}`, 'info');
+            setClockInTime(timeStr);
+            setClockRunning(true);
+          } else {
+            showToast(err.response?.data?.message || 'Error clocking in', 'error');
+          }
+        }
+      } else {
+        try {
+          const res = await api.post('/timesheet/clock-out');
+          setClockOutTime(formatTimeString(res.data.clockOut, res.data.legacyTimezoneUncertain));
+          setClockRunning(false);
+          if (timerRef.current) clearInterval(timerRef.current);
+          setStopwatchVal('00:00:00');
+          showToast('Clocked Out successfully.', 'info');
+          fetchTimesheets();
+        } catch (err) {
+          showToast(err.response?.data?.message || 'Error clocking out', 'error');
+        }
       }
-    } else {
-      try {
-        const res = await api.post('/timesheet/clock-out');
-        setClockOutTime(res.data.clockOut);
-        setClockRunning(false);
-        if (timerRef.current) clearInterval(timerRef.current);
-        setStopwatchVal('00:00:00');
-        showToast('Clocked Out successfully.', 'info');
-        fetchTimesheets();
-      } catch (err) {
-        showToast(err.response?.data?.message || 'Error clocking out', 'error');
-      }
+    } finally {
+      setIsPunching(false);
     }
   };
 
@@ -1656,8 +1672,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                     <tr key={idx}>
                       <td><strong>{t.empId}</strong></td>
                       <td>{t.date}</td>
-                      <td>{t.clockIn}</td>
-                      <td>{t.clockOut || 'Active Shift'}</td>
+                      <td>{formatTimeString(t.clockIn, t.legacyTimezoneUncertain)}</td>
+                      <td>{t.clockOut ? formatTimeString(t.clockOut, t.legacyTimezoneUncertain) : 'Active Shift'}</td>
                       <td>{t.hours} Hrs</td>
                       <td><span className={`badge ${t.status === 'Punctual' ? 'badge-success' : t.status === 'Late Entry' ? 'badge-warning' : 'badge-danger'}`}>{t.status}</span></td>
                     </tr>

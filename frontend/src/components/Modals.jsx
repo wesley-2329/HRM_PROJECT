@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getAvatarUrl } from '../App';
+import { formatTimeString } from '../utils/dateUtils';
 
 const getSalaryDetails = (role) => {
   let basic = 65000;
@@ -278,8 +279,8 @@ export const LedgerModal = ({ active, onClose, employee, timesheets = [], leaves
                 empTimesheets.map((t, idx) => (
                   <tr key={idx}>
                     <td>{t.date}</td>
-                    <td>{t.clockIn}</td>
-                    <td>{t.clockOut || '--'}</td>
+                    <td>{formatTimeString(t.clockIn, t.legacyTimezoneUncertain)}</td>
+                    <td>{t.clockOut ? formatTimeString(t.clockOut, t.legacyTimezoneUncertain) : '--'}</td>
                     <td>{t.hours} Hrs</td>
                     <td><span className={`badge ${t.status === 'Punctual' ? 'badge-success' : 'badge-warning'}`}>{t.status}</span></td>
                   </tr>

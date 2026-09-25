@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-// Enable command buffering (default) so queries wait for cold start connection instead of throwing MongooseError 500
-mongoose.set('bufferCommands', true);
+// Disable command buffering so queries fail immediately when disconnected instead of hanging until 8s client timeout
+mongoose.set('bufferCommands', false);
 
 let cachedConn = null;
 let cachedPromise = null;

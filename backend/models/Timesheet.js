@@ -6,12 +6,16 @@ const TimesheetSchema = new mongoose.Schema({
     required: true
   },
   clockIn: {
-    type: String,
+    type: Date,
     required: true
   },
   clockOut: {
-    type: String,
-    default: ''
+    type: Date,
+    default: null
+  },
+  legacyTimezoneUncertain: {
+    type: Boolean,
+    default: false
   },
   hours: {
     type: Number,
@@ -27,5 +31,11 @@ const TimesheetSchema = new mongoose.Schema({
     required: true
   }
 }, { timestamps: true });
+
+// Prevent duplicate active shifts at the MongoDB database level
+TimesheetSchema.index(
+  { empId: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'Active Shift' } }
+);
 
 module.exports = mongoose.model('Timesheet', TimesheetSchema);
