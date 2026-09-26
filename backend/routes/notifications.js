@@ -7,27 +7,17 @@ const { protect } = require('../middleware/auth');
 // @desc    Get user alerts
 // @access  Private
 router.get('/', protect, async (req, res) => {
-  try {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      res.setHeader('X-Data-Source', 'fallback');
-      return res.json([]);
-    }
-    let notifications;
-    if (req.user.role === 'hr') {
-      notifications = await Notification.find({
-        $or: [{ empId: req.user.id }, { empId: '' }, { empId: 'hr' }]
-      }).sort({ createdAt: -1 });
-    } else {
-      notifications = await Notification.find({
-        $or: [{ empId: req.user.id }, { empId: '' }]
-      }).sort({ createdAt: -1 });
-    }
-    res.json(notifications);
-  } catch (error) {
-    res.setHeader('X-Data-Source', 'fallback');
-    res.json([]);
+  let notifications;
+  if (req.user.role === 'hr') {
+    notifications = await Notification.find({
+      $or: [{ empId: req.user.id }, { empId: '' }, { empId: 'hr' }]
+    }).sort({ createdAt: -1 });
+  } else {
+    notifications = await Notification.find({
+      $or: [{ empId: req.user.id }, { empId: '' }]
+    }).sort({ createdAt: -1 });
   }
+  res.json(notifications);
 });
 
 // @route   PUT /api/notifications/mark-all-read

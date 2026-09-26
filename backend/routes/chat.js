@@ -7,18 +7,8 @@ const { protect } = require('../middleware/auth');
 // @desc    Get support chat history
 // @access  Private
 router.get('/', protect, async (req, res) => {
-  try {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      res.setHeader('X-Data-Source', 'fallback');
-      return res.json([]);
-    }
-    const messages = await ChatMessage.find({ empId: req.user.id }).sort({ createdAt: 1 });
-    res.json(messages);
-  } catch (error) {
-    res.setHeader('X-Data-Source', 'fallback');
-    res.json([]);
-  }
+  const messages = await ChatMessage.find({ empId: req.user.id }).sort({ createdAt: 1 });
+  res.json(messages);
 });
 
 // @route   POST /api/chat

@@ -1,4 +1,5 @@
 const express = require('express');
+require('express-async-errors');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -251,10 +252,59 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Error handling middleware
+// Unified Global Error Handling Middleware for DB Connection Failures & Fallback Behavior
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Server error occurred' });
+  // Pass through E11000 duplicate key error and business/status errors (e.g. 400, 401, 404, 409)
+  if (err.code === 11000 || (err.status && err.status < 500) || err.name === 'ValidationError') {
+    return next(err);
+  }
+
+  const isDBDisconnected = mongoose.connection.readyState !== 1;
+  const isDBError = err.name === 'MongooseError' || 
+                    err.name === 'MongoNetworkError' || 
+                    err.name === 'MongoServerSelectionError' || 
+                    err.name === 'MongoError' ||
+                    (err.message && (
+                      err.message.includes('buffering timed out') ||
+                      err.message.includes('Topology is closed') ||
+                      err.message.includes('connection') ||
+                      err.message.includes('disconnected')
+                    ));
+
+  if (isDBDisconnected || isDBError) {
+    res.setHeader('X-Data-Source', 'fallback');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
+
+    // 1. Auth routes (/api/auth/*) must NEVER silently succeed or return 200 with empty result
+    if (req.originalUrl && req.originalUrl.startsWith('/api/auth')) {
+      return res.status(503).json({
+        message: 'Authentication service temporarily unavailable, please retry',
+        _degraded: true
+      });
+    }
+
+    // 2. Non-GET requests (POST / PUT / DELETE) must return 503 Service Unavailable so writes never look like false successes
+    if (req.method !== 'GET') {
+      return res.status(503).json({
+        message: 'Unable to save — service temporarily unavailable, please retry',
+        _degraded: true
+      });
+    }
+
+    // 3. GET requests get silent 200 OK with empty fallback shape (or mock state if available)
+    try {
+      const { getMockState } = require('./config/mock_data');
+      const mockState = getMockState();
+      res.setHeader('x-mock-state', JSON.stringify(mockState));
+    } catch (e) {
+      // ignore mock state serialization error
+    }
+
+    return res.status(200).json([]);
+  }
+
+  console.error('[Unhandled Server Error]:', err.stack || err);
+  res.status(err.status || 500).json({ message: err.message || 'Server error occurred' });
 });
 
 const PORT = process.env.PORT || 5001;
