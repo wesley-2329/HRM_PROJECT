@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/meetings
 // @desc    Get all meetings
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let meetings = [];
     if (req.user && req.user.role === 'hr') {
@@ -34,7 +34,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/meetings
 // @desc    Schedule a meeting
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { title, host, date, time, type, empId, link, agenda, fromTime, toTime, points, durationHours, attendeesCount, topics } = req.body;
 
   try {
@@ -81,7 +81,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/meetings/:id/status
 // @desc    Update meeting status
 // @access  Private
-router.put('/:id/status', protect, async (req, res) => {
+router.put('/:id/status', protect, async (req, res, next) => {
   const { status, notes } = req.body;
 
   try {

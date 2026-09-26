@@ -126,7 +126,7 @@ const verifyEscalations = async (io) => {
 };
 
 // ================= MASTER SETUP ENDPOINTS =================
-router.get('/masters', protect, async (req, res) => {
+router.get('/masters', protect, async (req, res, next) => {
   try {
     let processes = await ProcessMaster.find({});
     let roles = await RoleMaster.find({});
@@ -170,7 +170,7 @@ router.get('/masters', protect, async (req, res) => {
 // ================= APPROVAL MATRIX CONFIG ROUTES =================
 
 // List configurations
-router.get('/matrices', protect, async (req, res) => {
+router.get('/matrices', protect, async (req, res, next) => {
   try {
     const list = await ApprovalMatrix.find({}).sort({ updatedAt: -1 });
     res.json(list);
@@ -178,7 +178,7 @@ router.get('/matrices', protect, async (req, res) => {
 });
 
 // Create new configuration matrix
-router.post('/matrices', protect, adminOnly, async (req, res) => {
+router.post('/matrices', protect, adminOnly, async (req, res, next) => {
   const { moduleName, processName, department, levels, effectiveDate } = req.body;
 
   try {
@@ -206,7 +206,7 @@ router.post('/matrices', protect, adminOnly, async (req, res) => {
 });
 
 // Update matrix config (Increments version & archives details in history log)
-router.put('/matrices/:id', protect, adminOnly, async (req, res) => {
+router.put('/matrices/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const matrix = await ApprovalMatrix.findById(req.params.id);
     if (!matrix) return res.status(404).json({ message: 'Matrix not found' });
@@ -237,7 +237,7 @@ router.put('/matrices/:id', protect, adminOnly, async (req, res) => {
 });
 
 // Toggle configuration status
-router.put('/matrices/:id/status', protect, adminOnly, async (req, res) => {
+router.put('/matrices/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
     const matrix = await ApprovalMatrix.findById(req.params.id);
     if (!matrix) return res.status(404).json({ message: 'Matrix not found' });
@@ -263,7 +263,7 @@ router.put('/matrices/:id/status', protect, adminOnly, async (req, res) => {
 });
 
 // Delete configuration matrix
-router.delete('/matrices/:id', protect, adminOnly, async (req, res) => {
+router.delete('/matrices/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const matrix = await ApprovalMatrix.findById(req.params.id);
     if (!matrix) return res.status(404).json({ message: 'Matrix config not found' });
@@ -277,7 +277,7 @@ router.delete('/matrices/:id', protect, adminOnly, async (req, res) => {
 // ================= ACTIVE WORKFLOW ASSIGNMENTS & TRANSACTIONS =================
 
 // Get active assignments
-router.get('/assignments', protect, async (req, res) => {
+router.get('/assignments', protect, async (req, res, next) => {
   try {
     // Run SLA validations
     await verifyEscalations(req.io);
@@ -296,7 +296,7 @@ router.get('/assignments', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/assignments/inbox', protect, async (req, res) => {
+router.get('/assignments/inbox', protect, async (req, res, next) => {
   try {
     await verifyEscalations(req.io);
 
@@ -328,7 +328,7 @@ router.get('/assignments/inbox', protect, async (req, res) => {
 });
 
 // Submit approval decision (Approve/Reject)
-router.put('/assignments/:id/action', protect, async (req, res) => {
+router.put('/assignments/:id/action', protect, async (req, res, next) => {
   const { action, comments } = req.body; // 'Approved' or 'Rejected'
 
   if (!['Approved', 'Rejected'].includes(action)) {
@@ -447,7 +447,7 @@ router.put('/assignments/:id/action', protect, async (req, res) => {
 // ================= AUDIT LOGS & REPORTS ENDPOINTS =================
 
 // Turnaround time & history reports
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const list = await ApprovalAssignment.find({});
     const histories = await ApprovalHistory.find({}).sort({ createdAt: -1 });

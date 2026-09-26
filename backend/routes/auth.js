@@ -19,7 +19,7 @@ const generateToken = (id) => {
   });
 };
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   const { email, password, role } = req.body;
   const lowerEmail = email ? email.toLowerCase().trim() : '';
 
@@ -134,7 +134,7 @@ router.post('/login', async (req, res) => {
 // @route   POST /api/auth/register
 // @desc    Register a new employee (Pending status)
 // @access  Public
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res, next) => {
   const { name, email, password, dept, role, aadhaar, phone, joined } = req.body;
 
   try {
@@ -171,7 +171,7 @@ router.post('/register', async (req, res) => {
 // @route   GET /api/auth/me
 // @desc    Get user profile
 // @access  Private
-router.get('/me', protect, async (req, res) => {
+router.get('/me', protect, async (req, res, next) => {
   try {
     const employee = await Employee.findById(req.user._id).select('-password');
     if (employee) {
@@ -193,7 +193,7 @@ router.get('/me', protect, async (req, res) => {
 // @route   POST /api/auth/change-password
 // @desc    Change password
 // @access  Private
-router.post('/change-password', protect, async (req, res) => {
+router.post('/change-password', protect, async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
 
   try {

@@ -36,7 +36,7 @@ const logAudit = async (req, entityType, entityId, action, previousState, newSta
 // ==========================================
 // 1. TRAINING NEEDS ANALYSIS (TNA)
 // ==========================================
-router.get('/tna', protect, async (req, res) => {
+router.get('/tna', protect, async (req, res, next) => {
   try {
     const { status, search } = req.query;
     let filter = {};
@@ -55,7 +55,7 @@ router.get('/tna', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/tna', protect, async (req, res) => {
+router.post('/tna', protect, async (req, res, next) => {
   try {
     const count = await TrainingNeedsAnalysis.countDocuments();
     const tnaId = `TNA-${1000 + count + 1}`;
@@ -85,7 +85,7 @@ router.post('/tna', protect, async (req, res) => {
   }
 });
 
-router.put('/tna/:id/status', protect, async (req, res) => {
+router.put('/tna/:id/status', protect, async (req, res, next) => {
   try {
     const tna = await TrainingNeedsAnalysis.findById(req.params.id);
     if (!tna) return res.status(404).json({ message: 'TNA request not found' });
@@ -108,14 +108,14 @@ router.put('/tna/:id/status', protect, async (req, res) => {
 // ==========================================
 // 2. ANNUAL TRAINING PLAN
 // ==========================================
-router.get('/annual-plan', protect, async (req, res) => {
+router.get('/annual-plan', protect, async (req, res, next) => {
   try {
     const plans = await AnnualTrainingPlan.find().sort({ year: -1 });
     res.json(plans);
   } catch (err) { next(err); }
 });
 
-router.post('/annual-plan', protect, async (req, res) => {
+router.post('/annual-plan', protect, async (req, res, next) => {
   try {
     const count = await AnnualTrainingPlan.countDocuments();
     const planId = `ATP-${2026 + count}`;
@@ -140,7 +140,7 @@ router.post('/annual-plan', protect, async (req, res) => {
 // ==========================================
 // 3. TRAINING PROGRAMS & CALENDAR
 // ==========================================
-router.get('/programs', protect, async (req, res) => {
+router.get('/programs', protect, async (req, res, next) => {
   try {
     const { category, status } = req.query;
     let filter = {};
@@ -152,7 +152,7 @@ router.get('/programs', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/programs', protect, async (req, res) => {
+router.post('/programs', protect, async (req, res, next) => {
   try {
     const count = await TrainingProgram.countDocuments();
     const programId = `TRN-${1000 + count + 1}`;
@@ -177,7 +177,7 @@ router.post('/programs', protect, async (req, res) => {
   }
 });
 
-router.post('/programs/:id/enroll', protect, async (req, res) => {
+router.post('/programs/:id/enroll', protect, async (req, res, next) => {
   try {
     let prog;
     const mongoose = require('mongoose');
@@ -209,14 +209,14 @@ router.post('/programs/:id/enroll', protect, async (req, res) => {
 // ==========================================
 // 4. TRAINERS & VENUES
 // ==========================================
-router.get('/trainers-venues', protect, async (req, res) => {
+router.get('/trainers-venues', protect, async (req, res, next) => {
   try {
     const items = await TrainerVenue.find({ isActive: true });
     res.json(items);
   } catch (err) { next(err); }
 });
 
-router.post('/trainers-venues', protect, async (req, res) => {
+router.post('/trainers-venues', protect, async (req, res, next) => {
   try {
     const newItem = new TrainerVenue(req.body);
     await newItem.save();
@@ -229,7 +229,7 @@ router.post('/trainers-venues', protect, async (req, res) => {
 // ==========================================
 // 5. SKILL & COMPETENCY MATRIX
 // ==========================================
-router.get('/skill-matrix', protect, async (req, res) => {
+router.get('/skill-matrix', protect, async (req, res, next) => {
   try {
     let filter = {};
     if (req.user.role !== 'hr') {
@@ -240,7 +240,7 @@ router.get('/skill-matrix', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/skill-matrix', protect, async (req, res) => {
+router.post('/skill-matrix', protect, async (req, res, next) => {
   try {
     const count = await SkillMatrix.countDocuments();
     const skillId = `SKL-${1000 + count + 1}`;
@@ -265,7 +265,7 @@ router.post('/skill-matrix', protect, async (req, res) => {
   }
 });
 
-router.get('/competency-matrix', protect, async (req, res) => {
+router.get('/competency-matrix', protect, async (req, res, next) => {
   try {
     const comps = await CompetencyMatrix.find().sort({ createdAt: -1 });
     res.json(comps);
@@ -275,14 +275,14 @@ router.get('/competency-matrix', protect, async (req, res) => {
 // ==========================================
 // 6. ASSESSMENTS & CERTIFICATIONS
 // ==========================================
-router.get('/assessments', protect, async (req, res) => {
+router.get('/assessments', protect, async (req, res, next) => {
   try {
     const items = await AssessmentCertification.find().sort({ createdAt: -1 });
     res.json(items);
   } catch (err) { next(err); }
 });
 
-router.post('/assessments/:id/issue-certificate', protect, async (req, res) => {
+router.post('/assessments/:id/issue-certificate', protect, async (req, res, next) => {
   try {
     const cert = await AssessmentCertification.findById(req.params.id);
     if (!cert) return res.status(404).json({ message: 'Assessment not found' });
@@ -321,7 +321,7 @@ router.post('/assessments/:id/issue-certificate', protect, async (req, res) => {
 // ==========================================
 // 7. LEARNING HISTORY & PORTAL
 // ==========================================
-router.get('/learning-history', protect, async (req, res) => {
+router.get('/learning-history', protect, async (req, res, next) => {
   try {
     let filter = {};
     if (req.user.role !== 'hr') {
@@ -335,7 +335,7 @@ router.get('/learning-history', protect, async (req, res) => {
 // ==========================================
 // 8. DASHBOARD METRICS
 // ==========================================
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const totalPrograms = await TrainingProgram.countDocuments();
     const completedPrograms = await TrainingProgram.countDocuments({ status: 'Completed' });
@@ -359,7 +359,7 @@ router.get('/dashboard', protect, async (req, res) => {
 // ==========================================
 // 9. AUDIT LOGS
 // ==========================================
-router.get('/audit', protect, async (req, res) => {
+router.get('/audit', protect, async (req, res, next) => {
   try {
     const logs = await TrainingAuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);

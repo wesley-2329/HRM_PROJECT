@@ -6,7 +6,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 // @route   GET /api/leaves
 // @desc    Get all leaves (HR sees all, Employee sees own)
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let leaves;
     if (req.user.role === 'hr') {
@@ -21,7 +21,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/leaves
 // @desc    Apply for leave
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { type, start, end, reason } = req.body;
 
   try {
@@ -165,7 +165,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/leaves/:id
 // @desc    Approve or Reject leave request
 // @access  Private/HR only
-router.put('/:id', protect, adminOnly, async (req, res) => {
+router.put('/:id', protect, adminOnly, async (req, res, next) => {
   const { status } = req.body;
 
   if (!['Approved', 'Rejected'].includes(status)) {
@@ -200,7 +200,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
 // @route   DELETE /api/leaves/:id
 // @desc    Cancel/delete a pending leave request
 // @access  Private
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, async (req, res, next) => {
   try {
     const leave = await Leave.findById(req.params.id);
     if (!leave) {

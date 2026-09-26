@@ -9,7 +9,7 @@ router.use(protect, adminOnly);
 // @route   GET /api/hr-notes
 // @desc    Get all HR confidential notes
 // @access  HR Only
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const notes = await ConfidentialNote.find({}).sort({ createdAt: -1 });
     res.json(notes || []);
@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 // @route   POST /api/hr-notes
 // @desc    Create a confidential note
 // @access  HR Only
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const { title, content, category } = req.body;
 
   try {
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 // @route   PUT /api/hr-notes/:id
 // @desc    Update a confidential note
 // @access  HR Only
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
   const { title, content, category } = req.body;
 
   try {
@@ -60,7 +60,7 @@ router.put('/:id', async (req, res) => {
 // @route   DELETE /api/hr-notes/:id
 // @desc    Delete a confidential note
 // @access  HR Only
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const note = await ConfidentialNote.findById(req.params.id);
     if (!note) {

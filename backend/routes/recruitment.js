@@ -67,7 +67,7 @@ const logAudit = async (req, entityType, entityId, action, previousState, newSta
 // ==========================================
 // 1. RECRUITMENT DASHBOARD & KPI ANALYTICS
 // ==========================================
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const requisitions = await ManpowerRequisition.find({ deletedAt: null });
     const positions = await PositionApprovalRequest.find({ deletedAt: null });
@@ -151,14 +151,14 @@ router.get('/dashboard', protect, async (req, res) => {
 // ==========================================
 // 2. MANPOWER REQUISITION WORKFLOW
 // ==========================================
-router.get('/requisitions', protect, async (req, res) => {
+router.get('/requisitions', protect, async (req, res, next) => {
   try {
     const list = await ManpowerRequisition.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/requisitions', protect, async (req, res) => {
+router.post('/requisitions', protect, async (req, res, next) => {
   try {
     // Idempotency check: prevent rapid duplicate creation within 5 seconds
     const existingDuplicate = await ManpowerRequisition.findOne({
@@ -200,7 +200,7 @@ router.post('/requisitions', protect, async (req, res) => {
 });
 
 // Requisition Status & Multi-step Workflow Transitions
-router.put('/requisitions/:id/approval', protect, async (req, res) => {
+router.put('/requisitions/:id/approval', protect, async (req, res, next) => {
   try {
     const { action, comments, approverName, approverId } = req.body; // action: 'Approve', 'Reject', 'Hold', 'Send Back'
     const reqDoc = await ManpowerRequisition.findById(req.params.id);
@@ -253,7 +253,7 @@ router.put('/requisitions/:id/approval', protect, async (req, res) => {
 });
 
 // Assign Recruiter
-router.put('/requisitions/:id/assign', protect, async (req, res) => {
+router.put('/requisitions/:id/assign', protect, async (req, res, next) => {
   try {
     const { recruiterId, recruiterName } = req.body;
     const reqDoc = await ManpowerRequisition.findById(req.params.id);
@@ -275,14 +275,14 @@ router.put('/requisitions/:id/assign', protect, async (req, res) => {
 // ==========================================
 // 3. POSITION APPROVAL & ORG VALIDATION
 // ==========================================
-router.get('/positions', protect, async (req, res) => {
+router.get('/positions', protect, async (req, res, next) => {
   try {
     const requests = await PositionApprovalRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(requests);
   } catch (err) { next(err); }
 });
 
-router.post('/positions', protect, async (req, res) => {
+router.post('/positions', protect, async (req, res, next) => {
   try {
     const count = await PositionApprovalRequest.countDocuments();
     const requestNumber = `PR-2026-${String(count + 1).padStart(4, '0')}`;
@@ -302,7 +302,7 @@ router.post('/positions', protect, async (req, res) => {
   }
 });
 
-router.put('/positions/:id/approve', protect, async (req, res) => {
+router.put('/positions/:id/approve', protect, async (req, res, next) => {
   try {
     const { status, comments } = req.body; // Approved or Rejected
     const posReq = await PositionApprovalRequest.findById(req.params.id);
@@ -343,14 +343,14 @@ router.put('/positions/:id/approve', protect, async (req, res) => {
 // ==========================================
 // 4. VACANCY BUDGET APPROVAL
 // ==========================================
-router.get('/budgets', protect, async (req, res) => {
+router.get('/budgets', protect, async (req, res, next) => {
   try {
     const list = await VacancyBudgetRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/budgets', protect, async (req, res) => {
+router.post('/budgets', protect, async (req, res, next) => {
   try {
     const count = await VacancyBudgetRequest.countDocuments();
     const budgetRequestNumber = `BR-2026-${String(count + 1).padStart(4, '0')}`;
@@ -371,7 +371,7 @@ router.post('/budgets', protect, async (req, res) => {
   }
 });
 
-router.put('/budgets/:id/approve', protect, async (req, res) => {
+router.put('/budgets/:id/approve', protect, async (req, res, next) => {
   try {
     const { financeStatus, managementStatus, comments } = req.body;
     const bReq = await VacancyBudgetRequest.findById(req.params.id);
@@ -399,7 +399,7 @@ router.put('/budgets/:id/approve', protect, async (req, res) => {
 // ==========================================
 // 5. RESUME ANALYSIS & PARSING
 // ==========================================
-router.get('/resumes', protect, async (req, res) => {
+router.get('/resumes', protect, async (req, res, next) => {
   try {
     const list = await ResumeAnalysis.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
@@ -485,7 +485,7 @@ router.post('/resumes/upload', protect, upload.single('resume'), async (req, res
   }
 });
 
-router.put('/resumes/:id/trigger-interview', protect, async (req, res) => {
+router.put('/resumes/:id/trigger-interview', protect, async (req, res, next) => {
   try {
     const { interviewDate, remarks } = req.body;
     const analysis = await ResumeAnalysis.findById(req.params.id);
@@ -522,14 +522,14 @@ router.put('/resumes/:id/trigger-interview', protect, async (req, res) => {
 // ==========================================
 // 6. CANDIDATE DATABASE (360 VIEW)
 // ==========================================
-router.get('/candidates', protect, async (req, res) => {
+router.get('/candidates', protect, async (req, res, next) => {
   try {
     const candidates = await Candidate.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(candidates);
   } catch (err) { next(err); }
 });
 
-router.post('/candidates', protect, async (req, res) => {
+router.post('/candidates', protect, async (req, res, next) => {
   try {
     const newCandidate = new Candidate({
       ...req.body,
@@ -548,7 +548,7 @@ router.post('/candidates', protect, async (req, res) => {
   }
 });
 
-router.put('/candidates/:id/stage', protect, async (req, res) => {
+router.put('/candidates/:id/stage', protect, async (req, res, next) => {
   try {
     const { stage, stageRejectedAt, rejectionReason, interviewStage } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -576,7 +576,7 @@ router.put('/candidates/:id/stage', protect, async (req, res) => {
 });
 
 // Offer Release
-router.put('/candidates/:id/offer', protect, async (req, res) => {
+router.put('/candidates/:id/offer', protect, async (req, res, next) => {
   try {
     const { offeredCtc, joiningDate, offeredDesignation } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -607,7 +607,7 @@ router.put('/candidates/:id/offer', protect, async (req, res) => {
 });
 
 // Onboarding Joining Confirmation
-router.put('/candidates/:id/join', protect, async (req, res) => {
+router.put('/candidates/:id/join', protect, async (req, res, next) => {
   try {
     const cand = await Candidate.findById(req.params.id);
     if (!cand) return res.status(404).json({ message: 'Candidate not found' });
@@ -632,7 +632,7 @@ router.put('/candidates/:id/join', protect, async (req, res) => {
 });
 
 // Communication Log Entry
-router.post('/candidates/:id/communication', protect, async (req, res) => {
+router.post('/candidates/:id/communication', protect, async (req, res, next) => {
   try {
     const { medium, message } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -655,14 +655,14 @@ router.post('/candidates/:id/communication', protect, async (req, res) => {
 // ==========================================
 // 7. TALENT POOL SEARCH & REACTIVATION
 // ==========================================
-router.get('/talent-pool', protect, async (req, res) => {
+router.get('/talent-pool', protect, async (req, res, next) => {
   try {
     const pool = await TalentPool.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(pool);
   } catch (err) { next(err); }
 });
 
-router.post('/talent-pool', protect, async (req, res) => {
+router.post('/talent-pool', protect, async (req, res, next) => {
   try {
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
@@ -680,7 +680,7 @@ router.post('/talent-pool', protect, async (req, res) => {
   }
 });
 
-router.put('/talent-pool/:id/reactivate', protect, async (req, res) => {
+router.put('/talent-pool/:id/reactivate', protect, async (req, res, next) => {
   try {
     const { reason } = req.body;
     const item = await TalentPool.findById(req.params.id);
@@ -705,14 +705,14 @@ router.put('/talent-pool/:id/reactivate', protect, async (req, res) => {
 // ==========================================
 // 8. RECRUITMENT COST TRACKING
 // ==========================================
-router.get('/costs', protect, async (req, res) => {
+router.get('/costs', protect, async (req, res, next) => {
   try {
     const costs = await RecruitmentCost.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(costs);
   } catch (err) { next(err); }
 });
 
-router.post('/costs', protect, async (req, res) => {
+router.post('/costs', protect, async (req, res, next) => {
   try {
     const count = await RecruitmentCost.countDocuments();
     const costId = `COST-2026-${String(count + 1).padStart(4, '0')}`;
@@ -736,14 +736,14 @@ router.post('/costs', protect, async (req, res) => {
 // ==========================================
 // 9. MASTER TABLES CRUD
 // ==========================================
-router.get('/masters', protect, async (req, res) => {
+router.get('/masters', protect, async (req, res, next) => {
   try {
     const masters = await RecruitmentMaster.find({ is_active: true }).sort({ category: 1, name: 1 });
     res.json(masters);
   } catch (err) { next(err); }
 });
 
-router.post('/masters', protect, async (req, res) => {
+router.post('/masters', protect, async (req, res, next) => {
   try {
     const newMaster = new RecruitmentMaster(req.body);
     await newMaster.save();
@@ -756,7 +756,7 @@ router.post('/masters', protect, async (req, res) => {
 // ==========================================
 // 10. RECRUITMENT AUDIT LOGS
 // ==========================================
-router.get('/audit-logs', protect, async (req, res) => {
+router.get('/audit-logs', protect, async (req, res, next) => {
   try {
     const logs = await RecruitmentAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

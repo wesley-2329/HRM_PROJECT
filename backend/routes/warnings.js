@@ -8,7 +8,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 // @route   GET /api/warning-letters
 // @desc    Get warning letters (filtered for employee; all for HR)
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let warnings;
     if (req.user.role === 'hr') {
@@ -23,7 +23,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/warning-letters
 // @desc    Issue a warning letter to an employee
 // @access  HR Only
-router.post('/', protect, adminOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { empId, subject, reason } = req.body;
 
   try {
@@ -58,7 +58,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/warning-letters/:id/acknowledge
 // @desc    Acknowledge a warning letter
 // @access  Private
-router.put('/:id/acknowledge', protect, async (req, res) => {
+router.put('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const warning = await WarningLetter.findById(req.params.id);
     if (!warning) {

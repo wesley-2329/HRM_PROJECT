@@ -21,7 +21,7 @@ const generateRequestId = async () => {
 
 // @route   GET /api/promotions
 // @desc    Get all promotion requests and dashboard metrics
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await PromotionRequest.find({}).sort({ createdAt: -1 });
 
@@ -51,7 +51,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/promotions
 // @desc    Recommend/Initiate employee promotion request
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { 
     employeeId, proposedDesignation, proposedGrade, proposedDepartment, 
     proposedManagerId, effectiveDate, justification, performanceSummary, 
@@ -155,7 +155,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/promotions/:id/verify
 // @desc    HR eligibility verification step (HR only)
-router.put('/:id/verify', protect, async (req, res) => {
+router.put('/:id/verify', protect, async (req, res, next) => {
   const { status, comments } = req.body; // 'Pending Approval', 'Rejected', 'Hold'
 
   try {
@@ -187,7 +187,7 @@ router.put('/:id/verify', protect, async (req, res) => {
 
 // @route   PUT /api/promotions/:id/approve
 // @desc    Finalize and Approve/Close promotion request (Management / HR)
-router.put('/:id/approve', protect, async (req, res) => {
+router.put('/:id/approve', protect, async (req, res, next) => {
   const { status, comments } = req.body; // 'Approved', 'Rejected', 'Sent Back', 'Hold'
 
   try {
@@ -318,7 +318,7 @@ router.put('/:id/approve', protect, async (req, res) => {
 
 // @route   PUT /api/promotions/:id/acknowledge
 // @desc    Employee acknowledge promotion letter
-router.put('/:id/acknowledge', protect, async (req, res) => {
+router.put('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const promotion = await PromotionRequest.findById(req.params.id);
     if (!promotion) return res.status(404).json({ message: 'Promotion request not found.' });
@@ -346,7 +346,7 @@ router.put('/:id/acknowledge', protect, async (req, res) => {
 
 // @route   GET /api/promotions/reports
 // @desc    Get aggregated metrics and cost impacts for management reviews
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const list = await PromotionRequest.find({});
 

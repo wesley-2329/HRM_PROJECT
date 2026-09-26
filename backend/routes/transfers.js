@@ -19,7 +19,7 @@ const generateTransferNum = async () => {
 
 // @route   GET /api/transfers
 // @desc    Get all transfers list and dashboard count summary
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await TransferRequest.find({}).sort({ createdAt: -1 });
 
@@ -42,7 +42,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/transfers
 // @desc    Initiate transfer request
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { employeeId, transferType, transferReason, effectiveDate, remarks, attachmentUrl } = req.body;
 
   if (!employeeId || !transferType || !effectiveDate) {
@@ -117,7 +117,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/transfers/:id/action
 // @desc    Submit approval step decision (Approve/Reject/Send Back)
-router.put('/:id/action', protect, async (req, res) => {
+router.put('/:id/action', protect, async (req, res, next) => {
   const { decision, comments } = req.body; // 'Recommend' | 'Approve' | 'Process' | 'Reject' | 'Send Back'
 
   try {
@@ -170,7 +170,7 @@ router.put('/:id/action', protect, async (req, res) => {
 
 // @route   PUT /api/transfers/:id/process
 // @desc    HR review, validate and execute final transfer
-router.post('/:id/process', protect, async (req, res) => {
+router.post('/:id/process', protect, async (req, res, next) => {
   const { newDepartment, newLocation, newManagerId, newCostCenter, newGrade } = req.body;
 
   try {
@@ -265,7 +265,7 @@ router.post('/:id/process', protect, async (req, res) => {
 
 // @route   GET /api/transfers/history
 // @desc    Get complete transfers and department/manager change histories
-router.get('/history', protect, async (req, res) => {
+router.get('/history', protect, async (req, res, next) => {
   try {
     const deptHistory = await DepartmentTransferHistory.find({}).sort({ effectiveDate: -1 });
     const managerHistory = await EmployeeReportingHistory.find({}).sort({ effectiveDate: -1 });

@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/tasks
 // @desc    Get all tasks
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let tasks;
     if (req.user.role === 'hr') {
@@ -26,7 +26,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/tasks
 // @desc    Create a task
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { title, project, priority, due, progress, status, empId } = req.body;
 
   try {
@@ -79,7 +79,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/tasks/:id
 // @desc    Update task status or progress
 // @access  Private
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, async (req, res, next) => {
   const { status, progress, title, project, priority, due } = req.body;
 
   try {
@@ -113,7 +113,7 @@ router.put('/:id', protect, async (req, res) => {
 // @route   DELETE /api/tasks/:id
 // @desc    Delete task
 // @access  Private
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) {

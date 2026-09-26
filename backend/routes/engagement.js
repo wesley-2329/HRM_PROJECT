@@ -39,7 +39,7 @@ const logAudit = async (req, entityType, entityId, action, previousState, newSta
 // ==========================================
 
 // Get Suggestions
-router.get('/suggestions', protect, async (req, res) => {
+router.get('/suggestions', protect, async (req, res, next) => {
   try {
     const { status, category, search } = req.query;
     let filter = {};
@@ -70,7 +70,7 @@ router.get('/suggestions', protect, async (req, res) => {
 });
 
 // Submit Suggestion
-router.post('/suggestions', protect, async (req, res) => {
+router.post('/suggestions', protect, async (req, res, next) => {
   try {
     const count = await Suggestion.countDocuments();
     const suggestionId = `SUG-${1000 + count + 1}`;
@@ -107,7 +107,7 @@ router.post('/suggestions', protect, async (req, res) => {
 });
 
 // Update Suggestion Status
-router.put('/suggestions/:id/status', protect, async (req, res) => {
+router.put('/suggestions/:id/status', protect, async (req, res, next) => {
   try {
     const sug = await Suggestion.findById(req.params.id);
     if (!sug) return res.status(404).json({ message: 'Suggestion not found' });
@@ -141,7 +141,7 @@ router.put('/suggestions/:id/status', protect, async (req, res) => {
 // ==========================================
 
 // Get Grievances
-router.get('/grievances', protect, async (req, res) => {
+router.get('/grievances', protect, async (req, res, next) => {
   try {
     const { severity, status, search } = req.query;
     let filter = {};
@@ -168,7 +168,7 @@ router.get('/grievances', protect, async (req, res) => {
 });
 
 // Raise Grievance
-router.post('/grievances', protect, async (req, res) => {
+router.post('/grievances', protect, async (req, res, next) => {
   try {
     const count = await Grievance.countDocuments();
     const grievanceId = `GRV-${1000 + count + 1}`;
@@ -202,7 +202,7 @@ router.post('/grievances', protect, async (req, res) => {
 });
 
 // Assign / Resolve Grievance
-router.put('/grievances/:id', protect, async (req, res) => {
+router.put('/grievances/:id', protect, async (req, res, next) => {
   try {
     const grv = await Grievance.findById(req.params.id);
     if (!grv) return res.status(404).json({ message: 'Grievance not found' });
@@ -237,7 +237,7 @@ router.put('/grievances/:id', protect, async (req, res) => {
 // ==========================================
 
 // Get Helpdesk Tickets
-router.get('/helpdesk', protect, async (req, res) => {
+router.get('/helpdesk', protect, async (req, res, next) => {
   try {
     const { priority, status, category } = req.query;
     let filter = {};
@@ -261,7 +261,7 @@ router.get('/helpdesk', protect, async (req, res) => {
 });
 
 // Create Helpdesk Ticket
-router.post('/helpdesk', protect, async (req, res) => {
+router.post('/helpdesk', protect, async (req, res, next) => {
   try {
     const count = await HelpdeskTicket.countDocuments();
     const ticketId = `HD-${1000 + count + 1}`;
@@ -299,7 +299,7 @@ router.post('/helpdesk', protect, async (req, res) => {
 });
 
 // Update Ticket Status / Assign / Resolve / Rate
-router.put('/helpdesk/:id', protect, async (req, res) => {
+router.put('/helpdesk/:id', protect, async (req, res, next) => {
   try {
     const ticket = await HelpdeskTicket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
@@ -331,7 +331,7 @@ router.put('/helpdesk/:id', protect, async (req, res) => {
 // ==========================================
 
 // Get Welfare Requests
-router.get('/welfare', protect, async (req, res) => {
+router.get('/welfare', protect, async (req, res, next) => {
   try {
     let filter = {};
     if (req.user.role !== 'hr') {
@@ -343,7 +343,7 @@ router.get('/welfare', protect, async (req, res) => {
 });
 
 // Submit Welfare Request
-router.post('/welfare', protect, async (req, res) => {
+router.post('/welfare', protect, async (req, res, next) => {
   try {
     const count = await WelfareRequest.countDocuments();
     const requestId = `WEL-${1000 + count + 1}`;
@@ -375,7 +375,7 @@ router.post('/welfare', protect, async (req, res) => {
 });
 
 // Approve / Verify Welfare Request
-router.put('/welfare/:id/status', protect, async (req, res) => {
+router.put('/welfare/:id/status', protect, async (req, res, next) => {
   try {
     const reqItem = await WelfareRequest.findById(req.params.id);
     if (!reqItem) return res.status(404).json({ message: 'Welfare request not found' });
@@ -408,7 +408,7 @@ router.put('/welfare/:id/status', protect, async (req, res) => {
 // ==========================================
 
 // Get Recognition Posts
-router.get('/recognition', protect, async (req, res) => {
+router.get('/recognition', protect, async (req, res, next) => {
   try {
     const posts = await RecognitionPost.find().sort({ createdAt: -1 });
     res.json(posts);
@@ -416,7 +416,7 @@ router.get('/recognition', protect, async (req, res) => {
 });
 
 // Create Recognition Post
-router.post('/recognition', protect, async (req, res) => {
+router.post('/recognition', protect, async (req, res, next) => {
   try {
     const count = await RecognitionPost.countDocuments();
     const recognitionId = `REC-${1000 + count + 1}`;
@@ -445,7 +445,7 @@ router.post('/recognition', protect, async (req, res) => {
 });
 
 // Like / Comment Recognition Post
-router.post('/recognition/:id/interact', protect, async (req, res) => {
+router.post('/recognition/:id/interact', protect, async (req, res, next) => {
   try {
     const post = await RecognitionPost.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -479,7 +479,7 @@ router.post('/recognition/:id/interact', protect, async (req, res) => {
 // ==========================================
 
 // Get Communications
-router.get('/communications', protect, async (req, res) => {
+router.get('/communications', protect, async (req, res, next) => {
   try {
     const comms = await Communication.find({ status: { $ne: 'Archived' } }).sort({ createdAt: -1 });
     
@@ -504,7 +504,7 @@ router.get('/communications', protect, async (req, res) => {
 });
 
 // Publish Communication
-router.post('/communications', protect, async (req, res) => {
+router.post('/communications', protect, async (req, res, next) => {
   try {
     const count = await Communication.countDocuments();
     const communicationId = `COM-${1000 + count + 1}`;
@@ -534,7 +534,7 @@ router.post('/communications', protect, async (req, res) => {
 });
 
 // Mark Read / Acknowledge Communication
-router.post('/communications/:commId/read', protect, async (req, res) => {
+router.post('/communications/:commId/read', protect, async (req, res, next) => {
   try {
     const { acknowledge } = req.body;
     let log = await CommunicationReadLog.findOne({
@@ -568,7 +568,7 @@ router.post('/communications/:commId/read', protect, async (req, res) => {
 // 7. DASHBOARD METRICS
 // ==========================================
 
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const totalComms = await Communication.countDocuments({ status: 'Published' });
     const openGrievances = await Grievance.countDocuments({ status: { $in: ['Submitted', 'Assigned', 'Under Investigation'] } });
@@ -594,7 +594,7 @@ router.get('/dashboard', protect, async (req, res) => {
 // 8. AUDIT LOGS
 // ==========================================
 
-router.get('/audit', protect, async (req, res) => {
+router.get('/audit', protect, async (req, res, next) => {
   try {
     const logs = await EngagementAuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);

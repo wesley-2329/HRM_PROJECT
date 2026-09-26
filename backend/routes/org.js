@@ -61,14 +61,14 @@ const createAuditLog = async (req, action, details, oldValues = null, newValues 
 };
 
 // ================= 1. Company Setup =================
-router.get('/companies', protect, async (req, res) => {
+router.get('/companies', protect, async (req, res, next) => {
   try {
     const list = await CompanyMaster.find({});
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/companies', protect, adminOnly, async (req, res) => {
+router.post('/companies', protect, adminOnly, async (req, res, next) => {
   const { name, code, logo, businessType, status } = req.body;
   try {
     const cleanCode = (code || '').trim();
@@ -97,7 +97,7 @@ router.post('/companies', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/companies/:id', protect, adminOnly, async (req, res) => {
+router.put('/companies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await CompanyMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Company not found' });
@@ -108,7 +108,7 @@ router.put('/companies/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/companies/:id', protect, adminOnly, async (req, res) => {
+router.delete('/companies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await CompanyMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Company not found' });
@@ -119,14 +119,14 @@ router.delete('/companies/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 2. Branch Setup =================
-router.get('/branches', protect, async (req, res) => {
+router.get('/branches', protect, async (req, res, next) => {
   try {
     const list = await BranchMaster.find({});
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/branches', protect, adminOnly, async (req, res) => {
+router.post('/branches', protect, adminOnly, async (req, res, next) => {
   const { name, code, location, branchHead, status } = req.body;
   try {
     const cleanCode = (code || '').trim();
@@ -149,7 +149,7 @@ router.post('/branches', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/branches/:id', protect, adminOnly, async (req, res) => {
+router.put('/branches/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BranchMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Branch not found' });
@@ -160,7 +160,7 @@ router.put('/branches/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/branches/:id', protect, adminOnly, async (req, res) => {
+router.delete('/branches/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BranchMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Branch not found' });
@@ -171,7 +171,7 @@ router.delete('/branches/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 3. Business Unit Setup =================
-router.get('/business-units', protect, async (req, res) => {
+router.get('/business-units', protect, async (req, res, next) => {
   try {
     const { page, limit, search = '', status = '', parentCompany = '', sortBy = 'name', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
     const query = includeDeleted === 'true' ? {} : { deletedAt: null };
@@ -209,7 +209,7 @@ router.get('/business-units', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/business-units', protect, adminOnly, async (req, res) => {
+router.post('/business-units', protect, adminOnly, async (req, res, next) => {
   const { name, code, status, parentCompany, description, headOfUnit, email, phone, costCenter } = req.body;
   try {
     const cleanCode = (code || '').trim();
@@ -257,7 +257,7 @@ router.post('/business-units', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/business-units/:id', protect, adminOnly, async (req, res) => {
+router.put('/business-units/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BusinessUnitMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Business Unit not found' });
@@ -276,7 +276,7 @@ router.put('/business-units/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/business-units/:id', protect, adminOnly, async (req, res) => {
+router.delete('/business-units/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BusinessUnitMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Business Unit not found' });
@@ -299,7 +299,7 @@ router.delete('/business-units/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/business-units/:id/restore', protect, adminOnly, async (req, res) => {
+router.post('/business-units/:id/restore', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BusinessUnitMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Business Unit not found' });
@@ -313,7 +313,7 @@ router.post('/business-units/:id/restore', protect, adminOnly, async (req, res) 
   } catch (err) { next(err); }
 });
 
-router.post('/business-units/bulk-delete', protect, adminOnly, async (req, res) => {
+router.post('/business-units/bulk-delete', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids)) return res.status(400).json({ message: 'IDs array is required' });
@@ -337,7 +337,7 @@ router.post('/business-units/bulk-delete', protect, adminOnly, async (req, res) 
   } catch (err) { next(err); }
 });
 
-router.put('/business-units/bulk-status', protect, adminOnly, async (req, res) => {
+router.put('/business-units/bulk-status', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids, status } = req.body;
     if (!ids || !Array.isArray(ids) || !status) return res.status(400).json({ message: 'IDs array and status are required' });
@@ -352,14 +352,14 @@ router.put('/business-units/bulk-status', protect, adminOnly, async (req, res) =
 });
 
 // ================= 4. Cost Center Setup =================
-router.get('/cost-centers', protect, async (req, res) => {
+router.get('/cost-centers', protect, async (req, res, next) => {
   try {
     const list = await CostCenterMaster.find({});
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/cost-centers', protect, adminOnly, async (req, res) => {
+router.post('/cost-centers', protect, adminOnly, async (req, res, next) => {
   const { name, code, status } = req.body;
   try {
     const cleanCode = (code || '').trim();
@@ -380,7 +380,7 @@ router.post('/cost-centers', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/cost-centers/:id', protect, adminOnly, async (req, res) => {
+router.put('/cost-centers/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await CostCenterMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Cost Center not found' });
@@ -390,7 +390,7 @@ router.put('/cost-centers/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/cost-centers/:id', protect, adminOnly, async (req, res) => {
+router.delete('/cost-centers/:id', protect, adminOnly, async (req, res, next) => {
   try {
     await CostCenterMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Cost Center deleted successfully' });
@@ -398,14 +398,14 @@ router.delete('/cost-centers/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 5. Department Master Setup (Upgraded CRUD) =================
-router.get('/departments', protect, async (req, res) => {
+router.get('/departments', protect, async (req, res, next) => {
   try {
     const list = await Department.find({}).sort({ name: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/departments', protect, adminOnly, async (req, res) => {
+router.post('/departments', protect, adminOnly, async (req, res, next) => {
   const { name, code, description, parentDept, managerId, businessUnit, location, costCenter, status } = req.body;
   try {
     const cleanCode = (code || '').trim();
@@ -453,7 +453,7 @@ router.post('/departments', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/departments/:id', protect, adminOnly, async (req, res) => {
+router.put('/departments/:id', protect, adminOnly, async (req, res, next) => {
   const { name, code, description, parentDept, managerId, businessUnit, location, costCenter, status } = req.body;
   try {
     const dept = await Department.findById(req.params.id);
@@ -496,7 +496,7 @@ router.put('/departments/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/departments/:id', protect, adminOnly, async (req, res) => {
+router.delete('/departments/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const dept = await Department.findById(req.params.id);
     if (!dept) return res.status(404).json({ message: 'Department not found' });
@@ -514,7 +514,7 @@ router.delete('/departments/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 6. Sub Department Setup =================
-router.get('/sub-departments', protect, async (req, res) => {
+router.get('/sub-departments', protect, async (req, res, next) => {
   try {
     const list = await SubDepartmentMaster.find({});
     res.json(list || []);
@@ -524,7 +524,7 @@ router.get('/sub-departments', protect, async (req, res) => {
   }
 });
 
-router.post('/sub-departments', protect, adminOnly, async (req, res) => {
+router.post('/sub-departments', protect, adminOnly, async (req, res, next) => {
   const { name, code, parentDept, managerId, status } = req.body;
   try {
     const exists = await SubDepartmentMaster.findOne({ code });
@@ -535,7 +535,7 @@ router.post('/sub-departments', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/sub-departments/:id', protect, adminOnly, async (req, res) => {
+router.put('/sub-departments/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await SubDepartmentMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Sub-department not found' });
@@ -545,7 +545,7 @@ router.put('/sub-departments/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/sub-departments/:id', protect, adminOnly, async (req, res) => {
+router.delete('/sub-departments/:id', protect, adminOnly, async (req, res, next) => {
   try {
     await SubDepartmentMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Sub-department deleted successfully' });
@@ -553,7 +553,7 @@ router.delete('/sub-departments/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 7. Designation Setup =================
-router.get('/designations', protect, async (req, res) => {
+router.get('/designations', protect, async (req, res, next) => {
   try {
     const list = await DesignationMaster.find({});
     res.json(list || []);
@@ -563,7 +563,7 @@ router.get('/designations', protect, async (req, res) => {
   }
 });
 
-router.post('/designations', protect, adminOnly, async (req, res) => {
+router.post('/designations', protect, adminOnly, async (req, res, next) => {
   const { name, code, deptMapping, gradeMapping, positionLimit, status } = req.body;
   try {
     const exists = await DesignationMaster.findOne({ code });
@@ -574,7 +574,7 @@ router.post('/designations', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/designations/:id', protect, adminOnly, async (req, res) => {
+router.put('/designations/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await DesignationMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Designation not found' });
@@ -584,7 +584,7 @@ router.put('/designations/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/designations/:id', protect, adminOnly, async (req, res) => {
+router.delete('/designations/:id', protect, adminOnly, async (req, res, next) => {
   try {
     await DesignationMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Designation deleted successfully' });
@@ -592,14 +592,14 @@ router.delete('/designations/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 8. Grade Band Setup =================
-router.get('/grade-bands', protect, async (req, res) => {
+router.get('/grade-bands', protect, async (req, res, next) => {
   try {
     const list = await GradeBandMaster.find({});
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/grade-bands', protect, adminOnly, async (req, res) => {
+router.post('/grade-bands', protect, adminOnly, async (req, res, next) => {
   const { name, description, status } = req.body;
   try {
     const exists = await GradeBandMaster.findOne({ name });
@@ -610,7 +610,7 @@ router.post('/grade-bands', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/grade-bands/:id', protect, adminOnly, async (req, res) => {
+router.put('/grade-bands/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await GradeBandMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Grade/Band not found' });
@@ -620,7 +620,7 @@ router.put('/grade-bands/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/grade-bands/:id', protect, adminOnly, async (req, res) => {
+router.delete('/grade-bands/:id', protect, adminOnly, async (req, res, next) => {
   try {
     await GradeBandMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Grade/Band deleted successfully' });
@@ -654,7 +654,7 @@ const getHierarchyDepth = async (managerId, depth = 1) => {
   return depth;
 };
 
-router.put('/reporting-manager', protect, adminOnly, async (req, res) => {
+router.put('/reporting-manager', protect, adminOnly, async (req, res, next) => {
   const {
     employeeId,
     newManagerId,
@@ -821,7 +821,7 @@ router.put('/reporting-manager', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 10. Department Transfers =================
-router.put('/department-transfer', protect, adminOnly, async (req, res) => {
+router.put('/department-transfer', protect, adminOnly, async (req, res, next) => {
   const { employeeId, newDept, effectiveDate, reason } = req.body;
   try {
     const emp = await Employee.findOne({ id: employeeId });
@@ -870,7 +870,7 @@ router.put('/department-transfer', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 11. Designation Movements =================
-router.put('/designation-transfer', protect, adminOnly, async (req, res) => {
+router.put('/designation-transfer', protect, adminOnly, async (req, res, next) => {
   const { employeeId, newDesignation, newGrade, effectiveDate, reason } = req.body;
   try {
     const emp = await Employee.findOne({ id: employeeId });
@@ -906,7 +906,7 @@ router.put('/designation-transfer', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 12. History Records Fetching =================
-router.get('/reporting-history', protect, async (req, res) => {
+router.get('/reporting-history', protect, async (req, res, next) => {
   try {
     const list = await EmployeeReportingHistory.find({}).sort({ createdAt: -1 });
     res.json(list || []);
@@ -916,14 +916,14 @@ router.get('/reporting-history', protect, async (req, res) => {
   }
 });
 
-router.get('/transfer-history', protect, async (req, res) => {
+router.get('/transfer-history', protect, async (req, res, next) => {
   try {
     const list = await DepartmentTransferHistory.find({}).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.get('/designation-history', protect, async (req, res) => {
+router.get('/designation-history', protect, async (req, res, next) => {
   try {
     const list = await DesignationHistory.find({}).sort({ createdAt: -1 });
     res.json(list);
@@ -931,14 +931,14 @@ router.get('/designation-history', protect, async (req, res) => {
 });
 
 // ================= 13. Vacancy Mapping & Approvals =================
-router.get('/vacancies', protect, async (req, res) => {
+router.get('/vacancies', protect, async (req, res, next) => {
   try {
     const list = await Vacancy.find({}).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/vacancies', protect, adminOnly, async (req, res) => {
+router.post('/vacancies', protect, adminOnly, async (req, res, next) => {
   const { jobTitle, dept, managerId, budget, description, priorityLevel, requiredDate, vacancyReason, approvedHeadcount } = req.body;
   try {
     // Generate unique position ID
@@ -965,7 +965,7 @@ router.post('/vacancies', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/vacancies/:id', protect, adminOnly, async (req, res) => {
+router.put('/vacancies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await Vacancy.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Vacancy not found' });
@@ -976,7 +976,7 @@ router.put('/vacancies/:id', protect, adminOnly, async (req, res) => {
 });
 
 // HR / Management Vacancy Review Approvals (Screen 5 Approval flow)
-router.put('/vacancies/:id/approve', protect, adminOnly, async (req, res) => {
+router.put('/vacancies/:id/approve', protect, adminOnly, async (req, res, next) => {
   const { comments } = req.body;
   try {
     const rec = await Vacancy.findById(req.params.id);
@@ -996,7 +996,7 @@ router.put('/vacancies/:id/approve', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/vacancies/:id/reject', protect, adminOnly, async (req, res) => {
+router.put('/vacancies/:id/reject', protect, adminOnly, async (req, res, next) => {
   const { comments } = req.body;
   try {
     const rec = await Vacancy.findById(req.params.id);
@@ -1016,7 +1016,7 @@ router.put('/vacancies/:id/reject', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/vacancies/:id', protect, adminOnly, async (req, res) => {
+router.delete('/vacancies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     await Vacancy.findByIdAndDelete(req.params.id);
     res.json({ message: 'Vacancy removed successfully' });
@@ -1024,7 +1024,7 @@ router.delete('/vacancies/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= 14. Span of Control & Audits =================
-router.get('/span-of-control', protect, async (req, res) => {
+router.get('/span-of-control', protect, async (req, res, next) => {
   try {
     const allEmployees = await Employee.find({ status: 'Approved' }).select('id name role dept teamLeadId isTeamLead avatar gender designation');
     const directReportsMap = {};
@@ -1074,7 +1074,7 @@ router.get('/span-of-control', protect, async (req, res) => {
 });
 
 // ================= Rollback Support =================
-router.post('/audit-logs/:id/rollback', protect, adminOnly, async (req, res) => {
+router.post('/audit-logs/:id/rollback', protect, adminOnly, async (req, res, next) => {
   try {
     const log = await OrgAuditLog.findById(req.params.id);
     if (!log) return res.status(404).json({ message: 'Audit log not found' });
@@ -1120,7 +1120,7 @@ router.post('/audit-logs/:id/rollback', protect, adminOnly, async (req, res) => 
 });
 
 // ================= Legal Entity Management =================
-router.get('/legal-entities', protect, async (req, res) => {
+router.get('/legal-entities', protect, async (req, res, next) => {
   try {
     const { page, limit, search = '', status = '', sortBy = 'name', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
     const query = includeDeleted === 'true' ? {} : { deletedAt: null };
@@ -1157,7 +1157,7 @@ router.get('/legal-entities', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/legal-entities', protect, adminOnly, async (req, res) => {
+router.post('/legal-entities', protect, adminOnly, async (req, res, next) => {
   try {
     const { name, code, gst, pan, cin } = req.body;
     // Check duplicates
@@ -1178,7 +1178,7 @@ router.post('/legal-entities', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/legal-entities/:id', protect, adminOnly, async (req, res) => {
+router.put('/legal-entities/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await LegalEntityMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Legal Entity not found' });
@@ -1213,7 +1213,7 @@ router.put('/legal-entities/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/legal-entities/:id', protect, adminOnly, async (req, res) => {
+router.delete('/legal-entities/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await LegalEntityMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Legal Entity not found' });
@@ -1236,7 +1236,7 @@ router.delete('/legal-entities/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/legal-entities/:id/restore', protect, adminOnly, async (req, res) => {
+router.post('/legal-entities/:id/restore', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await LegalEntityMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Legal Entity not found' });
@@ -1250,7 +1250,7 @@ router.post('/legal-entities/:id/restore', protect, adminOnly, async (req, res) 
   } catch (err) { next(err); }
 });
 
-router.post('/legal-entities/bulk-delete', protect, adminOnly, async (req, res) => {
+router.post('/legal-entities/bulk-delete', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids)) return res.status(400).json({ message: 'IDs array is required' });
@@ -1272,7 +1272,7 @@ router.post('/legal-entities/bulk-delete', protect, adminOnly, async (req, res) 
   } catch (err) { next(err); }
 });
 
-router.put('/legal-entities/bulk-status', protect, adminOnly, async (req, res) => {
+router.put('/legal-entities/bulk-status', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids, status } = req.body;
     if (!ids || !Array.isArray(ids) || !status) return res.status(400).json({ message: 'IDs array and status are required' });
@@ -1287,14 +1287,14 @@ router.put('/legal-entities/bulk-status', protect, adminOnly, async (req, res) =
 });
 
 // ================= Region Management =================
-router.get('/regions', protect, async (req, res) => {
+router.get('/regions', protect, async (req, res, next) => {
   try {
     const list = await RegionMaster.find({}).sort({ name: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/regions', protect, adminOnly, async (req, res) => {
+router.post('/regions', protect, adminOnly, async (req, res, next) => {
   try {
     const exists = await RegionMaster.findOne({ code: req.body.code });
     if (exists) return res.status(400).json({ message: 'Region code already exists' });
@@ -1304,7 +1304,7 @@ router.post('/regions', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/regions/:id', protect, adminOnly, async (req, res) => {
+router.put('/regions/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await RegionMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Region not found' });
@@ -1316,7 +1316,7 @@ router.put('/regions/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/regions/:id', protect, adminOnly, async (req, res) => {
+router.delete('/regions/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await RegionMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Region not found' });
@@ -1328,14 +1328,14 @@ router.delete('/regions/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Building Management =================
-router.get('/buildings', protect, async (req, res) => {
+router.get('/buildings', protect, async (req, res, next) => {
   const filter = {};
   if (req.query.branchId) filter.branchId = req.query.branchId;
   const list = await BuildingMaster.find(filter).populate('branchId').sort({ name: 1 });
   res.json(list);
 });
 
-router.post('/buildings', protect, adminOnly, async (req, res) => {
+router.post('/buildings', protect, adminOnly, async (req, res, next) => {
   try {
     const exists = await BuildingMaster.findOne({ code: req.body.code });
     if (exists) return res.status(400).json({ message: 'Building code already exists' });
@@ -1345,7 +1345,7 @@ router.post('/buildings', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/buildings/:id', protect, adminOnly, async (req, res) => {
+router.put('/buildings/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BuildingMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Building not found' });
@@ -1357,7 +1357,7 @@ router.put('/buildings/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/buildings/:id', protect, adminOnly, async (req, res) => {
+router.delete('/buildings/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await BuildingMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Building not found' });
@@ -1369,7 +1369,7 @@ router.delete('/buildings/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Floor Management =================
-router.get('/floors', protect, async (req, res) => {
+router.get('/floors', protect, async (req, res, next) => {
   try {
     const filter = {};
     if (req.query.buildingId) filter.buildingId = req.query.buildingId;
@@ -1387,7 +1387,7 @@ router.get('/floors', protect, async (req, res) => {
   }
 });
 
-router.post('/floors', protect, adminOnly, async (req, res) => {
+router.post('/floors', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await FloorMaster.create(req.body);
     await createAuditLog(req, 'CREATE_FLOOR', `Created Floor: ${rec.name} (Building ref: ${rec.buildingId})`, null, rec);
@@ -1395,7 +1395,7 @@ router.post('/floors', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/floors/:id', protect, adminOnly, async (req, res) => {
+router.put('/floors/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await FloorMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Floor not found' });
@@ -1407,7 +1407,7 @@ router.put('/floors/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/floors/:id', protect, adminOnly, async (req, res) => {
+router.delete('/floors/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await FloorMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Floor not found' });
@@ -1419,7 +1419,7 @@ router.delete('/floors/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Team Management =================
-router.get('/teams', protect, async (req, res) => {
+router.get('/teams', protect, async (req, res, next) => {
   const { page, limit, search = '', status = '', parentDeptId = '', sortBy = 'name', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
   const query = includeDeleted === 'true' ? {} : { deletedAt: null };
 
@@ -1455,7 +1455,7 @@ router.get('/teams', protect, async (req, res) => {
   res.json(list);
 });
 
-router.post('/teams', protect, adminOnly, async (req, res) => {
+router.post('/teams', protect, adminOnly, async (req, res, next) => {
   try {
     const exists = await TeamMaster.findOne({ code: req.body.code });
     if (exists) return res.status(400).json({ message: 'Team code already exists' });
@@ -1468,7 +1468,7 @@ router.post('/teams', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/teams/:id', protect, adminOnly, async (req, res) => {
+router.put('/teams/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await TeamMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Team not found' });
@@ -1490,7 +1490,7 @@ router.put('/teams/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/teams/:id', protect, adminOnly, async (req, res) => {
+router.delete('/teams/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await TeamMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Team not found' });
@@ -1512,7 +1512,7 @@ router.delete('/teams/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/teams/:id/restore', protect, adminOnly, async (req, res) => {
+router.post('/teams/:id/restore', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await TeamMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Team not found' });
@@ -1526,7 +1526,7 @@ router.post('/teams/:id/restore', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/teams/bulk-delete', protect, adminOnly, async (req, res) => {
+router.post('/teams/bulk-delete', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids)) return res.status(400).json({ message: 'IDs array is required' });
@@ -1547,7 +1547,7 @@ router.post('/teams/bulk-delete', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/teams/bulk-status', protect, adminOnly, async (req, res) => {
+router.put('/teams/bulk-status', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids, status } = req.body;
     if (!ids || !Array.isArray(ids) || !status) return res.status(400).json({ message: 'IDs array and status are required' });
@@ -1562,7 +1562,7 @@ router.put('/teams/bulk-status', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Position Management =================
-router.get('/positions', protect, async (req, res) => {
+router.get('/positions', protect, async (req, res, next) => {
   const { page, limit, search = '', status = '', department = '', grade = '', employmentType = '', sortBy = 'positionCode', sortOrder = 'asc', includeDeleted = 'false' } = req.query;
   const query = includeDeleted === 'true' ? {} : { deletedAt: null };
 
@@ -1603,7 +1603,7 @@ router.get('/positions', protect, async (req, res) => {
   res.json(list);
 });
 
-router.post('/positions', protect, adminOnly, async (req, res) => {
+router.post('/positions', protect, adminOnly, async (req, res, next) => {
   try {
     const exists = await PositionMaster.findOne({ positionCode: req.body.positionCode });
     if (exists) return res.status(400).json({ message: 'Position code already exists' });
@@ -1613,7 +1613,7 @@ router.post('/positions', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/positions/:id', protect, adminOnly, async (req, res) => {
+router.put('/positions/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await PositionMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Position not found' });
@@ -1625,7 +1625,7 @@ router.put('/positions/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/positions/:id', protect, adminOnly, async (req, res) => {
+router.delete('/positions/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await PositionMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Position not found' });
@@ -1647,7 +1647,7 @@ router.delete('/positions/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/positions/:id/restore', protect, adminOnly, async (req, res) => {
+router.post('/positions/:id/restore', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await PositionMaster.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Position not found' });
@@ -1661,7 +1661,7 @@ router.post('/positions/:id/restore', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/positions/bulk-delete', protect, adminOnly, async (req, res) => {
+router.post('/positions/bulk-delete', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids)) return res.status(400).json({ message: 'IDs array is required' });
@@ -1682,7 +1682,7 @@ router.post('/positions/bulk-delete', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/positions/bulk-status', protect, adminOnly, async (req, res) => {
+router.put('/positions/bulk-status', protect, adminOnly, async (req, res, next) => {
   try {
     const { ids, status } = req.body;
     if (!ids || !Array.isArray(ids) || !status) return res.status(400).json({ message: 'IDs array and status are required' });
@@ -1697,12 +1697,12 @@ router.put('/positions/bulk-status', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Organization Policies =================
-router.get('/policies', protect, async (req, res) => {
+router.get('/policies', protect, async (req, res, next) => {
   const list = await OrgPolicy.find({}).sort({ category: 1, name: 1 });
   res.json(list);
 });
 
-router.post('/policies', protect, adminOnly, async (req, res) => {
+router.post('/policies', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await OrgPolicy.create(req.body);
     await createAuditLog(req, 'CREATE_POLICY', `Created Org Policy: ${rec.name} [Category: ${rec.category}]`, null, rec);
@@ -1710,7 +1710,7 @@ router.post('/policies', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/policies/:id', protect, adminOnly, async (req, res) => {
+router.put('/policies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await OrgPolicy.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Policy not found' });
@@ -1734,7 +1734,7 @@ router.put('/policies/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/policies/:id', protect, adminOnly, async (req, res) => {
+router.delete('/policies/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await OrgPolicy.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Policy not found' });
@@ -1746,12 +1746,12 @@ router.delete('/policies/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Organization Documents =================
-router.get('/documents', protect, async (req, res) => {
+router.get('/documents', protect, async (req, res, next) => {
   const list = await OrgDocument.find({}).sort({ category: 1, title: 1 });
   res.json(list);
 });
 
-router.post('/documents', protect, adminOnly, async (req, res) => {
+router.post('/documents', protect, adminOnly, async (req, res, next) => {
   try {
     const { title, category, filePath } = req.body;
     const rec = await OrgDocument.create({
@@ -1765,7 +1765,7 @@ router.post('/documents', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/documents/:id', protect, adminOnly, async (req, res) => {
+router.put('/documents/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await OrgDocument.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Document not found' });
@@ -1788,7 +1788,7 @@ router.put('/documents/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/documents/:id', protect, adminOnly, async (req, res) => {
+router.delete('/documents/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await OrgDocument.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Document not found' });
@@ -1800,12 +1800,12 @@ router.delete('/documents/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Succession Planning =================
-router.get('/succession-plans', protect, async (req, res) => {
+router.get('/succession-plans', protect, async (req, res, next) => {
   const list = await SuccessionPlan.find({}).populate('positionId').sort({ createdAt: -1 });
   res.json(list);
 });
 
-router.post('/succession-plans', protect, adminOnly, async (req, res) => {
+router.post('/succession-plans', protect, adminOnly, async (req, res, next) => {
   try {
     const { positionId, criticalLevel, riskLevel, successors } = req.body;
     let rec = await SuccessionPlan.findOne({ positionId });
@@ -1826,7 +1826,7 @@ router.post('/succession-plans', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/succession-plans/:id', protect, adminOnly, async (req, res) => {
+router.delete('/succession-plans/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await SuccessionPlan.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Succession Plan not found' });
@@ -1838,12 +1838,12 @@ router.delete('/succession-plans/:id', protect, adminOnly, async (req, res) => {
 });
 
 // ================= Headcount Planning =================
-router.get('/headcount-plans', protect, async (req, res) => {
+router.get('/headcount-plans', protect, async (req, res, next) => {
   const list = await HeadcountPlan.find({}).populate('deptId').sort({ year: -1 });
   res.json(list);
 });
 
-router.post('/headcount-plans', protect, adminOnly, async (req, res) => {
+router.post('/headcount-plans', protect, adminOnly, async (req, res, next) => {
   try {
     const exists = await HeadcountPlan.findOne({ deptId: req.body.deptId, year: req.body.year });
     if (exists) return res.status(400).json({ message: 'Headcount plan for this department and year already exists' });
@@ -1872,7 +1872,7 @@ router.post('/headcount-plans', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
+router.put('/headcount-plans/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await HeadcountPlan.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Headcount plan not found' });
@@ -1898,7 +1898,7 @@ router.put('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/headcount-plans/:id/approve', protect, adminOnly, async (req, res) => {
+router.put('/headcount-plans/:id/approve', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await HeadcountPlan.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Headcount plan not found' });
@@ -1921,7 +1921,7 @@ router.put('/headcount-plans/:id/approve', protect, adminOnly, async (req, res) 
   } catch (err) { next(err); }
 });
 
-router.put('/headcount-plans/:id/reject', protect, adminOnly, async (req, res) => {
+router.put('/headcount-plans/:id/reject', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await HeadcountPlan.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Headcount plan not found' });
@@ -1944,7 +1944,7 @@ router.put('/headcount-plans/:id/reject', protect, adminOnly, async (req, res) =
   } catch (err) { next(err); }
 });
 
-router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
+router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const rec = await HeadcountPlan.findById(req.params.id);
     if (!rec) return res.status(404).json({ message: 'Headcount plan not found' });
@@ -1955,7 +1955,7 @@ router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/audit-logs', protect, adminOnly, async (req, res) => {
+router.get('/audit-logs', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await OrgAuditLog.find({}).sort({ timestamp: -1 });
     res.json(logs || []);

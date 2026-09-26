@@ -9,7 +9,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 // @route   GET /api/policies
 // @desc    Get all policies (HR gets all; employees get active only)
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let policies;
     if (req.user.role === 'hr') {
@@ -24,7 +24,7 @@ router.get('/', protect, async (req, res) => {
 // @route   GET /api/policies/employee-status
 // @desc    Get current employee's acknowledgement status for all active policies
 // @access  Private
-router.get('/employee-status', protect, async (req, res) => {
+router.get('/employee-status', protect, async (req, res, next) => {
   try {
     const activePolicies = await CompanyPolicy.find({ status: 'Active' });
     const result = [];
@@ -77,7 +77,7 @@ router.get('/employee-status', protect, async (req, res) => {
 // @route   POST /api/policies
 // @desc    Create a new policy (HR only)
 // @access  Private/Admin
-router.post('/', protect, adminOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { name, content, effectiveDate, status } = req.body;
 
   try {
@@ -143,7 +143,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/policies/:id
 // @desc    Update an existing policy & increment version (HR only)
 // @access  Private/Admin
-router.put('/:id', protect, adminOnly, async (req, res) => {
+router.put('/:id', protect, adminOnly, async (req, res, next) => {
   const { name, content, effectiveDate, status, changeSummary } = req.body;
 
   try {
@@ -221,7 +221,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/policies/:id/status
 // @desc    Toggle policy active / inactive status (HR only)
 // @access  Private/Admin
-router.put('/:id/status', protect, adminOnly, async (req, res) => {
+router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
   const { status } = req.body;
 
   try {
@@ -241,7 +241,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
 // @route   POST /api/policies/:id/acknowledge
 // @desc    Acknowledge a policy version (Employee flow)
 // @access  Private
-router.post('/:id/acknowledge', protect, async (req, res) => {
+router.post('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const policy = await CompanyPolicy.findById(req.params.id);
     if (!policy) {
@@ -304,7 +304,7 @@ router.post('/:id/acknowledge', protect, async (req, res) => {
 // @route   GET /api/policies/compliance-reports
 // @desc    Get policy compliance reports (HR only)
 // @access  Private/Admin
-router.get('/compliance-reports', protect, adminOnly, async (req, res) => {
+router.get('/compliance-reports', protect, adminOnly, async (req, res, next) => {
   try {
     const activePolicies = await CompanyPolicy.find({});
     const acceptedList = await PolicyAcknowledgement.find({ status: 'Accepted' }).sort({ acceptedAt: -1 });

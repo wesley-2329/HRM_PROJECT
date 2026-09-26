@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/timesheet
 // @desc    Get timesheet logs
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let logs;
     if (req.user.role === 'hr') {
@@ -21,7 +21,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/timesheet/clock-in
 // @desc    Clock-In shift
 // @access  Private
-router.post('/clock-in', protect, async (req, res) => {
+router.post('/clock-in', protect, async (req, res, next) => {
   const now = new Date();
   const todayDate = req.body.date || now.toISOString().split('T')[0];
 
@@ -81,7 +81,7 @@ router.post('/clock-in', protect, async (req, res) => {
 // @route   POST /api/timesheet/clock-out
 // @desc    Clock-Out shift
 // @access  Private
-router.post('/clock-out', protect, async (req, res) => {
+router.post('/clock-out', protect, async (req, res, next) => {
   try {
     // Find active shift
     const activeShift = await Timesheet.findOne({

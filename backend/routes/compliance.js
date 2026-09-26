@@ -64,7 +64,7 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 // 1. COMPLIANCE DASHBOARD & EXECUTIVE KPIS
 // ==========================================
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const challans = await StatutoryChallan.find();
     const notices = await GovernmentNotice.find();
@@ -114,7 +114,7 @@ router.get('/dashboard', protect, async (req, res) => {
 // ==========================================
 // 2. STATUTORY OVERVIEW
 // ==========================================
-router.get('/overview', protect, async (req, res) => {
+router.get('/overview', protect, async (req, res, next) => {
   try {
     const list = await StatutoryActMaster.find();
     res.json(list.length > 0 ? list : [
@@ -129,7 +129,7 @@ router.get('/overview', protect, async (req, res) => {
 // ==========================================
 // 3. COMPLIANCE CALENDAR
 // ==========================================
-router.get('/calendar', protect, async (req, res) => {
+router.get('/calendar', protect, async (req, res, next) => {
   try {
     const list = await ComplianceCalendar.find().sort({ dueDate: 1 });
     res.json(list);
@@ -139,7 +139,7 @@ router.get('/calendar', protect, async (req, res) => {
 // ==========================================
 // 4. PROVIDENT FUND (PF)
 // ==========================================
-router.get('/pf', protect, async (req, res) => {
+router.get('/pf', protect, async (req, res, next) => {
   try {
     const pfProfiles = await EmployeePfProfile.find();
     const contributions = await PfContribution.find().sort({ createdAt: -1 });
@@ -147,7 +147,7 @@ router.get('/pf', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/pf/ecr', protect, async (req, res) => {
+router.post('/pf/ecr', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const contribId = 'PFC-' + Date.now();
@@ -175,7 +175,7 @@ router.post('/pf/ecr', protect, async (req, res) => {
 // ==========================================
 // 5. EMPLOYEE STATE INSURANCE (ESI)
 // ==========================================
-router.get('/esi', protect, async (req, res) => {
+router.get('/esi', protect, async (req, res, next) => {
   try {
     const esiProfiles = await EmployeeEsiProfile.find();
     const contributions = await EsiContribution.find().sort({ createdAt: -1 });
@@ -186,7 +186,7 @@ router.get('/esi', protect, async (req, res) => {
 // ==========================================
 // 6. PROFESSIONAL TAX (PT)
 // ==========================================
-router.get('/pt', protect, async (req, res) => {
+router.get('/pt', protect, async (req, res, next) => {
   try {
     const profiles = await EmployeePtProfile.find();
     const calculations = await PtCalculation.find();
@@ -198,7 +198,7 @@ router.get('/pt', protect, async (req, res) => {
 // ==========================================
 // 7. LABOUR WELFARE FUND (LWF)
 // ==========================================
-router.get('/lwf', protect, async (req, res) => {
+router.get('/lwf', protect, async (req, res, next) => {
   try {
     const profiles = await EmployeeLwfProfile.find();
     const contributions = await LwfContribution.find();
@@ -210,14 +210,14 @@ router.get('/lwf', protect, async (req, res) => {
 // ==========================================
 // 8. CHALLANS & PAYMENTS
 // ==========================================
-router.get('/challans', protect, async (req, res) => {
+router.get('/challans', protect, async (req, res, next) => {
   try {
     const list = await StatutoryChallan.find().sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/challans', protect, async (req, res) => {
+router.post('/challans', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const challanId = 'CHL-' + Date.now();
@@ -238,7 +238,7 @@ router.post('/challans', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.post('/challans/:id/pay', protect, async (req, res) => {
+router.post('/challans/:id/pay', protect, async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
@@ -255,14 +255,14 @@ router.post('/challans/:id/pay', protect, async (req, res) => {
 // ==========================================
 // 9. RETURN FILING
 // ==========================================
-router.get('/returns', protect, async (req, res) => {
+router.get('/returns', protect, async (req, res, next) => {
   try {
     const list = await StatutoryReturn.find().sort({ filingDueDate: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/returns', protect, async (req, res) => {
+router.post('/returns', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const returnId = 'RET-' + Date.now();
@@ -285,7 +285,7 @@ router.post('/returns', protect, async (req, res) => {
 // ==========================================
 // 10. DUE DATE TRACKER
 // ==========================================
-router.get('/due-dates', protect, async (req, res) => {
+router.get('/due-dates', protect, async (req, res, next) => {
   try {
     const list = await DueDateTracker.find().sort({ dueDate: 1 });
     res.json(list);
@@ -295,14 +295,14 @@ router.get('/due-dates', protect, async (req, res) => {
 // ==========================================
 // 11. GOVERNMENT NOTICES & INSPECTIONS
 // ==========================================
-router.get('/notices', protect, async (req, res) => {
+router.get('/notices', protect, async (req, res, next) => {
   try {
     const notices = await GovernmentNotice.find().sort({ createdAt: -1 });
     res.json(notices);
   } catch (err) { next(err); }
 });
 
-router.post('/notices', protect, async (req, res) => {
+router.post('/notices', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const noticeId = 'NTC-' + Date.now();
@@ -321,14 +321,14 @@ router.post('/notices', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/inspections', protect, async (req, res) => {
+router.get('/inspections', protect, async (req, res, next) => {
   try {
     const list = await InspectionRecord.find().sort({ inspectionDate: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/inspections', protect, async (req, res) => {
+router.post('/inspections', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const inspectionId = 'INS-' + Date.now();
@@ -349,14 +349,14 @@ router.post('/inspections', protect, async (req, res) => {
 // ==========================================
 // 12. COMPLIANCE DOCUMENTS REPOSITORY
 // ==========================================
-router.get('/documents', protect, async (req, res) => {
+router.get('/documents', protect, async (req, res, next) => {
   try {
     const docs = await ComplianceDocument.find().sort({ createdAt: -1 });
     res.json(docs);
   } catch (err) { next(err); }
 });
 
-router.post('/documents', protect, async (req, res) => {
+router.post('/documents', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const docId = 'DOC-COMP-' + Date.now();
@@ -375,7 +375,7 @@ router.post('/documents', protect, async (req, res) => {
 // ==========================================
 // 13. MASTERS & AUDIT HISTORY
 // ==========================================
-router.get('/masters', protect, async (req, res) => {
+router.get('/masters', protect, async (req, res, next) => {
   try {
     const acts = await StatutoryActMaster.find();
     const categories = await ComplianceCategoryMaster.find();
@@ -386,7 +386,7 @@ router.get('/masters', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/history', protect, async (req, res) => {
+router.get('/history', protect, async (req, res, next) => {
   try {
     const logs = await StatutoryAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

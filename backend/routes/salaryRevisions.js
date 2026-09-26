@@ -18,7 +18,7 @@ const generateRequestId = async () => {
 
 // @route   GET /api/salary-revisions
 // @desc    Get all requests and dashboard summary
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await SalaryRevisionRequest.find({}).sort({ createdAt: -1 });
 
@@ -48,7 +48,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/salary-revisions
 // @desc    Initiate new salary revision request
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { 
     employeeId, revisionType, effectiveDate, reason, attachmentUrl,
     currentCtc, currentGross, currentBasic, currentAllowances,
@@ -133,7 +133,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/salary-revisions/:id/action
 // @desc    Submit approval step decision (Approve/Reject/Hold/Send Back)
-router.put('/:id/action', protect, async (req, res) => {
+router.put('/:id/action', protect, async (req, res, next) => {
   const { decision, comments } = req.body; // 'Approved' | 'Rejected' | 'Hold' | 'Sent Back'
 
   try {
@@ -195,7 +195,7 @@ router.put('/:id/action', protect, async (req, res) => {
 
 // @route   PUT /api/salary-revisions/:id/acknowledge
 // @desc    Employee acknowledge revision letter
-router.put('/:id/acknowledge', protect, async (req, res) => {
+router.put('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const reqObj = await SalaryRevisionRequest.findById(req.params.id);
     if (!reqObj) return res.status(404).json({ message: 'Salary revision request not found.' });
@@ -223,7 +223,7 @@ router.put('/:id/acknowledge', protect, async (req, res) => {
 
 // @route   GET /api/salary-revisions/reports
 // @desc    Get aggregated cost comparison and revisions list
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const approvedList = await SalaryRevisionRequest.find({ status: 'Approved' }).sort({ effectiveDate: -1 });
     const historyList = await SalaryRevisionHistory.find({}).sort({ effectiveDate: -1 });

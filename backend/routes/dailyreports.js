@@ -8,7 +8,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/daily-reports
 // @desc    Get reports based on role (HR: all, Lead: received + sent, Employee: sent)
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let reports;
     if (req.user.role === 'hr') {
@@ -30,7 +30,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/daily-reports
 // @desc    Submit a daily report to the employee's team lead
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { date, tasksCompleted, blockers, hoursWorked } = req.body;
 
   try {
@@ -72,7 +72,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/daily-reports/:id/review
 // @desc    Submit a review for a daily report (Team Lead or HR only)
 // @access  Private
-router.put('/:id/review', protect, async (req, res) => {
+router.put('/:id/review', protect, async (req, res, next) => {
   const { reviewFeedback } = req.body;
 
   try {

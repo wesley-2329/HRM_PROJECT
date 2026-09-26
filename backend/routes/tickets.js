@@ -6,7 +6,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 // @route   GET /api/tickets
 // @desc    Get tickets list
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let tickets;
     if (req.user.role === 'hr') {
@@ -21,7 +21,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/tickets
 // @desc    Raise a support ticket
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { title, category, priority, description } = req.body;
 
   try {
@@ -57,7 +57,7 @@ router.post('/', protect, async (req, res) => {
 // @route   PUT /api/tickets/:id
 // @desc    Respond to/Close ticket
 // @access  Private/HR only
-router.put('/:id', protect, adminOnly, async (req, res) => {
+router.put('/:id', protect, adminOnly, async (req, res, next) => {
   const { response, status } = req.body;
 
   try {

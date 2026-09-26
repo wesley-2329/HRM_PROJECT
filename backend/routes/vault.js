@@ -40,7 +40,7 @@ const upload = multer({ storage });
 // @route   GET /api/vault/documents
 // @desc    Get all vault documents (HR gets all company documents; Employees get only their own)
 // @access  Private
-router.get('/documents', protect, async (req, res) => {
+router.get('/documents', protect, async (req, res, next) => {
   try {
     let docs;
     if (req.user.role === 'hr') {
@@ -55,7 +55,7 @@ router.get('/documents', protect, async (req, res) => {
 // @route   GET /api/vault/documents/:id
 // @desc    Get a single document and add a "View" log to audit trail
 // @access  Private
-router.get('/documents/:id', protect, async (req, res) => {
+router.get('/documents/:id', protect, async (req, res, next) => {
   try {
     const doc = await VaultDocument.findById(req.params.id);
     if (!doc) {
@@ -194,7 +194,7 @@ router.post('/documents/upload', protect, upload.single('file'), async (req, res
 // @route   PUT /api/vault/documents/:id/approve
 // @desc    Approve a document
 // @access  Private/HR Only
-router.put('/documents/:id/approve', protect, adminOnly, async (req, res) => {
+router.put('/documents/:id/approve', protect, adminOnly, async (req, res, next) => {
   const { comments } = req.body;
 
   try {
@@ -238,7 +238,7 @@ router.put('/documents/:id/approve', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/vault/documents/:id/reject
 // @desc    Reject a document
 // @access  Private/HR Only
-router.put('/documents/:id/reject', protect, adminOnly, async (req, res) => {
+router.put('/documents/:id/reject', protect, adminOnly, async (req, res, next) => {
   const { comments } = req.body;
 
   if (!comments) {
@@ -286,7 +286,7 @@ router.put('/documents/:id/reject', protect, adminOnly, async (req, res) => {
 // @route   GET /api/vault/documents/:id/download/:versionNumber
 // @desc    Download a specific file version of a document, adds a "Download" log to audit trail
 // @access  Private
-router.get('/documents/:id/download/:versionNumber', protect, async (req, res) => {
+router.get('/documents/:id/download/:versionNumber', protect, async (req, res, next) => {
   try {
     const doc = await VaultDocument.findById(req.params.id);
     if (!doc) {
@@ -328,7 +328,7 @@ router.get('/documents/:id/download/:versionNumber', protect, async (req, res) =
 // @route   GET /api/vault/expiries
 // @desc    Get all expired documents or documents expiring in next 30 days
 // @access  Private/HR Only
-router.get('/expiries', protect, adminOnly, async (req, res) => {
+router.get('/expiries', protect, adminOnly, async (req, res, next) => {
   try {
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
@@ -344,7 +344,7 @@ router.get('/expiries', protect, adminOnly, async (req, res) => {
 // @route   POST /api/vault/trigger-expiry-checks
 // @desc    Trigger expiry monitoring and alert notification sweeps
 // @access  Private/HR Only
-router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
+router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res, next) => {
   try {
     const today = new Date();
     const thirtyDaysVal = new Date();

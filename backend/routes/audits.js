@@ -50,7 +50,7 @@ const getCategoryChecklist = (category) => {
 // @route   GET /api/audits/stats
 // @desc    Get audit stats for dashboard
 // @access  Private
-router.get('/stats', protect, async (req, res) => {
+router.get('/stats', protect, async (req, res, next) => {
   try {
     const total = await Audit.countDocuments();
     const open = await Audit.countDocuments({ status: { $ne: 'Closed' } });
@@ -83,7 +83,7 @@ router.get('/stats', protect, async (req, res) => {
 // @route   GET /api/audits
 // @desc    Get all audits
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const audits = await Audit.find().sort({ createdAt: -1 });
     res.json(audits);
@@ -93,7 +93,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/audits
 // @desc    Create a new audit plan
 // @access  Private/Admin
-router.post('/', protect, adminOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { name, type, category, date, department, auditorName } = req.body;
 
   try {
@@ -138,7 +138,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/audits/:id/checklist
 // @desc    Conduct audit: update checklist item status
 // @access  Private/Admin
-router.put('/:id/checklist', protect, adminOnly, async (req, res) => {
+router.put('/:id/checklist', protect, adminOnly, async (req, res, next) => {
   const { checklist } = req.body; // array of items with _id and status
 
   try {
@@ -173,7 +173,7 @@ router.put('/:id/checklist', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/audits/:id/observations
 // @desc    Record audit observations & evidence files
 // @access  Private/Admin
-router.put('/:id/observations', protect, adminOnly, async (req, res) => {
+router.put('/:id/observations', protect, adminOnly, async (req, res, next) => {
   const { observation, severity, evidenceUrl } = req.body;
 
   try {
@@ -208,7 +208,7 @@ router.put('/:id/observations', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/audits/:id/actions
 // @desc    Create/Assign CAPA actions
 // @access  Private/Admin
-router.put('/:id/actions', protect, adminOnly, async (req, res) => {
+router.put('/:id/actions', protect, adminOnly, async (req, res, next) => {
   const { description, responsiblePerson, targetDate } = req.body;
 
   try {
@@ -248,7 +248,7 @@ router.put('/:id/actions', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/audits/:id/action-status/:actionId
 // @desc    Department update action closure remarks and request verification
 // @access  Private
-router.put('/:id/action-status/:actionId', protect, async (req, res) => {
+router.put('/:id/action-status/:actionId', protect, async (req, res, next) => {
   const { status, closureRemarks } = req.body; // status: 'Resolved' or 'Closed'
 
   try {
@@ -291,7 +291,7 @@ router.put('/:id/action-status/:actionId', protect, async (req, res) => {
 // @route   PUT /api/audits/:id/verify-close
 // @desc    Perform verification and close audit (HR Manager only)
 // @access  Private/Admin
-router.put('/:id/verify-close', protect, adminOnly, async (req, res) => {
+router.put('/:id/verify-close', protect, adminOnly, async (req, res, next) => {
   const { closureRemarks, verificationNotes } = req.body;
 
   try {
@@ -339,7 +339,7 @@ router.put('/:id/verify-close', protect, adminOnly, async (req, res) => {
 
 // Alias API Requirements support:
 // 1. Create Audit POST /api/audits/create
-router.post('/create', protect, async (req, res) => {
+router.post('/create', protect, async (req, res, next) => {
   const { name, type, category, date, department, auditorName } = req.body;
   try {
     const count = await Audit.countDocuments();
@@ -371,7 +371,7 @@ router.post('/create', protect, async (req, res) => {
 });
 
 // 2. Add Observation POST /api/audits/observation
-router.post('/observation', protect, async (req, res) => {
+router.post('/observation', protect, async (req, res, next) => {
   const { auditId, observation, severity, evidenceUrl } = req.body;
   if (!auditId) return res.status(400).json({ message: 'auditId is required' });
   try {
@@ -395,7 +395,7 @@ router.post('/observation', protect, async (req, res) => {
 });
 
 // 3. Update Action PUT /api/audits/action
-router.put('/action', protect, async (req, res) => {
+router.put('/action', protect, async (req, res, next) => {
   const { auditId, actionId, status, closureRemarks } = req.body;
   if (!auditId || !actionId) return res.status(400).json({ message: 'auditId and actionId are required' });
   try {
@@ -415,7 +415,7 @@ router.put('/action', protect, async (req, res) => {
 });
 
 // 4. Close Audit POST /api/audits/close
-router.post('/close', protect, async (req, res) => {
+router.post('/close', protect, async (req, res, next) => {
   const { auditId, closureRemarks, verificationNotes } = req.body;
   if (!auditId) return res.status(400).json({ message: 'auditId is required' });
   try {
@@ -438,7 +438,7 @@ router.post('/close', protect, async (req, res) => {
 });
 
 // 5. Dashboard GET /api/audits/dashboard
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const total = await Audit.countDocuments();
     const open = await Audit.countDocuments({ status: { $ne: 'Closed' } });

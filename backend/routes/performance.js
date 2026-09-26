@@ -41,7 +41,7 @@ const logPerfAudit = async (req, entityType, entityId, action, previousState, ne
 // ==========================================
 // 1. DASHBOARD ANALYTICS & HEALTH METRICS
 // ==========================================
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const cycles = await AppraisalCycleMaster.find({ deletedAt: null });
     const goals = await EmployeeGoal.find({ deletedAt: null });
@@ -105,14 +105,14 @@ router.get('/dashboard', protect, async (req, res) => {
 // ==========================================
 // 2. APPRAISAL CYCLE MASTER & FRAMEWORK
 // ==========================================
-router.get('/cycles', protect, async (req, res) => {
+router.get('/cycles', protect, async (req, res, next) => {
   try {
     const list = await AppraisalCycleMaster.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/cycles', protect, async (req, res) => {
+router.post('/cycles', protect, async (req, res, next) => {
   try {
     const newCycle = new AppraisalCycleMaster({
       ...req.body,
@@ -126,7 +126,7 @@ router.post('/cycles', protect, async (req, res) => {
   }
 });
 
-router.put('/cycles/:id/status', protect, async (req, res) => {
+router.put('/cycles/:id/status', protect, async (req, res, next) => {
   try {
     const { status } = req.body;
     const cycle = await AppraisalCycleMaster.findById(req.params.id);
@@ -146,14 +146,14 @@ router.put('/cycles/:id/status', protect, async (req, res) => {
 // ==========================================
 // 3. FRAMEWORK MASTERS: RATING, COMPETENCY, TEMPLATES, KRA, KPI
 // ==========================================
-router.get('/rating-scales', protect, async (req, res) => {
+router.get('/rating-scales', protect, async (req, res, next) => {
   try {
     const list = await RatingScaleMaster.find().sort({ ratingValue: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/rating-scales', protect, async (req, res) => {
+router.post('/rating-scales', protect, async (req, res, next) => {
   try {
     const item = new RatingScaleMaster(req.body);
     await item.save();
@@ -163,14 +163,14 @@ router.post('/rating-scales', protect, async (req, res) => {
   }
 });
 
-router.get('/competencies', protect, async (req, res) => {
+router.get('/competencies', protect, async (req, res, next) => {
   try {
     const list = await CompetencyMaster.find().sort({ competencyType: 1, competencyName: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/competencies', protect, async (req, res) => {
+router.post('/competencies', protect, async (req, res, next) => {
   try {
     const count = await CompetencyMaster.countDocuments();
     const competencyCode = `CMP-${String(count + 1).padStart(3, '0')}`;
@@ -182,14 +182,14 @@ router.post('/competencies', protect, async (req, res) => {
   }
 });
 
-router.get('/templates', protect, async (req, res) => {
+router.get('/templates', protect, async (req, res, next) => {
   try {
     const list = await PerformanceTemplate.find().sort({ templateName: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/templates', protect, async (req, res) => {
+router.post('/templates', protect, async (req, res, next) => {
   try {
     const item = new PerformanceTemplate(req.body);
     await item.save();
@@ -199,14 +199,14 @@ router.post('/templates', protect, async (req, res) => {
   }
 });
 
-router.get('/kras', protect, async (req, res) => {
+router.get('/kras', protect, async (req, res, next) => {
   try {
     const list = await KraMaster.find().sort({ kraId: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/kras', protect, async (req, res) => {
+router.post('/kras', protect, async (req, res, next) => {
   try {
     const count = await KraMaster.countDocuments();
     const kraId = `KRA-2026-${String(count + 1).padStart(3, '0')}`;
@@ -218,14 +218,14 @@ router.post('/kras', protect, async (req, res) => {
   }
 });
 
-router.get('/kpis', protect, async (req, res) => {
+router.get('/kpis', protect, async (req, res, next) => {
   try {
     const list = await KpiMaster.find().sort({ kpiId: 1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/kpis', protect, async (req, res) => {
+router.post('/kpis', protect, async (req, res, next) => {
   try {
     const count = await KpiMaster.countDocuments();
     const kpiId = `KPI-2026-${String(count + 1).padStart(3, '0')}`;
@@ -240,14 +240,14 @@ router.post('/kpis', protect, async (req, res) => {
 // ==========================================
 // 4. GOAL SETTING & GOAL PROGRESS WORKFLOW
 // ==========================================
-router.get('/goals', protect, async (req, res) => {
+router.get('/goals', protect, async (req, res, next) => {
   try {
     const list = await EmployeeGoal.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/goals', protect, async (req, res) => {
+router.post('/goals', protect, async (req, res, next) => {
   try {
     const count = await EmployeeGoal.countDocuments();
     const goalCode = `GOL-2026-${String(count + 1).padStart(4, '0')}`;
@@ -266,7 +266,7 @@ router.post('/goals', protect, async (req, res) => {
   }
 });
 
-router.put('/goals/:id/progress', protect, async (req, res) => {
+router.put('/goals/:id/progress', protect, async (req, res, next) => {
   try {
     const { achievementValue, achievementPct, goalStatus, employeeComments, managerComments } = req.body;
     const goal = await EmployeeGoal.findById(req.params.id);
@@ -296,7 +296,7 @@ router.put('/goals/:id/progress', protect, async (req, res) => {
   }
 });
 
-router.put('/goals/:id/revision', protect, async (req, res) => {
+router.put('/goals/:id/revision', protect, async (req, res, next) => {
   try {
     const { revisedGoal, revisedTarget, reason } = req.body;
     const goal = await EmployeeGoal.findById(req.params.id);
@@ -327,14 +327,14 @@ router.put('/goals/:id/revision', protect, async (req, res) => {
 // ==========================================
 // 5. MID-YEAR REVIEWS
 // ==========================================
-router.get('/mid-year-reviews', protect, async (req, res) => {
+router.get('/mid-year-reviews', protect, async (req, res, next) => {
   try {
     const list = await MidYearReview.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/mid-year-reviews', protect, async (req, res) => {
+router.post('/mid-year-reviews', protect, async (req, res, next) => {
   try {
     const newReview = new MidYearReview({
       ...req.body,
@@ -348,7 +348,7 @@ router.post('/mid-year-reviews', protect, async (req, res) => {
   }
 });
 
-router.put('/mid-year-reviews/:id/manager-review', protect, async (req, res) => {
+router.put('/mid-year-reviews/:id/manager-review', protect, async (req, res, next) => {
   try {
     const { managerRating, strengths, improvementAreas, managerComments, developmentPlan } = req.body;
     const review = await MidYearReview.findById(req.params.id);
@@ -373,14 +373,14 @@ router.put('/mid-year-reviews/:id/manager-review', protect, async (req, res) => 
 // ==========================================
 // 6. ANNUAL REVIEWS, CALCULATION ENGINE & CALIBRATION
 // ==========================================
-router.get('/annual-reviews', protect, async (req, res) => {
+router.get('/annual-reviews', protect, async (req, res, next) => {
   try {
     const list = await AnnualReview.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/annual-reviews', protect, async (req, res) => {
+router.post('/annual-reviews', protect, async (req, res, next) => {
   try {
     const newAnnual = new AnnualReview({
       ...req.body,
@@ -394,7 +394,7 @@ router.post('/annual-reviews', protect, async (req, res) => {
   }
 });
 
-router.put('/annual-reviews/:id/manager-assessment', protect, async (req, res) => {
+router.put('/annual-reviews/:id/manager-assessment', protect, async (req, res, next) => {
   try {
     const { managerKraScore, managerKpiScore, managerCompetencyScore, managerBehaviourScore, strengths, improvementAreas, recommendedAction } = req.body;
     const review = await AnnualReview.findById(req.params.id);
@@ -420,7 +420,7 @@ router.put('/annual-reviews/:id/manager-assessment', protect, async (req, res) =
   }
 });
 
-router.put('/annual-reviews/:id/calibrate', protect, async (req, res) => {
+router.put('/annual-reviews/:id/calibrate', protect, async (req, res, next) => {
   try {
     const { finalRating, performanceCategory, calibrationRemarks } = req.body;
     const review = await AnnualReview.findById(req.params.id);
@@ -443,7 +443,7 @@ router.put('/annual-reviews/:id/calibrate', protect, async (req, res) => {
   }
 });
 
-router.put('/annual-reviews/:id/acknowledge', protect, async (req, res) => {
+router.put('/annual-reviews/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const { comments } = req.body;
     const review = await AnnualReview.findById(req.params.id);
@@ -465,14 +465,14 @@ router.put('/annual-reviews/:id/acknowledge', protect, async (req, res) => {
 // ==========================================
 // 7. PROMOTION RECOMMENDATIONS & EMPLOYEE MASTER SYNC
 // ==========================================
-router.get('/promotions', protect, async (req, res) => {
+router.get('/promotions', protect, async (req, res, next) => {
   try {
     const list = await PromotionRequest.find().sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/promotions', protect, async (req, res) => {
+router.post('/promotions', protect, async (req, res, next) => {
   try {
     const existingDuplicate = await PromotionRequest.findOne({
       employeeId: req.body.employeeId,
@@ -506,7 +506,7 @@ router.post('/promotions', protect, async (req, res) => {
   }
 });
 
-router.put('/promotions/:id/approve', protect, async (req, res) => {
+router.put('/promotions/:id/approve', protect, async (req, res, next) => {
   try {
     const { status, comments } = req.body; // Approved / Rejected
     const promo = await PromotionRequest.findById(req.params.id);
@@ -545,14 +545,14 @@ router.put('/promotions/:id/approve', protect, async (req, res) => {
 // ==========================================
 // 8. INCREMENT RECOMMENDATIONS & PAYROLL INTEGRATION
 // ==========================================
-router.get('/increments', protect, async (req, res) => {
+router.get('/increments', protect, async (req, res, next) => {
   try {
     const list = await SalaryRevisionRequest.find().sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/increments', protect, async (req, res) => {
+router.post('/increments', protect, async (req, res, next) => {
   try {
     const existingDuplicate = await SalaryRevisionRequest.findOne({
       employeeId: req.body.employeeId,
@@ -587,7 +587,7 @@ router.post('/increments', protect, async (req, res) => {
   }
 });
 
-router.put('/increments/:id/approve', protect, async (req, res) => {
+router.put('/increments/:id/approve', protect, async (req, res, next) => {
   try {
     const { status, comments } = req.body;
     const inc = await SalaryRevisionRequest.findById(req.params.id);
@@ -613,14 +613,14 @@ router.put('/increments/:id/approve', protect, async (req, res) => {
 // ==========================================
 // 9. PERFORMANCE IMPROVEMENT PLAN (PIP) LIFECYCLE
 // ==========================================
-router.get('/pip', protect, async (req, res) => {
+router.get('/pip', protect, async (req, res, next) => {
   try {
     const list = await PipRecord.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/pip', protect, async (req, res) => {
+router.post('/pip', protect, async (req, res, next) => {
   try {
     const count = await PipRecord.countDocuments();
     const pipCode = `PIP-2026-${String(count + 1).padStart(4, '0')}`;
@@ -639,7 +639,7 @@ router.post('/pip', protect, async (req, res) => {
   }
 });
 
-router.put('/pip/:id/review', protect, async (req, res) => {
+router.put('/pip/:id/review', protect, async (req, res, next) => {
   try {
     const { managerFeedback, rating, objectiveUpdates, outcome } = req.body;
     const pip = await PipRecord.findById(req.params.id);
@@ -674,7 +674,7 @@ router.put('/pip/:id/review', protect, async (req, res) => {
 // ==========================================
 // 10. AUDIT LOGS & REPORTS
 // ==========================================
-router.get('/audit-logs', protect, async (req, res) => {
+router.get('/audit-logs', protect, async (req, res, next) => {
   try {
     const logs = await PerformanceAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

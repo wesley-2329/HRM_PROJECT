@@ -10,7 +10,7 @@ const { protect } = require('../middleware/auth');
 
 // @route   GET /api/grades/dashboard
 // @desc    Get counts and distributions
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const gradesCount = await GradeMaster.countDocuments({});
     const bandsCount = await BandMaster.countDocuments({});
@@ -36,7 +36,7 @@ router.get('/dashboard', protect, async (req, res) => {
 
 // @route   GET /api/grades
 // @desc    Get all grades
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await GradeMaster.find({}).sort({ gradeLevel: 1 });
     res.json(list);
@@ -45,7 +45,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/grades
 // @desc    Create new grade
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { gradeCode, gradeName, gradeDescription, gradeLevel, status } = req.body;
 
   if (!gradeCode || !gradeName || !gradeLevel) {
@@ -75,7 +75,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/grades/:id
 // @desc    Update grade details
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, async (req, res, next) => {
   try {
     const grade = await GradeMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!grade) return res.status(404).json({ message: 'Grade not found.' });
@@ -85,7 +85,7 @@ router.put('/:id', protect, async (req, res) => {
 
 // @route   GET /api/grades/bands
 // @desc    Get all bands
-router.get('/bands', protect, async (req, res) => {
+router.get('/bands', protect, async (req, res, next) => {
   try {
     const list = await BandMaster.find({}).sort({ careerLevel: 1 });
     res.json(list);
@@ -94,7 +94,7 @@ router.get('/bands', protect, async (req, res) => {
 
 // @route   POST /api/grades/bands
 // @desc    Create new band
-router.post('/bands', protect, async (req, res) => {
+router.post('/bands', protect, async (req, res, next) => {
   const { bandCode, bandName, bandDescription, parentGrade, careerLevel, status } = req.body;
 
   if (!bandCode || !bandName || !parentGrade || !careerLevel) {
@@ -129,7 +129,7 @@ router.post('/bands', protect, async (req, res) => {
 
 // @route   PUT /api/grades/bands/:id
 // @desc    Update band details
-router.put('/bands/:id', protect, async (req, res) => {
+router.put('/bands/:id', protect, async (req, res, next) => {
   try {
     const band = await BandMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!band) return res.status(404).json({ message: 'Band not found.' });
@@ -139,7 +139,7 @@ router.put('/bands/:id', protect, async (req, res) => {
 
 // @route   POST /api/grades/assign
 // @desc    Assign Grade/Band directly to employee (HR only)
-router.post('/assign', protect, async (req, res) => {
+router.post('/assign', protect, async (req, res, next) => {
   const { employeeId, gradeCode, bandCode, effectiveDate } = req.body;
 
   if (!employeeId || !gradeCode || !bandCode) {
@@ -173,7 +173,7 @@ router.post('/assign', protect, async (req, res) => {
 
 // @route   GET /api/grades/movements
 // @desc    Get all grade movements
-router.get('/movements', protect, async (req, res) => {
+router.get('/movements', protect, async (req, res, next) => {
   try {
     const list = await GradeMovementRequest.find({}).sort({ createdAt: -1 });
     res.json(list);
@@ -182,7 +182,7 @@ router.get('/movements', protect, async (req, res) => {
 
 // @route   POST /api/grades/movements
 // @desc    Create grade movement request (Promotion/Same Grade justification)
-router.post('/movements', protect, async (req, res) => {
+router.post('/movements', protect, async (req, res, next) => {
   const { employeeId, proposedGrade, proposedBand, reason, effectiveDate, attachmentUrl } = req.body;
 
   if (!employeeId || !proposedGrade || !proposedBand || !effectiveDate) {
@@ -233,7 +233,7 @@ router.post('/movements', protect, async (req, res) => {
 
 // @route   PUT /api/grades/movements/:id/action
 // @desc    Approve/Reject/Hold Grade movement request
-router.put('/movements/:id/action', protect, async (req, res) => {
+router.put('/movements/:id/action', protect, async (req, res, next) => {
   const { decision, comments } = req.body; // 'Approved' | 'Rejected' | 'Hold'
 
   try {
@@ -293,7 +293,7 @@ router.put('/movements/:id/action', protect, async (req, res) => {
 
 // @route   GET /api/grades/reports
 // @desc    Get aggregated distribution reports
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const employeesList = await Employee.find({ status: 'Approved' });
     const gradesList = await GradeMaster.find({});

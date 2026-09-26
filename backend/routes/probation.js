@@ -14,7 +14,7 @@ const addDays = (date, days) => {
 
 // @route   GET /api/probation
 // @desc    Get all probation records and dashboard metrics
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await EmployeeProbation.find({}).sort({ createdAt: -1 });
 
@@ -45,7 +45,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/probation/assign
 // @desc    Assign probation period to an employee
-router.post('/assign', protect, async (req, res) => {
+router.post('/assign', protect, async (req, res, next) => {
   const { employeeId, employeeCategory, probationDuration, kpis, reportingManagerId } = req.body;
 
   if (!employeeId || !probationDuration) {
@@ -142,7 +142,7 @@ router.post('/assign', protect, async (req, res) => {
 
 // @route   PUT /api/probation/:id/review
 // @desc    Submit probation review evaluation (Reporting Manager only)
-router.put('/:id/review', protect, async (req, res) => {
+router.put('/:id/review', protect, async (req, res, next) => {
   const { goalAchievement, attendanceReview, behaviorReview, managerComments, recommendation } = req.body;
 
   try {
@@ -192,7 +192,7 @@ router.put('/:id/review', protect, async (req, res) => {
 
 // @route   PUT /api/probation/:id/decision
 // @desc    HR process probation confirmation/extension decision
-router.put('/:id/decision', protect, async (req, res) => {
+router.put('/:id/decision', protect, async (req, res, next) => {
   const { action, remarks, effectiveDate, extensionDays } = req.body; // 'Confirm' | 'Extend Probation' | 'Transfer' | 'Separation'
 
   try {
@@ -289,7 +289,7 @@ router.put('/:id/decision', protect, async (req, res) => {
 
 // @route   GET /api/probation/reports
 // @desc    Get reports data for probation
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const list = await EmployeeProbation.find({});
     const now = new Date();
@@ -337,7 +337,7 @@ router.get('/reports', protect, async (req, res) => {
 
 // @route   POST /api/probation/:id/email-letter
 // @desc    Email confirmation/extension letter to employee
-router.post('/:id/email-letter', protect, async (req, res) => {
+router.post('/:id/email-letter', protect, async (req, res, next) => {
   try {
     const prob = await EmployeeProbation.findById(req.params.id);
     if (!prob) return res.status(404).json({ message: 'Probation record not found.' });

@@ -53,7 +53,7 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 // 1. DASHBOARD & KPIS
 // ==========================================
-router.get('/dashboard', protect, async (req, res) => {
+router.get('/dashboard', protect, async (req, res, next) => {
   try {
     const exits = await EmployeeExit.find();
     const activeExits = exits.filter(e => e.status !== 'Separated' && e.status !== 'Withdrawn').length || 6;
@@ -95,14 +95,14 @@ router.get('/dashboard', protect, async (req, res) => {
 // ==========================================
 // 2. RESIGNATION WORKFLOW
 // ==========================================
-router.get('/resignations', protect, async (req, res) => {
+router.get('/resignations', protect, async (req, res, next) => {
   try {
     const list = await EmployeeExit.find().sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/resignations', protect, async (req, res) => {
+router.post('/resignations', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const exitId = 'EXT-' + Math.floor(Math.random() * 9000 + 1000);
@@ -135,7 +135,7 @@ router.post('/resignations', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.put('/resignations/:id', protect, async (req, res) => {
+router.put('/resignations/:id', protect, async (req, res, next) => {
   try {
     const { id } = req.params;
     const update = req.body;
@@ -148,7 +148,7 @@ router.put('/resignations/:id', protect, async (req, res) => {
 // ==========================================
 // 3. NOTICE PERIOD MANAGEMENT
 // ==========================================
-router.get('/notice-period', protect, async (req, res) => {
+router.get('/notice-period', protect, async (req, res, next) => {
   try {
     const list = await NoticePeriod.find().sort({ createdAt: -1 });
     res.json(list);
@@ -158,14 +158,14 @@ router.get('/notice-period', protect, async (req, res) => {
 // ==========================================
 // 4. DEPARTMENT CLEARANCES & ASSETS
 // ==========================================
-router.get('/clearance', protect, async (req, res) => {
+router.get('/clearance', protect, async (req, res, next) => {
   try {
     const clearances = await DepartmentClearance.find();
     res.json(clearances);
   } catch (err) { next(err); }
 });
 
-router.put('/clearance/:id', protect, async (req, res) => {
+router.put('/clearance/:id', protect, async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
@@ -179,7 +179,7 @@ router.put('/clearance/:id', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/assets', protect, async (req, res) => {
+router.get('/assets', protect, async (req, res, next) => {
   try {
     const assets = await AssetReturn.find();
     const itStatus = await ItClearance.find();
@@ -191,14 +191,14 @@ router.get('/assets', protect, async (req, res) => {
 // ==========================================
 // 5. EXIT INTERVIEW
 // ==========================================
-router.get('/interview', protect, async (req, res) => {
+router.get('/interview', protect, async (req, res, next) => {
   try {
     const interviews = await ExitInterview.find().sort({ createdAt: -1 });
     res.json(interviews);
   } catch (err) { next(err); }
 });
 
-router.post('/interview', protect, async (req, res) => {
+router.post('/interview', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const interviewId = 'INT-' + Date.now();
@@ -220,14 +220,14 @@ router.post('/interview', protect, async (req, res) => {
 // ==========================================
 // 6. FULL & FINAL SETTLEMENT (F&F)
 // ==========================================
-router.get('/settlement', protect, async (req, res) => {
+router.get('/settlement', protect, async (req, res, next) => {
   try {
     const list = await FullFinalSettlement.find().sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
 
-router.post('/settlement/calculate', protect, async (req, res) => {
+router.post('/settlement/calculate', protect, async (req, res, next) => {
   try {
     const body = req.body;
     const settlementId = 'FFS-' + Date.now();
@@ -271,7 +271,7 @@ router.post('/settlement/calculate', protect, async (req, res) => {
 // ==========================================
 // 7. NO DUE CERTIFICATE & DOCUMENTS
 // ==========================================
-router.get('/no-due/:exitId', protect, async (req, res) => {
+router.get('/no-due/:exitId', protect, async (req, res, next) => {
   try {
     const { exitId } = req.params;
     let ndc = await NoDueCertificate.findOne({ exitId });
@@ -291,7 +291,7 @@ router.get('/no-due/:exitId', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/documents/:exitId', protect, async (req, res) => {
+router.get('/documents/:exitId', protect, async (req, res, next) => {
   try {
     const { exitId } = req.params;
     const docs = await ExitDocument.find({ exitId });
@@ -302,7 +302,7 @@ router.get('/documents/:exitId', protect, async (req, res) => {
 // ==========================================
 // 8. MASTERS & AUDIT HISTORY
 // ==========================================
-router.get('/masters', protect, async (req, res) => {
+router.get('/masters', protect, async (req, res, next) => {
   try {
     const exitTypes = await ExitTypeMaster.find();
     const reasons = await ResignationReasonMaster.find();
@@ -313,7 +313,7 @@ router.get('/masters', protect, async (req, res) => {
   } catch (err) { next(err); }
 });
 
-router.get('/history', protect, async (req, res) => {
+router.get('/history', protect, async (req, res, next) => {
   try {
     const logs = await ExitAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

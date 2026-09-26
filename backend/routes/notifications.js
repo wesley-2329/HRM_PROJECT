@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/notifications
 // @desc    Get user alerts
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   let notifications;
   if (req.user.role === 'hr') {
     notifications = await Notification.find({
@@ -23,7 +23,7 @@ router.get('/', protect, async (req, res) => {
 // @route   PUT /api/notifications/mark-all-read
 // @desc    Mark all read
 // @access  Private
-router.put('/mark-all-read', protect, async (req, res) => {
+router.put('/mark-all-read', protect, async (req, res, next) => {
   try {
     await Notification.updateMany(
       { empId: req.user.id, read: false },

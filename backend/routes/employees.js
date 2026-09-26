@@ -20,7 +20,7 @@ const ensureEmployeesSeeded = async () => {
 // @route   GET /api/employees
 // @desc    Get all employees
 // @access  Private/HR only
-router.get('/', protect, adminOnly, async (req, res) => {
+router.get('/', protect, adminOnly, async (req, res, next) => {
   try {
     await ensureEmployeesSeeded();
     const employees = await Employee.find({}).select('-password');
@@ -31,7 +31,7 @@ router.get('/', protect, adminOnly, async (req, res) => {
 // @route   GET /api/employees/public
 // @desc    Get basic info of all active employees for public org directory / org chart
 // @access  Private
-router.get('/public', protect, async (req, res) => {
+router.get('/public', protect, async (req, res, next) => {
   try {
     await ensureEmployeesSeeded();
     const list = await Employee.find({ status: 'Approved' }).select('id name role dept teamLeadId isTeamLead avatar gender designation functionalManagerId branch businessUnit grade');
@@ -42,7 +42,7 @@ router.get('/public', protect, async (req, res) => {
 // @route   GET /api/employees/:id
 // @desc    Get employee details
 // @access  Private
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', protect, async (req, res, next) => {
   try {
     const employee = await Employee.findOne({ id: req.params.id }).select('-password');
     if (!employee) {
@@ -61,7 +61,7 @@ router.get('/:id', protect, async (req, res) => {
 // @route   POST /api/employees
 // @desc    Add employee manually
 // @access  Private/HR only
-router.post('/', protect, adminOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { name, email, dept, role, aadhaar, phone, joined, gender, address, emergency, parentStatus } = req.body;
 
   try {
@@ -123,7 +123,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/employees/:id
 // @desc    Update employee details
 // @access  Private
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, async (req, res, next) => {
   try {
     const mongoose = require('mongoose');
     let employee = await Employee.findOne({ id: req.params.id });
@@ -197,7 +197,7 @@ router.put('/:id', protect, async (req, res) => {
 // @route   DELETE /api/employees/:id
 // @desc    Delete employee
 // @access  Private/HR only
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const employee = await Employee.findOne({ id: req.params.id });
     if (!employee) {
@@ -212,7 +212,7 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/employees/:id/status
 // @desc    Approve or Reject registration application
 // @access  Private/HR only
-router.put('/:id/status', protect, adminOnly, async (req, res) => {
+router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
   const { status } = req.body;
 
   if (!['Approved', 'Rejected'].includes(status)) {

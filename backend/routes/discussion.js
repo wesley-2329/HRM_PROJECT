@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/discussion
 // @desc    Get all group discussion messages
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const messages = await DiscussionMessage.find({}).sort({ createdAt: 1 }).limit(100);
     res.json(messages);
@@ -16,7 +16,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/discussion
 // @desc    Post a new group discussion message
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { message } = req.body;
 
   try {

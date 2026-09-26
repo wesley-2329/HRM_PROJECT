@@ -9,7 +9,7 @@ router.use(protect, adminOnly);
 // @route   GET /api/candidates
 // @desc    Get all candidates
 // @access  HR Director Only
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const candidates = await Candidate.find({});
     res.json(candidates);
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 // @route   POST /api/candidates
 // @desc    Add a candidate (Walk-In or job application)
 // @access  HR Director Only
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const { name, role, source, experience, notes, phone, email, currentPosition, currentCompany, lastSalary, workingStatus, skills } = req.body;
 
   try {
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
 // @route   PUT /api/candidates/:id/stage
 // @desc    Update candidate stage
 // @access  HR Director Only
-router.put('/:id/stage', async (req, res) => {
+router.put('/:id/stage', async (req, res, next) => {
   const { stage, stageRejectedAt, rejectionReason, interviewStage } = req.body;
 
   try {
@@ -69,7 +69,7 @@ router.put('/:id/stage', async (req, res) => {
 // @route   PUT /api/candidates/:id/offer
 // @desc    Release offer letter
 // @access  HR Director Only
-router.put('/:id/offer', async (req, res) => {
+router.put('/:id/offer', async (req, res, next) => {
   try {
     const candidate = await Candidate.findById(req.params.id);
     if (!candidate) {
@@ -85,7 +85,7 @@ router.put('/:id/offer', async (req, res) => {
 // @route   DELETE /api/candidates/:id
 // @desc    Remove candidate record
 // @access  HR Director Only
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     await Candidate.findByIdAndDelete(req.params.id);
     res.json({ message: 'Candidate removed successfully' });

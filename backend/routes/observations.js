@@ -17,7 +17,7 @@ const generateObsId = async () => {
 
 // @route   GET /api/observations
 // @desc    Get observations list and summary dashboard metrics
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await ObservationTracker.find({}).sort({ createdAt: -1 });
     
@@ -45,7 +45,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/observations
 // @desc    Create a new observation
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { title, description, department, category, priority, assigneeId, dueDate } = req.body;
 
   if (!dueDate) {
@@ -111,7 +111,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/observations/:id/assign
 // @desc    Update assignee
-router.put('/:id/assign', protect, async (req, res) => {
+router.put('/:id/assign', protect, async (req, res, next) => {
   const { assigneeId, dueDate } = req.body;
 
   try {
@@ -171,7 +171,7 @@ router.put('/:id/assign', protect, async (req, res) => {
 
 // @route   PUT /api/observations/:id/action
 // @desc    Submit Action Taken (evidence, corrective actions)
-router.put('/:id/action', protect, async (req, res) => {
+router.put('/:id/action', protect, async (req, res, next) => {
   const { correctiveAction, rootCause, preventiveAction, evidenceUrl } = req.body;
 
   try {
@@ -222,7 +222,7 @@ router.put('/:id/action', protect, async (req, res) => {
 
 // @route   PUT /api/observations/:id/verify
 // @desc    Verify & Close or Reopen observation
-router.put('/:id/verify', protect, async (req, res) => {
+router.put('/:id/verify', protect, async (req, res, next) => {
   const { status, comments, reopenReason } = req.body; // 'Closed' or 'Reopened'
 
   try {
@@ -296,7 +296,7 @@ router.put('/:id/verify', protect, async (req, res) => {
 
 // @route   GET /api/observations/reports
 // @desc    Retrieve compliance observation reports
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const list = await ObservationTracker.find({});
     

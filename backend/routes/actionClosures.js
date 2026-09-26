@@ -17,7 +17,7 @@ const generateActionId = async () => {
 
 // @route   GET /api/action-closures
 // @desc    Get action closures list and dashboard summary metrics
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const list = await ActionClosureTracker.find({}).sort({ createdAt: -1 });
 
@@ -60,7 +60,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST /api/action-closures
 // @desc    Create a new action item entry
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { observationType, department, description, priority, dueDate } = req.body;
 
   if (!dueDate) {
@@ -98,7 +98,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   PUT /api/action-closures/:id/assign
 // @desc    Assign owner and reviewer details
-router.put('/:id/assign', protect, async (req, res) => {
+router.put('/:id/assign', protect, async (req, res, next) => {
   const { assignedToId, responsibleDepartment, dueDate, reviewerId, remarks } = req.body;
 
   try {
@@ -157,7 +157,7 @@ router.put('/:id/assign', protect, async (req, res) => {
 
 // @route   PUT /api/action-closures/:id/progress
 // @desc    Update progress metrics and submit updates
-router.put('/:id/progress', protect, async (req, res) => {
+router.put('/:id/progress', protect, async (req, res, next) => {
   const { progressStatus, completionPercentage, updateNotes, evidenceUrl } = req.body;
 
   try {
@@ -215,7 +215,7 @@ router.put('/:id/progress', protect, async (req, res) => {
 
 // @route   PUT /api/action-closures/:id/verify
 // @desc    Verify and Approve Closure or Reopen
-router.put('/:id/verify', protect, async (req, res) => {
+router.put('/:id/verify', protect, async (req, res, next) => {
   const { status, comments, reopenReason } = req.body; // 'Closed' or 'Reopened'
 
   try {
@@ -293,7 +293,7 @@ router.put('/:id/verify', protect, async (req, res) => {
 
 // @route   GET /api/action-closures/reports
 // @desc    Retrieve compliance reports stats
-router.get('/reports', protect, async (req, res) => {
+router.get('/reports', protect, async (req, res, next) => {
   try {
     const list = await ActionClosureTracker.find({});
     

@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 // @route   GET /api/chat
 // @desc    Get support chat history
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   const messages = await ChatMessage.find({ empId: req.user.id }).sort({ createdAt: 1 });
   res.json(messages);
 });
@@ -14,7 +14,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/chat
 // @desc    Send helpdesk message & generate bot response
 // @access  Private
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, async (req, res, next) => {
   const { message } = req.body;
 
   try {

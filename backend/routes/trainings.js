@@ -6,7 +6,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 // @route   GET /api/trainings
 // @desc    Get training progress logs
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     let trainings;
     if (req.user.role === 'hr') {
@@ -21,7 +21,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/trainings
 // @desc    Assign training course to employee
 // @access  Private/HR only
-router.post('/', protect, adminOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { name, deadline, category, duration, empId } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // @route   PUT /api/trainings/:id/progress
 // @desc    Update learning course progress
 // @access  Private
-router.put('/:id/progress', protect, async (req, res) => {
+router.put('/:id/progress', protect, async (req, res, next) => {
   const { progress } = req.body;
 
   try {
@@ -72,7 +72,7 @@ router.put('/:id/progress', protect, async (req, res) => {
 // @route   PUT /api/trainings/:id/review
 // @desc    Add review/rating for completed training
 // @access  Private
-router.put('/:id/review', protect, async (req, res) => {
+router.put('/:id/review', protect, async (req, res, next) => {
   const { rating, review, trainer } = req.body;
 
   try {
