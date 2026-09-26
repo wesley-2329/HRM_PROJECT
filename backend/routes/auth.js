@@ -196,6 +196,10 @@ router.get('/me', protect, async (req, res, next) => {
 router.post('/change-password', protect, async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
 
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current password and new password are required' });
+  }
+
   try {
     const employee = await Employee.findById(req.user._id);
 
