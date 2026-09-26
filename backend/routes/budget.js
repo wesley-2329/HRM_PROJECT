@@ -111,9 +111,7 @@ router.get('/dashboard', protect, async (req, res) => {
         ]
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -123,9 +121,7 @@ router.get('/planning', protect, async (req, res) => {
   try {
     const list = await HrBudget.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/planning', protect, async (req, res) => {
@@ -154,9 +150,7 @@ router.post('/planning', protect, async (req, res) => {
 
     await logAudit(req, 'CREATE_BUDGET', 'HrBudget', budgetId, newBudget);
     res.status(201).json(newBudget);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.put('/planning/:id', protect, async (req, res) => {
@@ -166,9 +160,7 @@ router.put('/planning/:id', protect, async (req, res) => {
     const updated = await HrBudget.findOneAndUpdate({ budgetId: id }, update, { new: true });
     await logAudit(req, 'UPDATE_BUDGET', 'HrBudget', id, update);
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -178,9 +170,7 @@ router.get('/allocation', protect, async (req, res) => {
   try {
     const list = await BudgetAllocation.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/allocation', protect, async (req, res) => {
@@ -202,9 +192,7 @@ router.post('/allocation', protect, async (req, res) => {
     });
     await logAudit(req, 'ALLOCATE_BUDGET', 'BudgetAllocation', allocationId, newAlloc);
     res.status(201).json(newAlloc);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -214,9 +202,7 @@ router.get('/analytics', protect, async (req, res) => {
   try {
     const analytics = await CostAnalytics.find();
     res.json(analytics);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -227,9 +213,7 @@ router.get('/forecast', protect, async (req, res) => {
     const forecasts = await ForecastData.find();
     const variances = await VarianceAnalysis.find();
     res.json({ forecasts, variances });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -239,9 +223,7 @@ router.get('/history', protect, async (req, res) => {
   try {
     const logs = await BudgetAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -252,9 +234,7 @@ router.get('/manpower', protect, async (req, res) => {
     const manpower = await ManpowerBudget.find().sort({ createdAt: -1 });
     const plans = await HeadcountPlanning.find();
     res.json({ manpower, plans });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/manpower', protect, async (req, res) => {
@@ -283,9 +263,7 @@ router.post('/manpower', protect, async (req, res) => {
     });
     await logAudit(req, 'SUBMIT_MANPOWER_BUDGET', 'ManpowerBudget', budgetId, newManpower);
     res.status(201).json(newManpower);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -297,9 +275,7 @@ router.get('/recruitment', protect, async (req, res) => {
     const expenses = await RecruitmentExpense.find().sort({ expenseDate: -1 });
     const cph = await CostPerHire.find();
     res.json({ budgets, expenses, costPerHire: cph });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/recruitment-expense', protect, async (req, res) => {
@@ -321,9 +297,7 @@ router.post('/recruitment-expense', protect, async (req, res) => {
     });
     await logAudit(req, 'ADD_RECRUITMENT_EXPENSE', 'RecruitmentExpense', expenseId, newExpense);
     res.status(201).json(newExpense);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -335,9 +309,7 @@ router.get('/welfare', protect, async (req, res) => {
     const expenses = await WelfareExpense.find().sort({ expenseDate: -1 });
     const activities = await WelfareActivity.find();
     res.json({ budgets, expenses, activities });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/welfare-expense', protect, async (req, res) => {
@@ -359,9 +331,7 @@ router.post('/welfare-expense', protect, async (req, res) => {
     });
     await logAudit(req, 'ADD_WELFARE_EXPENSE', 'WelfareExpense', expenseId, newExpense);
     res.status(201).json(newExpense);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -384,9 +354,7 @@ router.get('/masters', protect, async (req, res) => {
       welfareCategories: welfareCats,
       approvalMatrices
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

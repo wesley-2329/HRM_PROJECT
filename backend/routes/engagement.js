@@ -66,9 +66,7 @@ router.get('/suggestions', protect, async (req, res) => {
 
     const suggestions = await Suggestion.find(filter).sort({ createdAt: -1 });
     res.json(suggestions);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Submit Suggestion
@@ -166,9 +164,7 @@ router.get('/grievances', protect, async (req, res) => {
 
     const grievances = await Grievance.find(filter).sort({ createdAt: -1 });
     res.json(grievances);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Raise Grievance
@@ -261,9 +257,7 @@ router.get('/helpdesk', protect, async (req, res) => {
 
     const tickets = await HelpdeskTicket.find(filter).sort({ createdAt: -1 });
     res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Create Helpdesk Ticket
@@ -345,9 +339,7 @@ router.get('/welfare', protect, async (req, res) => {
     }
     const requests = await WelfareRequest.find(filter).sort({ createdAt: -1 });
     res.json(requests);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Submit Welfare Request
@@ -420,9 +412,7 @@ router.get('/recognition', protect, async (req, res) => {
   try {
     const posts = await RecognitionPost.find().sort({ createdAt: -1 });
     res.json(posts);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Create Recognition Post
@@ -510,9 +500,7 @@ router.get('/communications', protect, async (req, res) => {
     });
 
     res.json(enrichedComms);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Publish Communication
@@ -599,9 +587,7 @@ router.get('/dashboard', protect, async (req, res) => {
       employeeEngagementScore: '94.2%',
       slaPerformanceScore: '98.5%'
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -612,9 +598,7 @@ router.get('/audit', protect, async (req, res) => {
   try {
     const logs = await EngagementAuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

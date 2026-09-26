@@ -46,9 +46,7 @@ router.get('/', protect, async (req, res) => {
         eligibleCount
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/promotions
@@ -152,9 +150,7 @@ router.post('/', protect, async (req, res) => {
     });
 
     res.status(201).json(promotion);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/promotions/:id/verify
@@ -186,9 +182,7 @@ router.put('/:id/verify', protect, async (req, res) => {
     await promotion.save();
 
     res.json(promotion);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/promotions/:id/approve
@@ -319,9 +313,7 @@ router.put('/:id/approve', protect, async (req, res) => {
     }
 
     res.json(promotion);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/promotions/:id/acknowledge
@@ -349,9 +341,7 @@ router.put('/:id/acknowledge', protect, async (req, res) => {
     await promotion.save();
 
     res.json(promotion);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/promotions/reports
@@ -387,9 +377,7 @@ router.get('/reports', protect, async (req, res) => {
       departmentReport,
       historyList
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

@@ -15,9 +15,7 @@ router.get('/', protect, async (req, res) => {
       trainings = await Training.find({ empId: req.user.id });
     }
     res.json(trainings);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/trainings
@@ -40,9 +38,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     });
 
     res.status(201).json(training);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/trainings/:id/progress
@@ -70,9 +66,7 @@ router.put('/:id/progress', protect, async (req, res) => {
 
     await training.save();
     res.json(training);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/trainings/:id/review
@@ -97,9 +91,7 @@ router.put('/:id/review', protect, async (req, res) => {
 
     await training.save();
     res.json(training);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

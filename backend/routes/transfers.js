@@ -37,9 +37,7 @@ router.get('/', protect, async (req, res) => {
         rejected
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/transfers
@@ -114,9 +112,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     res.status(201).json(reqObj);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/transfers/:id/action
@@ -169,9 +165,7 @@ router.put('/:id/action', protect, async (req, res) => {
     });
 
     res.json(trn);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/transfers/:id/process
@@ -266,9 +260,7 @@ router.post('/:id/process', protect, async (req, res) => {
       transfer: trn,
       letter
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/transfers/history
@@ -282,9 +274,7 @@ router.get('/history', protect, async (req, res) => {
       deptHistory,
       managerHistory
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

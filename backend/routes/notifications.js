@@ -30,9 +30,7 @@ router.put('/mark-all-read', protect, async (req, res) => {
       { $set: { read: true } }
     );
     res.json({ message: 'All notifications marked as read' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

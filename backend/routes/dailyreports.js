@@ -24,9 +24,7 @@ router.get('/', protect, async (req, res) => {
       reports = await DailyReport.find({ empId: req.user.id }).sort({ createdAt: -1 });
     }
     res.json(reports);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/daily-reports
@@ -68,9 +66,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     res.status(201).json(report);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/daily-reports/:id/review
@@ -108,9 +104,7 @@ router.put('/:id/review', protect, async (req, res) => {
     req.io.to(report.empId).emit('notification', notif);
 
     res.json(updatedReport);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

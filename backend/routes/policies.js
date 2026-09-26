@@ -18,9 +18,7 @@ router.get('/', protect, async (req, res) => {
       policies = await CompanyPolicy.find({ status: 'Active' }).sort({ updatedAt: -1 });
     }
     res.json(policies);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/policies/employee-status
@@ -73,9 +71,7 @@ router.get('/employee-status', protect, async (req, res) => {
       pendingCount,
       onboardingCompleted: req.user.onboardingCompleted
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/policies
@@ -141,9 +137,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     }
 
     res.status(201).json(policy);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/policies/:id
@@ -221,9 +215,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     }
 
     res.json(policy);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/policies/:id/status
@@ -243,9 +235,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     await policy.save();
 
     res.json({ message: `Policy status updated to ${status}`, policy });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/policies/:id/acknowledge
@@ -308,9 +298,7 @@ router.post('/:id/acknowledge', protect, async (req, res) => {
       pendingCount,
       onboardingCompleted
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/policies/compliance-reports
@@ -392,9 +380,7 @@ router.get('/compliance-reports', protect, adminOnly, async (req, res) => {
       departmentCompliance,
       versionHistory
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

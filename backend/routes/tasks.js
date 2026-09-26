@@ -20,9 +20,7 @@ router.get('/', protect, async (req, res) => {
       tasks = await Task.find({ empId: req.user.id });
     }
     res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/tasks
@@ -75,9 +73,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     res.status(201).json(task);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/tasks/:id
@@ -111,9 +107,7 @@ router.put('/:id', protect, async (req, res) => {
 
     const updatedTask = await task.save();
     res.json(updatedTask);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   DELETE /api/tasks/:id
@@ -133,9 +127,7 @@ router.delete('/:id', protect, async (req, res) => {
 
     await Task.deleteOne({ _id: req.params.id });
     res.json({ message: 'Task removed successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

@@ -31,9 +31,7 @@ router.get('/dashboard', protect, async (req, res) => {
       activeEmployees,
       gradeDistribution
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/grades
@@ -42,9 +40,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const list = await GradeMaster.find({}).sort({ gradeLevel: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/grades
@@ -74,9 +70,7 @@ router.post('/', protect, async (req, res) => {
     });
 
     res.status(201).json(grade);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/grades/:id
@@ -86,9 +80,7 @@ router.put('/:id', protect, async (req, res) => {
     const grade = await GradeMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!grade) return res.status(404).json({ message: 'Grade not found.' });
     res.json(grade);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/grades/bands
@@ -97,9 +89,7 @@ router.get('/bands', protect, async (req, res) => {
   try {
     const list = await BandMaster.find({}).sort({ careerLevel: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/grades/bands
@@ -134,9 +124,7 @@ router.post('/bands', protect, async (req, res) => {
     });
 
     res.status(201).json(band);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/grades/bands/:id
@@ -146,9 +134,7 @@ router.put('/bands/:id', protect, async (req, res) => {
     const band = await BandMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!band) return res.status(404).json({ message: 'Band not found.' });
     res.json(band);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/grades/assign
@@ -182,9 +168,7 @@ router.post('/assign', protect, async (req, res) => {
     });
 
     res.json({ message: 'Direct Grade/Band Mapping update completed successfully.', employee: emp });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/grades/movements
@@ -193,9 +177,7 @@ router.get('/movements', protect, async (req, res) => {
   try {
     const list = await GradeMovementRequest.find({}).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/grades/movements
@@ -246,9 +228,7 @@ router.post('/movements', protect, async (req, res) => {
     });
 
     res.status(201).json(request);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/grades/movements/:id/action
@@ -308,9 +288,7 @@ router.put('/movements/:id/action', protect, async (req, res) => {
     }
 
     res.json(reqObj);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/grades/reports
@@ -346,9 +324,7 @@ router.get('/reports', protect, async (req, res) => {
       bandReport: Object.keys(bandReport).map(k => ({ band: k, count: bandReport[k] })),
       movementsHistory
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

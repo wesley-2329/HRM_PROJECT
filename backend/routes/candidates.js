@@ -13,9 +13,7 @@ router.get('/', async (req, res) => {
   try {
     const candidates = await Candidate.find({});
     res.json(candidates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/candidates
@@ -43,9 +41,7 @@ router.post('/', async (req, res) => {
     });
 
     res.status(201).json(candidate);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/candidates/:id/stage
@@ -67,9 +63,7 @@ router.put('/:id/stage', async (req, res) => {
 
     await candidate.save();
     res.json(candidate);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/candidates/:id/offer
@@ -85,9 +79,7 @@ router.put('/:id/offer', async (req, res) => {
     candidate.offerReleased = 'Yes';
     await candidate.save();
     res.json(candidate);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   DELETE /api/candidates/:id
@@ -97,9 +89,7 @@ router.delete('/:id', async (req, res) => {
   try {
     await Candidate.findByIdAndDelete(req.params.id);
     res.json({ message: 'Candidate removed successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

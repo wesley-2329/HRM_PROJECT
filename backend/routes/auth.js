@@ -165,9 +165,7 @@ router.post('/register', async (req, res) => {
       message: 'Registration successful! You can now login.',
       id: employee.id
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/auth/me
@@ -214,9 +212,7 @@ router.post('/change-password', protect, async (req, res) => {
     await employee.save();
 
     res.json({ message: 'Password updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

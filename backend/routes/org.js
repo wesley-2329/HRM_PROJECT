@@ -65,7 +65,7 @@ router.get('/companies', protect, async (req, res) => {
   try {
     const list = await CompanyMaster.find({});
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/companies', protect, adminOnly, async (req, res) => {
@@ -94,7 +94,7 @@ router.post('/companies', protect, adminOnly, async (req, res) => {
     rec = await CompanyMaster.create({ name: cleanName, code: cleanCode, logo, businessType, status: status || 'Inactive' });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_COMPANY', details: `Created Company Master with status '${status}': ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/companies/:id', protect, adminOnly, async (req, res) => {
@@ -105,7 +105,7 @@ router.put('/companies/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'UPDATE_COMPANY', details: `Updated Company Master: ${rec.name} (${rec.code})` });
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/companies/:id', protect, adminOnly, async (req, res) => {
@@ -115,7 +115,7 @@ router.delete('/companies/:id', protect, adminOnly, async (req, res) => {
     await CompanyMaster.findByIdAndDelete(req.params.id);
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'DELETE_COMPANY', details: `Deleted Company Master: ${rec.name}` });
     res.json({ message: 'Company deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 2. Branch Setup =================
@@ -123,7 +123,7 @@ router.get('/branches', protect, async (req, res) => {
   try {
     const list = await BranchMaster.find({});
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/branches', protect, adminOnly, async (req, res) => {
@@ -146,7 +146,7 @@ router.post('/branches', protect, adminOnly, async (req, res) => {
     rec = await BranchMaster.create({ name: cleanName, code: cleanCode, location, branchHead, status: status || 'Inactive' });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_BRANCH', details: `Created Branch Master: ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/branches/:id', protect, adminOnly, async (req, res) => {
@@ -157,7 +157,7 @@ router.put('/branches/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'UPDATE_BRANCH', details: `Updated Branch Master: ${rec.name} (${rec.code})` });
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/branches/:id', protect, adminOnly, async (req, res) => {
@@ -167,7 +167,7 @@ router.delete('/branches/:id', protect, adminOnly, async (req, res) => {
     await BranchMaster.findByIdAndDelete(req.params.id);
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'DELETE_BRANCH', details: `Deleted Branch Master: ${rec.name}` });
     res.json({ message: 'Branch deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 3. Business Unit Setup =================
@@ -206,7 +206,7 @@ router.get('/business-units', protect, async (req, res) => {
 
     const list = await BusinessUnitMaster.find(query).populate('parentCompany').sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/business-units', protect, adminOnly, async (req, res) => {
@@ -254,7 +254,7 @@ router.post('/business-units', protect, adminOnly, async (req, res) => {
     });
     await createAuditLog(req, 'CREATE_BU', `Created Business Unit: ${cleanName} (${cleanCode})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/business-units/:id', protect, adminOnly, async (req, res) => {
@@ -273,7 +273,7 @@ router.put('/business-units/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_BU', `Updated Business Unit: ${rec.name} (${rec.code})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/business-units/:id', protect, adminOnly, async (req, res) => {
@@ -296,7 +296,7 @@ router.delete('/business-units/:id', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'DELETE_BU', `Soft deleted Business Unit: ${rec.name}`, oldValues, rec);
     res.json({ message: 'Business Unit soft deleted successfully', rec });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/business-units/:id/restore', protect, adminOnly, async (req, res) => {
@@ -310,7 +310,7 @@ router.post('/business-units/:id/restore', protect, adminOnly, async (req, res) 
     await rec.save();
     await createAuditLog(req, 'RESTORE_BU', `Restored Business Unit: ${rec.name}`, null, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/business-units/bulk-delete', protect, adminOnly, async (req, res) => {
@@ -334,7 +334,7 @@ router.post('/business-units/bulk-delete', protect, adminOnly, async (req, res) 
     );
     await createAuditLog(req, 'BULK_DELETE_BU', `Bulk soft deleted ${ids.length} Business Units`);
     res.json({ message: `Bulk deleted ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/business-units/bulk-status', protect, adminOnly, async (req, res) => {
@@ -348,7 +348,7 @@ router.put('/business-units/bulk-status', protect, adminOnly, async (req, res) =
     );
     await createAuditLog(req, 'BULK_STATUS_BU', `Bulk updated status of ${ids.length} Business Units to ${status}`);
     res.json({ message: `Bulk updated status of ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 4. Cost Center Setup =================
@@ -356,7 +356,7 @@ router.get('/cost-centers', protect, async (req, res) => {
   try {
     const list = await CostCenterMaster.find({});
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/cost-centers', protect, adminOnly, async (req, res) => {
@@ -377,7 +377,7 @@ router.post('/cost-centers', protect, adminOnly, async (req, res) => {
     rec = await CostCenterMaster.create({ name: cleanName, code: cleanCode, status: status || 'Inactive' });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_CC', details: `Created Cost Center: ${cleanName} (${cleanCode})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/cost-centers/:id', protect, adminOnly, async (req, res) => {
@@ -387,14 +387,14 @@ router.put('/cost-centers/:id', protect, adminOnly, async (req, res) => {
     Object.assign(rec, req.body);
     await rec.save();
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/cost-centers/:id', protect, adminOnly, async (req, res) => {
   try {
     await CostCenterMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Cost Center deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 5. Department Master Setup (Upgraded CRUD) =================
@@ -402,7 +402,7 @@ router.get('/departments', protect, async (req, res) => {
   try {
     const list = await Department.find({}).sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/departments', protect, adminOnly, async (req, res) => {
@@ -450,7 +450,7 @@ router.post('/departments', protect, adminOnly, async (req, res) => {
     }
 
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/departments/:id', protect, adminOnly, async (req, res) => {
@@ -493,7 +493,7 @@ router.put('/departments/:id', protect, adminOnly, async (req, res) => {
     if (req.io) req.io.to('hr').emit('notification', hrNotif);
 
     res.json(dept);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/departments/:id', protect, adminOnly, async (req, res) => {
@@ -510,7 +510,7 @@ router.delete('/departments/:id', protect, adminOnly, async (req, res) => {
     await Department.findByIdAndDelete(req.params.id);
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'DELETE_DEPT', details: `Deleted Department: ${dept.name}` });
     res.json({ message: 'Department deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 6. Sub Department Setup =================
@@ -532,7 +532,7 @@ router.post('/sub-departments', protect, adminOnly, async (req, res) => {
     const rec = await SubDepartmentMaster.create({ name, code, parentDept, managerId, status });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_SUBDEPT', details: `Created Sub-department: ${name} (${code})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/sub-departments/:id', protect, adminOnly, async (req, res) => {
@@ -542,14 +542,14 @@ router.put('/sub-departments/:id', protect, adminOnly, async (req, res) => {
     Object.assign(rec, req.body);
     await rec.save();
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/sub-departments/:id', protect, adminOnly, async (req, res) => {
   try {
     await SubDepartmentMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Sub-department deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 7. Designation Setup =================
@@ -571,7 +571,7 @@ router.post('/designations', protect, adminOnly, async (req, res) => {
     const rec = await DesignationMaster.create({ name, code, deptMapping, gradeMapping, positionLimit, status });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_DESG', details: `Created Designation: ${name} (${code})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/designations/:id', protect, adminOnly, async (req, res) => {
@@ -581,14 +581,14 @@ router.put('/designations/:id', protect, adminOnly, async (req, res) => {
     Object.assign(rec, req.body);
     await rec.save();
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/designations/:id', protect, adminOnly, async (req, res) => {
   try {
     await DesignationMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Designation deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 8. Grade Band Setup =================
@@ -596,7 +596,7 @@ router.get('/grade-bands', protect, async (req, res) => {
   try {
     const list = await GradeBandMaster.find({});
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/grade-bands', protect, adminOnly, async (req, res) => {
@@ -607,7 +607,7 @@ router.post('/grade-bands', protect, adminOnly, async (req, res) => {
     const rec = await GradeBandMaster.create({ name, description, status });
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'CREATE_GRADE', details: `Created Grade/Band: ${name}` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/grade-bands/:id', protect, adminOnly, async (req, res) => {
@@ -617,14 +617,14 @@ router.put('/grade-bands/:id', protect, adminOnly, async (req, res) => {
     Object.assign(rec, req.body);
     await rec.save();
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/grade-bands/:id', protect, adminOnly, async (req, res) => {
   try {
     await GradeBandMaster.findByIdAndDelete(req.params.id);
     res.json({ message: 'Grade/Band deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 9. Reporting Manager Matrix (With Circular Check) =================
@@ -817,7 +817,7 @@ router.put('/reporting-manager', protect, adminOnly, async (req, res) => {
     if (req.io) req.io.to('hr').emit('notification', hrNotif);
 
     res.json({ message: 'Reporting manager details updated successfully', employee: emp });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 10. Department Transfers =================
@@ -866,7 +866,7 @@ router.put('/department-transfer', protect, adminOnly, async (req, res) => {
     if (req.io) req.io.to('hr').emit('notification', hrNotif);
 
     res.json({ message: 'Department transfer processed successfully', employee: emp });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 11. Designation Movements =================
@@ -902,7 +902,7 @@ router.put('/designation-transfer', protect, adminOnly, async (req, res) => {
     });
 
     res.json({ message: 'Designation updated successfully', employee: emp });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 12. History Records Fetching =================
@@ -920,14 +920,14 @@ router.get('/transfer-history', protect, async (req, res) => {
   try {
     const list = await DepartmentTransferHistory.find({}).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.get('/designation-history', protect, async (req, res) => {
   try {
     const list = await DesignationHistory.find({}).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 13. Vacancy Mapping & Approvals =================
@@ -935,7 +935,7 @@ router.get('/vacancies', protect, async (req, res) => {
   try {
     const list = await Vacancy.find({}).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/vacancies', protect, adminOnly, async (req, res) => {
@@ -962,7 +962,7 @@ router.post('/vacancies', protect, adminOnly, async (req, res) => {
 
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'REQUEST_VACANCY', details: `Raised manpower request: ${jobTitle} (${positionId})` });
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/vacancies/:id', protect, adminOnly, async (req, res) => {
@@ -972,7 +972,7 @@ router.put('/vacancies/:id', protect, adminOnly, async (req, res) => {
     Object.assign(rec, req.body);
     await rec.save();
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // HR / Management Vacancy Review Approvals (Screen 5 Approval flow)
@@ -993,7 +993,7 @@ router.put('/vacancies/:id/approve', protect, adminOnly, async (req, res) => {
     await rec.save();
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'APPROVE_VACANCY', details: `Approved vacancy headcount request for POS: ${rec.positionId}` });
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/vacancies/:id/reject', protect, adminOnly, async (req, res) => {
@@ -1013,14 +1013,14 @@ router.put('/vacancies/:id/reject', protect, adminOnly, async (req, res) => {
     await rec.save();
     await OrgAuditLog.create({ actorId: req.user.id, actorName: req.user.name, action: 'REJECT_VACANCY', details: `Rejected vacancy request for POS: ${rec.positionId}` });
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/vacancies/:id', protect, adminOnly, async (req, res) => {
   try {
     await Vacancy.findByIdAndDelete(req.params.id);
     res.json({ message: 'Vacancy removed successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= 14. Span of Control & Audits =================
@@ -1070,7 +1070,7 @@ router.get('/span-of-control', protect, async (req, res) => {
         };
       });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Rollback Support =================
@@ -1116,9 +1116,7 @@ router.post('/audit-logs/:id/rollback', protect, adminOnly, async (req, res) => 
 
     await createAuditLog(req, 'ROLLBACK_ACTION', `Rolled back action: ${log.action} (Original Log ID: ${log._id})`, log.newValues, log.oldValues);
     res.json({ message: 'Rollback executed successfully', restored });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ================= Legal Entity Management =================
@@ -1156,7 +1154,7 @@ router.get('/legal-entities', protect, async (req, res) => {
 
     const list = await LegalEntityMaster.find(query).sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/legal-entities', protect, adminOnly, async (req, res) => {
@@ -1177,7 +1175,7 @@ router.post('/legal-entities', protect, adminOnly, async (req, res) => {
     const rec = await LegalEntityMaster.create(Object.assign({}, req.body, { created_by: req.user.name, updated_by: req.user.name }));
     await createAuditLog(req, 'CREATE_LEGAL_ENTITY', `Created Legal Entity: ${rec.name} (${rec.code})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/legal-entities/:id', protect, adminOnly, async (req, res) => {
@@ -1212,7 +1210,7 @@ router.put('/legal-entities/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_LEGAL_ENTITY', `Updated Legal Entity: ${rec.name} (${rec.code})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/legal-entities/:id', protect, adminOnly, async (req, res) => {
@@ -1235,7 +1233,7 @@ router.delete('/legal-entities/:id', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'DELETE_LEGAL_ENTITY', `Soft deleted Legal Entity: ${rec.name}`, oldValues, rec);
     res.json({ message: 'Legal Entity soft deleted successfully', rec });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/legal-entities/:id/restore', protect, adminOnly, async (req, res) => {
@@ -1249,7 +1247,7 @@ router.post('/legal-entities/:id/restore', protect, adminOnly, async (req, res) 
     await rec.save();
     await createAuditLog(req, 'RESTORE_LEGAL_ENTITY', `Restored Legal Entity: ${rec.name}`, null, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/legal-entities/bulk-delete', protect, adminOnly, async (req, res) => {
@@ -1271,7 +1269,7 @@ router.post('/legal-entities/bulk-delete', protect, adminOnly, async (req, res) 
     );
     await createAuditLog(req, 'BULK_DELETE_LEGAL_ENTITY', `Bulk soft deleted ${ids.length} Legal Entities`);
     res.json({ message: `Bulk deleted ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/legal-entities/bulk-status', protect, adminOnly, async (req, res) => {
@@ -1285,7 +1283,7 @@ router.put('/legal-entities/bulk-status', protect, adminOnly, async (req, res) =
     );
     await createAuditLog(req, 'BULK_STATUS_LEGAL_ENTITY', `Bulk updated status of ${ids.length} Legal Entities to ${status}`);
     res.json({ message: `Bulk updated status of ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Region Management =================
@@ -1293,7 +1291,7 @@ router.get('/regions', protect, async (req, res) => {
   try {
     const list = await RegionMaster.find({}).sort({ name: 1 });
     res.json(list);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/regions', protect, adminOnly, async (req, res) => {
@@ -1303,7 +1301,7 @@ router.post('/regions', protect, adminOnly, async (req, res) => {
     const rec = await RegionMaster.create(req.body);
     await createAuditLog(req, 'CREATE_REGION', `Created Region: ${rec.name} (${rec.code})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/regions/:id', protect, adminOnly, async (req, res) => {
@@ -1315,7 +1313,7 @@ router.put('/regions/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_REGION', `Updated Region: ${rec.name} (${rec.code})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/regions/:id', protect, adminOnly, async (req, res) => {
@@ -1326,7 +1324,7 @@ router.delete('/regions/:id', protect, adminOnly, async (req, res) => {
     await RegionMaster.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_REGION', `Deleted Region: ${rec.name}`, oldValues, null);
     res.json({ message: 'Region deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Building Management =================
@@ -1344,7 +1342,7 @@ router.post('/buildings', protect, adminOnly, async (req, res) => {
     const rec = await BuildingMaster.create(req.body);
     await createAuditLog(req, 'CREATE_BUILDING', `Created Building: ${rec.name} (${rec.code})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/buildings/:id', protect, adminOnly, async (req, res) => {
@@ -1356,7 +1354,7 @@ router.put('/buildings/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_BUILDING', `Updated Building: ${rec.name} (${rec.code})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/buildings/:id', protect, adminOnly, async (req, res) => {
@@ -1367,7 +1365,7 @@ router.delete('/buildings/:id', protect, adminOnly, async (req, res) => {
     await BuildingMaster.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_BUILDING', `Deleted Building: ${rec.name}`, oldValues, null);
     res.json({ message: 'Building deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Floor Management =================
@@ -1394,7 +1392,7 @@ router.post('/floors', protect, adminOnly, async (req, res) => {
     const rec = await FloorMaster.create(req.body);
     await createAuditLog(req, 'CREATE_FLOOR', `Created Floor: ${rec.name} (Building ref: ${rec.buildingId})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/floors/:id', protect, adminOnly, async (req, res) => {
@@ -1406,7 +1404,7 @@ router.put('/floors/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_FLOOR', `Updated Floor: ${rec.name}`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/floors/:id', protect, adminOnly, async (req, res) => {
@@ -1417,7 +1415,7 @@ router.delete('/floors/:id', protect, adminOnly, async (req, res) => {
     await FloorMaster.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_FLOOR', `Deleted Floor: ${rec.name}`, oldValues, null);
     res.json({ message: 'Floor deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Team Management =================
@@ -1467,7 +1465,7 @@ router.post('/teams', protect, adminOnly, async (req, res) => {
     const rec = await TeamMaster.create(Object.assign({}, req.body, { created_by: req.user.name, updated_by: req.user.name }));
     await createAuditLog(req, 'CREATE_TEAM', `Created Team: ${rec.name} (${rec.code})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/teams/:id', protect, adminOnly, async (req, res) => {
@@ -1489,7 +1487,7 @@ router.put('/teams/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_TEAM', `Updated Team: ${rec.name} (${rec.code})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/teams/:id', protect, adminOnly, async (req, res) => {
@@ -1511,7 +1509,7 @@ router.delete('/teams/:id', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'DELETE_TEAM', `Soft deleted Team: ${rec.name}`, oldValues, rec);
     res.json({ message: 'Team soft deleted successfully', rec });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/teams/:id/restore', protect, adminOnly, async (req, res) => {
@@ -1525,7 +1523,7 @@ router.post('/teams/:id/restore', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'RESTORE_TEAM', `Restored Team: ${rec.name}`, null, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/teams/bulk-delete', protect, adminOnly, async (req, res) => {
@@ -1546,7 +1544,7 @@ router.post('/teams/bulk-delete', protect, adminOnly, async (req, res) => {
     );
     await createAuditLog(req, 'BULK_DELETE_TEAM', `Bulk soft deleted ${ids.length} Teams`);
     res.json({ message: `Bulk deleted ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/teams/bulk-status', protect, adminOnly, async (req, res) => {
@@ -1560,7 +1558,7 @@ router.put('/teams/bulk-status', protect, adminOnly, async (req, res) => {
     );
     await createAuditLog(req, 'BULK_STATUS_TEAM', `Bulk updated status of ${ids.length} Teams to ${status}`);
     res.json({ message: `Bulk updated status of ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Position Management =================
@@ -1612,7 +1610,7 @@ router.post('/positions', protect, adminOnly, async (req, res) => {
     const rec = await PositionMaster.create(Object.assign({}, req.body, { created_by: req.user.name, updated_by: req.user.name }));
     await createAuditLog(req, 'CREATE_POSITION', `Created Position: ${rec.positionName} (${rec.positionCode})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/positions/:id', protect, adminOnly, async (req, res) => {
@@ -1624,7 +1622,7 @@ router.put('/positions/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_POSITION', `Updated Position: ${rec.positionName} (${rec.positionCode})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/positions/:id', protect, adminOnly, async (req, res) => {
@@ -1646,7 +1644,7 @@ router.delete('/positions/:id', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'DELETE_POSITION', `Soft deleted Position: ${rec.positionName} (${rec.positionCode})`, oldValues, rec);
     res.json({ message: 'Position soft deleted successfully', rec });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/positions/:id/restore', protect, adminOnly, async (req, res) => {
@@ -1660,7 +1658,7 @@ router.post('/positions/:id/restore', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'RESTORE_POSITION', `Restored Position: ${rec.positionName}`, null, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.post('/positions/bulk-delete', protect, adminOnly, async (req, res) => {
@@ -1681,7 +1679,7 @@ router.post('/positions/bulk-delete', protect, adminOnly, async (req, res) => {
     );
     await createAuditLog(req, 'BULK_DELETE_POSITION', `Bulk soft deleted ${ids.length} Positions`);
     res.json({ message: `Bulk deleted ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/positions/bulk-status', protect, adminOnly, async (req, res) => {
@@ -1695,7 +1693,7 @@ router.put('/positions/bulk-status', protect, adminOnly, async (req, res) => {
     );
     await createAuditLog(req, 'BULK_STATUS_POSITION', `Bulk updated status of ${ids.length} Positions to ${status}`);
     res.json({ message: `Bulk updated status of ${result.modifiedCount} records successfully` });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Organization Policies =================
@@ -1709,7 +1707,7 @@ router.post('/policies', protect, adminOnly, async (req, res) => {
     const rec = await OrgPolicy.create(req.body);
     await createAuditLog(req, 'CREATE_POLICY', `Created Org Policy: ${rec.name} [Category: ${rec.category}]`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/policies/:id', protect, adminOnly, async (req, res) => {
@@ -1733,7 +1731,7 @@ router.put('/policies/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_POLICY', `Updated Policy: ${rec.name} to Version ${rec.version}`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/policies/:id', protect, adminOnly, async (req, res) => {
@@ -1744,7 +1742,7 @@ router.delete('/policies/:id', protect, adminOnly, async (req, res) => {
     await OrgPolicy.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_POLICY', `Deleted Policy: ${rec.name}`, oldValues, null);
     res.json({ message: 'Policy deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Organization Documents =================
@@ -1764,7 +1762,7 @@ router.post('/documents', protect, adminOnly, async (req, res) => {
     });
     await createAuditLog(req, 'CREATE_DOCUMENT', `Uploaded document: ${rec.title} (${rec.category})`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/documents/:id', protect, adminOnly, async (req, res) => {
@@ -1787,7 +1785,7 @@ router.put('/documents/:id', protect, adminOnly, async (req, res) => {
     await rec.save();
     await createAuditLog(req, 'UPDATE_DOCUMENT', `Updated Document: ${rec.title} (New Version: ${rec.version})`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/documents/:id', protect, adminOnly, async (req, res) => {
@@ -1798,7 +1796,7 @@ router.delete('/documents/:id', protect, adminOnly, async (req, res) => {
     await OrgDocument.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_DOCUMENT', `Deleted Document: ${rec.title}`, oldValues, null);
     res.json({ message: 'Document deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Succession Planning =================
@@ -1825,7 +1823,7 @@ router.post('/succession-plans', protect, adminOnly, async (req, res) => {
       await createAuditLog(req, 'CREATE_SUCCESSION', `Created succession plan for Position: ${positionId}`, null, rec);
     }
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/succession-plans/:id', protect, adminOnly, async (req, res) => {
@@ -1836,7 +1834,7 @@ router.delete('/succession-plans/:id', protect, adminOnly, async (req, res) => {
     await SuccessionPlan.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_SUCCESSION', `Deleted succession plan for position ID: ${rec.positionId}`, oldValues, null);
     res.json({ message: 'Succession plan deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 // ================= Headcount Planning =================
@@ -1871,7 +1869,7 @@ router.post('/headcount-plans', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'CREATE_HEADCOUNT', `Created headcount plan for Year ${rec.year}`, null, rec);
     res.status(201).json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
@@ -1897,7 +1895,7 @@ router.put('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
 
     await createAuditLog(req, 'UPDATE_HEADCOUNT', `Updated headcount plan for ID: ${rec._id}`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/headcount-plans/:id/approve', protect, adminOnly, async (req, res) => {
@@ -1920,7 +1918,7 @@ router.put('/headcount-plans/:id/approve', protect, adminOnly, async (req, res) 
 
     await createAuditLog(req, 'APPROVE_HEADCOUNT', `Approved headcount plan for ID: ${rec._id}`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.put('/headcount-plans/:id/reject', protect, adminOnly, async (req, res) => {
@@ -1943,7 +1941,7 @@ router.put('/headcount-plans/:id/reject', protect, adminOnly, async (req, res) =
 
     await createAuditLog(req, 'REJECT_HEADCOUNT', `Rejected headcount plan for ID: ${rec._id}`, oldValues, rec);
     res.json(rec);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
@@ -1954,7 +1952,7 @@ router.delete('/headcount-plans/:id', protect, adminOnly, async (req, res) => {
     await HeadcountPlan.findByIdAndDelete(req.params.id);
     await createAuditLog(req, 'DELETE_HEADCOUNT', `Deleted headcount plan for year ${rec.year}`, oldValues, null);
     res.json({ message: 'Headcount plan deleted successfully' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { next(err); }
 });
 
 router.get('/audit-logs', protect, adminOnly, async (req, res) => {

@@ -17,9 +17,7 @@ router.get('/', protect, async (req, res) => {
       warnings = await WarningLetter.find({ empId: req.user.id }).sort({ createdAt: -1 });
     }
     res.json(warnings);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/warning-letters
@@ -54,9 +52,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     req.io.to(empId).emit('notification', notif);
 
     res.status(201).json(warning);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/warning-letters/:id/acknowledge
@@ -88,9 +84,7 @@ router.put('/:id/acknowledge', protect, async (req, res) => {
     req.io.to('hr').emit('notification', notif);
 
     res.json(warning);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

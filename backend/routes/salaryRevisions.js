@@ -43,9 +43,7 @@ router.get('/', protect, async (req, res) => {
         totalCostImpact
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/salary-revisions
@@ -130,9 +128,7 @@ router.post('/', protect, async (req, res) => {
     });
 
     res.status(201).json(request);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/salary-revisions/:id/action
@@ -194,9 +190,7 @@ router.put('/:id/action', protect, async (req, res) => {
     await reqObj.save();
 
     res.json(reqObj);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/salary-revisions/:id/acknowledge
@@ -224,9 +218,7 @@ router.put('/:id/acknowledge', protect, async (req, res) => {
     await reqObj.save();
 
     res.json(reqObj);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/salary-revisions/reports
@@ -240,9 +232,7 @@ router.get('/reports', protect, async (req, res) => {
       approvedList,
       historyList
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

@@ -52,9 +52,7 @@ router.get('/tna', protect, async (req, res) => {
     }
     const tnaList = await TrainingNeedsAnalysis.find(filter).sort({ createdAt: -1 });
     res.json(tnaList);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/tna', protect, async (req, res) => {
@@ -114,9 +112,7 @@ router.get('/annual-plan', protect, async (req, res) => {
   try {
     const plans = await AnnualTrainingPlan.find().sort({ year: -1 });
     res.json(plans);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/annual-plan', protect, async (req, res) => {
@@ -153,9 +149,7 @@ router.get('/programs', protect, async (req, res) => {
 
     const programs = await TrainingProgram.find(filter).sort({ scheduleDate: 1 });
     res.json(programs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/programs', protect, async (req, res) => {
@@ -219,9 +213,7 @@ router.get('/trainers-venues', protect, async (req, res) => {
   try {
     const items = await TrainerVenue.find({ isActive: true });
     res.json(items);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/trainers-venues', protect, async (req, res) => {
@@ -245,9 +237,7 @@ router.get('/skill-matrix', protect, async (req, res) => {
     }
     const skills = await SkillMatrix.find(filter).sort({ createdAt: -1 });
     res.json(skills);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/skill-matrix', protect, async (req, res) => {
@@ -279,9 +269,7 @@ router.get('/competency-matrix', protect, async (req, res) => {
   try {
     const comps = await CompetencyMatrix.find().sort({ createdAt: -1 });
     res.json(comps);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -291,9 +279,7 @@ router.get('/assessments', protect, async (req, res) => {
   try {
     const items = await AssessmentCertification.find().sort({ createdAt: -1 });
     res.json(items);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/assessments/:id/issue-certificate', protect, async (req, res) => {
@@ -343,9 +329,7 @@ router.get('/learning-history', protect, async (req, res) => {
     }
     const history = await LearningHistory.find(filter).sort({ completionDate: -1 });
     res.json(history);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -369,9 +353,7 @@ router.get('/dashboard', protect, async (req, res) => {
       averageAssessmentScore: '86.2%',
       trainingBudgetUtilization: '74.5%'
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -381,9 +363,7 @@ router.get('/audit', protect, async (req, res) => {
   try {
     const logs = await TrainingAuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

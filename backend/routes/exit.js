@@ -89,9 +89,7 @@ router.get('/dashboard', protect, async (req, res) => {
         ]
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -101,9 +99,7 @@ router.get('/resignations', protect, async (req, res) => {
   try {
     const list = await EmployeeExit.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/resignations', protect, async (req, res) => {
@@ -136,9 +132,7 @@ router.post('/resignations', protect, async (req, res) => {
 
     await logAudit(req, 'SUBMIT_RESIGNATION', 'EmployeeExit', exitId, newExit);
     res.status(201).json(newExit);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.put('/resignations/:id', protect, async (req, res) => {
@@ -148,9 +142,7 @@ router.put('/resignations/:id', protect, async (req, res) => {
     const updated = await EmployeeExit.findOneAndUpdate({ exitId: id }, update, { new: true });
     await logAudit(req, 'UPDATE_EXIT_STATUS', 'EmployeeExit', id, update);
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -160,9 +152,7 @@ router.get('/notice-period', protect, async (req, res) => {
   try {
     const list = await NoticePeriod.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -172,9 +162,7 @@ router.get('/clearance', protect, async (req, res) => {
   try {
     const clearances = await DepartmentClearance.find();
     res.json(clearances);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.put('/clearance/:id', protect, async (req, res) => {
@@ -188,9 +176,7 @@ router.put('/clearance/:id', protect, async (req, res) => {
     );
     await logAudit(req, 'APPROVE_DEPARTMENT_CLEARANCE', 'DepartmentClearance', id, updated);
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/assets', protect, async (req, res) => {
@@ -199,9 +185,7 @@ router.get('/assets', protect, async (req, res) => {
     const itStatus = await ItClearance.find();
     const secStatus = await SecurityClearance.find();
     res.json({ assets, itStatus, secStatus });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -211,9 +195,7 @@ router.get('/interview', protect, async (req, res) => {
   try {
     const interviews = await ExitInterview.find().sort({ createdAt: -1 });
     res.json(interviews);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/interview', protect, async (req, res) => {
@@ -232,9 +214,7 @@ router.post('/interview', protect, async (req, res) => {
     });
     await logAudit(req, 'COMPLETE_EXIT_INTERVIEW', 'ExitInterview', interviewId, newInterview);
     res.status(201).json(newInterview);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -244,9 +224,7 @@ router.get('/settlement', protect, async (req, res) => {
   try {
     const list = await FullFinalSettlement.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/settlement/calculate', protect, async (req, res) => {
@@ -287,9 +265,7 @@ router.post('/settlement/calculate', protect, async (req, res) => {
 
     await logAudit(req, 'CALCULATE_FF_SETTLEMENT', 'FullFinalSettlement', settlementId, newFFS);
     res.status(201).json(newFFS);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -312,9 +288,7 @@ router.get('/no-due/:exitId', protect, async (req, res) => {
       });
     }
     res.json(ndc);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/documents/:exitId', protect, async (req, res) => {
@@ -322,9 +296,7 @@ router.get('/documents/:exitId', protect, async (req, res) => {
     const { exitId } = req.params;
     const docs = await ExitDocument.find({ exitId });
     res.json(docs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -338,18 +310,14 @@ router.get('/masters', protect, async (req, res) => {
     const clearanceDepts = await ClearanceDepartmentMaster.find();
 
     res.json({ exitTypes, reasons, noticePolicies, clearanceDepts });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/history', protect, async (req, res) => {
   try {
     const logs = await ExitAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

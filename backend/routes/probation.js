@@ -40,9 +40,7 @@ router.get('/', protect, async (req, res) => {
         overdueReviews
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/probation/assign
@@ -139,9 +137,7 @@ router.post('/assign', protect, async (req, res) => {
     }
 
     res.status(201).json(prob);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/probation/:id/review
@@ -191,9 +187,7 @@ router.put('/:id/review', protect, async (req, res) => {
     });
 
     res.json(prob);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/probation/:id/decision
@@ -290,9 +284,7 @@ router.put('/:id/decision', protect, async (req, res) => {
       probation: prob,
       letter: letterText
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/probation/reports
@@ -340,9 +332,7 @@ router.get('/reports', protect, async (req, res) => {
       extendedList,
       deptReport
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/probation/:id/email-letter
@@ -363,9 +353,7 @@ router.post('/:id/email-letter', protect, async (req, res) => {
     await prob.save();
 
     res.json({ message: `Confirmation Letter successfully emailed to ${prob.employeeName}.` });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

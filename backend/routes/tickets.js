@@ -15,9 +15,7 @@ router.get('/', protect, async (req, res) => {
       tickets = await Ticket.find({ empId: req.user.id }).sort({ createdAt: -1 });
     }
     res.json(tickets);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/tickets
@@ -53,9 +51,7 @@ router.post('/', protect, async (req, res) => {
     req.io.to('hr').emit('notification', notif);
 
     res.status(201).json(ticket);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/tickets/:id
@@ -97,9 +93,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     req.io.to(ticket.empId).emit('notification', notif);
 
     res.json(ticket);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

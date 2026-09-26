@@ -145,9 +145,7 @@ router.get('/dashboard', protect, async (req, res) => {
         variance: (totalAllocatedBudget || 2500000) - (totalUtilizedBudget || 1450000)
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: 'Error loading recruitment dashboard metrics', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -157,9 +155,7 @@ router.get('/requisitions', protect, async (req, res) => {
   try {
     const list = await ManpowerRequisition.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching requisitions', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/requisitions', protect, async (req, res) => {
@@ -283,9 +279,7 @@ router.get('/positions', protect, async (req, res) => {
   try {
     const requests = await PositionApprovalRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(requests);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching position requests', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/positions', protect, async (req, res) => {
@@ -353,9 +347,7 @@ router.get('/budgets', protect, async (req, res) => {
   try {
     const list = await VacancyBudgetRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching budget requests', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/budgets', protect, async (req, res) => {
@@ -411,9 +403,7 @@ router.get('/resumes', protect, async (req, res) => {
   try {
     const list = await ResumeAnalysis.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching resume analyses', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/resumes/upload', protect, upload.single('resume'), async (req, res) => {
@@ -536,9 +526,7 @@ router.get('/candidates', protect, async (req, res) => {
   try {
     const candidates = await Candidate.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(candidates);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching candidates', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/candidates', protect, async (req, res) => {
@@ -671,9 +659,7 @@ router.get('/talent-pool', protect, async (req, res) => {
   try {
     const pool = await TalentPool.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(pool);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching talent pool', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/talent-pool', protect, async (req, res) => {
@@ -723,9 +709,7 @@ router.get('/costs', protect, async (req, res) => {
   try {
     const costs = await RecruitmentCost.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(costs);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching recruitment costs', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/costs', protect, async (req, res) => {
@@ -756,9 +740,7 @@ router.get('/masters', protect, async (req, res) => {
   try {
     const masters = await RecruitmentMaster.find({ is_active: true }).sort({ category: 1, name: 1 });
     res.json(masters);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching master data', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/masters', protect, async (req, res) => {
@@ -778,9 +760,7 @@ router.get('/audit-logs', protect, async (req, res) => {
   try {
     const logs = await RecruitmentAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching audit logs', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

@@ -55,9 +55,7 @@ router.get('/', protect, async (req, res) => {
         averageClosureDays
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/action-closures
@@ -95,9 +93,7 @@ router.post('/', protect, async (req, res) => {
     });
 
     res.status(201).json(action);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/action-closures/:id/assign
@@ -156,9 +152,7 @@ router.put('/:id/assign', protect, async (req, res) => {
     }
 
     res.json(action);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/action-closures/:id/progress
@@ -216,9 +210,7 @@ router.put('/:id/progress', protect, async (req, res) => {
     }
 
     res.json(action);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/action-closures/:id/verify
@@ -296,9 +288,7 @@ router.put('/:id/verify', protect, async (req, res) => {
 
     await action.save();
     res.json(action);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/action-closures/reports
@@ -335,9 +325,7 @@ router.get('/reports', protect, async (req, res) => {
       overdueList,
       deptReport
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

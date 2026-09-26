@@ -15,9 +15,7 @@ router.get('/', protect, async (req, res) => {
       logs = await Timesheet.find({ empId: req.user.id }).sort({ createdAt: -1 });
     }
     res.json(logs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/timesheet/clock-in
@@ -110,9 +108,7 @@ router.post('/clock-out', protect, async (req, res) => {
     
     await activeShift.save();
     res.json(activeShift);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

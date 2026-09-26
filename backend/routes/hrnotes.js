@@ -33,9 +33,7 @@ router.post('/', async (req, res) => {
       authorId: req.user.id
     });
     res.status(201).json(note);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/hr-notes/:id
@@ -56,9 +54,7 @@ router.put('/:id', async (req, res) => {
 
     await note.save();
     res.json(note);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   DELETE /api/hr-notes/:id
@@ -73,9 +69,7 @@ router.delete('/:id', async (req, res) => {
 
     await ConfidentialNote.findByIdAndDelete(req.params.id);
     res.json({ message: 'Confidential note removed successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

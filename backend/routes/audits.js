@@ -77,9 +77,7 @@ router.get('/stats', protect, async (req, res) => {
       overdueAudits: overdue,
       pendingActions
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/audits
@@ -89,9 +87,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const audits = await Audit.find().sort({ createdAt: -1 });
     res.json(audits);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/audits
@@ -395,9 +391,7 @@ router.post('/observation', protect, async (req, res) => {
     });
     await audit.save();
     res.json(audit);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // 3. Update Action PUT /api/audits/action
@@ -417,9 +411,7 @@ router.put('/action', protect, async (req, res) => {
     
     await audit.save();
     res.json(audit);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // 4. Close Audit POST /api/audits/close
@@ -442,9 +434,7 @@ router.post('/close', protect, async (req, res) => {
     
     await audit.save();
     res.json(audit);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // 5. Dashboard GET /api/audits/dashboard
@@ -465,9 +455,7 @@ router.get('/dashboard', protect, async (req, res) => {
       closedAudits: closed,
       overdueAudits: overdue
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

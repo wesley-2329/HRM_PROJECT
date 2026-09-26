@@ -99,9 +99,7 @@ router.get('/dashboard', protect, async (req, res) => {
         { year: '2026', avgIncrementPct: 12.5 }
       ]
     });
-  } catch (err) {
-    res.status(500).json({ message: 'Error loading performance dashboard analytics', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -111,9 +109,7 @@ router.get('/cycles', protect, async (req, res) => {
   try {
     const list = await AppraisalCycleMaster.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching appraisal cycles', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/cycles', protect, async (req, res) => {
@@ -154,9 +150,7 @@ router.get('/rating-scales', protect, async (req, res) => {
   try {
     const list = await RatingScaleMaster.find().sort({ ratingValue: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching rating scales', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/rating-scales', protect, async (req, res) => {
@@ -173,9 +167,7 @@ router.get('/competencies', protect, async (req, res) => {
   try {
     const list = await CompetencyMaster.find().sort({ competencyType: 1, competencyName: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching competencies', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/competencies', protect, async (req, res) => {
@@ -194,9 +186,7 @@ router.get('/templates', protect, async (req, res) => {
   try {
     const list = await PerformanceTemplate.find().sort({ templateName: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching performance templates', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/templates', protect, async (req, res) => {
@@ -213,9 +203,7 @@ router.get('/kras', protect, async (req, res) => {
   try {
     const list = await KraMaster.find().sort({ kraId: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching KRA master', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/kras', protect, async (req, res) => {
@@ -234,9 +222,7 @@ router.get('/kpis', protect, async (req, res) => {
   try {
     const list = await KpiMaster.find().sort({ kpiId: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching KPI master', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/kpis', protect, async (req, res) => {
@@ -258,9 +244,7 @@ router.get('/goals', protect, async (req, res) => {
   try {
     const list = await EmployeeGoal.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching employee goals', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/goals', protect, async (req, res) => {
@@ -347,9 +331,7 @@ router.get('/mid-year-reviews', protect, async (req, res) => {
   try {
     const list = await MidYearReview.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching mid-year reviews', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/mid-year-reviews', protect, async (req, res) => {
@@ -395,9 +377,7 @@ router.get('/annual-reviews', protect, async (req, res) => {
   try {
     const list = await AnnualReview.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching annual reviews', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/annual-reviews', protect, async (req, res) => {
@@ -489,9 +469,7 @@ router.get('/promotions', protect, async (req, res) => {
   try {
     const list = await PromotionRequest.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching promotion recommendations', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/promotions', protect, async (req, res) => {
@@ -571,9 +549,7 @@ router.get('/increments', protect, async (req, res) => {
   try {
     const list = await SalaryRevisionRequest.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching increment recommendations', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/increments', protect, async (req, res) => {
@@ -641,9 +617,7 @@ router.get('/pip', protect, async (req, res) => {
   try {
     const list = await PipRecord.find({ deletedAt: null }).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching PIP records', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/pip', protect, async (req, res) => {
@@ -704,9 +678,7 @@ router.get('/audit-logs', protect, async (req, res) => {
   try {
     const logs = await PerformanceAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching performance audit logs', error: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

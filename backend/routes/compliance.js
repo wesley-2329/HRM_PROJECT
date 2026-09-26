@@ -108,9 +108,7 @@ router.get('/dashboard', protect, async (req, res) => {
         ]
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -125,9 +123,7 @@ router.get('/overview', protect, async (req, res) => {
       { actId: 'ACT-PT', actCode: 'PT-ACT', actName: 'Karnataka Professional Tax Act', governingBody: 'Commercial Tax Dept', frequency: 'Monthly', nextDueDate: '2026-08-20', currentStatus: 'Compliant', riskLevel: 'Low' },
       { actId: 'ACT-LWF', actCode: 'LWF-ACT', actName: 'Labour Welfare Fund Act', governingBody: 'Labour Welfare Board', frequency: 'Half-Yearly', nextDueDate: '2026-12-31', currentStatus: 'Compliant', riskLevel: 'Low' }
     ]);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -137,9 +133,7 @@ router.get('/calendar', protect, async (req, res) => {
   try {
     const list = await ComplianceCalendar.find().sort({ dueDate: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -150,9 +144,7 @@ router.get('/pf', protect, async (req, res) => {
     const pfProfiles = await EmployeePfProfile.find();
     const contributions = await PfContribution.find().sort({ createdAt: -1 });
     res.json({ profiles: pfProfiles, contributions });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/pf/ecr', protect, async (req, res) => {
@@ -177,9 +169,7 @@ router.post('/pf/ecr', protect, async (req, res) => {
     });
     await logAudit(req, 'GENERATE_PF_ECR', 'PfContribution', contribId, newContrib);
     res.status(201).json(newContrib);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -190,9 +180,7 @@ router.get('/esi', protect, async (req, res) => {
     const esiProfiles = await EmployeeEsiProfile.find();
     const contributions = await EsiContribution.find().sort({ createdAt: -1 });
     res.json({ profiles: esiProfiles, contributions });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -204,9 +192,7 @@ router.get('/pt', protect, async (req, res) => {
     const calculations = await PtCalculation.find();
     const rules = await PtRuleMaster.find();
     res.json({ profiles, calculations, rules });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -218,9 +204,7 @@ router.get('/lwf', protect, async (req, res) => {
     const contributions = await LwfContribution.find();
     const rules = await LwfRuleMaster.find();
     res.json({ profiles, contributions, rules });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -230,9 +214,7 @@ router.get('/challans', protect, async (req, res) => {
   try {
     const list = await StatutoryChallan.find().sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/challans', protect, async (req, res) => {
@@ -253,9 +235,7 @@ router.post('/challans', protect, async (req, res) => {
     });
     await logAudit(req, 'CREATE_STATUTORY_CHALLAN', 'StatutoryChallan', challanId, newChallan);
     res.status(201).json(newChallan);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/challans/:id/pay', protect, async (req, res) => {
@@ -269,9 +249,7 @@ router.post('/challans/:id/pay', protect, async (req, res) => {
     );
     await logAudit(req, 'PAY_STATUTORY_CHALLAN', 'StatutoryChallan', id, updated);
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -281,9 +259,7 @@ router.get('/returns', protect, async (req, res) => {
   try {
     const list = await StatutoryReturn.find().sort({ filingDueDate: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/returns', protect, async (req, res) => {
@@ -303,9 +279,7 @@ router.post('/returns', protect, async (req, res) => {
     });
     await logAudit(req, 'FILE_STATUTORY_RETURN', 'StatutoryReturn', returnId, newReturn);
     res.status(201).json(newReturn);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -315,9 +289,7 @@ router.get('/due-dates', protect, async (req, res) => {
   try {
     const list = await DueDateTracker.find().sort({ dueDate: 1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -327,9 +299,7 @@ router.get('/notices', protect, async (req, res) => {
   try {
     const notices = await GovernmentNotice.find().sort({ createdAt: -1 });
     res.json(notices);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/notices', protect, async (req, res) => {
@@ -348,18 +318,14 @@ router.post('/notices', protect, async (req, res) => {
     });
     await logAudit(req, 'CREATE_GOVERNMENT_NOTICE', 'GovernmentNotice', noticeId, newNotice);
     res.status(201).json(newNotice);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/inspections', protect, async (req, res) => {
   try {
     const list = await InspectionRecord.find().sort({ inspectionDate: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/inspections', protect, async (req, res) => {
@@ -377,9 +343,7 @@ router.post('/inspections', protect, async (req, res) => {
     });
     await logAudit(req, 'LOG_LABOUR_INSPECTION', 'InspectionRecord', inspectionId, newIns);
     res.status(201).json(newIns);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -389,9 +353,7 @@ router.get('/documents', protect, async (req, res) => {
   try {
     const docs = await ComplianceDocument.find().sort({ createdAt: -1 });
     res.json(docs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.post('/documents', protect, async (req, res) => {
@@ -407,9 +369,7 @@ router.post('/documents', protect, async (req, res) => {
     });
     await logAudit(req, 'UPLOAD_COMPLIANCE_DOC', 'ComplianceDocument', docId, newDoc);
     res.status(201).json(newDoc);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ==========================================
@@ -423,18 +383,14 @@ router.get('/masters', protect, async (req, res) => {
     const plants = await PlantMaster.find();
 
     res.json({ acts, categories, states, plants });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/history', protect, async (req, res) => {
   try {
     const logs = await StatutoryAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

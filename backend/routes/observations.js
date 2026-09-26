@@ -40,9 +40,7 @@ router.get('/', protect, async (req, res) => {
         overdue: overdueCount
       }
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   POST /api/observations
@@ -108,9 +106,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     res.status(201).json(obs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/observations/:id/assign
@@ -170,9 +166,7 @@ router.put('/:id/assign', protect, async (req, res) => {
     }
 
     res.json(obs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/observations/:id/action
@@ -223,9 +217,7 @@ router.put('/:id/action', protect, async (req, res) => {
     req.io.to(obs.creatorId).emit('notification', notif);
 
     res.json(obs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   PUT /api/observations/:id/verify
@@ -299,9 +291,7 @@ router.put('/:id/verify', protect, async (req, res) => {
 
     await obs.save();
     res.json(obs);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // @route   GET /api/observations/reports
@@ -330,9 +320,7 @@ router.get('/reports', protect, async (req, res) => {
       overdueReport: overdueList,
       pendingReport: pendingList
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

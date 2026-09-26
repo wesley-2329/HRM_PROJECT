@@ -49,9 +49,7 @@ router.get('/documents', protect, async (req, res) => {
       docs = await VaultDocument.find({ employeeId: req.user.id }).sort({ updatedAt: -1 });
     }
     res.json(docs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/vault/documents/:id
@@ -79,9 +77,7 @@ router.get('/documents/:id', protect, async (req, res) => {
     await doc.save();
 
     res.json(doc);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/vault/documents/upload
@@ -192,9 +188,7 @@ router.post('/documents/upload', protect, upload.single('file'), async (req, res
     }
 
     res.json({ message: 'Document uploaded successfully', document: doc });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/vault/documents/:id/approve
@@ -238,9 +232,7 @@ router.put('/documents/:id/approve', protect, adminOnly, async (req, res) => {
     }
 
     res.json({ message: 'Document approved successfully', document: doc });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/vault/documents/:id/reject
@@ -288,9 +280,7 @@ router.put('/documents/:id/reject', protect, adminOnly, async (req, res) => {
     }
 
     res.json({ message: 'Document rejected successfully', document: doc });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/vault/documents/:id/download/:versionNumber
@@ -330,9 +320,7 @@ router.get('/documents/:id/download/:versionNumber', protect, async (req, res) =
     } else {
       res.status(404).json({ message: 'Physical file not found on disk' });
     }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // ================= Expiry & Compliance Monitoring =================
@@ -350,9 +338,7 @@ router.get('/expiries', protect, adminOnly, async (req, res) => {
     }).sort({ expiryDate: 1 });
 
     res.json(expiringDocs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/vault/trigger-expiry-checks
@@ -426,9 +412,7 @@ router.post('/trigger-expiry-checks', protect, adminOnly, async (req, res) => {
     }
 
     res.json({ message: 'Compliance check completed successfully', checkedCount: docs.length, updatedCount });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

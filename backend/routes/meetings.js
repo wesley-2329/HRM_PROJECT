@@ -75,9 +75,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     res.status(201).json(meeting);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/meetings/:id/status
@@ -97,9 +95,7 @@ router.put('/:id/status', protect, async (req, res) => {
 
     await meeting.save();
     res.json(meeting);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

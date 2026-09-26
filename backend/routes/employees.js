@@ -25,9 +25,7 @@ router.get('/', protect, adminOnly, async (req, res) => {
     await ensureEmployeesSeeded();
     const employees = await Employee.find({}).select('-password');
     res.json(employees);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/employees/public
@@ -38,9 +36,7 @@ router.get('/public', protect, async (req, res) => {
     await ensureEmployeesSeeded();
     const list = await Employee.find({ status: 'Approved' }).select('id name role dept teamLeadId isTeamLead avatar gender designation functionalManagerId branch businessUnit grade');
     res.json(list);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   GET /api/employees/:id
@@ -59,9 +55,7 @@ router.get('/:id', protect, async (req, res) => {
     }
 
     res.json(employee);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/employees
@@ -123,9 +117,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     });
 
     res.status(201).json(employee);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/employees/:id
@@ -214,9 +206,7 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
 
     await Employee.deleteOne({ id: req.params.id });
     res.json({ message: 'Employee removed successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   PUT /api/employees/:id/status
@@ -238,9 +228,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     employee.status = status;
     await employee.save();
     res.json({ message: `Employee status set to ${status}`, employee });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // Multer Storage Configuration
@@ -307,9 +295,7 @@ router.post('/upload-doc', protect, upload.single('file'), async (req, res) => {
       filePath: fileRelativePath,
       fileName: req.file.filename
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/employees/upload-avatar
@@ -338,9 +324,7 @@ router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res)
       avatar: fileRelativePath,
       empId: targetEmpId
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

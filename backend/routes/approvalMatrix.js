@@ -164,9 +164,7 @@ router.get('/masters', protect, async (req, res) => {
     }
 
     res.json({ processes, roles, levels });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ================= APPROVAL MATRIX CONFIG ROUTES =================
@@ -176,9 +174,7 @@ router.get('/matrices', protect, async (req, res) => {
   try {
     const list = await ApprovalMatrix.find({}).sort({ updatedAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Create new configuration matrix
@@ -206,9 +202,7 @@ router.post('/matrices', protect, adminOnly, async (req, res) => {
 
     await logAction(req, 'CREATE_MATRIX', `Created Approval Matrix for ${processName} (${department})`, null, matrix);
     res.status(201).json(matrix);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Update matrix config (Increments version & archives details in history log)
@@ -239,9 +233,7 @@ router.put('/matrices/:id', protect, adminOnly, async (req, res) => {
     await logAction(req, 'UPDATE_MATRIX', `Updated Matrix configurations to version v${matrix.version} for ${matrix.processName}`, oldValues, matrix);
 
     res.json(matrix);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Toggle configuration status
@@ -267,9 +259,7 @@ router.put('/matrices/:id/status', protect, adminOnly, async (req, res) => {
 
     await logAction(req, 'TOGGLE_MATRIX_STATUS', `Approval matrix status of ${matrix.processName} changed from ${oldStatus} to ${newStatus}`, { status: oldStatus }, { status: newStatus });
     res.json(matrix);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Delete configuration matrix
@@ -281,9 +271,7 @@ router.delete('/matrices/:id', protect, adminOnly, async (req, res) => {
     await ApprovalMatrix.findByIdAndDelete(req.params.id);
     await logAction(req, 'DELETE_MATRIX', `Deleted configuration matrix for ${matrix.processName} (${matrix.department})`);
     res.json({ message: 'Matrix deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ================= ACTIVE WORKFLOW ASSIGNMENTS & TRANSACTIONS =================
@@ -305,9 +293,7 @@ router.get('/assignments', protect, async (req, res) => {
 
     const list = await ApprovalAssignment.find(query).sort({ createdAt: -1 });
     res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 router.get('/assignments/inbox', protect, async (req, res) => {
@@ -338,9 +324,7 @@ router.get('/assignments/inbox', protect, async (req, res) => {
     }
 
     res.json(inboxWithDetails);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // Submit approval decision (Approve/Reject)
@@ -457,9 +441,7 @@ router.put('/assignments/:id/action', protect, async (req, res) => {
     }
 
     res.json(assign);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 // ================= AUDIT LOGS & REPORTS ENDPOINTS =================
@@ -512,9 +494,7 @@ router.get('/reports', protect, async (req, res) => {
       histories,
       escalations
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

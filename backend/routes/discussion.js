@@ -10,9 +10,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const messages = await DiscussionMessage.find({}).sort({ createdAt: 1 }).limit(100);
     res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 // @route   POST /api/discussion
@@ -37,9 +35,7 @@ router.post('/', protect, async (req, res) => {
     req.io.emit('discussion_message', newMsg);
 
     res.status(201).json(newMsg);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;
