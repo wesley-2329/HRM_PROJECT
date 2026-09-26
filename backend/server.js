@@ -255,8 +255,12 @@ if (process.env.NODE_ENV === 'production') {
 // Unified Global Error Handling Middleware for DB Connection Failures & Fallback Behavior
 app.use((err, req, res, next) => {
   // Pass through E11000 duplicate key error and business/status errors (e.g. 400, 401, 404, 409)
-  if (err.code === 11000 || (err.status && err.status < 500) || err.name === 'ValidationError') {
-    return next(err);
+  if (err.code === 11000 || (err.status && err.status < 500) || err.name === 'ValidationError' || err.name === 'CastError') {
+    const statusCode = err.status || (err.code === 11000 ? 409 : (err.name === 'ValidationError' || err.name === 'CastError' ? 400 : 400));
+    return res.status(statusCode).json({
+      message: err.message,
+      ...(err.activeShift ? { activeShift: err.activeShift } : {})
+    });
   }
 
   const isDBDisconnected = mongoose.connection.readyState !== 1;
