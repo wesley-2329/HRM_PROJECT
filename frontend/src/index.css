@@ -206,7 +206,13 @@ body.dark-mode {
 }
 
 .glass-card {
-  @apply bg-white/5 dark:bg-slate-900/20 backdrop-blur-xl border border-white/10 dark:border-slate-800/30 rounded-3xl p-8 md:p-10 text-white z-10 w-full max-w-md shadow-2xl;
+  @apply bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-slate-800/60 rounded-2xl p-6 text-slate-900 dark:text-slate-100 w-full shadow-sm hover:shadow-md transition-all duration-300;
+}
+
+body.dark-mode .glass-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
 }
 
 /* App Layout & Sidebar Navigation */

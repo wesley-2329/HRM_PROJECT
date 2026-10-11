@@ -1579,35 +1579,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     return n.type === notifCategoryFilter;
   });
 
-  const displayTasks = tasks && tasks.length > 0 ? tasks : [
-    {
-      _id: 'mock-t1',
-      title: 'Complete Quarterly Self-Assessment',
-      project: 'HR Development',
-      due: 'In 3 Days',
-      priority: 'High',
-      status: 'pending',
-      description: 'Document your contributions, key milestones, and set growth objectives for the upcoming quarter.'
-    },
-    {
-      _id: 'mock-t2',
-      title: 'Review Codebase Security Policies',
-      project: 'Security Compliance',
-      due: 'Next Week',
-      priority: 'Medium',
-      status: 'pending',
-      description: 'Audit local storage keys, session timeouts, and cross-site scripting vulnerabilities in settings forms.'
-    },
-    {
-      _id: 'mock-t3',
-      title: 'Sprint Planning Alignment Sync',
-      project: 'Project Atlas',
-      due: 'Tomorrow',
-      priority: 'High',
-      status: 'pending',
-      description: 'Align with the DevOps team on database migrations and whitelisting IP configuration parameters.'
-    }
-  ];
+  const displayTasks = tasks || [];
 
   const displayMeetings = meetings && meetings.length > 0 ? meetings : [
     {
@@ -1821,24 +1793,30 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     </button>
                   </div>
                   <div style={{ maxHeight: '290px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
-                    {displayTasks.map(t => {
-                      const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
-                      return (
-                        <div key={t._id} style={{ padding: '14px', background: 'hsl(var(--bg-main))', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid hsl(var(--border))' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ fontSize: '0.9rem' }}>{t.title}</strong>
-                            <span className={`badge ${priorityColor}`}>{t.priority}</span>
+                    {displayTasks.length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        No pending tasks assigned. Click <strong>Full Tasks Board</strong> to manage or add new tasks.
+                      </div>
+                    ) : (
+                      displayTasks.map(t => {
+                        const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
+                        return (
+                          <div key={t._id} style={{ padding: '14px', background: 'hsl(var(--bg-main))', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid hsl(var(--border))' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}>{t.title}</strong>
+                              <span className={`badge ${priorityColor}`}>{t.priority}</span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
+                              {t.description || `${t.project} — Deliverables & Progress`}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid hsl(var(--border))', paddingTop: '6px', marginTop: '2px' }}>
+                              <span>Due: {t.due}</span>
+                              <span style={{ textTransform: 'capitalize' }}>Status: {t.status || 'todo'}</span>
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
-                            {t.description || 'Assigned deliverables and pipeline security compliance updates.'}
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '6px', marginTop: '2px' }}>
-                            <span>Due: {t.due}</span>
-                            <span>Project: {t.project}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
@@ -2656,98 +2634,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           </section>
         )}
 
-        {/* 7. Learning View */}
-        {currentModule === 'emp-learning' && (
-          <section id="emp-mod-emp-learning" className="emp-module">
-            <div className="card">
-              <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-crown" style={{ color: 'var(--warning)' }}></i> Learning Progress
-              </div>
-              <div className="chart-container">
-                <canvas ref={empLearningLineRef}></canvas>
-              </div>
-            </div>
 
-            <h3 style={{ marginBottom: '16px' }}>Assigned Training Courses</h3>
-            <div className="emp-grid">
-              {trainings.filter(t => t.status === 'assigned').map(tr => (
-                <div key={tr._id} className="emp-card" style={{ textAlign: 'left' }}>
-                  <span className="badge badge-info" style={{ marginBottom: '8px' }}>{tr.category}</span>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px' }}>{tr.name}</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Assigned by {tr.assignedBy}</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                    <span>Progress</span><strong>{tr.progress}%</strong>
-                  </div>
-                  <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
-                    <div style={{ width: `${tr.progress}%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
-                  </div>
-                  <SubjectSparkline progress={tr.progress} />
-                  <button className="btn btn-secondary" style={{ width: '100%' }} onClick={async () => {
-                    try {
-                      await api.put(`/trainings/${tr._id}/progress`, { progress: Math.min(tr.progress + 20, 100) });
-                      showToast('Module progress updated.', 'success');
-                      fetchTrainings();
-                    } catch (err) {
-                      showToast('Error updating course.', 'error');
-                    }
-                  }}>Continue Learning</button>
-                </div>
-              ))}
-              {trainings.filter(t => t.status === 'assigned').length === 0 && (
-                <div style={{ color: 'var(--text-secondary)' }}>No assigned training courses.</div>
-              )}
-            </div>
-
-            <div className="card">
-              <div className="card-title">Attended Training Programs</div>
-              <div className="table-responsive">
-                <table className="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Program Name</th>
-                      <th>Trainer</th>
-                      <th>Date</th>
-                      <th>Duration</th>
-                      <th>Mode</th>
-                      <th>Review & Rating</th>
-                      <th>Certificate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trainings.filter(t => t.status === 'attended').map((at, idx) => (
-                      <tr key={idx}>
-                        <td><strong>{at.name}</strong></td>
-                        <td>{at.trainer || 'In-house'}</td>
-                        <td>{at.date || '2026-05-10'}</td>
-                        <td>{at.duration}</td>
-                        <td>Online</td>
-                        <td>
-                          {at.rating ? (
-                            <>
-                              <span style={{ color: 'var(--warning)' }}><i className="fa-solid fa-star"></i> {at.rating}/5</span>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{at.review}</div>
-                            </>
-                          ) : (
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={async () => {
-                              try {
-                                await api.put(`/trainings/${at._id}/review`, { rating: 5, review: 'Amazing training!', trainer: 'E-learning module' });
-                                showToast('Review submitted.', 'success');
-                                fetchTrainings();
-                              } catch (err) {
-                                showToast('Error submitting review.', 'error');
-                              }
-                            }}>Submit Rating</button>
-                          )}
-                        </td>
-                        <td><span className="badge badge-success">{at.certificate}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* 8. Tasks Kanban Board View */}
         {currentModule === 'emp-tasks' && (

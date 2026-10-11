@@ -143,7 +143,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
   };
 
   return (
-    <div className="training-module-container" style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="training-module-container" style={{ padding: '0 0 24px 0', width: '100%', maxWidth: '100%', margin: '0 auto' }}>
       
       {/* Header Banner */}
       <div className="glass-card mb-6" style={{
@@ -188,7 +188,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
         overflowX: 'auto',
         paddingBottom: '12px',
         marginBottom: '24px',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
+        borderBottom: '1px solid hsl(var(--border))'
       }}>
         {[
           { id: 'overview', label: 'Dashboard Overview', icon: 'fa-chart-line' },
@@ -207,7 +207,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
             style={{
               padding: '10px 18px',
               borderRadius: '10px',
-              border: 'none',
+              border: activeTab === tab.id ? 'none' : '1px solid hsl(var(--border))',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 700 : 500,
               fontSize: '0.9rem',
@@ -216,8 +216,8 @@ const TrainingModule = ({ searchQuery = '' }) => {
               alignItems: 'center',
               gap: '8px',
               transition: 'all 0.2s ease',
-              background: activeTab === tab.id ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
-              color: activeTab === tab.id ? '#ffffff' : 'hsl(var(--muted-foreground))',
+              background: activeTab === tab.id ? 'linear-gradient(135deg, #10b981, #059669)' : 'hsl(var(--bg-card))',
+              color: activeTab === tab.id ? '#ffffff' : 'hsl(var(--foreground))',
               boxShadow: activeTab === tab.id ? '0 4px 14px rgba(16,185,129,0.35)' : 'none'
             }}
           >
@@ -233,25 +233,25 @@ const TrainingModule = ({ searchQuery = '' }) => {
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #10b981' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>SCHEDULED PROGRAMS</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>SCHEDULED PROGRAMS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#10b981' }}>{metrics.totalTrainingPrograms}</div>
               <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #3b82f6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>TNA REQUESTS</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>TNA REQUESTS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#3b82f6' }}>{metrics.tnaRequestsTotal}</div>
               <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.approvedTnaRequests} HR Approved</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #8b5cf6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>ISSUED CERTIFICATES</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>ISSUED CERTIFICATES</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#8b5cf6' }}>{metrics.issuedCertificates}</div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #f59e0b' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700 }}>SKILL GAP CLOSURE</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>SKILL GAP CLOSURE</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#f59e0b' }}>{metrics.skillGapClosurePercentage}</div>
               <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
             </div>
@@ -259,7 +259,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
           {/* Quick Actions Bar */}
           <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '14px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem', marginRight: '8px' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions:</span>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', marginRight: '8px', color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions:</span>
             <button className="btn btn-primary" onClick={() => setShowTnaModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
               <i className="fa-solid fa-magnifying-glass-chart"></i> Submit TNA Request
             </button>
@@ -272,20 +272,22 @@ const TrainingModule = ({ searchQuery = '' }) => {
           </div>
 
           {/* Upcoming Programs List */}
-          <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 700 }}>📅 Featured Upcoming Training Workshops</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📅 Featured Upcoming Training Workshops</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', width: '100%' }}>
               {programs.map(p => (
-                <div key={p._id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span className="badge badge-info">{p.category}</span>
-                    <span className="badge badge-success">{p.mode}</span>
+                <div key={p._id} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span className="badge badge-info">{p.category}</span>
+                      <span className="badge badge-success">{p.mode}</span>
+                    </div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{p.title}</h4>
+                    <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                      👨‍🏫 Trainer: {p.trainer?.name} | 📍 Venue: {p.venue?.name}
+                    </p>
                   </div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700 }}>{p.title}</h4>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                    👨‍🏫 Trainer: {p.trainer?.name} | 📍 Venue: {p.venue?.name}
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
                     <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>⏱️ {p.durationHours} Hours | Capacity: {p.capacity}</span>
                     <button className="btn btn-sm btn-primary" onClick={() => handleEnrollProgram(p.programId)} style={{ borderRadius: '6px' }}>Enroll Now</button>
                   </div>
@@ -298,129 +300,135 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
       {/* TAB 2: TNA */}
       {activeTab === 'tna' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>🔍 Training Needs Analysis (TNA)</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🔍 Training Needs Analysis (TNA)</h3>
             <button className="btn btn-primary" onClick={() => setShowTnaModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Submit TNA Request
             </button>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                <th style={{ padding: '12px' }}>TNA ID</th>
-                <th style={{ padding: '12px' }}>Employee & Dept</th>
-                <th style={{ padding: '12px' }}>Requested Skill</th>
-                <th style={{ padding: '12px' }}>Proficiency Gap</th>
-                <th style={{ padding: '12px' }}>Priority</th>
-                <th style={{ padding: '12px' }}>Target Quarter</th>
-                <th style={{ padding: '12px' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tnas.map(t => (
-                <tr key={t._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>{t.tnaId}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600 }}>{t.employee?.name}</div>
-                    <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{t.employee?.dept}</span>
-                  </td>
-                  <td style={{ padding: '12px', fontWeight: 600 }}>{t.requestedSkill}</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>L{t.currentProficiency} → L{t.targetProficiency} (Gap: {t.targetProficiency - t.currentProficiency})</td>
-                  <td style={{ padding: '12px' }}><span className="badge badge-danger">{t.priority}</span></td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{t.targetQuarter}</td>
-                  <td style={{ padding: '12px' }}><span className="badge badge-success">{t.status}</span></td>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                  <th style={{ padding: '12px' }}>TNA ID</th>
+                  <th style={{ padding: '12px' }}>Employee & Dept</th>
+                  <th style={{ padding: '12px' }}>Requested Skill</th>
+                  <th style={{ padding: '12px' }}>Proficiency Gap</th>
+                  <th style={{ padding: '12px' }}>Priority</th>
+                  <th style={{ padding: '12px' }}>Target Quarter</th>
+                  <th style={{ padding: '12px' }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tnas.map(t => (
+                  <tr key={t._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{t.tnaId}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ fontWeight: 600 }}>{t.employee?.name}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{t.employee?.dept}</span>
+                    </td>
+                    <td style={{ padding: '12px', fontWeight: 600 }}>{t.requestedSkill}</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>L{t.currentProficiency} → L{t.targetProficiency} (Gap: {t.targetProficiency - t.currentProficiency})</td>
+                    <td style={{ padding: '12px' }}><span className="badge badge-danger">{t.priority}</span></td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{t.targetQuarter}</td>
+                    <td style={{ padding: '12px' }}><span className="badge badge-success">{t.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TAB 3: ANNUAL TRAINING PLAN */}
       {activeTab === 'annual-plan' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700 }}>📋 FY2026 Annual Corporate Training Plan</h3>
-          {annualPlans.map(plan => (
-            <div key={plan._id} style={{ padding: '20px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{plan.title} ({plan.year})</h4>
-                <span className="badge badge-success">{plan.status}</span>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📋 FY2026 Annual Corporate Training Plan</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {annualPlans.map(plan => (
+              <div key={plan._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{plan.title} ({plan.year})</h4>
+                  <span className="badge badge-success">{plan.status}</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Allocated Budget</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981' }}>₹{plan.allocatedBudget?.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Utilized Budget</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#3b82f6' }}>₹{plan.utilizedBudget?.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Planned Courses</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f59e0b' }}>{plan.plannedCoursesCount} Modules</div>
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Allocated Budget</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981' }}>₹{plan.allocatedBudget?.toLocaleString()}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Utilized Budget</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#3b82f6' }}>₹{plan.utilizedBudget?.toLocaleString()}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Planned Courses</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f59e0b' }}>{plan.plannedCoursesCount} Modules</div>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {/* TAB 4: CALENDAR */}
       {activeTab === 'calendar' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>📅 Training Calendar & Scheduling</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📅 Training Calendar & Scheduling</h3>
             <button className="btn btn-primary" onClick={() => setShowProgramModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Schedule Program
             </button>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                <th style={{ padding: '12px' }}>Program ID</th>
-                <th style={{ padding: '12px' }}>Title & Category</th>
-                <th style={{ padding: '12px' }}>Mode & Duration</th>
-                <th style={{ padding: '12px' }}>Trainer</th>
-                <th style={{ padding: '12px' }}>Venue</th>
-                <th style={{ padding: '12px' }}>Schedule Date</th>
-                <th style={{ padding: '12px' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {programs.map(p => (
-                <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>{p.programId}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600 }}>{p.title}</div>
-                    <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{p.category}</span>
-                  </td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.mode} ({p.durationHours}h)</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.trainer?.name}</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.venue?.name}</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{new Date(p.scheduleDate).toLocaleDateString()}</td>
-                  <td style={{ padding: '12px' }}><span className="badge badge-success">{p.status}</span></td>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                  <th style={{ padding: '12px' }}>Program ID</th>
+                  <th style={{ padding: '12px' }}>Title & Category</th>
+                  <th style={{ padding: '12px' }}>Mode & Duration</th>
+                  <th style={{ padding: '12px' }}>Trainer</th>
+                  <th style={{ padding: '12px' }}>Venue</th>
+                  <th style={{ padding: '12px' }}>Schedule Date</th>
+                  <th style={{ padding: '12px' }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {programs.map(p => (
+                  <tr key={p._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{p.programId}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ fontWeight: 600 }}>{p.title}</div>
+                      <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{p.category}</span>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.mode} ({p.durationHours}h)</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.trainer?.name}</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{p.venue?.name}</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{new Date(p.scheduleDate).toLocaleDateString()}</td>
+                    <td style={{ padding: '12px' }}><span className="badge badge-success">{p.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TAB 5: TRAINERS & VENUES */}
       {activeTab === 'trainers-venues' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700 }}>👨‍🏫 Trainer & Venue Repository</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>👨‍🏫 Trainer & Venue Repository</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', width: '100%' }}>
             {trainersVenues.map(tv => (
-              <div key={tv._id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div key={tv._id} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span className="badge badge-info">{tv.type}</span>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>⭐ {tv.rating} / 5</span>
                 </div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700 }}>{tv.name}</h4>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{tv.name}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{tv.specialization || tv.category}</p>
                 <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>📍 {tv.location} | Capacity: {tv.capacity}</div>
               </div>
@@ -431,59 +439,63 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
       {/* TAB 6: SKILL & COMPETENCY MATRIX */}
       {activeTab === 'skill-matrix' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>📊 Organizational Skill & Competency Matrix</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📊 Organizational Skill & Competency Matrix</h3>
             <button className="btn btn-primary" onClick={() => setShowSkillModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Record Skill Entry
             </button>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                <th style={{ padding: '12px' }}>Skill ID</th>
-                <th style={{ padding: '12px' }}>Skill Name & Category</th>
-                <th style={{ padding: '12px' }}>Employee</th>
-                <th style={{ padding: '12px' }}>Required Level</th>
-                <th style={{ padding: '12px' }}>Current Level</th>
-                <th style={{ padding: '12px' }}>Gap Score</th>
-                <th style={{ padding: '12px' }}>Evaluator</th>
-              </tr>
-            </thead>
-            <tbody>
-              {skills.map(s => (
-                <tr key={s._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>{s.skillId}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600 }}>{s.skillName}</div>
-                    <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{s.category} ({s.department})</span>
-                  </td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{s.employee?.name}</td>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>Level {s.requiredLevel}</td>
-                  <td style={{ padding: '12px', fontWeight: 700, color: '#3b82f6' }}>Level {s.currentLevel}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span className={`badge ${s.gapScore > 1 ? 'badge-danger' : 'badge-success'}`}>Gap: {s.gapScore}</span>
-                  </td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{s.evaluatorName}</td>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                  <th style={{ padding: '12px' }}>Skill ID</th>
+                  <th style={{ padding: '12px' }}>Skill Name & Category</th>
+                  <th style={{ padding: '12px' }}>Employee</th>
+                  <th style={{ padding: '12px' }}>Required Level</th>
+                  <th style={{ padding: '12px' }}>Current Level</th>
+                  <th style={{ padding: '12px' }}>Gap Score</th>
+                  <th style={{ padding: '12px' }}>Evaluator</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {skills.map(s => (
+                  <tr key={s._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{s.skillId}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ fontWeight: 600 }}>{s.skillName}</div>
+                      <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{s.category} ({s.department})</span>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{s.employee?.name}</td>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>Level {s.requiredLevel}</td>
+                    <td style={{ padding: '12px', fontWeight: 700, color: '#3b82f6' }}>Level {s.currentLevel}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span className={`badge ${s.gapScore > 1 ? 'badge-danger' : 'badge-success'}`}>Gap: {s.gapScore}</span>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{s.evaluatorName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TAB 7: ASSESSMENTS & CERTIFICATIONS */}
       {activeTab === 'assessments' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700 }}>🎓 Online Assessments & Digital Certifications</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🎓 Online Assessments & Digital Certifications</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', width: '100%' }}>
             {assessments.map(a => (
-              <div key={a._id} style={{ padding: '20px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span className="badge badge-info mb-2">Certification Exam</span>
-                <h4 style={{ margin: '4px 0 8px 0', fontSize: '1.1rem', fontWeight: 700 }}>{a.title}</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>Passing Score: {a.passingMarks}% | Questions: {a.totalQuestions}</p>
-                <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={a._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <span className="badge badge-info mb-2">Certification Exam</span>
+                  <h4 style={{ margin: '4px 0 8px 0', fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{a.title}</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>Passing Score: {a.passingMarks}% | Questions: {a.totalQuestions}</p>
+                </div>
+                <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
                   <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>📜 {a.certificateName}</span>
                   <button className="btn btn-sm btn-primary" onClick={() => handleIssueCertificate(a._id)} style={{ borderRadius: '6px' }}>Take Exam & Issue Cert</button>
                 </div>
@@ -495,65 +507,69 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
       {/* TAB 8: LEARNING PORTAL & HISTORY */}
       {activeTab === 'portal' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700 }}>📚 My Learning Portal & Completion Records</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                <th style={{ padding: '12px' }}>Program Title</th>
-                <th style={{ padding: '12px' }}>Employee</th>
-                <th style={{ padding: '12px' }}>Completion Date</th>
-                <th style={{ padding: '12px' }}>Score</th>
-                <th style={{ padding: '12px' }}>Status</th>
-                <th style={{ padding: '12px' }}>Certificate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map(h => (
-                <tr key={h._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '12px', fontWeight: 600 }}>{h.programTitle}</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{h.employeeName}</td>
-                  <td style={{ padding: '12px', fontSize: '0.85rem' }}>{new Date(h.completionDate).toLocaleDateString()}</td>
-                  <td style={{ padding: '12px', fontWeight: 700, color: '#10b981' }}>{h.scoreObtained}%</td>
-                  <td style={{ padding: '12px' }}><span className="badge badge-success">{h.status}</span></td>
-                  <td style={{ padding: '12px' }}>
-                    {h.certificateUrl && <a href={h.certificateUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline" style={{ borderRadius: '6px', fontSize: '0.75rem' }}>View Cert</a>}
-                  </td>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📚 My Learning Portal & Completion Records</h3>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                  <th style={{ padding: '12px' }}>Program Title</th>
+                  <th style={{ padding: '12px' }}>Employee</th>
+                  <th style={{ padding: '12px' }}>Completion Date</th>
+                  <th style={{ padding: '12px' }}>Score</th>
+                  <th style={{ padding: '12px' }}>Status</th>
+                  <th style={{ padding: '12px' }}>Certificate</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {history.map(h => (
+                  <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <td style={{ padding: '12px', fontWeight: 600 }}>{h.programTitle}</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{h.employeeName}</td>
+                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>{new Date(h.completionDate).toLocaleDateString()}</td>
+                    <td style={{ padding: '12px', fontWeight: 700, color: '#10b981' }}>{h.scoreObtained}%</td>
+                    <td style={{ padding: '12px' }}><span className="badge badge-success">{h.status}</span></td>
+                    <td style={{ padding: '12px' }}>
+                      {h.certificateUrl && <a href={h.certificateUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline" style={{ borderRadius: '6px', fontSize: '0.75rem' }}>View Cert</a>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TAB 9: ANALYTICS & AUDITS */}
       {activeTab === 'analytics' && (
-        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700 }}>📊 Training Audit Trail & KPI Analytics</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                <th style={{ padding: '12px' }}>Timestamp</th>
-                <th style={{ padding: '12px' }}>Entity</th>
-                <th style={{ padding: '12px' }}>Entity ID</th>
-                <th style={{ padding: '12px' }}>Action</th>
-                <th style={{ padding: '12px' }}>Performed By</th>
-                <th style={{ padding: '12px' }}>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {auditLogs.map(l => (
-                <tr key={l._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
-                  <td style={{ padding: '12px' }}>{new Date(l.timestamp).toLocaleString()}</td>
-                  <td style={{ padding: '12px', fontWeight: 600 }}>{l.entityType}</td>
-                  <td style={{ padding: '12px', fontWeight: 700 }}>{l.entityId}</td>
-                  <td style={{ padding: '12px' }}><span className="badge badge-info">{l.action}</span></td>
-                  <td style={{ padding: '12px' }}>{l.performedBy?.name} ({l.performedBy?.role})</td>
-                  <td style={{ padding: '12px', color: 'hsl(var(--muted-foreground))' }}>{l.comments}</td>
+        <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📊 Training Audit Trail & KPI Analytics</h3>
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                  <th style={{ padding: '12px' }}>Timestamp</th>
+                  <th style={{ padding: '12px' }}>Entity</th>
+                  <th style={{ padding: '12px' }}>Entity ID</th>
+                  <th style={{ padding: '12px' }}>Action</th>
+                  <th style={{ padding: '12px' }}>Performed By</th>
+                  <th style={{ padding: '12px' }}>Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {auditLogs.map(l => (
+                  <tr key={l._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.85rem', color: 'hsl(var(--foreground))' }}>
+                    <td style={{ padding: '12px' }}>{new Date(l.timestamp).toLocaleString()}</td>
+                    <td style={{ padding: '12px', fontWeight: 600 }}>{l.entityType}</td>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{l.entityId}</td>
+                    <td style={{ padding: '12px' }}><span className="badge badge-info">{l.action}</span></td>
+                    <td style={{ padding: '12px' }}>{l.performedBy?.name} ({l.performedBy?.role})</td>
+                    <td style={{ padding: '12px', color: 'hsl(var(--muted-foreground))' }}>{l.comments}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

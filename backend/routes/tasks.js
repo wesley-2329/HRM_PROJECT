@@ -19,6 +19,41 @@ router.get('/', protect, async (req, res, next) => {
     } else {
       tasks = await Task.find({ empId: req.user.id });
     }
+
+    // Auto-seed starter tasks for employee if none exist yet
+    if ((!tasks || tasks.length === 0) && req.user.role !== 'hr') {
+      const defaultTasks = [
+        {
+          title: 'Complete Quarterly Self-Assessment',
+          project: 'HR Development',
+          priority: 'High',
+          due: 'In 3 Days',
+          progress: 0,
+          status: 'todo',
+          empId: req.user.id
+        },
+        {
+          title: 'Review Codebase Security Policies',
+          project: 'Security Compliance',
+          priority: 'Medium',
+          due: 'Next Week',
+          progress: 40,
+          status: 'in-progress',
+          empId: req.user.id
+        },
+        {
+          title: 'Sprint Planning Alignment Sync',
+          project: 'Project Atlas',
+          priority: 'High',
+          due: 'Tomorrow',
+          progress: 0,
+          status: 'todo',
+          empId: req.user.id
+        }
+      ];
+      tasks = await Task.insertMany(defaultTasks);
+    }
+
     res.json(tasks);
   } catch (error) { next(error); }
 });
