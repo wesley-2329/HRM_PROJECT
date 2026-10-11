@@ -19,7 +19,7 @@ const app = express();
 // Database connection middleware for serverless environments
 const mongoose = require('mongoose');
 app.use(async (req, res, next) => {
-  if (mongoose.connection.readyState < 1) {
+  if (mongoose.connection.readyState !== 1) {
     try {
       await connectDB();
     } catch (error) {

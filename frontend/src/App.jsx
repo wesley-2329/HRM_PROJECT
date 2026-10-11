@@ -11,6 +11,7 @@ import EmpTopNavbar from './components/EmpTopNavbar';
 import HRApp from './pages/HRApp';
 import EmployeeApp from './pages/EmployeeApp';
 import LandingPage from './pages/LandingPage';
+import api from './api';
 
 export const encodeId = (id) => {
   if (!id) return '';
@@ -154,13 +155,33 @@ const AppContent = () => {
   const [isOfflineFallback, setIsOfflineFallback] = useState(false);
 
   useEffect(() => {
-    const handleOffline = () => setIsOfflineFallback(true);
-    const handleLive = () => setIsOfflineFallback(false);
+    let retryTimer = null;
+    const handleOffline = () => {
+      setIsOfflineFallback(true);
+      // Auto-probe after 1.5s in case of temporary cold-start connection delay
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(async () => {
+        try {
+          const res = await api.get('/org/policies');
+          if (res.headers['x-data-source'] === 'live') {
+            setIsOfflineFallback(false);
+          }
+        } catch (e) {
+          // keep offline if still disconnected
+        }
+      }, 1500);
+    };
+
+    const handleLive = () => {
+      clearTimeout(retryTimer);
+      setIsOfflineFallback(false);
+    };
 
     window.addEventListener('offline-fallback-detected', handleOffline);
     window.addEventListener('offline-fallback-cleared', handleLive);
 
     return () => {
+      clearTimeout(retryTimer);
       window.removeEventListener('offline-fallback-detected', handleOffline);
       window.removeEventListener('offline-fallback-cleared', handleLive);
     };
@@ -196,22 +217,64 @@ const AppContent = () => {
       {isOfflineFallback && (
         <div style={{
           background: '#f59e0b',
-          color: '#000000',
+          color: '#1a1a1a',
           padding: '8px 16px',
           textAlign: 'center',
-          fontWeight: 700,
+          fontWeight: 600,
           fontSize: '0.85rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px',
+          gap: '12px',
           zIndex: 99999,
           position: 'sticky',
           top: 0,
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <i className="fa-solid fa-triangle-exclamation"></i>
-          <span>Database Disconnected — Showing cached offline data</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>Database Disconnected — Showing cached offline data</span>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                const res = await api.get('/org/policies');
+                if (res.headers['x-data-source'] === 'live') {
+                  setIsOfflineFallback(false);
+                }
+              } catch (e) {
+                // still offline
+              }
+            }}
+            style={{
+              background: '#1a1a1a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '3px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Reconnect
+          </button>
+          <button
+            onClick={() => setIsOfflineFallback(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              color: '#1a1a1a',
+              lineHeight: 1,
+              marginLeft: '4px'
+            }}
+            title="Dismiss"
+          >
+            ✕
+          </button>
         </div>
       )}
       <Routes>
