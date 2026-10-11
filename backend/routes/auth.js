@@ -145,7 +145,19 @@ router.post('/register', async (req, res, next) => {
     }
 
     const employeeCount = await Employee.countDocuments();
-    const newEmpId = `EMP-${1000 + employeeCount + 1}`;
+    let newEmpId;
+    let isUnique = false;
+    let suffix = employeeCount + 1;
+    while (!isUnique) {
+      const candidateId = `EMP-${1000 + suffix}`;
+      const existing = await Employee.findOne({ id: candidateId });
+      if (!existing) {
+        newEmpId = candidateId;
+        isUnique = true;
+      } else {
+        suffix++;
+      }
+    }
 
     const employee = await Employee.create({
       id: newEmpId,
