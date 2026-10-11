@@ -63,6 +63,64 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const [ticketReplies, setTicketReplies] = useState({});
   const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
+  const formatNotifTime = (createdAt, fallbackTime) => {
+    if (!createdAt) return fallbackTime || 'Just now';
+    const date = new Date(createdAt);
+    if (isNaN(date.getTime())) return fallbackTime || 'Just now';
+    const now = new Date();
+    const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffSec < 45) return 'Just now';
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const handleMarkAllNotifsRead = async () => {
+    try {
+      await api.put('/notifications/mark-all-read');
+      showToast('All notifications marked read.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error updating alerts.', 'error');
+    }
+  };
+
+  const handleMarkSingleNotifRead = async (notifId) => {
+    try {
+      await api.put(`/notifications/${notifId}/read`);
+      showToast('Notification marked as read.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error updating notification.', 'error');
+    }
+  };
+
+  const handleClearNotif = async (notifId) => {
+    try {
+      await api.delete(`/notifications/${notifId}`);
+      showToast('Notification cleared.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error clearing notification.', 'error');
+    }
+  };
+
+  const handleClearAllReadNotifs = async () => {
+    try {
+      await api.delete('/notifications/clear-all-read');
+      showToast('All read notifications cleared.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error clearing read notifications.', 'error');
+    }
+  };
+
   // Profile states (for HR profile tab)
   const [profileTab, setProfileTab] = useState('personal');
   const [profileEditing, setProfileEditing] = useState(false);
@@ -1883,13 +1941,65 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       {currentModule === 'notification-system' && (
         <section id="hr-mod-notification-system" className="hr-module">
           <div className="card">
-            <div className="card-title">HR Notification & Warning Center</div>
+            <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>HR Notification & Warning Center</span>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="badge badge-primary" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                    {notifications.filter(n => !n.read).length} New
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleMarkAllNotifsRead}
+                  disabled={!notifications.some(n => !n.read)}
+                  title="Mark all notifications as read"
+                >
+                  <i className="fa-solid fa-check-double" style={{ marginRight: '6px' }}></i>Mark All Read
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleClearAllReadNotifs}
+                  disabled={!notifications.some(n => n.read)}
+                  title="Clear all read notifications"
+                >
+                  <i className="fa-solid fa-trash-can" style={{ marginRight: '6px' }}></i>Clear Read
+                </button>
+              </div>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {notifications.map(n => (
-                <div key={n._id} style={{ padding: '15px', background: 'hsl(var(--bg-main))', borderRadius: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <i className="fa-solid fa-bell" style={{ fontSize: '1.25rem', color: 'hsl(var(--primary))', marginTop: '3px' }}></i>
+                <div key={n._id} style={{ padding: '15px', background: 'hsl(var(--bg-main))', borderRadius: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start', opacity: n.read ? 0.7 : 1 }}>
+                  <i className="fa-solid fa-bell" style={{ fontSize: '1.25rem', color: n.read ? 'var(--text-secondary)' : 'hsl(var(--primary))', marginTop: '3px' }}></i>
                   <div style={{ flex: 1 }}>
-                    <strong>{n.title}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <strong>{n.title}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }} title={n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}>
+                          {formatNotifTime(n.createdAt, n.time)}
+                        </span>
+                        {!n.read && (
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => handleMarkSingleNotifRead(n._id)}
+                            title="Mark as read"
+                            style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                          >
+                            <i className="fa-solid fa-check"></i>
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => handleClearNotif(n._id)}
+                          title="Clear notification"
+                          style={{ padding: '2px 6px', fontSize: '0.7rem', color: '#ef4444' }}
+                        >
+                          <i className="fa-solid fa-trash-can"></i>
+                        </button>
+                      </div>
+                    </div>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{n.desc}</p>
                     {n.ticketId && (
                       <div style={{ marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid hsl(var(--primary))' }}>

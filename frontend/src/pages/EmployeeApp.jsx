@@ -274,6 +274,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // Modals state
   const [raiseTicketActive, setRaiseTicketActive] = useState(false);
   const [joinMeetingActive, setJoinMeetingActive] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [addTaskActive, setAddTaskActive] = useState(false);
   const [payslipActive, setPayslipActive] = useState(false);
   const [payslipMonth, setPayslipMonth] = useState('May 2026');
@@ -1507,13 +1508,61 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   };
 
   // Notifications
+  const formatNotifTime = (createdAt, fallbackTime) => {
+    if (!createdAt) return fallbackTime || 'Just now';
+    const date = new Date(createdAt);
+    if (isNaN(date.getTime())) return fallbackTime || 'Just now';
+    const now = new Date();
+    const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffSec < 45) return 'Just now';
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
   const handleMarkAllNotifsRead = async () => {
     try {
       await api.put('/notifications/mark-all-read');
       showToast('All notifications marked read.', 'success');
-      fetchNotifications();
+      if (fetchNotifications) await fetchNotifications();
     } catch (err) {
       showToast('Error updating alerts.', 'error');
+    }
+  };
+
+  const handleMarkSingleNotifRead = async (notifId) => {
+    try {
+      await api.put(`/notifications/${notifId}/read`);
+      showToast('Notification marked as read.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error updating notification.', 'error');
+    }
+  };
+
+  const handleClearNotif = async (notifId) => {
+    try {
+      await api.delete(`/notifications/${notifId}`);
+      showToast('Notification cleared.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error clearing notification.', 'error');
+    }
+  };
+
+  const handleClearAllReadNotifs = async () => {
+    try {
+      await api.delete('/notifications/clear-all-read');
+      showToast('All read notifications cleared.', 'success');
+      if (fetchNotifications) await fetchNotifications();
+    } catch (err) {
+      showToast('Error clearing read notifications.', 'error');
     }
   };
 
@@ -1666,7 +1715,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     </p>
                   </div>
                 </div>
-                <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: 'var(--amber-500)', color: '#fff', border: 'none' }} onClick={() => setCurrentModule('emp-policies')}>
+                <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: 'var(--amber-500)', color: '#fff', border: 'none' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-policies`)}>
                   Review Policies ({complianceData.pendingCount})
                 </button>
               </div>
@@ -1735,29 +1784,93 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
 
-            <div className="dashboard-layout">
-              <div className="lg:col-span-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'start' }}>
+              {/* Left Column: Operations, Attendance & Tasks */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {renderPunchClockCard()}
-                <div className="card">
-                  <div className="card-title">Monthly Attendance Ratio (%)</div>
-                  <div className="chart-container">
-                    <canvas ref={empAttendanceDonutRef}></canvas>
-                  </div>
-                </div>
-                <div className="card">
+
+                <div className="card" style={{ marginBottom: 0 }}>
                   <div className="card-title">Working Hours Trend (Last 7 Days)</div>
                   <div className="chart-container">
                     <canvas ref={empHoursLineRef}></canvas>
                   </div>
                 </div>
+
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title">Monthly Attendance Ratio (%)</div>
+                  <div className="chart-container">
+                    <canvas ref={empAttendanceDonutRef}></canvas>
+                  </div>
+                </div>
+
+                {/* Assigned Tasks Card with link to Kanban Tasks page */}
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-list-check" style={{ color: 'hsl(var(--primary))' }}></i>
+                      <span>Assigned Tasks</span>
+                    </div>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-tasks`)}
+                      title="Open full Tasks Kanban board"
+                    >
+                      <span>Full Tasks Board</span>
+                      <i className="fa-solid fa-arrow-right"></i>
+                    </button>
+                  </div>
+                  <div style={{ maxHeight: '290px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                    {displayTasks.map(t => {
+                      const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
+                      return (
+                        <div key={t._id} style={{ padding: '14px', background: 'hsl(var(--bg-main))', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid hsl(var(--border))' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ fontSize: '0.9rem' }}>{t.title}</strong>
+                            <span className={`badge ${priorityColor}`}>{t.priority}</span>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
+                            {t.description || 'Assigned deliverables and pipeline security compliance updates.'}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '6px', marginTop: '2px' }}>
+                            <span>Due: {t.due}</span>
+                            <span>Project: {t.project}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Performance Standing Summary */}
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title">Performance Standing Summary</div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
+                      <span>Current Rating: 4.2 / 5.0</span>
+                      <span className="badge badge-success">Standing: Excellent</span>
+                    </div>
+                    <div style={{ color: 'var(--warning)', fontSize: '0.95rem' }}>
+                      <i className="fa-solid fa-star"></i>
+                      <i className="fa-solid fa-star"></i>
+                      <i className="fa-solid fa-star"></i>
+                      <i className="fa-solid fa-star"></i>
+                      <i className="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="lg:col-span-1">
-                {/* Group Discussion Chat Widget - Relocated & Enlarged */}
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
+              {/* Right Column: Communication, Collaboration & Schedules */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Group Discussion Board */}
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '420px', marginBottom: 0 }}>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Group Discussion Board</span>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-engagement')}>Open Full Hub</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-comments" style={{ color: 'hsl(var(--primary))' }}></i>
+                      <span>Group Discussion Board</span>
+                    </div>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-engagement`)}>Open Full Hub</button>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {displayDiscussions.slice(-8).map((msg) => (
@@ -1788,35 +1901,22 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   </form>
                 </div>
 
-                {/* Assigned Tasks - Enlarged layout */}
-                <div className="card">
-                  <div className="card-title">Assigned Tasks</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {displayTasks.slice(0, 3).map(t => {
-                      const priorityColor = t.priority === 'High' ? 'badge-danger' : t.priority === 'Medium' ? 'badge-warning' : 'badge-success';
-                      return (
-                        <div key={t._id} style={{ padding: '16px', background: 'hsl(var(--bg-main))', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid hsl(var(--border))' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ fontSize: '0.95rem' }}>{t.title}</strong>
-                            <span className={`badge ${priorityColor}`}>{t.priority}</span>
-                          </div>
-                          <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
-                            {t.description || 'Assigned deliverables and pipeline security compliance updates.'}
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '8px', marginTop: '4px' }}>
-                            <span>Due: {t.due}</span>
-                            <span>Project: {t.project}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                {/* Upcoming Meetings Card with Join Meeting action */}
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-video" style={{ color: 'hsl(var(--primary))' }}></i>
+                      <span>Upcoming Meetings</span>
+                    </div>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-meetings`)}
+                    >
+                      View Calendar
+                    </button>
                   </div>
-                </div>
-
-                {/* Upcoming Meetings - Enlarged layout */}
-                <div className="card">
-                  <div className="card-title">Upcoming Meetings</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
                     {displayMeetings.map(m => {
                       let cardStyle = {
                         background: 'hsla(var(--warning), 0.15)',
@@ -1835,17 +1935,29 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       }
 
                       return (
-                        <div key={m._id} style={{ padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px', ...cardStyle }}>
+                        <div key={m._id} style={{ padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px', ...cardStyle }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ fontSize: '0.95rem' }}>{m.title}</strong>
-                            <span className="badge badge-primary">{m.type}</span>
+                            <strong style={{ fontSize: '0.9rem' }}>{m.title}</strong>
+                            <span className="badge badge-primary">{m.type || 'Virtual'}</span>
                           </div>
                           <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
                             Agenda: Discuss sprint deliverables, whitelisting changes, and platform security checks.
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '8px', marginTop: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '6px', marginTop: '2px' }}>
                             <span>Host: {m.host}</span>
                             <span>Time: {m.time}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
+                            <button
+                              className="btn btn-primary"
+                              style={{ padding: '5px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              onClick={() => {
+                                setSelectedMeeting(m);
+                                setJoinMeetingActive(true);
+                              }}
+                            >
+                              <i className="fa-solid fa-video"></i> Join Meeting
+                            </button>
                           </div>
                         </div>
                       );
@@ -1853,8 +1965,14 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   </div>
                 </div>
 
-                <div className="card">
-                  <div className="card-title">Training Reminders</div>
+                {/* Training Reminders with functional View Course */}
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-graduation-cap" style={{ color: 'hsl(var(--primary))' }}></i>
+                      <span>Training Reminders</span>
+                    </div>
+                  </div>
                   {trainings.length > 0 ? (
                     <div style={{ background: 'hsl(var(--bg-main))', padding: '16px', borderRadius: 'var(--radius-md)' }}>
                       <strong>{trainings[0].name}</strong>
@@ -1862,7 +1980,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                         <div style={{ width: `${trainings[0].progress}%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-learning')}>View Course</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-learning`)}>View Course</button>
                     </div>
                   ) : (
                     <div style={{ background: 'hsl(var(--bg-main))', padding: '16px', borderRadius: 'var(--radius-md)' }}>
@@ -1871,48 +1989,50 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                         <div style={{ width: `75%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setCurrentModule('emp-learning')}>View Course</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-learning`)}>View Course</button>
                     </div>
                   )}
                 </div>
 
-                <div className="card">
-                  <div className="card-title">Latest Notifications</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Latest Notifications with live real-time timestamps and scroll */}
+                <div className="card" style={{ marginBottom: 0 }}>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-bell" style={{ color: 'hsl(var(--primary))' }}></i>
+                      <span>Latest Notifications</span>
+                    </div>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-notifications`)}
+                    >
+                      <span>View All</span>
+                      <i className="fa-solid fa-arrow-right"></i>
+                    </button>
+                  </div>
+                  <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
                     {notifications.length > 0 ? (
-                      notifications.slice(0, 3).map(n => (
-                        <div key={n._id} style={{ padding: '8px', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.8rem' }}>
-                          <strong>{n.title}</strong> - <span style={{ color: 'var(--text-secondary)' }}>{n.desc}</span>
+                      notifications.slice(0, 8).map(n => (
+                        <div key={n._id} style={{ padding: '10px 12px', background: n.read ? 'transparent' : 'hsl(var(--bg-main))', borderBottom: '1px solid hsl(var(--border))', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                            {!n.read && (
+                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'hsl(var(--primary))', flexShrink: 0 }} title="Unread"></span>
+                            )}
+                            <div>
+                              <strong style={{ fontSize: '0.85rem' }}>{n.title}</strong>
+                              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.3 }}>{n.desc}</p>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', flexShrink: 0 }} title={n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}>
+                            {formatNotifTime(n.createdAt, n.time)}
+                          </span>
                         </div>
                       ))
                     ) : (
-                      <>
-                        {[
-                          { _id: 'notif-1', title: 'Q3 Policy Update', desc: 'Updated security whitelisting procedures.' },
-                          { _id: 'notif-2', title: 'Upcoming Holiday', desc: 'Office closed next Monday for Summer Solstice.' }
-                        ].map(n => (
-                          <div key={n._id} style={{ padding: '8px', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.8rem' }}>
-                            <strong>{n.title}</strong> - <span style={{ color: 'var(--text-secondary)' }}>{n.desc}</span>
-                          </div>
-                        ))}
-                      </>
+                      <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '16px', fontSize: '0.85rem' }}>
+                        No notifications logged.
+                      </div>
                     )}
-                  </div>
-                </div>
-                <div className="card">
-                  <div className="card-title">Performance Standing Summary</div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
-                      <span>Current Rating: 4.2 / 5.0</span>
-                      <span className="badge badge-success">Standing: Excellent</span>
-                    </div>
-                    <div style={{ color: 'var(--warning)', fontSize: '0.95rem', marginBottom: '12px' }}>
-                      <i className="fa-solid fa-star"></i>
-                      <i className="fa-solid fa-star"></i>
-                      <i className="fa-solid fa-star"></i>
-                      <i className="fa-solid fa-star"></i>
-                      <i className="fa-solid fa-star-half-stroke"></i>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -3019,10 +3139,32 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           <section id="emp-mod-emp-notifications" className="emp-module">
             <div className="card">
               <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <span>Alert Notifications</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-secondary" onClick={handleMarkAllNotifsRead}>Mark All Read</button>
-                  <select className="form-control" style={{ width: '180px' }} value={notifCategoryFilter} onChange={(e) => setNotifCategoryFilter(e.target.value)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span>Alert Notifications</span>
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="badge badge-primary" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                      {notifications.filter(n => !n.read).length} New
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleMarkAllNotifsRead}
+                    disabled={!notifications.some(n => !n.read)}
+                    title="Mark all notifications as read"
+                  >
+                    <i className="fa-solid fa-check-double" style={{ marginRight: '6px' }}></i>Mark All Read
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleClearAllReadNotifs}
+                    disabled={!notifications.some(n => n.read)}
+                    title="Clear all read notifications"
+                  >
+                    <i className="fa-solid fa-trash-can" style={{ marginRight: '6px' }}></i>Clear Read
+                  </button>
+                  <select className="form-control" style={{ width: '160px' }} value={notifCategoryFilter} onChange={(e) => setNotifCategoryFilter(e.target.value)}>
                     <option value="All">All Categories</option>
                     <option value="salary">Salary</option>
                     <option value="leave">Leave</option>
@@ -3033,16 +3175,75 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {filteredNotifs.map(n => (
-                  <div key={n._id} style={{ padding: '15px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: n.read ? 0.6 : 1 }}>
-                    <div>
-                      <strong>{n.title}</strong>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{n.desc}</p>
+                  <div
+                    key={n._id}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '8px',
+                      background: n.read ? 'transparent' : 'hsl(var(--bg-main))',
+                      borderBottom: '1px solid hsl(var(--border))',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      opacity: n.read ? 0.65 : 1,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1 }}>
+                      <span
+                        style={{
+                          width: '9px',
+                          height: '9px',
+                          borderRadius: '50%',
+                          background: n.read ? 'transparent' : 'hsl(var(--primary))',
+                          marginTop: '6px',
+                          flexShrink: 0
+                        }}
+                        title={n.read ? 'Read' : 'Unread'}
+                      ></span>
+                      <div>
+                        <strong style={{ fontSize: '0.92rem', color: n.read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
+                          {n.title}
+                        </strong>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '3px', lineHeight: 1.4 }}>
+                          {n.desc}
+                        </p>
+                      </div>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{n.time}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                      <span
+                        style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', minWidth: '70px', textAlign: 'right' }}
+                        title={n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                      >
+                        {formatNotifTime(n.createdAt, n.time)}
+                      </span>
+                      {!n.read && (
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => handleMarkSingleNotifRead(n._id)}
+                          title="Mark as read"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <i className="fa-solid fa-check"></i> Read
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => handleClearNotif(n._id)}
+                        title="Clear notification"
+                        style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <i className="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {filteredNotifs.length === 0 && (
-                  <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No notifications found.</div>
+                  <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '28px 20px' }}>
+                    <i className="fa-regular fa-bell-slash" style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'block', opacity: 0.5 }}></i>
+                    No notifications found.
+                  </div>
                 )}
               </div>
             </div>
@@ -3719,8 +3920,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
       <JoinMeetingModal
         active={joinMeetingActive}
+        meeting={selectedMeeting}
         onClose={() => setJoinMeetingActive(false)}
-        onJoin={() => { showToast('Connecting to meeting...', 'info'); setJoinMeetingActive(false); }}
+        onJoin={() => { showToast(`Connecting to ${selectedMeeting?.title || 'meeting'}...`, 'info'); setJoinMeetingActive(false); }}
       />
 
       <AddTaskModal
@@ -3788,7 +3990,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <strong>TalentSphere Notification:</strong> A new or updated policy requires your acknowledgement. Please sign to remain compliant.
             </p>
             <button
-              onClick={() => { setCurrentModule('emp-policies'); setShowMobilePush(false); }}
+              onClick={() => { navigate(`/employee/${encodeId(user.id)}/emp-policies`); setShowMobilePush(false); }}
               className="btn btn-primary"
               style={{ padding: '6px 12px', fontSize: '0.75rem', marginTop: '10px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >

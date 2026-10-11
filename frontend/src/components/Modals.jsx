@@ -627,22 +627,51 @@ export const RaiseTicketModal = ({ active, onClose, onSubmit }) => {
 };
 
 // 7. Virtual Session Meeting Join Modal
-export const JoinMeetingModal = ({ active, onClose, onJoin }) => {
+export const JoinMeetingModal = ({ active, onClose, onJoin, meeting }) => {
+  const meetingUrl = meeting?.link || "https://meet.google.com/new";
+  const meetingTitle = meeting?.title || "Virtual Team Session";
+  const meetingHost = meeting?.host ? `Hosted by ${meeting.host}` : "Team Sync";
+
+  const handleJoinClick = () => {
+    window.open(meetingUrl, '_blank', 'noopener,noreferrer');
+    if (onJoin) onJoin(meeting);
+  };
+
   return (
     <ModalWrapper id="join-meeting-modal" active={active} onClose={onClose}>
       <div className="modal-header">
-        <h3 className="modal-title">Join Virtual Session</h3>
+        <h3 className="modal-title">Join Virtual Meeting</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <div style={{ textAlign: 'center', padding: '10px 0' }}>
-        <i className="fa-solid fa-video" style={{ fontSize: '3rem', color: 'hsl(var(--primary))', marginBottom: '16px' }}></i>
-        <p style={{ fontSize: '0.95rem', marginBottom: '16px' }}>You are about to join the team video session.</p>
-        <div className="form-group">
-          <input type="text" className="form-control" value="https://meet.hrorbit.company/join/tck-standup" readOnly />
+      <div style={{ textAlign: 'center', padding: '14px 0' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'hsla(var(--primary), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+          <i className="fa-solid fa-video" style={{ fontSize: '2rem', color: 'hsl(var(--primary))' }}></i>
+        </div>
+        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>{meetingTitle}</h4>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>{meetingHost} {meeting?.time ? `• ${meeting.time}` : ''}</p>
+        <div className="form-group" style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textAlign: 'left', marginBottom: '6px' }}>Meeting Room Link</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type="text" className="form-control" value={meetingUrl} readOnly style={{ fontSize: '0.8rem', background: 'hsl(var(--bg-main))' }} />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                navigator.clipboard.writeText(meetingUrl);
+                alert('Meeting link copied to clipboard!');
+              }}
+              title="Copy Link"
+              style={{ padding: '0 12px' }}
+            >
+              <i className="fa-solid fa-copy"></i>
+            </button>
+          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={() => { navigator.clipboard.writeText("https://meet.hrorbit.company/join/tck-standup"); }}>Copy Link</button>
-          <button className="btn btn-primary" onClick={onJoin}>Join Meeting</button>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn btn-primary" onClick={handleJoinClick} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px' }}>
+            <i className="fa-solid fa-arrow-up-right-from-square"></i> Open & Join
+          </button>
         </div>
       </div>
     </ModalWrapper>

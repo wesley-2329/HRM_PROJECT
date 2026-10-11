@@ -21,6 +21,14 @@ const NotificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  readBy: {
+    type: [String],
+    default: []
+  },
+  clearedBy: {
+    type: [String],
+    default: []
+  },
   empId: {
     type: String,
     default: ''
