@@ -17,7 +17,7 @@ const protect = async (req, res, next) => {
       }
 
       // Look up user in MongoDB Atlas
-      if (mongoose.connection.readyState >= 1) {
+      if (mongoose.connection.readyState === 1) {
         try {
           req.user = await Employee.findById(decoded.id).select('-password');
           if (req.user) {

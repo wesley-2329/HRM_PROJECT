@@ -23,14 +23,42 @@ api.interceptors.request.use(
   }
 );
 
+let consecutiveFallbackCount = 0;
+let debounceFallbackTimer = null;
+let isCurrentlyOffline = false;
+
+const notifyOfflineState = (isFallback) => {
+  if (isFallback) {
+    consecutiveFallbackCount++;
+    // Only trigger offline if at least 2 consecutive requests return fallback,
+    // and debounce by 1500ms to eliminate cold-start glitching
+    if (consecutiveFallbackCount >= 2 && !isCurrentlyOffline && !debounceFallbackTimer) {
+      debounceFallbackTimer = setTimeout(() => {
+        isCurrentlyOffline = true;
+        window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+      }, 1500);
+    }
+  } else {
+    consecutiveFallbackCount = 0;
+    if (debounceFallbackTimer) {
+      clearTimeout(debounceFallbackTimer);
+      debounceFallbackTimer = null;
+    }
+    if (isCurrentlyOffline) {
+      isCurrentlyOffline = false;
+      window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+    }
+  }
+};
+
 // Intercept response to capture state changes and DB connection health events
 api.interceptors.response.use(
   (response) => {
     const dataSource = response.headers['x-data-source'];
     if (dataSource === 'fallback') {
-      window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+      notifyOfflineState(true);
     } else if (dataSource === 'live') {
-      window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+      notifyOfflineState(false);
     }
 
     const mockState = response.headers['x-mock-state'];
@@ -42,9 +70,9 @@ api.interceptors.response.use(
   (error) => {
     const dataSource = error.response?.headers?.['x-data-source'];
     if (dataSource === 'fallback') {
-      window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+      notifyOfflineState(true);
     } else if (dataSource === 'live') {
-      window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+      notifyOfflineState(false);
     }
 
     const mockState = error.response?.headers?.['x-mock-state'];

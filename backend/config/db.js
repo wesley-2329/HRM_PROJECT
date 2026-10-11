@@ -23,7 +23,7 @@ const cleanUri = (rawUri) => {
 };
 
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
 
@@ -39,7 +39,7 @@ const connectDB = async () => {
   if (cachedPromise) {
     try {
       cachedConn = await cachedPromise;
-      if (mongoose.connection.readyState >= 1) {
+      if (mongoose.connection.readyState === 1) {
         return cachedConn;
       }
     } catch (e) {
@@ -47,7 +47,7 @@ const connectDB = async () => {
     }
   }
 
-  const rawUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hrorbit';
+  const rawUri = process.env.MONGODB_URI || 'mongodb+srv://johnwesley290305_db_user:bnani.290305@cluster0.nlkbuna.mongodb.net/hrorbit?retryWrites=true&w=majority';
   const connUri = cleanUri(rawUri);
 
   if (!connUri) {
