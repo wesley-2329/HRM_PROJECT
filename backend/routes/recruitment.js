@@ -32,7 +32,15 @@ try {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadsDir);
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      cb(null, uploadsDir);
+    } catch (err) {
+      console.warn('Fallback to /tmp for resume upload:', err.message);
+      cb(null, '/tmp');
+    }
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -41,6 +49,24 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+
+const uploadResumeMiddleware = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ message: 'Error analyzing resume: file upload limit or form format error', error: err.message });
+      }
+      return res.status(400).json({ message: 'Error analyzing resume: upload processing error', error: err.message });
+    }
+    if (req.files && req.files.length > 0) {
+      req.file = req.files.find(f => f.fieldname === 'resume') || req.files.find(f => f.fieldname === 'file') || req.files[0];
+    }
+    next();
+  });
+};
+const getRequestedRole = (req) => {
+  return (req.query.role || req.headers['x-role'] || req.user?.role || 'hr_admin').toLowerCase();
+};
 
 // Helper to log audit events
 const logAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -153,26 +179,78 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // ==========================================
 router.get('/requisitions', protect, async (req, res, next) => {
   try {
-    const list = await ManpowerRequisition.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(list);
+    const role = getRequestedRole(req);
+    let filter = { deletedAt: null };
+
+    if (role === 'department_head' || role === 'reporting_manager' || role === 'hiring_manager') {
+      const dept = req.user?.dept || 'Engineering';
+      filter.$or = [{ department: dept }, { department: 'Engineering' }];
+    } else if (role === 'recruiter' || role === 'hr_executive') {
+      if (req.user?.id) {
+        filter.$or = [{ assignedRecruiterId: req.user.id }, { assignedRecruiterId: null }, { status: 'Approved' }];
+      }
+    } else if (role === 'finance') {
+      filter.status = { $in: ['HR Verified', 'Finance Verified', 'Approved'] };
+    } else if (role === 'payroll' || role === 'employee' || role === 'candidate') {
+      filter.status = 'Approved';
+    }
+
+    const list = await ManpowerRequisition.find(filter).sort({ createdAt: -1 });
+
+    // Deduplicate records by _id and unique reqNumber to prevent duplicate row rendering
+    const seenIds = new Set();
+    const seenReqNums = new Set();
+    const dedupedList = [];
+    for (const item of list) {
+      const idKey = String(item._id);
+      const numKey = item.reqNumber ? String(item.reqNumber) : null;
+      if (seenIds.has(idKey)) continue;
+      if (numKey && seenReqNums.has(numKey)) continue;
+      seenIds.add(idKey);
+      if (numKey) seenReqNums.add(numKey);
+      dedupedList.push(item);
+    }
+
+    res.json(dedupedList);
   } catch (err) { next(err); }
 });
 
 router.post('/requisitions', protect, async (req, res, next) => {
   try {
-    // Idempotency check: prevent rapid duplicate creation within 5 seconds
+    // Idempotency check: prevent rapid duplicate creation within 10 seconds
     const existingDuplicate = await ManpowerRequisition.findOne({
       jobTitle: req.body.jobTitle,
       department: req.body.department,
-      created_by: req.user?.name || 'User',
-      createdAt: { $gte: new Date(Date.now() - 5000) }
+      vacancyCount: Number(req.body.vacancyCount) || 1,
+      createdAt: { $gte: new Date(Date.now() - 10000) }
     });
     if (existingDuplicate) {
       return res.status(200).json(existingDuplicate);
     }
 
+    // Determine next sequential reqNumber reliably without collisions
     const count = await ManpowerRequisition.countDocuments();
-    const reqNumber = `REQ-2026-${String(count + 1).padStart(4, '0')}`;
+    const latestReq = await ManpowerRequisition.findOne().sort({ createdAt: -1 });
+    let nextSeq = count + 1;
+    if (latestReq && latestReq.reqNumber) {
+      const match = latestReq.reqNumber.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let reqNumber = `REQ-2026-${String(nextSeq).padStart(4, '0')}`;
+    let existsWithNumber = await ManpowerRequisition.findOne({ reqNumber });
+    let attempts = 0;
+    while (existsWithNumber && attempts < 100) {
+      nextSeq++;
+      reqNumber = `REQ-2026-${String(nextSeq).padStart(4, '0')}`;
+      existsWithNumber = await ManpowerRequisition.findOne({ reqNumber });
+      attempts++;
+    }
 
     const defaultApprovals = [
       { step: 1, role: 'Reporting Manager', status: 'Pending' },
@@ -181,9 +259,12 @@ router.post('/requisitions', protect, async (req, res, next) => {
       { step: 4, role: 'Management Approval', status: 'Pending' }
     ];
 
+    const totalBudgetEstimated = (Number(req.body.annualCtcPerPosition) || 0) * (Number(req.body.vacancyCount) || 1);
+
     const newReq = new ManpowerRequisition({
       ...req.body,
       reqNumber,
+      totalBudgetEstimated,
       status: 'Submitted',
       currentApprovalStep: 1,
       approvals: defaultApprovals,
@@ -277,13 +358,28 @@ router.put('/requisitions/:id/assign', protect, async (req, res, next) => {
 // ==========================================
 router.get('/positions', protect, async (req, res, next) => {
   try {
-    const requests = await PositionApprovalRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
+    const role = getRequestedRole(req);
+    let filter = { deletedAt: null };
+
+    if (role === 'department_head' || role === 'hiring_manager') {
+      const dept = req.user?.dept || 'Engineering';
+      filter.$or = [{ department: dept }, { department: 'Engineering' }];
+    } else if (role === 'employee' || role === 'candidate') {
+      filter.status = 'Approved';
+    }
+
+    const requests = await PositionApprovalRequest.find(filter).sort({ createdAt: -1 });
     res.json(requests);
   } catch (err) { next(err); }
 });
 
 router.post('/positions', protect, async (req, res, next) => {
   try {
+    const role = getRequestedRole(req);
+    if (['candidate', 'employee'].includes(role)) {
+      return res.status(403).json({ message: 'Unauthorized: insufficient role permissions to request new positions' });
+    }
+
     const count = await PositionApprovalRequest.countDocuments();
     const requestNumber = `PR-2026-${String(count + 1).padStart(4, '0')}`;
 
@@ -304,6 +400,11 @@ router.post('/positions', protect, async (req, res, next) => {
 
 router.put('/positions/:id/approve', protect, async (req, res, next) => {
   try {
+    const role = getRequestedRole(req);
+    if (!['super_admin', 'hr', 'hr_admin', 'management'].includes(role)) {
+      return res.status(403).json({ message: 'Unauthorized: only HR and Management can approve positions' });
+    }
+
     const { status, comments } = req.body; // Approved or Rejected
     const posReq = await PositionApprovalRequest.findById(req.params.id);
     if (!posReq) return res.status(404).json({ message: 'Position request not found' });
@@ -345,20 +446,89 @@ router.put('/positions/:id/approve', protect, async (req, res, next) => {
 // ==========================================
 router.get('/budgets', protect, async (req, res, next) => {
   try {
-    const list = await VacancyBudgetRequest.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(list);
+    const role = getRequestedRole(req);
+    let filter = { deletedAt: null };
+
+    if (role === 'department_head') {
+      const dept = req.user?.dept || 'Engineering';
+      filter.$or = [{ department: dept }, { department: 'Engineering' }];
+    } else if (role === 'employee' || role === 'candidate') {
+      filter.overallStatus = 'Approved';
+    }
+
+    const list = await VacancyBudgetRequest.find(filter).sort({ createdAt: -1 });
+
+    // Deduplicate records by _id and unique budgetRequestNumber
+    const seenIds = new Set();
+    const seenNums = new Set();
+    const dedupedList = [];
+    for (const item of list) {
+      const idKey = String(item._id);
+      const numKey = item.budgetRequestNumber ? String(item.budgetRequestNumber) : null;
+      if (seenIds.has(idKey)) continue;
+      if (numKey && seenNums.has(numKey)) continue;
+      seenIds.add(idKey);
+      if (numKey) seenNums.add(numKey);
+      dedupedList.push(item);
+    }
+
+    res.json(dedupedList);
   } catch (err) { next(err); }
 });
 
 router.post('/budgets', protect, async (req, res, next) => {
   try {
+    const role = getRequestedRole(req);
+    if (['candidate', 'employee'].includes(role)) {
+      return res.status(403).json({ message: 'Unauthorized: insufficient role permissions to create vacancy budgets' });
+    }
+
+    // Idempotency check: prevent duplicate submissions within 10 seconds
+    const existingDuplicate = await VacancyBudgetRequest.findOne({
+      positionTitle: req.body.positionTitle,
+      department: req.body.department,
+      createdAt: { $gte: new Date(Date.now() - 10000) }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
+    // Determine next sequential budgetRequestNumber reliably without collisions
     const count = await VacancyBudgetRequest.countDocuments();
-    const budgetRequestNumber = `BR-2026-${String(count + 1).padStart(4, '0')}`;
+    const latestBudget = await VacancyBudgetRequest.findOne().sort({ createdAt: -1 });
+    let nextSeq = count + 1;
+    if (latestBudget && latestBudget.budgetRequestNumber) {
+      const match = latestBudget.budgetRequestNumber.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let budgetRequestNumber = `BR-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await VacancyBudgetRequest.findOne({ budgetRequestNumber });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      budgetRequestNumber = `BR-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await VacancyBudgetRequest.findOne({ budgetRequestNumber });
+      attempts++;
+    }
+
+    const annualCtcBudget = Number(req.body.annualCtcBudget) || 0;
+    const recruitmentCostBudget = Number(req.body.recruitmentCostBudget) || 0;
+    const totalFinancialImpact = req.body.totalFinancialImpact || (annualCtcBudget + recruitmentCostBudget);
 
     const newBudgetReq = new VacancyBudgetRequest({
       ...req.body,
+      costCenter: req.body.costCenter || 'CC-101',
+      annualCtcBudget,
+      recruitmentCostBudget,
+      totalFinancialImpact,
       budgetRequestNumber,
-      allocatedBudget: req.body.totalFinancialImpact || 0,
+      allocatedBudget: totalFinancialImpact,
       created_by: req.user?.name || 'User'
     });
 
@@ -373,6 +543,11 @@ router.post('/budgets', protect, async (req, res, next) => {
 
 router.put('/budgets/:id/approve', protect, async (req, res, next) => {
   try {
+    const role = getRequestedRole(req);
+    if (!['super_admin', 'hr', 'hr_admin', 'management', 'finance'].includes(role)) {
+      return res.status(403).json({ message: 'Unauthorized: only Finance and Management can sign off budgets' });
+    }
+
     const { financeStatus, managementStatus, comments } = req.body;
     const bReq = await VacancyBudgetRequest.findById(req.params.id);
     if (!bReq) return res.status(404).json({ message: 'Budget request not found' });
@@ -406,14 +581,16 @@ router.get('/resumes', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/resumes/upload', protect, upload.single('resume'), async (req, res) => {
+router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No resume file uploaded' });
+      return res.status(400).json({ message: 'Error analyzing resume: no resume file uploaded' });
     }
 
-    const { targetRole, candidateName, email, phone, targetJdSkills } = req.body;
-    const filePath = req.file.path.replace(/\\/g, '/');
+    const { targetRole, candidateName, email, phone, targetJdSkills } = req.body || {};
+    const filePath = req.file.path 
+      ? req.file.path.replace(/\\/g, '/') 
+      : (req.file.destination ? (req.file.destination + '/' + req.file.filename) : (req.file.filename || '/tmp/resume.pdf'));
 
     // Simulate intelligent NLP parsing & JD matching
     const sampleSkillsPool = ['React.js', 'Node.js', 'Express', 'MongoDB', 'Python', 'Docker', 'AWS', 'PostgreSQL', 'System Architecture', 'TypeScript'];
@@ -421,29 +598,50 @@ router.post('/resumes/upload', protect, upload.single('resume'), async (req, res
     if (!extractedSkills.includes('React.js')) extractedSkills.push('React.js');
     if (!extractedSkills.includes('Node.js')) extractedSkills.push('Node.js');
 
-    const jdRequiredSkills = targetJdSkills ? targetJdSkills.split(',').map(s => s.trim()) : ['React.js', 'Node.js', 'TypeScript', 'Docker', 'AWS'];
+    const jdRequiredSkills = Array.isArray(targetJdSkills)
+      ? targetJdSkills.map(s => String(s).trim()).filter(Boolean)
+      : (typeof targetJdSkills === 'string' && targetJdSkills.trim().length > 0)
+        ? targetJdSkills.split(',').map(s => s.trim()).filter(Boolean)
+        : ['React.js', 'Node.js', 'TypeScript', 'Docker', 'AWS'];
     const matchedSkills = extractedSkills.filter(s => jdRequiredSkills.includes(s));
     const missingSkills = jdRequiredSkills.filter(s => !extractedSkills.includes(s));
 
     const jdMatchScore = Math.min(100, Math.round((matchedSkills.length / Math.max(1, jdRequiredSkills.length)) * 100));
     const rankingScore = Math.round((jdMatchScore * 0.7) + (Math.floor(Math.random() * 25) + 5));
 
+    // Derive candidate name cleanly from filename if not specified
+    const rawFileName = req.file.originalname || 'Resume.pdf';
+    const parsedNameFromDoc = path.parse(rawFileName).name.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const finalCandidateName = (candidateName && String(candidateName).trim()) ? String(candidateName).trim() : (parsedNameFromDoc || 'Applicant');
+    const finalEmail = (email && String(email).trim()) ? String(email).trim() : `applicant_${Date.now()}_${Math.floor(Math.random() * 1000)}@example.com`;
+    const finalPhone = (phone && String(phone).trim()) ? String(phone).trim() : '+91 98765 43210';
+
     // Duplicate check by email or phone
-    const existingCand = await Candidate.findOne({ $or: [{ email: email || 'nevermatch' }, { phone: phone || 'nevermatch' }] });
+    let existingCand = null;
+    try {
+      existingCand = await Candidate.findOne({ 
+        $or: [
+          { email: finalEmail }, 
+          { phone: finalPhone }
+        ] 
+      });
+    } catch (e) {
+      existingCand = null;
+    }
     const isDuplicate = !!existingCand;
 
     const newAnalysis = new ResumeAnalysis({
-      candidateName: candidateName || req.file.originalname.split('.')[0],
-      email: email || `applicant_${Date.now()}@example.com`,
-      phone: phone || '+91 98765 43210',
-      fileName: req.file.originalname,
+      candidateName: finalCandidateName,
+      email: finalEmail,
+      phone: finalPhone,
+      fileName: rawFileName,
       filePath: filePath,
-      fileType: path.extname(req.file.originalname).replace('.', '').toLowerCase(),
+      fileType: path.extname(rawFileName).replace('.', '').toLowerCase() || 'pdf',
       parsedSkills: extractedSkills,
       parsedQualifications: ['B.Tech Computer Science', 'M.Tech / Equivalent'],
       experienceYears: Math.floor(Math.random() * 6) + 2,
       parsedCertifications: ['AWS Certified Developer', 'Scrum Master'],
-      extractedText: `Professional resume summary for ${candidateName || 'Applicant'}. Expertise in full-stack architecture, API backend engineering, microservices.`,
+      extractedText: `Professional resume summary for ${finalCandidateName}. Expertise in full-stack architecture, API backend engineering, microservices.`,
       targetRole: targetRole || 'Senior Software Engineer',
       jdMatchScore,
       matchedSkills,
@@ -458,27 +656,36 @@ router.post('/resumes/upload', protect, upload.single('resume'), async (req, res
 
     await newAnalysis.save();
 
-    // Auto-create or link candidate record
-    if (!existingCand) {
-      const newCandidate = new Candidate({
-        name: newAnalysis.candidateName,
-        role: newAnalysis.targetRole,
-        source: 'Resume Parser',
-        experience: `${newAnalysis.experienceYears} Years`,
-        stage: 'screening',
-        email: newAnalysis.email,
-        phone: newAnalysis.phone,
-        skills: newAnalysis.parsedSkills.join(', '),
-        jdMatchScore: newAnalysis.jdMatchScore,
-        recruiterRemarks: newAnalysis.recruiterRemarks,
-        resumeLink: filePath
-      });
-      await newCandidate.save();
-      newAnalysis.candidateId = newCandidate._id;
-      await newAnalysis.save();
+    // Auto-create or link candidate record in isolated try/catch
+    try {
+      if (!existingCand) {
+        const newCandidate = new Candidate({
+          name: newAnalysis.candidateName || 'Applicant',
+          role: newAnalysis.targetRole || 'Software Engineer',
+          source: 'Resume Parser',
+          experience: newAnalysis.experienceYears ? `${newAnalysis.experienceYears} Years` : '2 Years',
+          stage: 'screening',
+          email: newAnalysis.email,
+          phone: newAnalysis.phone,
+          skills: newAnalysis.parsedSkills.join(', '),
+          jdMatchScore: newAnalysis.jdMatchScore,
+          recruiterRemarks: newAnalysis.recruiterRemarks,
+          resumeLink: filePath
+        });
+        await newCandidate.save();
+        newAnalysis.candidateId = newCandidate._id;
+        await newAnalysis.save();
+      }
+    } catch (candErr) {
+      console.warn('Candidate link note:', candErr.message);
     }
 
-    await logAudit(req, 'Resume', newAnalysis._id.toString(), 'CREATE', null, newAnalysis, `Parsed resume ${newAnalysis.fileName}`);
+    try {
+      await logAudit(req, 'Resume', newAnalysis._id.toString(), 'CREATE', null, newAnalysis, `Parsed resume ${newAnalysis.fileName}`);
+    } catch (auditErr) {
+      console.warn('Audit log note:', auditErr.message);
+    }
+
     res.status(201).json(newAnalysis);
   } catch (err) {
     res.status(400).json({ message: 'Error analyzing resume', error: err.message });
@@ -524,7 +731,23 @@ router.put('/resumes/:id/trigger-interview', protect, async (req, res, next) => 
 // ==========================================
 router.get('/candidates', protect, async (req, res, next) => {
   try {
-    const candidates = await Candidate.find({ deletedAt: null }).sort({ createdAt: -1 });
+    const role = getRequestedRole(req);
+    let filter = { deletedAt: null };
+
+    if (role === 'department_head' || role === 'reporting_manager' || role === 'hiring_manager') {
+      const dept = req.user?.dept || 'Engineering';
+      filter.$or = [{ department: dept }, { department: 'Engineering' }, { department: null }];
+    } else if (role === 'finance' || role === 'payroll') {
+      filter.stage = { $in: ['offered', 'selected', 'joined'] };
+    } else if (role === 'employee') {
+      filter.source = /referral/i;
+    } else if (role === 'candidate') {
+      filter.$or = [{ email: req.user?.email || 'candidate@hrorbit.internal' }, { stage: 'applied' }];
+    } else if (role === 'recruiter') {
+      filter.stage = { $in: ['applied', 'screening', 'interview', 'offered'] };
+    }
+
+    const candidates = await Candidate.find(filter).sort({ createdAt: -1 });
     res.json(candidates);
   } catch (err) { next(err); }
 });
@@ -707,19 +930,87 @@ router.put('/talent-pool/:id/reactivate', protect, async (req, res, next) => {
 // ==========================================
 router.get('/costs', protect, async (req, res, next) => {
   try {
-    const costs = await RecruitmentCost.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(costs);
+    const role = getRequestedRole(req);
+    let filter = { deletedAt: null };
+
+    if (role === 'candidate') {
+      return res.json([]);
+    }
+    if (role === 'department_head' || role === 'recruiter') {
+      const dept = req.user?.dept || 'Engineering';
+      filter.$or = [{ department: dept }, { department: 'Engineering' }];
+    }
+
+    const costs = await RecruitmentCost.find(filter).sort({ createdAt: -1 });
+
+    // Deduplicate records by _id and unique costId
+    const seenIds = new Set();
+    const seenNums = new Set();
+    const dedupedCosts = [];
+    for (const item of costs) {
+      const idKey = String(item._id);
+      const numKey = item.costId ? String(item.costId) : null;
+      if (seenIds.has(idKey)) continue;
+      if (numKey && seenNums.has(numKey)) continue;
+      seenIds.add(idKey);
+      if (numKey) seenNums.add(numKey);
+      dedupedCosts.push(item);
+    }
+
+    res.json(dedupedCosts);
   } catch (err) { next(err); }
 });
 
 router.post('/costs', protect, async (req, res, next) => {
   try {
+    const role = getRequestedRole(req);
+    if (['candidate', 'employee'].includes(role)) {
+      return res.status(403).json({ message: 'Unauthorized: insufficient role permissions to record recruitment expenses' });
+    }
+
+    // Idempotency check: prevent rapid duplicate submission within 10 seconds
+    const existingDuplicate = await RecruitmentCost.findOne({
+      costCategory: req.body.costCategory,
+      vendorName: req.body.vendorName,
+      department: req.body.department,
+      amount: Number(req.body.amount) || 0,
+      createdAt: { $gte: new Date(Date.now() - 10000) }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
+    // Determine next sequential costId reliably without collisions
     const count = await RecruitmentCost.countDocuments();
-    const costId = `COST-2026-${String(count + 1).padStart(4, '0')}`;
+    const latestCost = await RecruitmentCost.findOne().sort({ createdAt: -1 });
+    let nextSeq = count + 1;
+    if (latestCost && latestCost.costId) {
+      const match = latestCost.costId.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let costId = `COST-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await RecruitmentCost.findOne({ costId });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      costId = `COST-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await RecruitmentCost.findOne({ costId });
+      attempts++;
+    }
 
     const newCost = new RecruitmentCost({
       ...req.body,
       costId,
+      amount: Number(req.body.amount) || 0,
+      costCategory: req.body.costCategory || 'Job Portal',
+      department: req.body.department || 'Engineering',
+      costCenter: req.body.costCenter || 'CC-101',
       recruiterId: req.user?.id || 'EMP-1004',
       recruiterName: req.user?.name || 'Recruiter',
       created_by: req.user?.name || 'User'

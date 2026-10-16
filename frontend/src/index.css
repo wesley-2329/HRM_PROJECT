@@ -40,7 +40,9 @@
   --bg-main: 30 20% 97%;
   --bg-card: 0 0% 100%;
   --text-primary: 222 47% 11%;
-  --text-secondary: 215 16% 47%;
+  --text-secondary: 215 16% 36%;
+  --foreground: 222 47% 11%;
+  --muted-foreground: 215 16% 36%;
   --border: 34 16% 89%;
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -51,8 +53,27 @@ body.dark-mode {
   --bg-main: 222 47% 11%;
   --bg-card: 217 33% 17%;
   --text-primary: 210 40% 98%;
-  --text-secondary: 215 20% 65%;
+  --text-secondary: 215 20% 75%;
+  --foreground: 210 40% 98%;
+  --muted-foreground: 215 20% 75%;
   --border: 217 32% 22%;
+}
+
+/* Enforce WCAG AA contrast for inline style var references */
+[style*="var(--text-secondary)"] {
+  color: hsl(var(--text-secondary)) !important;
+}
+
+[style*="var(--text-primary)"] {
+  color: hsl(var(--text-primary)) !important;
+}
+
+[style*="var(--foreground)"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+[style*="var(--muted-foreground)"] {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 * {
@@ -179,6 +200,66 @@ body.dark-mode {
 
 .form-control {
   @apply w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10;
+}
+
+/* Select & Option visibility & contrast fix (Bug 036) */
+select.form-control,
+select.input,
+select {
+  background-color: hsl(var(--card, #ffffff)) !important;
+  color: hsl(var(--foreground, #0f172a)) !important;
+}
+
+select.form-control option,
+select.input option,
+select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 8px 12px;
+}
+
+.dark select.form-control option,
+.dark select.input option,
+.dark select option {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  padding: 8px 12px;
+}
+
+/* Position Approval Modal Grid & Form Label Fix (Bug 049) */
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin-bottom: 6px;
+}
+
+.dark .form-label {
+  color: #f1f5f9;
+}
+
+.position-approval-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+
+.position-approval-grid .form-group {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.position-approval-grid .form-control {
+  height: 42px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .position-approval-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .form-options {
@@ -390,7 +471,7 @@ body.dark-mode .glass-card {
 }
 
 .metric-label {
-  @apply text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider;
+  @apply text-[11px] text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider;
 }
 
 .metric-trend {
@@ -570,24 +651,82 @@ body.dark-mode .glass-card {
 }
 
 /* Modal Overlay & Card dialogs */
-.modal-overlay {
-  @apply fixed inset-0 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[1000] opacity-0 pointer-events-none transition-all duration-300;
+.modal-overlay,
+.modal-backdrop {
+  @apply fixed inset-0 bg-slate-950/70 dark:bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[99999] opacity-0 pointer-events-none transition-all duration-300 p-4 overflow-y-auto;
 }
 
-.modal-overlay.active {
+.modal-overlay.active,
+.modal-backdrop.active {
   @apply opacity-100 pointer-events-auto;
 }
 
 .modal-content {
-  @apply bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl p-6 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-200 transform translate-y-6 transition-transform duration-300;
+  @apply bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl p-6 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-200 transform translate-y-6 transition-transform duration-300 relative z-[100000];
 }
 
-.modal-overlay.active .modal-content {
+.modal-overlay.active .modal-content,
+.modal-backdrop.active .modal-content {
   @apply translate-y-0;
 }
 
 .modal-header {
   @apply flex justify-between items-center border-b border-slate-100 dark:border-slate-800/60 pb-4 mb-5;
+}
+
+/* Bug 022: Prevent collision and overlapping between Requisition Form and Workflow Timeline */
+.dual-modal-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 24px;
+  width: 95vw;
+  max-width: 1350px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+  align-items: start;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .dual-modal-wrapper {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 8px;
+    max-height: 95vh;
+  }
+}
+
+.requisition-panel-box {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Bug 046: Isolated layout and visual separation for PIP Initiate Form & Review Log */
+.pip-panel-box {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: hsl(var(--bg-card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35);
+}
+
+.pip-dual-view-tabs {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: hsl(var(--bg-card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .modal-title {
@@ -629,15 +768,15 @@ body.dark-mode .glass-card {
 
 /* Toast alert elements */
 .toast-container {
-  @apply fixed top-20 right-5 z-[999999] flex flex-col gap-2.5;
+  @apply fixed top-6 right-6 z-[9999999] flex flex-col gap-2.5 pointer-events-none;
 }
 
 .toast {
-  @apply min-w-[320px] p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 text-sm font-semibold shadow-xl flex items-center gap-3 relative overflow-hidden transition-all duration-300 translate-x-[120%];
+  @apply min-w-[320px] p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 text-sm font-semibold shadow-xl flex items-center gap-3 relative overflow-hidden transition-all duration-300 pointer-events-auto;
 }
 
 .toast.active {
-  @apply translate-x-0;
+  @apply translate-x-0 opacity-100;
 }
 
 .toast.success {
@@ -797,7 +936,7 @@ body.dark-mode .glass-card {
 }
 
 .toast {
-  animation: slideInToast 0.3s ease-out;
+  animation: slideInToast 0.3s ease-out forwards;
   position: relative;
   overflow: hidden;
 }
@@ -1648,11 +1787,12 @@ body.dark-mode .emp-header {
 .emp-dropdown-panel::before {
   content: '';
   position: absolute;
-  top: -12px;
+  top: -20px;
   left: 0;
   right: 0;
-  height: 12px;
+  height: 22px;
   background: transparent;
+  pointer-events: auto;
 }
 
 body.dark-mode .hr-dropdown-panel,
@@ -2165,54 +2305,208 @@ body.dark-mode .welcome-card-banner {
   margin-top: 16px;
 }
 
+.print-only {
+  display: none;
+}
+
 /* ======================================================== */
 /* PRINT STYLESHEET: CLEAN REPORT-ONLY PRINT LAYOUT        */
 /* ======================================================== */
 @media print {
+  /* Hide all application navigation, headers, footers, sidebars, banners, tabs, and interactive controls */
+  header,
+  nav,
+  aside,
   .hr-header,
   .emp-header,
+  .hr-brand-section,
+  .emp-brand-section,
+  .hr-logo,
+  .hr-options-scroll-section,
+  .hr-nav-menu,
+  .hr-menu-item,
+  .hr-menu-link,
+  .hr-dropdown-panel,
+  .hr-dropdown-item,
+  .hr-header-right,
+  .emp-header-right,
+  .hr-search,
+  .emp-search,
   .sidebar,
   .sub-tabs,
   .sub-nav-tabs,
+  .welcome-card-banner,
+  .no-print,
   .btn,
   button,
+  input,
+  select,
+  textarea,
   .modal-backdrop,
+  .modal,
+  .modal-content,
   .toast-container,
+  .toast,
   .theme-toggle-btn,
-  .hr-brand-section,
-  .hr-search {
+  .app-notification-badge,
+  .app-notification-dropdown {
     display: none !important;
   }
 
-  body, html {
+  /* Reset layout constraints and allow full multi-page document flow */
+  html,
+  body,
+  #root,
+  .hr-top-layout,
+  .emp-top-layout,
+  .main-content,
+  .module-viewport,
+  .portal-container,
+  .page-container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    box-shadow: none !important;
   }
 
-  .main-content,
-  .page-container,
+  /* Show dedicated print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Clean printable typography and card containers */
   .card {
     box-shadow: none !important;
-    border: none !important;
+    border: 1px solid #cbd5e1 !important;
     background: #ffffff !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 14px 16px !important;
+    margin: 0 0 16px 0 !important;
     width: 100% !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
-  .table-responsive,
-  table {
+  .card-title {
+    font-size: 11pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin-bottom: 10px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 6px !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  table,
+  .custom-table {
     width: 100% !important;
     border-collapse: collapse !important;
+    page-break-inside: auto;
   }
 
-  th, td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 8px !important;
-    font-size: 10pt !important;
-    color: #000000 !important;
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
   }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 10px !important;
+    font-size: 8.5pt !important;
+    text-align: left !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 7px 10px !important;
+    font-size: 8pt !important;
+    color: #1e293b !important;
+  }
+
+  .badge {
+    border: 1px solid currentColor !important;
+    padding: 1px 5px !important;
+    font-size: 7pt !important;
+    font-weight: 600 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page margins & printing setup */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm 15mm 12mm;
+  }
+}
+
+/* ========================================================
+   Training Module (M8) High Contrast WCAG AA Styling Rules
+   ======================================================== */
+.stat-card-training {
+  background-color: hsl(var(--bg-card)) !important;
+  color: hsl(var(--text-primary)) !important;
+}
+
+.stat-card-training .stat-label {
+  color: hsl(var(--text-secondary)) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+}
+
+.stat-card-training .stat-sublabel {
+  color: hsl(var(--text-secondary)) !important;
+  font-weight: 600 !important;
+}
+
+.stat-card-training .stat-value-emerald {
+  color: #047857 !important;
+}
+
+.stat-card-training .stat-value-blue {
+  color: #1d4ed8 !important;
+}
+
+.stat-card-training .stat-value-purple {
+  color: #6d28d9 !important;
+}
+
+.stat-card-training .stat-value-amber {
+  color: #b45309 !important;
+}
+
+body.dark-mode .stat-card-training .stat-value-emerald {
+  color: #34d399 !important;
+}
+
+body.dark-mode .stat-card-training .stat-value-blue {
+  color: #60a5fa !important;
+}
+
+body.dark-mode .stat-card-training .stat-value-purple {
+  color: #c084fc !important;
+}
+
+body.dark-mode .stat-card-training .stat-value-amber {
+  color: #fbbf24 !important;
 }

@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
 const { protect, adminOnly } = require('../middleware/auth');
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 const ensureEmployeesSeeded = async () => {
   try {
@@ -301,28 +303,60 @@ router.post('/upload-doc', protect, upload.single('file'), async (req, res) => {
 // @route   POST /api/employees/upload-avatar
 // @desc    Upload employee profile picture (avatar)
 // @access  Private
-router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res) => {
+router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // HR can upload for another employee by passing empId
-    const targetEmpId = (req.user.role === 'hr' && req.body.empId) ? req.body.empId : req.user.id;
+    const targetEmpId = (req.user.role === 'hr' && req.body.empId) ? req.body.empId : (req.user.id || req.user._id);
 
-    const employee = await Employee.findOne({ id: targetEmpId });
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
+    let employee = null;
+    if (targetEmpId) {
+      employee = await Employee.findOne({ id: targetEmpId });
+      if (!employee && mongoose.Types.ObjectId.isValid(targetEmpId)) {
+        employee = await Employee.findById(targetEmpId);
+      }
+      if (!employee) {
+        employee = await Employee.findOne({ id: new RegExp('^' + targetEmpId + '$', 'i') });
+      }
+      if (!employee) {
+        employee = await Employee.findOne({ email: String(targetEmpId).toLowerCase().trim() });
+      }
     }
 
-    const fileRelativePath = `/uploads/${req.file.filename}`;
-    employee.avatar = fileRelativePath;
+    // Only fall back to self if caller did not specify an employee target
+    if (!employee && !req.body.empId && req.user.email) {
+      employee = await Employee.findOne({ email: req.user.email });
+    }
+
+    if (!employee) {
+      return res.status(404).json({ message: `Employee '${targetEmpId}' not found` });
+    }
+
+    let finalAvatarUrl = `/uploads/${req.file.filename}`;
+
+    // Upload to Cloudinary using product environment credentials
+    try {
+      const publicId = `avatar_${employee.id || employee._id}_${Date.now()}`;
+      const cldResult = await uploadToCloudinary(req.file.path, publicId);
+      if (cldResult && cldResult.secure_url) {
+        finalAvatarUrl = cldResult.secure_url;
+      }
+    } catch (cldErr) {
+      console.warn('[Cloudinary Notice] Upload fell back to local storage:', cldErr.message);
+    }
+
+    employee.avatar = finalAvatarUrl;
+    employee.profilePicture = finalAvatarUrl;
+    employee.profileImage = finalAvatarUrl;
     await employee.save();
 
     res.json({
       message: 'Profile picture uploaded successfully',
-      avatar: fileRelativePath,
-      empId: targetEmpId
+      avatar: finalAvatarUrl,
+      profilePicture: finalAvatarUrl,
+      empId: employee.id || targetEmpId
     });
   } catch (error) { next(error); }
 });

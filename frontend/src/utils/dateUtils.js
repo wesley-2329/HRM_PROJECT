@@ -6,9 +6,15 @@
 export const formatTimeString = (dateVal, fallbackUncertain = false) => {
   if (!dateVal) return '--';
   
-  // If dateVal is a string legacy formatted time e.g. "09:05 AM"
-  if (typeof dateVal === 'string' && /^\d{1,2}:\d{2}\s*(AM|PM)?$/i.test(dateVal.trim())) {
-    return fallbackUncertain ? `${dateVal.trim()} (legacy)` : dateVal.trim();
+  // If dateVal is a string legacy formatted time e.g. "09:05 AM" or 24-hr "00:47"
+  if (typeof dateVal === 'string' && /^\d{1,2}:\d{2}(:\d{2})?\s*(AM|PM)?$/i.test(dateVal.trim())) {
+    if (/(AM|PM)/i.test(dateVal)) {
+      return fallbackUncertain ? `${dateVal.trim()} (legacy)` : dateVal.trim();
+    }
+    const parts = dateVal.trim().split(':');
+    const d = new Date();
+    d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parts[2] ? parseInt(parts[2], 10) : 0, 0);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   }
 
   const dateObj = dateVal instanceof Date ? dateVal : new Date(dateVal);

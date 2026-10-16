@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import api from '../api';
 import { AuthContext } from './AuthContext';
@@ -137,13 +137,42 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
+  const activeNotifPromiseRef = useRef(null);
+
+  const fetchNotifications = async (options = {}) => {
+    if (activeNotifPromiseRef.current) {
+      return activeNotifPromiseRef.current;
     }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const promise = (async () => {
+      try {
+        const res = await api.get('/notifications', {
+          signal: controller.signal,
+          timeout: 6000,
+          ...options
+        });
+        if (res?.data) {
+          setNotifications(res.data);
+        }
+        return res?.data;
+      } catch (err) {
+        if (err.code === 'ECONNABORTED' || err.name === 'CanceledError' || err.message?.includes('timeout') || err.name === 'AbortError') {
+          console.warn('Notifications fetch timed out gracefully; maintaining cached notifications.');
+        } else {
+          console.warn('Notifications fetch non-critical issue:', err.message);
+        }
+        return null;
+      } finally {
+        clearTimeout(timeoutId);
+        activeNotifPromiseRef.current = null;
+      }
+    })();
+
+    activeNotifPromiseRef.current = promise;
+    return promise;
   };
 
   const fetchDiscussionMessages = async () => {
@@ -465,21 +494,24 @@ export const DataProvider = ({ children }) => {
       });
 
       socket.on('notification', (notif) => {
-        showToast(`${notif.title}: ${notif.desc}`, 'info');
-        fetchNotifications();
-        if (notif.type === 'leave') {
-          fetchLeaves();
-        } else if (notif.type === 'meeting') {
-          fetchMeetings();
-        } else if (notif.type === 'reminder') {
-          fetchTasks();
-          fetchTickets();
-          fetchWarningLetters();
-          fetchVaultDocuments();
-          fetchOrgAuditLogs();
-          fetchDepartments();
-          fetchVacancies();
-        }
+        // Defer notification processing out of WebSocket message loop to prevent main-thread violations
+        setTimeout(() => {
+          showToast(`${notif.title}: ${notif.desc}`, 'info');
+          fetchNotifications();
+          if (notif.type === 'leave') {
+            fetchLeaves();
+          } else if (notif.type === 'meeting') {
+            fetchMeetings();
+          } else if (notif.type === 'reminder') {
+            fetchTasks();
+            fetchTickets();
+            fetchWarningLetters();
+            fetchVaultDocuments();
+            fetchOrgAuditLogs();
+            fetchDepartments();
+            fetchVacancies();
+          }
+        }, 0);
       });
 
       socket.on('discussion_message', (msg) => {
@@ -490,8 +522,10 @@ export const DataProvider = ({ children }) => {
       });
 
       socket.on('org_update', (data) => {
-        showToast(`Structure Update: ${data.details}`, 'info');
-        fetchAllData();
+        setTimeout(() => {
+          showToast(`Structure Update: ${data.details}`, 'info');
+          fetchAllData();
+        }, 0);
       });
 
       socket.on('connect_error', () => {

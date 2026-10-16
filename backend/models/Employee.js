@@ -41,6 +41,14 @@ const EmployeeSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  profilePicture: {
+    type: String,
+    default: ''
+  },
+  profileImage: {
+    type: String,
+    default: ''
+  },
   aadhaar: {
     type: String,
     required: true

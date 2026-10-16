@@ -382,13 +382,21 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [activePolicies, setActivePolicies] = useState({});
 
   // Live Punch Clock Timer
-  const activeShift = timesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift') || timesheets.find(t => !t.clockOut || t.clockOut === '');
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const activeShift = timesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift' && (t.date === todayDateStr || (t.date && t.date.startsWith(todayDateStr))))
+    || timesheets.find(t => (!t.clockOut || t.clockOut === '') && (t.date === todayDateStr || (t.date && t.date.startsWith(todayDateStr))));
   const [elapsedTimeStr, setElapsedTimeStr] = useState('00:00:00');
   const [isPunching, setIsPunching] = useState(false);
 
   const getClockInDateTime = (shift) => {
     if (!shift) return null;
     if (shift.clockIn) {
+      if (typeof shift.clockIn === 'string' && /^\d{1,2}:\d{2}/.test(shift.clockIn.trim())) {
+        const parts = shift.clockIn.trim().split(':');
+        const d = shift.date ? new Date(shift.date) : new Date();
+        d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parts[2] ? parseInt(parts[2], 10) : 0, 0);
+        if (!isNaN(d.getTime())) return d;
+      }
       const parsed = new Date(shift.clockIn);
       if (!isNaN(parsed.getTime())) return parsed;
     }
@@ -410,6 +418,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       if (!clockInDate) return;
       let diffMs = new Date() - clockInDate;
       if (diffMs < 0) diffMs = 0;
+      if (diffMs > 16 * 3600 * 1000) diffMs = 16 * 3600 * 1000;
       const diffSecs = Math.floor(diffMs / 1000);
       const hrs = Math.floor(diffSecs / 3600);
       const mins = Math.floor((diffSecs % 3600) / 60);
@@ -1144,7 +1153,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   // Edit personal profile details
   const handleUpdateProfile = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
     try {
       const updateData = {
         name: profileName,
@@ -1165,10 +1176,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         }
       };
 
-      await api.put(`/employees/${user.id}`, updateData);
+      const empId = user?.id || user?._id;
+      await api.put(`/employees/${empId}`, updateData);
       showToast('Profile details updated.', 'success');
       setProfileEditing(false);
-      loadUser();
+      if (loadUser) await loadUser();
+      window.dispatchEvent(new Event('userProfileUpdated'));
     } catch (err) {
       showToast('Error updating profile.', 'error');
     }
@@ -1234,13 +1247,26 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   // Ticket submissions
   const handleRaiseTicketSubmit = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    const payload = (e && typeof e === 'object' && !e.preventDefault && (e.title || e.description)) ? e : null;
+    const finalTitle = payload?.title || ticketTitle;
+    const finalCategory = payload?.category || ticketCategory || 'General Support';
+    const finalPriority = payload?.priority || ticketPriority || 'Medium';
+    const finalDesc = payload?.description || ticketDesc;
+
+    if (!finalTitle?.trim() || !finalDesc?.trim()) {
+      showToast('Please provide a subject and description.', 'error');
+      return;
+    }
+
     try {
       const res = await api.post('/tickets', {
-        title: ticketTitle,
-        category: ticketCategory,
-        priority: ticketPriority,
-        description: ticketDesc
+        title: finalTitle.trim(),
+        category: finalCategory,
+        priority: finalPriority,
+        description: finalDesc.trim()
       });
       showToast('Support ticket raised.', 'success');
       if (res.data) {
@@ -1496,6 +1522,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       if (loadUser) {
         await loadUser(); // refresh navbar and context user
       }
+      window.dispatchEvent(new Event('userProfileUpdated'));
+      window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: res.data?.avatar }));
       if (fetchAllData) {
         fetchAllData(); // refresh employee records
       }
@@ -2073,7 +2101,17 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 <div className="card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid hsl(var(--border))' }}>
                     <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <img src={getAvatarUrl(user)} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid hsl(var(--primary))' }} alt="profile" />
+                      <img 
+                        src={getAvatarUrl(user)} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          const gender = (user?.gender || 'Male').toLowerCase();
+                          const fill = gender === 'female' ? '%23ec4899' : '%233b82f6';
+                          e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${fill}"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>`;
+                        }}
+                        style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid hsl(var(--primary))' }} 
+                        alt="profile" 
+                      />
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -3235,7 +3273,15 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                   Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
                 </p>
-                <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+                <img 
+                  src="/secure_vault_illustration.jpg" 
+                  alt="Security Illustration" 
+                  className="illustration-card-img" 
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250' fill='%236366f1'><rect width='400' height='250' rx='12' fill='%23f1f5f9'/><circle cx='200' cy='110' r='40' fill='%236366f1' opacity='0.2'/><path d='M200 90 v40 M180 110 h40' stroke='%236366f1' stroke-width='4' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' fill='%23475569' font-size='14' font-family='sans-serif' font-weight='600'>HR O Security Vault</text></svg>";
+                  }}
+                />
               </div>
 
               {/* Right Forms Column */}
@@ -3824,7 +3870,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         onClose={() => setPayslipActive(false)}
         employee={selectedEmpForPayslip}
         month={payslipMonth}
-        onPrint={() => { showToast('Payslip invoice sent to printer!', 'success'); setPayslipActive(false); }}
+        showToast={showToast}
       />
 
       {/* Simulated Mobile Notification Alert */}

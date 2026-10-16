@@ -29,6 +29,10 @@ const TimesheetSchema = new mongoose.Schema({
   empId: {
     type: String,
     required: true
+  },
+  remarks: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

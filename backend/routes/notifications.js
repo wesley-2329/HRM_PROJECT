@@ -48,7 +48,7 @@ router.get('/', protect, async (req, res, next) => {
       ];
     }
 
-    const rawNotifs = await Notification.find(filter).sort({ createdAt: -1 });
+    const rawNotifs = await Notification.find(filter).sort({ createdAt: -1 }).limit(50).lean();
 
     const notifications = rawNotifs.map(n => {
       const doc = n.toObject ? n.toObject() : { ...n };

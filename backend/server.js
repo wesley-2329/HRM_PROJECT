@@ -44,7 +44,13 @@ app.use(cors());
 app.use(express.json());
 
 // Stateful Offline Mock Database Sync Middleware (used when offline)
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState === 2) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+
   if (mongoose.connection.readyState === 1) {
     res.setHeader('X-Data-Source', 'live');
     res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');

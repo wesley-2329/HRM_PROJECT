@@ -1,54 +1,156 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 const ToastContext = createContext();
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const timeoutsRef = useRef({});
 
-  const showToast = (message, type = 'info') => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type, active: false }]);
-    
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      Object.values(timeoutsRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
+  const dismissToast = (id) => {
+    if (timeoutsRef.current[id]) {
+      clearTimeout(timeoutsRef.current[id]);
+      delete timeoutsRef.current[id];
+    }
+    setToasts((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, active: false } : t))
+    );
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 250);
+  };
+
+  const showToast = (message, type = 'info', options = {}) => {
+    const toastId = options.id || `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const duration = options.duration || 3500;
+
+    // Clear any existing auto-remove timer for this specific toast
+    if (timeoutsRef.current[toastId]) {
+      clearTimeout(timeoutsRef.current[toastId]);
+      delete timeoutsRef.current[toastId];
+    }
+
+    setToasts((prev) => {
+      const existingIdx = prev.findIndex((t) => t.id === toastId);
+      if (existingIdx !== -1) {
+        const updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          message,
+          type,
+          active: true
+        };
+        return updated;
+      }
+
+      // Deduplicate identical active message and type to prevent vertical stacking
+      if (prev.some((t) => t.message === message && t.type === type)) {
+        return prev;
+      }
+
+      // Limit concurrent visible toasts to 3 to prevent clutter
+      const list = prev.length >= 3 ? prev.slice(prev.length - 2) : prev;
+      return [...list, { id: toastId, message, type, active: false }];
+    });
+
     // Trigger slide-in animation
     setTimeout(() => {
       setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, active: true } : t))
+        prev.map((t) => (t.id === toastId ? { ...t, active: true } : t))
       );
     }, 10);
 
-    // Auto-remove toast after 3.5s
-    setTimeout(() => {
+    // Auto-remove toast after duration
+    timeoutsRef.current[toastId] = setTimeout(() => {
       setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, active: false } : t))
+        prev.map((t) => (t.id === toastId ? { ...t, active: false } : t))
       );
       setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
+        setToasts((prev) => prev.filter((t) => t.id !== toastId));
+        delete timeoutsRef.current[toastId];
       }, 300);
-    }, 3500);
+    }, duration);
+
+    return toastId;
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.showToast = showToast;
   }, []);
 
-  return (
-    <ToastContext.Provider value={{ showToast }}>
-      {children}
-      <div className="toast-container">
-        {toasts.map((t) => {
-          let icon = 'fa-info-circle';
-          if (t.type === 'success') icon = 'fa-circle-check';
-          if (t.type === 'error' || t.type === 'danger') icon = 'fa-circle-exclamation';
-          if (t.type === 'warning') icon = 'fa-triangle-exclamation';
-          return (
-            <div key={t.id} className={`toast ${t.type === 'danger' ? 'error' : t.type} ${t.active ? 'active' : ''}`}>
+  const toastContainer = (
+    <div
+      className="toast-container"
+      style={{
+        position: 'fixed',
+        top: '24px',
+        right: '24px',
+        zIndex: 9999999,
+        pointerEvents: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      }}
+    >
+      {toasts.map((t) => {
+        let icon = 'fa-info-circle';
+        if (t.type === 'success') icon = 'fa-circle-check';
+        if (t.type === 'error' || t.type === 'danger') icon = 'fa-circle-exclamation';
+        if (t.type === 'warning') icon = 'fa-triangle-exclamation';
+        return (
+          <div
+            key={t.id}
+            className={`toast ${t.type === 'danger' ? 'error' : t.type} ${t.active ? 'active' : ''}`}
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <i className={`fa-solid ${icon}`}></i>
               <span>{t.message}</span>
-              <div className="toast-progress"></div>
             </div>
-          );
-        })}
-      </div>
+            <button
+              type="button"
+              onClick={() => dismissToast(t.id)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: 0.6,
+                color: 'inherit',
+                fontSize: '0.85rem',
+                padding: '2px 4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Close"
+              aria-label="Close notification"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+            <div className="toast-progress"></div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <ToastContext.Provider value={{ showToast, dismissToast }}>
+      {children}
+      {mounted && typeof document !== 'undefined' ? createPortal(toastContainer, document.body) : toastContainer}
     </ToastContext.Provider>
   );
 };

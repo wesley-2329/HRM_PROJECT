@@ -89,6 +89,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleUpdate = () => {
+      if (localStorage.getItem('token')) {
+        loadUser();
+      }
+    };
+    window.addEventListener('userProfileUpdated', handleUpdate);
+    window.addEventListener('avatarUpdated', handleUpdate);
+    return () => {
+      window.removeEventListener('userProfileUpdated', handleUpdate);
+      window.removeEventListener('avatarUpdated', handleUpdate);
+    };
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, setUser: updateUserState, loadUser }}>
       {children}

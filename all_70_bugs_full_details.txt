@@ -1,0 +1,424 @@
+Total bugs in register: 70
+=== BUG 001 ===
+Login form retains pre-filled credentials for a new user
+Area: Login | Priority recommendation: High | Register status: Closed in register — retest required
+Required fix / acceptance: Clear username/password fields on a fresh login/new session; never ship real credentials as defaults. Keep any remembered username behind an explicit user choice and never persist passwords. Verify browser refresh, logout, and different-user flows.
+
+=== BUG 002 ===
+Secure HR Notepad save alert hidden behind top navigation
+Area: Overview → Secure HR Notepad | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Render toast in a global portal/root layer with correct z-index and viewport positioning; ensure it is not clipped by overflow/stacking contexts.
+
+=== BUG 003 ===
+Delete confirmation uses OK/Cancel instead of Yes/No
+Area: Overview → Secure HR Notepad | Priority recommendation: Low | Register status: Closed in register — retest required
+Required fix / acceptance: Use the requested Yes/No labels, clear destructive-action wording, and ensure No cancels without deleting while Yes deletes once.
+
+=== BUG 005 ===
+Top-panel UI elements overlap on dashboard
+Area: Dashboard/top navigation | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Fix responsive layout, flex/grid constraints, gaps and breakpoints; prevent overlap at supported desktop/tablet widths and browser zoom levels.
+
+=== BUG 006 ===
+Aadhaar field accepts more than 12 characters
+Area: Workforce → Employee Directory → Add Employee | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Limit to exactly 12 digits at UI and API validation; reject letters and extra digits; do not silently truncate invalid submitted data. Treat Aadhaar as sensitive data.
+
+=== BUG 007 ===
+Phone field accepts more than 10 characters
+Area: Workforce → Employee Directory → Add Employee | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Validate Indian mobile number as 10 digits (if that is the product requirement) on client and server; handle country code explicitly if supported.
+
+=== BUG 008 ===
+No success confirmation after saving employee
+Area: Workforce → Employee Directory → Add Employee | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Show one accessible success toast/dialog only after the server confirms persistence; show actionable errors on failure and avoid false success.
+
+=== BUG 009 ===
+Phone and Aadhaar values overflow View Details/Documents container
+Area: Employee Directory → employee details | Priority recommendation: Low | Register status: Closed in register — retest required
+Required fix / acceptance: Apply responsive wrapping/overflow-wrap, grid min-width:0, and consistent field containers; preserve full values without pushing layout outside the card.
+
+=== BUG 010 ===
+Address and Emergency Contact absent from Add Employee form
+Area: Workforce → Employee Directory → Add Employee | Priority recommendation: Medium | Register status: Closed in register — retest required
+Required fix / acceptance: Add fields consistent with the View Details schema, wire them to form state and API payload, validate them, and persist/reload them.
+
+=== BUG 011 ===
+Uploaded profile picture not shown; employee name appears instead
+Area: Employee Directory → employee profile/grid | Priority recommendation: High | Register status: CONFLICT: status says closed, retest note says picture still does not update
+Required fix / acceptance: Trace upload response, stored image URL/path, API field mapping and rendering fallback. Show uploaded image after save and refresh; do not mark fixed until actual image changes.
+
+=== BUG 012 ===
+Unique employee incorrectly receives Duplicate error
+Area: Workforce → Employee Directory → Add Employee | Priority recommendation: High | Register status: Closed in register — retest required
+Required fix / acceptance: Inspect duplicate-check keys and API response handling; normalize fields before comparison, enforce only intended unique fields, and return precise duplicate errors.
+
+=== BUG 013 ===
+Company creation with Inactive status fails; retry says duplicate
+Area: Workforce → Org Setup → Company Hierarchy → Company Profile | Priority recommendation: High | Register status: Closed in register — retest required
+Required fix / acceptance: Fix create transaction/validation so Inactive is a valid status; make retries idempotent and distinguish a persisted first request from a true duplicate.
+
+=== BUG 014 ===
+Business Unit creation with Inactive status fails; retry says duplicate
+Area: Workforce → Org Setup → Business Unit Profile | Priority recommendation: High | Register status: Closed in register — retest required
+Required fix / acceptance: Same root-cause investigation as 013: status enum/schema, request mapping, save result, and idempotent retry behavior.
+
+=== BUG 015 ===
+Cost Center creation with Inactive status fails; retry says duplicate
+Area: Workforce → Org Setup → Cost Centers | Priority recommendation: High | Register status: Closed in register — retest required
+Required fix / acceptance: Allow Inactive status through validation/schema and make failed/retried submissions safe; verify exactly one record is created.
+
+=== BUG 016 ===
+Department creation with Inactive status fails; retry says duplicate
+Area: Workforce → Org Setup → Department Structure | Priority recommendation: High | Register status: CONFLICT: status sequence suggests open; fixed/retest sheet explicitly says No
+Required fix / acceptance: Allow Inactive status and align frontend/backend enums; fix error handling/idempotency and test active/inactive creation.
+
+=== BUG 017 ===
+Generate Payslip confirmation unclear and Download PDF fails
+Area: Payroll/Payslip | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Fix confirmation visibility and generate a real PDF from the selected employee/period; return correct MIME type and filename, handle errors, and test that the PDF opens and contains data.
+
+=== BUG 018A ===
+Confidential Document Vault upload fails or hangs
+Area: Confidential Document Vault | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Trace upload request, auth, multipart field names, size/type validation, storage permissions and response handling; add progress, timeout/error state and retry; verify stored file can be retrieved.
+
+=== BUG 018B ===
+Employee Vault download says version undefined
+Area: Employee Vault | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Ensure each file record has version metadata; pass the selected file/version ID to the download endpoint; validate missing versions and provide a clear message rather than building an undefined URL.
+
+=== BUG 019 ===
+Run Expiry Scan requires multiple clicks and stacks popups
+Area: Expiry Scan | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Use a single in-flight state, disable button while request runs, deduplicate requests, and display one toast/modal after the actual response; fix toast stacking/z-index.
+
+=== BUG 020 ===
+Current Role RBAC view filter has no effect
+Area: Enterprise Recruitment & Onboarding | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Wire filter state to query/data filtering and ensure authorization is enforced server-side as well as in the UI; test each role and unauthorized access.
+
+=== BUG 021 ===
+Create Manpower Requisition needs 3–4 clicks
+Area: Manpower Requisition | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Inspect submit handler, validation, async API response and table refresh; submit once, prevent duplicate clicks while pending, and update the table from the returned saved record.
+
+=== BUG 022 ===
+Create Manpower Requisition panel overlaps Workflow Timeline
+Area: Manpower Requisition | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Correct layout/grid/flex sizing, spacing, min-width and responsive breakpoints; sections must not overlap at common viewport sizes.
+
+=== BUG 023 ===
+Manpower Requisitions Hub creates duplicate rows
+Area: Manpower Requisition Hub | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Prevent repeated submissions, use request idempotency and backend uniqueness where appropriate, and refresh from canonical server data; verify one row per submission.
+
+=== BUG 024 ===
+Vacancy Budget Approval & Cost Center Allocation fails to save first time
+Area: Recruitment/Manpower budget | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Trace form state, validation, API request and table refresh; show pending/success/error states and save once reliably; do not rely on repeated clicks.
+
+=== BUG 025 ===
+Resume Parser and JD Matching returns Error analyzing resume
+Area: Talent Growth → Recruitment ATS → Resume Parser/JD Matching | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Inspect supported file types, multipart upload, parser service, extraction errors and JD payload; return structured errors and test PDF/DOCX examples end-to-end.
+
+=== BUG 026 ===
+Cost-Per-Hire expense entry does not save first attempt
+Area: Talent Growth → Recruitment → Cost Tracking & Cost-Per-Hire | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Fix form submission/API persistence and post-save table refresh; prevent duplicate submissions and show explicit success/failure.
+
+=== BUG 027 ===
+Rating Scales/Performance Template Breakdown table misaligned
+Area: Performance & Appraisal | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Define stable column widths, wrapping, consistent cell padding and responsive horizontal scrolling; align headers and values.
+
+=== BUG 028 ===
+Assign Employee Goal under KRAs/KPIs saves only after 2–3 attempts
+Area: Talent Growth → Goal Setting Hub | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Trace submit state/API errors and asynchronous table update; single-click save, loading state, prevent duplicates and test persistence after refresh.
+
+=== BUG 029 ===
+Recommend Promotion fails to save on first click
+Area: Talent Growth → Performance & Appraisal | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Fix submit handler, validation, API persistence and state refresh; show actionable errors and prevent duplicate clicks.
+
+=== BUG 030 ===
+Second increment recommendation overwrites/disappears with first record
+Area: Increment Recommendations & Payroll Integration | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Append/merge server-returned records by stable ID instead of replacing the collection with one record; verify persistence and reload behavior.
+
+=== BUG 031 ===
+Recommend Promotion creates duplicate records
+Area: Performance & Appraisal | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Guard against double submits and enforce appropriate backend idempotency/uniqueness; verify one promotion record per intentional submission.
+
+=== BUG 032 ===
+Saving second PIP record deletes/loses earlier record
+Area: PIP Lifecycle | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Fix state update to append/merge by record ID; inspect backend upsert/replace semantics; test multiple PIPs and reload persistence.
+
+=== BUG 033 ===
+Dashboard Overview font colors have poor contrast
+Area: Dashboard Overview | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Adjust theme tokens and text colors to meet WCAG AA contrast (normally 4.5:1 for body text); verify labels, values and headings in actual themes.
+
+=== BUG 034 ===
+Support & Reports navigation overlaps search bar
+Area: Top navigation | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Fix nav flex sizing, overflow and responsive menu placement; keep search and navigation usable without overlap.
+
+=== BUG 035 ===
+Open New Ticket does not work in IT & HR Helpdesk
+Area: IT & HR Helpdesk Support Desk | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Wire button to the ticket form/API, validate required fields, show success/error state and verify ticket appears in the system.
+
+=== BUG 036 ===
+Welfare Type dropdown options are not visible
+Area: Welfare Support → Request Welfare Support | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Fix dropdown menu rendering/portal/z-index/overflow and options state; ensure options are visible and keyboard/mouse selectable.
+
+=== BUG 037 ===
+CSV/PDF/XLSX exports do not download in HR Budget & Financial Reports
+Area: HR Budget & Financial Reports Export | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Implement/repair each export endpoint and client Blob/download flow; use correct MIME type and filename; verify CSV, valid PDF and valid XLSX content.
+
+=== BUG 039 ===
+View action does not work for Challan Receipt documents
+Area: Statutory Compliance Documents | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Connect View action to the selected document preview/detail/download route; validate document ID and show a clear missing-file error.
+
+=== BUG 040 ===
+Immutable Statutory Audit Logs shows raw JSON in Details
+Area: Finance/Budget → Immutable Statutory Audit Logs | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Render a concise human-readable summary or expandable JSON viewer; wrap/truncate long values and keep the table within viewport; preserve full audit detail on demand.
+
+=== BUG 041 ===
+Duplicate records in Automated Full & Final Settlement Register
+Area: Exit Workflow & Full & Final Settlement | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Prevent duplicate generation/submission, inspect backend create logic and idempotency, and test repeated clicks/retries create one settlement record.
+
+=== BUG 042 ===
+NDC PDF and Exit Letter Generate show success but create no file
+Area: No Due Certificate / Official Exit Letters | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Do not show success until generation/storage/download succeeds; wire each document type to a real generator and return a downloadable artifact with valid content.
+
+=== BUG 043 ===
+Print Report layout overlaps navigation/UI elements
+Area: Governance → Observation Tracker → Reports Panel | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Add print-specific CSS (@media print) to hide navigation/buttons and format report content, margins, page breaks and tables.
+
+=== BUG 044 ===
+Download Report does not work in Internal Regulatory Audit Archives
+Area: Governance → Internal Regulatory Audit Archives | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Connect download to the correct report data/file generation; use correct response headers and verify a non-empty valid file is downloaded.
+
+=== BUG 045 ===
+Information icon dropdown closes before options can be clicked
+Area: Top navigation → Support Tickets/Reports & Audits/Alert Center | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Keep dropdown open across trigger-to-menu pointer movement; correct hover boundary, placement and z-index; support click and keyboard interaction.
+
+=== BUG 046 ===
+Initiate PIP form overlaps Periodic PIP Review Log
+Area: Growth & Talent → PIP Lifecycle Engine | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Separate panels into responsive sections/tabs/modals with spacing; ensure each remains independently scrollable and usable.
+
+=== BUG 047 ===
+Light Theme text is faded/low contrast in Training & Competency Evaluation
+Area: Growth & Talent → Training & Competency Evaluation | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Correct light-theme text/background tokens and verify WCAG AA contrast for module header and all stat cards.
+
+=== BUG 048 ===
+Enroll Now returns 400 Bad Request
+Area: Growth & Talent → Learning & Development | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Inspect request body, program ID, auth and backend validation for TRN-1002; align API contract; return visible validation errors and confirm enrollment persistence.
+
+=== BUG 049 ===
+Request Position Approval form fields misaligned
+Area: Position Approval modal | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Use consistent two-column grid, label/input spacing, row gaps and responsive stacking; prevent crowding on smaller screens.
+
+=== BUG 050 ===
+Resume parsing/score API returns 500
+Area: Growth & Talent → Recruitment resume screening | Priority recommendation: High | Register status: OPEN — overlaps Bug 025
+Required fix / acceptance: Inspect server logs and upload endpoint, multipart handling, parser dependencies and file validation; return structured errors; test end-to-end parsing and scoring.
+
+=== BUG 051 ===
+Budget Planning View does not open budget details
+Area: Finance & Exit → Budget Planning Register | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Attach View action to selected budget ID and open a detail modal/drawer/page; include amounts, cost center, status and approval history; add tests.
+
+=== BUG 052 ===
+Notifications API times out after Transfer; UI main-thread violations
+Area: Finance & Exit → Budget Allocation | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Investigate /api/notifications latency, repeated polling and blocking work; make notifications non-blocking, cancel/dedupe requests, handle timeout gracefully, and verify transfer result separately.
+
+=== BUG 053 ===
+Budget Audit Logs display raw/unformatted JSON
+Area: Finance & Exit → HR Budgeting & Cost Analytics → Budget History | Priority recommendation: Medium | Register status: OPEN — overlaps Bug 040
+Required fix / acceptance: Format audit changes into readable key/value summaries with expandable full details; prevent horizontal overflow and preserve audit completeness.
+
+=== BUG 054 ===
+Welfare Budget and Welfare Expense tabs show same table/data
+Area: HR Budgeting & Cost Analytics | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Give each tab distinct query, schema and columns: budget allocations vs actual expenses/invoices; remove fallback/mock data masquerading as live results.
+
+=== BUG 055 ===
+Welfare Budget APIs return 401 and silently use cached/stateful fallback
+Area: Welfare Budget APIs | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Fix auth/session/token forwarding and route permissions for all affected endpoints; show a clear error instead of presenting stale data as live; test authenticated roles.
+
+=== BUG 056 ===
+Submit Ticket throws e.preventDefault is not a function
+Area: Employee Profile → Raise a Ticket / HR Query | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Correct submit callback contract: only call preventDefault on a real event, or use the framework's supported form submission pattern; add tests and success/error feedback.
+
+=== BUG 057 ===
+Personal Details Save Changes throws e.preventDefault error and resets fields
+Area: Employee Profile → Personal Details | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Fix the same event/callback mismatch; preserve form state on failure, validate fields, persist API payload and display success/error feedback.
+
+=== BUG 058 ===
+Profile picture upload times out and fails
+Area: Employee Profile → Upload Profile Picture | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Trace upload API/network/storage and timeout configuration; validate multipart upload and file limits, return stored image URL, show progress, and verify updated picture after refresh.
+
+=== BUG 059 ===
+Update Password returns User not found for logged-in user
+Area: Employee Profile → Update Password | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Resolve authenticated user ID consistently between session/token and backend lookup; never trust a client-supplied unrelated ID; verify password hashing and current-password checks.
+
+=== BUG 060 ===
+Department Clearance table columns do not align
+Area: Exit Workflow & F&F → Department Clearances | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Use explicit column sizing, consistent cell padding, text wrapping and responsive overflow; align every header with its data cells.
+
+=== BUG 061 ===
+Training Reminders View Course button does nothing
+Area: Employee Dashboard → Training Reminders | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Wire the button to the assigned course ID and route/modal; show a fallback message if course content is unavailable.
+
+=== BUG 062 ===
+Punch In/Punch Out fails because clockIn is sent as '00:47' string
+Area: Operations → Attendance | Priority recommendation: Critical | Register status: OPEN — related to Bug 066
+Required fix / acceptance: Send/store a valid ISO datetime (including date and timezone policy), validate schema on server, and migrate/handle invalid legacy values; test clock-in/out.
+
+=== BUG 063 ===
+Top navigation arrows do not scroll menu
+Area: Top navigation | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Connect arrows to the nav container's scrollLeft/scrollBy behavior; disable at boundaries and test overflow/responsive widths.
+
+=== BUG 064 ===
+Last navigation dropdown closes before its options can be clicked
+Area: Top navigation → Tasks/Meetings/Daily Reports/Helpdesk | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Correct hover region/portal and menu positioning; keep open while pointer is inside; ensure dropdown aligns below trigger and is keyboard accessible.
+
+=== BUG 065 ===
+Database Disconnected banner appears during normal use and stale data is shown
+Area: Employee Dashboard | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Trace health checks, DB/API connection handling and offline cache logic; distinguish genuine outage from individual request timeout; refresh stale data and show accurate last-updated/offline status.
+
+=== BUG 066 ===
+Clocked-in time is '--' and shift timer is implausible
+Area: Attendance Punch Clock | Priority recommendation: Critical | Register status: OPEN in register
+Required fix / acceptance: Use persisted clockIn timestamp as source of truth, calculate elapsed time from it, handle timezone/invalid legacy data and reset state correctly after punch-out.
+
+=== BUG 067 ===
+Global search returns no suggestions/results/feedback
+Area: Top navigation global search | Priority recommendation: Medium | Register status: OPEN in register
+Required fix / acceptance: Implement/wire search query and index, debounce requests, display loading/empty/error states and navigate to selected result; verify permissions-aware results.
+
+=== BUG 068 ===
+Security Illustration image is broken
+Area: Employee Settings → Security & Config | Priority recommendation: Low | Register status: OPEN in register
+Required fix / acceptance: Fix asset path/case/build packaging or remote URL; add a graceful fallback and verify the image request succeeds in production.
+
+=== BUG 069 ===
+Budget Planning View still does not open details on retest
+Area: Finance & Exit → HR Budgeting & Cost Analytics → Budget Planning | Priority recommendation: High | Register status: OPEN — retest failed; duplicate of Bug 051
+Required fix / acceptance: Treat as a regression/retest failure of 051; fix the actual handler/data path and add a regression test before marking closed.
+
+=== BUG 070 ===
+Cost Analytics tab is blank
+Area: HR Budgeting & Cost Analytics → Cost Analytics | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Implement/wire the tab component, data query and charts/tables; include loading, empty and error states; check chart dependency and API failures.
+
+=== BUG 071 ===
+Forecast & Variance tab is blank
+Area: HR Budgeting & Cost Analytics → Forecast & Variance | Priority recommendation: High | Register status: OPEN in register
+Required fix / acceptance: Implement/wire planned-vs-actual calculations, variance amount/percentage and trend visualizations; show loading/empty/error states and test with known sample data.
+5. Cross-cutting engineering requirements
+Inspect the existing repository, package manager, framework, routes, API client, auth/session mechanism, schemas/models and current tests before editing. Do not assume a framework or rewrite the app.
+Trace each defect through UI → state/form handler → API request → backend validation/business logic → database/storage → returned response → UI refresh. Fix the root cause, not just the visible symptom.
+For all create/update actions: one click must issue one logical mutation; disable while pending; make retries safe; do not show success until persistence succeeds; preserve user input on failure; refresh from canonical server data.
+For duplicate/data-loss issues: inspect create vs update/upsert logic, state replacement vs append/merge, unique constraints, retries, double-clicks, and idempotency. Add regression tests with two sequential records and repeated submissions.
+For auth/RBAC: use the authenticated identity and server-side permission checks. Never rely on hiding UI controls as the only authorization. Do not mask 401/403 errors by silently displaying stale/mock data.
+For uploads/downloads/exports/PDFs: validate real bytes, response MIME type, filename, file size/type, storage path and permissions. A success message must correspond to a valid artifact that can be opened/downloaded.
+For date/time: define a consistent ISO 8601 timestamp/timezone policy, validate at API boundaries, and test persisted values after reload. Do not store bare time strings where a date-time is required.
+For UI: use responsive layout constraints, stable table column sizing, accessible contrast, visible loading/empty/error states, correct dropdown hover boundaries, and global toast/dialog layers not clipped by parent containers.
+Do not hardcode fake success, sample data, or mock fallback as if it were live. If backend capability is missing, report the blocker instead of faking it.
+Add unit/integration tests for each fix and a browser-level smoke test for the user flow. Run lint/typecheck/build/test commands available in the repo and report actual results.
+Keep unrelated behavior unchanged. Do not remove existing features, change route contracts, modify secrets, or perform destructive database migrations without a clear plan and approval.
+6. Copy/paste prompt for Antigravity
+You are working on the existing HR O / HRMS application repository. Fix the reported defects in the attached HRMS bug register and in the consolidated issue list in this document.  MANDATORY WORKFLOW 1. First inspect the repository and identify the actual frontend/backend framework, package manager, route structure, API client, authentication/session design, database models/schemas, file storage, and available test commands. Do not guess the stack and do not rewrite the app. 2. Create a defect checklist using the IDs below. For each item, trace the complete flow from UI interaction through state/validation/API/backend/database or storage and back to the UI. Inspect console, network responses and server logs where available. Fix root causes, not just symptoms. 3. Prioritize data integrity, authorization, attendance/payroll correctness, and broken core workflows before cosmetic changes. Related bugs may share a root cause; fix the shared root cause but verify every listed screen independently. 4. Do not fake success, hardcode sample data, suppress errors, or display cached/mock data as live. Success is shown only after the real operation succeeds. On failure, show an actionable message and preserve user input. 5. Prevent duplicate submissions: one user action must create one logical record. Use pending/disabled button state, idempotency where appropriate, and backend constraints where appropriate. Ensure retries are safe. 6. Preserve existing architecture and design. Avoid broad refactors unrelated to the defects. Do not change or delete user data, credentials, environment files, or database records. 7. Add/adjust regression tests for every fixed bug, including repeated-click, retry, refresh/persistence, failure/empty state, permissions and responsive viewport scenarios. 8. After implementation, run the repository's available tests, lint, type check and production build. Report exactly what passed/failed; never claim a test was run if it was not run.  DEFECT CHECKLIST - Bug 001: Login form retains pre-filled credentials for a new user. Acceptance/fix: Clear username/password fields on a fresh login/new session; never ship real credentials as defaults. Keep any remembered username behind an explicit user choice and never persist passwords. Verify browser refresh, logout, and different-user flows. - Bug 002: Secure HR Notepad save alert hidden behind top navigation. Acceptance/fix: Render toast in a global portal/root layer with correct z-index and viewport positioning; ensure it is not clipped by overflow/stacking contexts. - Bug 003: Delete confirmation uses OK/Cancel instead of Yes/No. Acceptance/fix: Use the requested Yes/No labels, clear destructive-action wording, and ensure No cancels without deleting while Yes deletes once. - Bug 005: Top-panel UI elements overlap on dashboard. Acceptance/fix: Fix responsive layout, flex/grid constraints, gaps and breakpoints; prevent overlap at supported desktop/tablet widths and browser zoom levels. - Bug 006: Aadhaar field accepts more than 12 characters. Acceptance/fix: Limit to exactly 12 digits at UI and API validation; reject letters and extra digits; do not silently truncate invalid submitted data. Treat Aadhaar as sensitive data. - Bug 007: Phone field accepts more than 10 characters. Acceptance/fix: Validate Indian mobile number as 10 digits (if that is the product requirement) on client and server; handle country code explicitly if supported. - Bug 008: No success confirmation after saving employee. Acceptance/fix: Show one accessible success toast/dialog only after the server confirms persistence; show actionable errors on failure and avoid false success. - Bug 009: Phone and Aadhaar values overflow View Details/Documents container. Acceptance/fix: Apply responsive wrapping/overflow-wrap, grid min-width:0, and consistent field containers; preserve full values without pushing layout outside the card. - Bug 010: Address and Emergency Contact absent from Add Employee form. Acceptance/fix: Add fields consistent with the View Details schema, wire them to form state and API payload, validate them, and persist/reload them. - Bug 011: Uploaded profile picture not shown; employee name appears instead. Acceptance/fix: Trace upload response, stored image URL/path, API field mapping and rendering fallback. Show uploaded image after save and refresh; do not mark fixed until actual image changes. - Bug 012: Unique employee incorrectly receives Duplicate error. Acceptance/fix: Inspect duplicate-check keys and API response handling; normalize fields before comparison, enforce only intended unique fields, and return precise duplicate errors. - Bug 013: Company creation with Inactive status fails; retry says duplicate. Acceptance/fix: Fix create transaction/validation so Inactive is a valid status; make retries idempotent and distinguish a persisted first request from a true duplicate. - Bug 014: Business Unit creation with Inactive status fails; retry says duplicate. Acceptance/fix: Same root-cause investigation as 013: status enum/schema, request mapping, save result, and idempotent retry behavior. - Bug 015: Cost Center creation with Inactive status fails; retry says duplicate. Acceptance/fix: Allow Inactive status through validation/schema and make failed/retried submissions safe; verify exactly one record is created. - Bug 016: Department creation with Inactive status fails; retry says duplicate. Acceptance/fix: Allow Inactive status and align frontend/backend enums; fix error handling/idempotency and test active/inactive creation. - Bug 017: Generate Payslip confirmation unclear and Download PDF fails. Acceptance/fix: Fix confirmation visibility and generate a real PDF from the selected employee/period; return correct MIME type and filename, handle errors, and test that the PDF opens and contains data. - Bug 018A: Confidential Document Vault upload fails or hangs. Acceptance/fix: Trace upload request, auth, multipart field names, size/type validation, storage permissions and response handling; add progress, timeout/error state and retry; verify stored file can be retrieved. - Bug 018B: Employee Vault download says version undefined. Acceptance/fix: Ensure each file record has version metadata; pass the selected file/version ID to the download endpoint; validate missing versions and provide a clear message rather than building an undefined URL. - Bug 019: Run Expiry Scan requires multiple clicks and stacks popups. Acceptance/fix: Use a single in-flight state, disable button while request runs, deduplicate requests, and display one toast/modal after the actual response; fix toast stacking/z-index. - Bug 020: Current Role RBAC view filter has no effect. Acceptance/fix: Wire filter state to query/data filtering and ensure authorization is enforced server-side as well as in the UI; test each role and unauthorized access. - Bug 021: Create Manpower Requisition needs 3–4 clicks. Acceptance/fix: Inspect submit handler, validation, async API response and table refresh; submit once, prevent duplicate clicks while pending, and update the table from the returned saved record. - Bug 022: Create Manpower Requisition panel overlaps Workflow Timeline. Acceptance/fix: Correct layout/grid/flex sizing, spacing, min-width and responsive breakpoints; sections must not overlap at common viewport sizes. - Bug 023: Manpower Requisitions Hub creates duplicate rows. Acceptance/fix: Prevent repeated submissions, use request idempotency and backend uniqueness where appropriate, and refresh from canonical server data; verify one row per submission. - Bug 024: Vacancy Budget Approval & Cost Center Allocation fails to save first time. Acceptance/fix: Trace form state, validation, API request and table refresh; show pending/success/error states and save once reliably; do not rely on repeated clicks. - Bug 025: Resume Parser and JD Matching returns Error analyzing resume. Acceptance/fix: Inspect supported file types, multipart upload, parser service, extraction errors and JD payload; return structured errors and test PDF/DOCX examples end-to-end. - Bug 026: Cost-Per-Hire expense entry does not save first attempt. Acceptance/fix: Fix form submission/API persistence and post-save table refresh; prevent duplicate submissions and show explicit success/failure. - Bug 027: Rating Scales/Performance Template Breakdown table misaligned. Acceptance/fix: Define stable column widths, wrapping, consistent cell padding and responsive horizontal scrolling; align headers and values. - Bug 028: Assign Employee Goal under KRAs/KPIs saves only after 2–3 attempts. Acceptance/fix: Trace submit state/API errors and asynchronous table update; single-click save, loading state, prevent duplicates and test persistence after refresh. - Bug 029: Recommend Promotion fails to save on first click. Acceptance/fix: Fix submit handler, validation, API persistence and state refresh; show actionable errors and prevent duplicate clicks. - Bug 030: Second increment recommendation overwrites/disappears with first record. Acceptance/fix: Append/merge server-returned records by stable ID instead of replacing the collection with one record; verify persistence and reload behavior. - Bug 031: Recommend Promotion creates duplicate records. Acceptance/fix: Guard against double submits and enforce appropriate backend idempotency/uniqueness; verify one promotion record per intentional submission. - Bug 032: Saving second PIP record deletes/loses earlier record. Acceptance/fix: Fix state update to append/merge by record ID; inspect backend upsert/replace semantics; test multiple PIPs and reload persistence. - Bug 033: Dashboard Overview font colors have poor contrast. Acceptance/fix: Adjust theme tokens and text colors to meet WCAG AA contrast (normally 4.5:1 for body text); verify labels, values and headings in actual themes. - Bug 034: Support & Reports navigation overlaps search bar. Acceptance/fix: Fix nav flex sizing, overflow and responsive menu placement; keep search and navigation usable without overlap. - Bug 035: Open New Ticket does not work in IT & HR Helpdesk. Acceptance/fix: Wire button to the ticket form/API, validate required fields, show success/error state and verify ticket appears in the system. - Bug 036: Welfare Type dropdown options are not visible. Acceptance/fix: Fix dropdown menu rendering/portal/z-index/overflow and options state; ensure options are visible and keyboard/mouse selectable. - Bug 037: CSV/PDF/XLSX exports do not download in HR Budget & Financial Reports. Acceptance/fix: Implement/repair each export endpoint and client Blob/download flow; use correct MIME type and filename; verify CSV, valid PDF and valid XLSX content. - Bug 039: View action does not work for Challan Receipt documents. Acceptance/fix: Connect View action to the selected document preview/detail/download route; validate document ID and show a clear missing-file error. - Bug 040: Immutable Statutory Audit Logs shows raw JSON in Details. Acceptance/fix: Render a concise human-readable summary or expandable JSON viewer; wrap/truncate long values and keep the table within viewport; preserve full audit detail on demand. - Bug 041: Duplicate records in Automated Full & Final Settlement Register. Acceptance/fix: Prevent duplicate generation/submission, inspect backend create logic and idempotency, and test repeated clicks/retries create one settlement record. - Bug 042: NDC PDF and Exit Letter Generate show success but create no file. Acceptance/fix: Do not show success until generation/storage/download succeeds; wire each document type to a real generator and return a downloadable artifact with valid content. - Bug 043: Print Report layout overlaps navigation/UI elements. Acceptance/fix: Add print-specific CSS (@media print) to hide navigation/buttons and format report content, margins, page breaks and tables. - Bug 044: Download Report does not work in Internal Regulatory Audit Archives. Acceptance/fix: Connect download to the correct report data/file generation; use correct response headers and verify a non-empty valid file is downloaded. - Bug 045: Information icon dropdown closes before options can be clicked. Acceptance/fix: Keep dropdown open across trigger-to-menu pointer movement; correct hover boundary, placement and z-index; support click and keyboard interaction. - Bug 046: Initiate PIP form overlaps Periodic PIP Review Log. Acceptance/fix: Separate panels into responsive sections/tabs/modals with spacing; ensure each remains independently scrollable and usable. - Bug 047: Light Theme text is faded/low contrast in Training & Competency Evaluation. Acceptance/fix: Correct light-theme text/background tokens and verify WCAG AA contrast for module header and all stat cards. - Bug 048: Enroll Now returns 400 Bad Request. Acceptance/fix: Inspect request body, program ID, auth and backend validation for TRN-1002; align API contract; return visible validation errors and confirm enrollment persistence. - Bug 049: Request Position Approval form fields misaligned. Acceptance/fix: Use consistent two-column grid, label/input spacing, row gaps and responsive stacking; prevent crowding on smaller screens. - Bug 050: Resume parsing/score API returns 500. Acceptance/fix: Inspect server logs and upload endpoint, multipart handling, parser dependencies and file validation; return structured errors; test end-to-end parsing and scoring. - Bug 051: Budget Planning View does not open budget details. Acceptance/fix: Attach View action to selected budget ID and open a detail modal/drawer/page; include amounts, cost center, status and approval history; add tests. - Bug 052: Notifications API times out after Transfer; UI main-thread violations. Acceptance/fix: Investigate /api/notifications latency, repeated polling and blocking work; make notifications non-blocking, cancel/dedupe requests, handle timeout gracefully, and verify transfer result separately. - Bug 053: Budget Audit Logs display raw/unformatted JSON. Acceptance/fix: Format audit changes into readable key/value summaries with expandable full details; prevent horizontal overflow and preserve audit completeness. - Bug 054: Welfare Budget and Welfare Expense tabs show same table/data. Acceptance/fix: Give each tab distinct query, schema and columns: budget allocations vs actual expenses/invoices; remove fallback/mock data masquerading as live results. - Bug 055: Welfare Budget APIs return 401 and silently use cached/stateful fallback. Acceptance/fix: Fix auth/session/token forwarding and route permissions for all affected endpoints; show a clear error instead of presenting stale data as live; test authenticated roles. - Bug 056: Submit Ticket throws e.preventDefault is not a function. Acceptance/fix: Correct submit callback contract: only call preventDefault on a real event, or use the framework's supported form submission pattern; add tests and success/error feedback. - Bug 057: Personal Details Save Changes throws e.preventDefault error and resets fields. Acceptance/fix: Fix the same event/callback mismatch; preserve form state on failure, validate fields, persist API payload and display success/error feedback. - Bug 058: Profile picture upload times out and fails. Acceptance/fix: Trace upload API/network/storage and timeout configuration; validate multipart upload and file limits, return stored image URL, show progress, and verify updated picture after refresh. - Bug 059: Update Password returns User not found for logged-in user. Acceptance/fix: Resolve authenticated user ID consistently between session/token and backend lookup; never trust a client-supplied unrelated ID; verify password hashing and current-password checks. - Bug 060: Department Clearance table columns do not align. Acceptance/fix: Use explicit column sizing, consistent cell padding, text wrapping and responsive overflow; align every header with its data cells. - Bug 061: Training Reminders View Course button does nothing. Acceptance/fix: Wire the button to the assigned course ID and route/modal; show a fallback message if course content is unavailable. - Bug 062: Punch In/Punch Out fails because clockIn is sent as '00:47' string. Acceptance/fix: Send/store a valid ISO datetime (including date and timezone policy), validate schema on server, and migrate/handle invalid legacy values; test clock-in/out. - Bug 063: Top navigation arrows do not scroll menu. Acceptance/fix: Connect arrows to the nav container's scrollLeft/scrollBy behavior; disable at boundaries and test overflow/responsive widths. - Bug 064: Last navigation dropdown closes before its options can be clicked. Acceptance/fix: Correct hover region/portal and menu positioning; keep open while pointer is inside; ensure dropdown aligns below trigger and is keyboard accessible. - Bug 065: Database Disconnected banner appears during normal use and stale data is shown. Acceptance/fix: Trace health checks, DB/API connection handling and offline cache logic; distinguish genuine outage from individual request timeout; refresh stale data and show accurate last-updated/offline status. - Bug 066: Clocked-in time is '--' and shift timer is implausible. Acceptance/fix: Use persisted clockIn timestamp as source of truth, calculate elapsed time from it, handle timezone/invalid legacy data and reset state correctly after punch-out. - Bug 067: Global search returns no suggestions/results/feedback. Acceptance/fix: Implement/wire search query and index, debounce requests, display loading/empty/error states and navigate to selected result; verify permissions-aware results. - Bug 068: Security Illustration image is broken. Acceptance/fix: Fix asset path/case/build packaging or remote URL; add a graceful fallback and verify the image request succeeds in production. - Bug 069: Budget Planning View still does not open details on retest. Acceptance/fix: Treat as a regression/retest failure of 051; fix the actual handler/data path and add a regression test before marking closed. - Bug 070: Cost Analytics tab is blank. Acceptance/fix: Implement/wire the tab component, data query and charts/tables; include loading, empty and error states; check chart dependency and API failures. - Bug 071: Forecast & Variance tab is blank. Acceptance/fix: Implement/wire planned-vs-actual calculations, variance amount/percentage and trend visualizations; show loading/empty/error states and test with known sample data.  FINAL RESPONSE REQUIRED - Summarize root causes found (with relevant file paths/functions). - List each bug ID as FIXED, PARTIALLY FIXED, BLOCKED, or NOT FIXED, with a concise reason and changed files. - List tests added/run and actual results. - Identify any backend/API/environment dependency that prevents completion. - Provide manual verification steps for each remaining issue. - Do not mark any issue fixed unless its acceptance criteria are demonstrated by tests or an explicit reproducible verification. 
+7. Manual verification checklist before marking closed
+Repeat each save/create action once, then rapidly click again: one record only; success appears once.
+Refresh the page and revisit the record: persisted values and uploaded images/files remain present.
+Test both valid and invalid input, API timeout, 401/403, 400/500 and empty-data responses; errors must be visible and not masquerade as success.
+For RBAC, test at least two roles and direct API access; unauthorized data must not be returned.
+For downloads/exports, open the downloaded file and verify it is non-empty, valid, and matches the selected employee/report/period.
+Test attendance clock-in/out across refresh and timezone boundary cases; timestamps and elapsed duration must be plausible.
+Test dropdowns and navigation with mouse and keyboard, and test layout at desktop and narrow viewport widths.
+Re-run Bug 051 and Bug 069 together; re-run Bug 025 and Bug 050 together; verify Bug 040 and Bug 053 use consistent audit-log formatting.
+
+1. What I found in the PDFs
+The register identifies these major problem areas:
+Category	Examples of reported bugs
+Login and employee management	Bugs 001–016
+Payslips, document vault and expiry scans	Bugs 017–019
+Recruitment and manpower requisitions	Bugs 020–026
+Performance, promotions and PIP	Bugs 027–032
+Navigation, forms and UI	Bugs 033–049
+Budget, audit logs and exports	Bugs 037, 040–044, 051–055, 069–071
+Employee profile and authentication	Bugs 056–059
+Attendance and dashboard	Bugs 062, 065–068
+These are reported defects from the documents, not independent confirmation that every issue still occurs in the current application.
+2. Which bugs are marked unresolved?
+The status register on PDF pages 49–72 contains 70 status entries. According to their apparent order:
+14
+Marked closed
+In the status register; still require verification.
+
+
+56
+Marked open
+Includes item 10 and items 16–70 in the apparent sequence.
+
+
+
+There are discrepancies in the later fix notes that need attention:
+- Bug 011: The status table appears to mark it closed, but a retest note says the success popup appears while the profile picture still does not update.
+- Bug 016: The fix notes explicitly mark it “No.”
+- Bug 069: The budget “View” action failed again on retest, so it should not be considered resolved.
+- Bugs 025 and 050: Both report resume parsing failures and should be investigated together.
+- Bugs 040 and 053: Both concern raw JSON in audit logs.
+- Bugs 062 and 066: Both concern broken attendance timestamps and timers.
+The report preserves these distinctions rather than assuming a “closed” status guarantees the defect is fixed.
+3. What Antigravity needs to do
+The document includes a full prompt covering every listed issue. The most important instructions are:
+1. Inspect the existing codebase first. Identify the actual frontend, backend, database, authentication and API structure before making changes.
+2. Fix root causes. Trace each bug from the UI through the API and database/storage, then back to the displayed result.
+3. Prevent duplicate submissions and data loss. One click must create one record, and saving a second record must not delete the first.
+4. Fix actual functionality. Buttons, tabs, search, uploads, downloads, exports and document generators must perform their intended operations—not merely display success messages.
+5. Preserve existing features. Avoid unnecessary rewrites, mock success responses or unrelated UI changes.
+6. Test every fix. Run the available tests, linting, type checks and production build, and report the actual results.
+7. Do not mark bugs fixed without verification. Antigravity must identify any remaining issues, backend dependencies and failed tests.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-15T02:13:25+05:30.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from  to Gemini 3.8 Flash (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+

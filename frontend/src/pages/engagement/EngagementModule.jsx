@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import api from '../../api';
@@ -36,6 +36,16 @@ const EngagementModule = ({ searchQuery = '' }) => {
   const [showWelfareModal, setShowWelfareModal] = useState(false);
   const [showRecognitionModal, setShowRecognitionModal] = useState(false);
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
+
+  // Ticket creation states & locks
+  const submittingTicketRef = useRef(false);
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [ticketConfirmation, setTicketConfirmation] = useState(null);
+
+  // Welfare request states & locks
+  const submittingWelfareRef = useRef(false);
+  const [isSubmittingWelfare, setIsSubmittingWelfare] = useState(false);
+  const [welfareConfirmation, setWelfareConfirmation] = useState(null);
 
   // Form Fields
   const [newSuggestion, setNewSuggestion] = useState({ title: '', category: 'Process Improvement', description: '', businessImpact: '', estimatedBenefit: '', priority: 'Medium' });
@@ -150,15 +160,54 @@ const EngagementModule = ({ searchQuery = '' }) => {
 
   // Handler: Raise Helpdesk Ticket
   const handleCreateTicket = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    if (submittingTicketRef.current) return;
+
+    if (!newTicket.subject?.trim()) {
+      showToast('Please provide a ticket subject', 'error');
+      return;
+    }
+    if (!newTicket.description?.trim()) {
+      showToast('Please provide a ticket description', 'error');
+      return;
+    }
+
+    submittingTicketRef.current = true;
+    setIsSubmittingTicket(true);
+
     try {
-      await api.post('/engagement/helpdesk', newTicket);
-      showToast('Helpdesk ticket opened', 'success');
+      const res = await api.post('/engagement/helpdesk', {
+        subject: newTicket.subject.trim(),
+        category: newTicket.category || 'IT Support',
+        subcategory: newTicket.subcategory?.trim() || 'General',
+        priority: newTicket.priority || 'Medium',
+        description: newTicket.description.trim()
+      });
+
+      const created = res.data;
+      const ticketIdDisplay = created?.ticketId || 'New';
+      showToast(`Support Ticket ${ticketIdDisplay} created successfully!`, 'success');
+      setTicketConfirmation(created);
       setShowHelpdeskModal(false);
       setNewTicket({ category: 'IT Support', subcategory: 'General', subject: '', description: '', priority: 'Medium' });
+
+      // Immediate in-place table update
+      if (created && created._id) {
+        setTickets(prev => [created, ...(prev || []).filter(t => t._id !== created._id && t.ticketId !== created.ticketId)]);
+        setDashboardMetrics(prev => ({
+          ...prev,
+          openHelpdeskTickets: (prev.openHelpdeskTickets || 0) + 1
+        }));
+      }
+
       fetchModuleData();
     } catch (err) {
-      showToast('Failed to open helpdesk ticket', 'error');
+      showToast(err.response?.data?.message || 'Failed to open helpdesk ticket', 'error');
+    } finally {
+      submittingTicketRef.current = false;
+      setIsSubmittingTicket(false);
     }
   };
 
@@ -181,15 +230,52 @@ const EngagementModule = ({ searchQuery = '' }) => {
 
   // Handler: Submit Welfare Request
   const handleCreateWelfare = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    if (submittingWelfareRef.current) return;
+
+    if (!newWelfare.description?.trim()) {
+      showToast('Please provide a description for the welfare request', 'error');
+      return;
+    }
+    if (!newWelfare.amount || newWelfare.amount <= 0) {
+      showToast('Please specify a valid requested amount', 'error');
+      return;
+    }
+
+    submittingWelfareRef.current = true;
+    setIsSubmittingWelfare(true);
+
     try {
-      await api.post('/engagement/welfare', newWelfare);
-      showToast('Welfare request submitted', 'success');
+      const res = await api.post('/engagement/welfare', {
+        welfareType: newWelfare.welfareType || 'Medical Assistance',
+        description: newWelfare.description.trim(),
+        amount: Number(newWelfare.amount) || 0
+      });
+
+      const created = res.data;
+      const reqIdDisplay = created?.requestId || 'New';
+      showToast(`Welfare request ${reqIdDisplay} submitted successfully!`, 'success');
+      setWelfareConfirmation(created);
       setShowWelfareModal(false);
       setNewWelfare({ welfareType: 'Medical Assistance', description: '', amount: 10000 });
+
+      // Immediate in-place table update
+      if (created && created._id) {
+        setWelfares(prev => [created, ...(prev || []).filter(w => w._id !== created._id && w.requestId !== created.requestId)]);
+        setDashboardMetrics(prev => ({
+          ...prev,
+          welfareRequestsPending: (prev.welfareRequestsPending || 0) + 1
+        }));
+      }
+
       fetchModuleData();
     } catch (err) {
-      showToast('Failed to submit welfare request', 'error');
+      showToast(err.response?.data?.message || 'Failed to submit welfare request', 'error');
+    } finally {
+      submittingWelfareRef.current = false;
+      setIsSubmittingWelfare(false);
     }
   };
 
@@ -583,10 +669,40 @@ const EngagementModule = ({ searchQuery = '' }) => {
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🎧 IT & HR Helpdesk Support Desk</h3>
-            <button className="btn btn-primary" onClick={() => setShowHelpdeskModal(true)} style={{ borderRadius: '8px' }}>
+            <button id="btn-open-new-ticket" className="btn btn-primary" onClick={() => setShowHelpdeskModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Open New Ticket
             </button>
           </div>
+
+          {ticketConfirmation && (
+            <div id="ticket-confirmation-banner" style={{
+              marginBottom: '20px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid #10b981',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.95rem' }}>
+                  <i className="fa-solid fa-circle-check" style={{ marginRight: '8px' }}></i>
+                  Ticket {ticketConfirmation.ticketId} Created Successfully!
+                </span>
+                <div style={{ fontSize: '0.85rem', color: 'hsl(var(--foreground))', marginTop: '4px' }}>
+                  Subject: <strong>{ticketConfirmation.subject}</strong> | Category: <strong>{ticketConfirmation.category}</strong> | Priority: <strong>{ticketConfirmation.priority}</strong> ({ticketConfirmation.slaHours || 24}h SLA Target)
+                </div>
+              </div>
+              <button
+                className="btn btn-outline"
+                style={{ padding: '4px 10px', fontSize: '0.8rem', borderColor: '#10b981', color: '#10b981' }}
+                onClick={() => setTicketConfirmation(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -645,10 +761,40 @@ const EngagementModule = ({ searchQuery = '' }) => {
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🤝 Employee Welfare & Benefit Grants</h3>
-            <button className="btn btn-primary" onClick={() => setShowWelfareModal(true)} style={{ borderRadius: '8px' }}>
+            <button id="btn-request-welfare-benefit" className="btn btn-primary" onClick={() => setShowWelfareModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Request Welfare Benefit
             </button>
           </div>
+
+          {welfareConfirmation && (
+            <div id="welfare-confirmation-banner" style={{
+              marginBottom: '20px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid #10b981',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.95rem' }}>
+                  <i className="fa-solid fa-circle-check" style={{ marginRight: '8px' }}></i>
+                  Welfare Request {welfareConfirmation.requestId} Submitted Successfully!
+                </span>
+                <div style={{ fontSize: '0.85rem', color: 'hsl(var(--foreground))', marginTop: '4px' }}>
+                  Type: <strong>{welfareConfirmation.welfareType}</strong> | Amount: <strong>₹{welfareConfirmation.amount?.toLocaleString()}</strong> | Status: <strong>{welfareConfirmation.status}</strong>
+                </div>
+              </div>
+              <button
+                className="btn btn-outline"
+                style={{ padding: '4px 10px', fontSize: '0.8rem', borderColor: '#10b981', color: '#10b981' }}
+                onClick={() => setWelfareConfirmation(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -889,20 +1035,101 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {/* MODAL: HELPDESK TICKET */}
       {showHelpdeskModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>🎧 Open Helpdesk Ticket</h3>
+          <div className="glass-card" style={{ width: '540px', maxWidth: '95vw', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🎧 Open Helpdesk Ticket</h3>
+              <button type="button" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => setShowHelpdeskModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
             <form onSubmit={handleCreateTicket}>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Subject</label>
-                <input type="text" className="input" required value={newTicket.subject} onChange={e => setNewTicket({ ...newTicket, subject: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px' }} />
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>Ticket Subject *</label>
+                <input
+                  type="text"
+                  className="input form-control"
+                  required
+                  placeholder="e.g. VPN Access Timeout or Payroll Slip Inquiry"
+                  value={newTicket.subject}
+                  onChange={e => setNewTicket({ ...newTicket, subject: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px' }}
+                />
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>Category *</label>
+                  <select
+                    className="form-control"
+                    value={newTicket.category}
+                    onChange={e => setNewTicket({ ...newTicket, category: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px' }}
+                  >
+                    <option value="IT Support">IT Support</option>
+                    <option value="HR Query">HR Query</option>
+                    <option value="Payroll Issue">Payroll Issue</option>
+                    <option value="Facilities & Workplace">Facilities & Workplace</option>
+                    <option value="Leave & Attendance">Leave & Attendance</option>
+                    <option value="Hardware & Equipment">Hardware & Equipment</option>
+                    <option value="Software & Access">Software & Access</option>
+                    <option value="General Support">General Support</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>Priority *</label>
+                  <select
+                    className="form-control"
+                    value={newTicket.priority}
+                    onChange={e => setNewTicket({ ...newTicket, priority: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px' }}
+                  >
+                    <option value="Low">Low (24h SLA)</option>
+                    <option value="Medium">Medium (24h SLA)</option>
+                    <option value="High">High (12h SLA)</option>
+                    <option value="Critical">Critical (4h SLA)</option>
+                  </select>
+                </div>
+              </div>
+
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Description</label>
-                <textarea className="input" required rows="3" value={newTicket.description} onChange={e => setNewTicket({ ...newTicket, description: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px' }}></textarea>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>Subcategory</label>
+                <input
+                  type="text"
+                  className="input form-control"
+                  placeholder="e.g. Network Access, Laptop, Reimbursement"
+                  value={newTicket.subcategory}
+                  onChange={e => setNewTicket({ ...newTicket, subcategory: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px' }}
+                />
               </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', fontWeight: 600 }}>Description *</label>
+                <textarea
+                  className="input form-control"
+                  required
+                  rows="3"
+                  placeholder="Detailed description of the support request..."
+                  value={newTicket.description}
+                  onChange={e => setNewTicket({ ...newTicket, description: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px' }}
+                ></textarea>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setShowHelpdeskModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Open Ticket</button>
+                <button
+                  type="submit"
+                  id="btn-submit-ticket"
+                  className="btn btn-primary"
+                  disabled={isSubmittingTicket}
+                >
+                  {isSubmittingTicket ? (
+                    <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</>
+                  ) : (
+                    <><i className="fa-solid fa-paper-plane"></i> Submit Ticket</>
+                  )}
+                </button>
               </div>
             </form>
           </div>
@@ -912,30 +1139,75 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {/* MODAL: WELFARE REQUEST */}
       {showWelfareModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>🤝 Request Welfare Support</h3>
+          <div className="glass-card" style={{ width: '500px', maxWidth: '95vw', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🤝 Request Welfare Support</h3>
+              <button type="button" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => setShowWelfareModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
             <form onSubmit={handleCreateWelfare}>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Welfare Type</label>
-                <select className="input" value={newWelfare.welfareType} onChange={e => setNewWelfare({ ...newWelfare, welfareType: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>
-                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Medical Assistance</option>
-                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Education Support</option>
-                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Travel Support</option>
-                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Emergency Fund</option>
-                  <option style={{ background: '#1e293b', color: '#f8fafc' }}>Festival Benefits</option>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600, color: 'hsl(var(--foreground))' }}>Welfare Type *</label>
+                <select
+                  id="welfare-type-select"
+                  className="form-control" value={newWelfare.welfareType}
+                  onChange={e => setNewWelfare({ ...newWelfare, welfareType: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'hsl(var(--card, #ffffff))',
+                    color: 'hsl(var(--foreground, #0f172a))',
+                    border: '1px solid hsl(var(--border, #cbd5e1))',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Medical Assistance" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Medical Assistance</option>
+                  <option value="Education Support" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Education Support</option>
+                  <option value="Travel Support" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Travel Support</option>
+                  <option value="Emergency Fund" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Emergency Fund</option>
+                  <option value="Festival Benefits" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Festival Benefits</option>
                 </select>
               </div>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Requested Amount (₹)</label>
-                <input type="number" className="input" required value={newWelfare.amount} onChange={e => setNewWelfare({ ...newWelfare, amount: Number(e.target.value) })} style={{ width: '100%', padding: '8px', borderRadius: '6px' }} />
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600, color: 'hsl(var(--foreground))' }}>Requested Amount (₹) *</label>
+                <input
+                  type="number"
+                  className="input form-control"
+                  required
+                  min="1"
+                  value={newWelfare.amount}
+                  onChange={e => setNewWelfare({ ...newWelfare, amount: Number(e.target.value) })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px' }}
+                />
               </div>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Description</label>
-                <textarea className="input" required rows="3" value={newWelfare.description} onChange={e => setNewWelfare({ ...newWelfare, description: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '6px' }}></textarea>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600, color: 'hsl(var(--foreground))' }}>Description *</label>
+                <textarea
+                  className="input form-control"
+                  required
+                  rows="3"
+                  placeholder="Detail your request and medical/educational justification..."
+                  value={newWelfare.description}
+                  onChange={e => setNewWelfare({ ...newWelfare, description: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px' }}
+                ></textarea>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setShowWelfareModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Submit Request</button>
+                <button
+                  type="submit"
+                  id="btn-submit-welfare"
+                  className="btn btn-primary"
+                  disabled={isSubmittingWelfare}
+                >
+                  {isSubmittingWelfare ? (
+                    <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</>
+                  ) : (
+                    <><i className="fa-solid fa-paper-plane"></i> Submit Request</>
+                  )}
+                </button>
               </div>
             </form>
           </div>

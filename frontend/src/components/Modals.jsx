@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getAvatarUrl } from '../App';
 import { formatTimeString } from '../utils/dateUtils';
+import { downloadPdfDocument } from '../utils/pdfGenerator';
 
 const getSalaryDetails = (role) => {
   let basic = 65000;
@@ -32,7 +33,14 @@ const getSalaryDetails = (role) => {
 export const ModalWrapper = ({ id, active, onClose, children }) => {
   return (
     <div className={`modal-overlay ${active ? 'active' : ''}`} id={id}>
-      <div className="modal-content" style={id === 'ledger-modal' || id === 'payslip-modal' ? { maxWidth: '700px' } : {}}>
+      <div 
+        className="modal-content" 
+        style={
+          id === 'payslip-modal' 
+            ? { maxWidth: '750px', width: '95%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } 
+            : (id === 'ledger-modal' ? { maxWidth: '700px' } : {})
+        }
+      >
         {children}
       </div>
     </div>
@@ -367,109 +375,252 @@ export const StatsModal = ({ active, onClose, employee, timesheets = [], leaves 
 };
 
 // 4. Payslip Modal
-export const PayslipModal = ({ active, onClose, employee, month, onPrint }) => {
+export const PayslipModal = ({ active, onClose, employee, month, onPrint, showToast }) => {
   if (!employee) return null;
 
+  const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
   const salary = getSalaryDetails(employee.role);
+  const cycleMonth = month || 'May 2026';
+  const docRef = `PAY-${employee.id}-${cycleMonth.replace(/\s+/g, '')}`;
+
+  const handleDownloadPdf = () => {
+    try {
+      setDownloading(true);
+      const ok = downloadPdfDocument({
+        title: 'HR O CORP - OFFICIAL SALARY PAYSLIP',
+        subtitle: `Disbursement Period: ${cycleMonth}`,
+        docNumber: docRef,
+        recipient: `${employee.name} (${employee.id})`,
+        metadata: [
+          { label: 'Employee Name', value: employee.name },
+          { label: 'Employee ID', value: employee.id },
+          { label: 'Department', value: employee.dept },
+          { label: 'Designation', value: employee.role }
+        ],
+        sections: [
+          {
+            heading: '1. Earnings & Allowances',
+            table: {
+              headers: ['Salary Component', 'Type', 'Amount (INR)'],
+              colWidths: [180, 140, 175],
+              rows: [
+                ['Basic Salary', 'Fixed', `INR ${salary.basic.toLocaleString()}`],
+                ['House Rent Allowance (HRA)', 'Allowance', `INR ${salary.hra.toLocaleString()}`],
+                ['Special & Other Allowances', 'Variable', `INR ${salary.other.toLocaleString()}`],
+                ['GROSS EARNINGS', 'Total', `INR ${salary.gross.toLocaleString()}`]
+              ]
+            }
+          },
+          {
+            heading: '2. Statutory & Tax Deductions',
+            table: {
+              headers: ['Deduction Component', 'Category', 'Amount (INR)'],
+              colWidths: [180, 140, 175],
+              rows: [
+                ['Provident Fund (PF)', 'Statutory', `INR ${salary.pf.toLocaleString()}`],
+                ['Professional Tax (PT)', 'Statutory', `INR ${salary.profTax.toLocaleString()}`],
+                ['TDS / Income Tax', 'Statutory', `INR ${salary.tds.toLocaleString()}`],
+                ['TOTAL DEDUCTIONS', 'Total', `INR ${salary.deductions.toLocaleString()}`]
+              ]
+            }
+          },
+          {
+            heading: '3. Net Disbursed Compensation',
+            paragraphs: [
+              `Total Net Take-Home Salary for this cycle is INR ${salary.net.toLocaleString()} directly credited to designated salary bank account.`
+            ]
+          }
+        ],
+        footer: 'This is a computer-generated official document. No physical signature is required.'
+      }, `Payslip_${employee.name.replace(/\s+/g, '_')}_${cycleMonth.replace(/\s+/g, '_')}.pdf`);
+
+      setDownloading(false);
+      if (ok !== false) {
+        setDownloadSuccess(true);
+        if (showToast) {
+          showToast(`Payslip PDF downloaded successfully for ${employee.name}!`, 'success');
+        }
+      }
+    } catch (err) {
+      console.error('Payslip PDF download failed:', err);
+      setDownloading(false);
+      if (showToast) {
+        showToast('Failed to download PDF. Please try again.', 'error');
+      }
+    }
+  };
 
   return (
     <ModalWrapper id="payslip-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
-        <h3 className="modal-title">Payslip Invoice Details</h3>
-        <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
+      {/* Pinned Header */}
+      <div className="modal-header" style={{ marginBottom: '12px' }}>
+        <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="fa-solid fa-file-invoice-dollar" style={{ color: 'hsl(var(--primary))' }}></i>
+          <span>Payslip Generated — Official Statement</span>
+        </h3>
+        <button className="close-modal" onClick={onClose} aria-label="Close modal">
+          <i className="fa-solid fa-xmark"></i>
+        </button>
       </div>
-      <div id="payslip-modal-body" style={{ background: '#fff', color: '#0f172a', padding: '20px', borderRadius: '8px' }}>
-        <div style={{ borderBottom: '2px solid hsl(var(--primary))', paddingBottom: '15px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+      {/* Prominent Confirmation Popup Banner */}
+      <div 
+        id="payslip-confirmation-banner"
+        style={{
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)',
+          border: '1px solid rgba(16, 185, 129, 0.35)',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: '#10b981',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.05rem',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)'
+          }}>
+            <i className="fa-solid fa-check"></i>
+          </div>
           <div>
-            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 700 }}>HR O Corp</h2>
-            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Bengaluru Office, India</p>
+            <div style={{ fontWeight: 700, color: '#065f46', fontSize: '0.95rem' }}>
+              Payslip Generated Successfully!
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#047857' }}>
+              Cycle <strong>{cycleMonth}</strong> record for <strong>{employee.name}</strong> ({employee.id}) is verified & ready.
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#047857', background: 'rgba(16, 185, 129, 0.18)', padding: '4px 8px', borderRadius: '6px' }}>
+          Ref: {docRef}
+        </div>
+      </div>
+
+      {/* Scrollable Document Preview Body */}
+      <div 
+        id="payslip-modal-body" 
+        style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          background: '#ffffff', 
+          color: '#0f172a', 
+          padding: '18px', 
+          borderRadius: '10px', 
+          border: '1px solid #e2e8f0',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)'
+        }}
+      >
+        <div style={{ borderBottom: '2px solid hsl(var(--primary))', paddingBottom: '12px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ color: 'hsl(var(--primary))', fontWeight: 800, margin: 0, fontSize: '1.3rem' }}>HR O Corp</h2>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0 0' }}>Bengaluru Corporate Hub, India</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h3>PAYSLIP INVOICE</h3>
-            <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>Cycle: {month || 'May 2026'}</p>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>PAYSLIP INVOICE</h3>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569', margin: '2px 0 0 0' }}>Cycle: {cycleMonth}</p>
           </div>
         </div>
         
-        <table style={{ width: '100%', fontSize: '0.85rem', marginBottom: '20px', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', fontSize: '0.85rem', marginBottom: '16px', borderCollapse: 'collapse' }}>
           <tbody>
             <tr>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Employee Name:</td><td>{employee.name}</td>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Employee ID:</td><td>{employee.id}</td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Employee Name:</td>
+              <td style={{ padding: '6px 4px', fontWeight: 700, color: '#0f172a' }}>{employee.name}</td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Employee ID:</td>
+              <td style={{ padding: '6px 4px', fontWeight: 700, color: '#0f172a' }}>{employee.id}</td>
             </tr>
             <tr>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Department:</td><td>{employee.dept}</td>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Parent Status:</td><td>{employee.parentStatus || 'No'}</td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Department:</td>
+              <td style={{ padding: '6px 4px' }}>{employee.dept}</td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Parent Status:</td>
+              <td style={{ padding: '6px 4px' }}>{employee.parentStatus || 'No'}</td>
             </tr>
             <tr>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Role Designation:</td><td>{employee.role}</td>
-              <td style={{ padding: '4px', fontWeight: 600 }}>Net Pay:</td><td><strong>₹{salary.net.toLocaleString()}</strong></td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Role Designation:</td>
+              <td style={{ padding: '6px 4px' }}>{employee.role}</td>
+              <td style={{ padding: '6px 4px', fontWeight: 600, color: '#475569' }}>Net Disbursed:</td>
+              <td style={{ padding: '6px 4px', color: '#059669', fontWeight: 800 }}>₹{salary.net.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', fontSize: '0.875rem', borderTop: '1px solid #e2e8f0', paddingTop: '15px' }}>
-          <div>
-            <h4 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px', color: 'hsl(var(--success))' }}>Earnings</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '0.875rem', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <h4 style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '6px', marginBottom: '8px', color: '#059669', fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.9rem' }}>Earnings</h4>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Basic Salary</span><strong>₹{salary.basic.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>HRA Reimbursement</span><strong>₹{salary.hra.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Other Allowance</span><strong>₹{salary.other.toLocaleString()}</strong></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: '6px', fontWeight: 700 }}><span>Total Earnings</span><span>₹{salary.gross.toLocaleString()}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '6px', fontWeight: 700, color: '#0f172a' }}><span>Total Earnings</span><span>₹{salary.gross.toLocaleString()}</span></div>
           </div>
-          <div>
-            <h4 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '10px', color: 'hsl(var(--danger))' }}>Deductions</h4>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <h4 style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '6px', marginBottom: '8px', color: '#dc2626', fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.9rem' }}>Deductions</h4>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Provident Fund (PF)</span><strong>₹{salary.pf.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>Professional Tax</span><strong>₹{salary.profTax.toLocaleString()}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}><span>TDS Deduction</span><strong>₹{salary.tds.toLocaleString()}</strong></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: '6px', fontWeight: 700 }}><span>Total Deductions</span><span>₹{salary.deductions.toLocaleString()}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '6px', fontWeight: 700, color: '#0f172a' }}><span>Total Deductions</span><span>₹{salary.deductions.toLocaleString()}</span></div>
           </div>
         </div>
 
-        <div style={{ marginTop: '20px', background: '#f1f5f9', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.05rem', border: '1px solid #cbd5e1' }}>
-          <span>NET DISBURSED AMOUNT:</span>
-          <span style={{ color: 'hsl(var(--primary))' }}>₹{salary.net.toLocaleString()}</span>
+        <div style={{ marginTop: '16px', background: '#ecfdf5', padding: '12px 16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '1rem', border: '1px solid #a7f3d0' }}>
+          <span style={{ color: '#065f46' }}>NET DISBURSED AMOUNT:</span>
+          <span style={{ color: '#059669', fontSize: '1.2rem', fontWeight: 800 }}>₹{salary.net.toLocaleString()}</span>
         </div>
       </div>
-      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-        <button className="btn btn-secondary" onClick={onClose}>Close</button>
-        <button className="btn btn-primary" onClick={() => {
-          const content = `====================================================
-HR O CORP - OFFICIAL PAYSLIP INVOICE
-====================================================
-Cycle: ${month || 'May 2026'}
-Employee Name: ${employee.name}
-Employee ID: ${employee.id}
-Department: ${employee.dept}
-Role: ${employee.role}
 
-EARNINGS:
-- Basic Salary: INR ${salary.basic.toLocaleString()}
-- HRA Reimbursement: INR ${salary.hra.toLocaleString()}
-- Other Allowance: INR ${salary.other.toLocaleString()}
-TOTAL EARNINGS: INR ${salary.gross.toLocaleString()}
-
-DEDUCTIONS:
-- Provident Fund (PF): INR ${salary.pf.toLocaleString()}
-- Professional Tax: INR ${salary.profTax.toLocaleString()}
-- TDS Deduction: INR ${salary.tds.toLocaleString()}
-TOTAL DEDUCTIONS: INR ${salary.deductions.toLocaleString()}
-
-NET DISBURSED AMOUNT: INR ${salary.net.toLocaleString()}
-====================================================`;
-          const blob = new Blob([content], { type: 'application/pdf' });
-          const blobUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.setAttribute('download', `Payslip_${employee.name.replace(/\s+/g, '_')}_${(month || 'May_2026').replace(/\s+/g, '_')}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(blobUrl);
-          if (onPrint) onPrint();
-        }}>Print / Download PDF</button>
+      {/* Pinned Action Footer */}
+      <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.8rem', color: downloadSuccess ? '#059669' : '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {downloadSuccess ? (
+            <>
+              <i className="fa-solid fa-circle-check" style={{ color: '#10b981' }}></i>
+              <span style={{ fontWeight: 600 }}>PDF downloaded successfully!</span>
+            </>
+          ) : (
+            <span>Official digital record ready for download</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={() => {
+              window.print();
+              if (onPrint) onPrint();
+            }}
+            title="Print statement"
+          >
+            <i className="fa-solid fa-print" style={{ marginRight: '6px' }}></i> Print
+          </button>
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            disabled={downloading}
+            onClick={handleDownloadPdf}
+          >
+            <i className={`fa-solid ${downloading ? 'fa-spinner fa-spin' : (downloadSuccess ? 'fa-check' : 'fa-file-arrow-down')}`} style={{ marginRight: '8px' }}></i>
+            {downloadSuccess ? 'Download PDF Again' : 'Download PDF'}
+          </button>
+        </div>
       </div>
     </ModalWrapper>
   );
 };
+
 
 // 5. Add Walk-in Candidate Modal
 export const AddWalkinModal = ({ active, onClose, onSubmit }) => {

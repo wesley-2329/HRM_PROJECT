@@ -24,7 +24,7 @@
       "dest": "frontend/assets/$1"
     },
     {
-      "src": "/(favicon\\.ico|logo\\.png)",
+      "src": "/(.*\\.(?:ico|png|jpg|jpeg|svg|webp|gif|json|pdf|txt|woff|woff2|ttf))",
       "dest": "frontend/$1"
     },
     {

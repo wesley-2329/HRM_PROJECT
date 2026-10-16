@@ -14,6 +14,7 @@ const PerformanceAuditLog = require('../models/PerformanceAuditLog');
 const PromotionRequest = require('../models/PromotionRequest');
 const SalaryRevisionRequest = require('../models/SalaryRevisionRequest');
 const Employee = require('../models/Employee');
+const Counter = require('../models/Counter');
 const { protect } = require('../middleware/auth');
 
 // Audit Logger Helper
@@ -243,19 +244,111 @@ router.post('/kpis', protect, async (req, res, next) => {
 router.get('/goals', protect, async (req, res, next) => {
   try {
     const list = await EmployeeGoal.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(list);
+    // Deduplicate goals by goalCode and _id before returning
+    const seen = new Set();
+    const deduplicated = list.filter(g => {
+      const key = g.goalCode || String(g._id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    res.json(deduplicated);
   } catch (err) { next(err); }
 });
 
 router.post('/goals', protect, async (req, res, next) => {
   try {
+    const employeeId = req.body.employeeId || 'EMP-1002';
+    const kraName = (req.body.kraName || 'KRA Objective').trim();
+    const weightage = Number(req.body.weightage) || 20;
+
+    // 1. Idempotency Check (10-second duplicate prevention)
+    const tenSecondsAgo = new Date(Date.now() - 10000);
+    const recentDuplicate = await EmployeeGoal.findOne({
+      employeeId,
+      kraName,
+      weightage,
+      createdAt: { $gte: tenSecondsAgo }
+    });
+    if (recentDuplicate) {
+      return res.status(200).json(recentDuplicate);
+    }
+
+    // 2. Resolve employee details if department or designation missing
+    let employeeName = req.body.employeeName;
+    let department = req.body.department;
+    let designation = req.body.designation;
+
+    if (!department || !designation || !employeeName) {
+      const emp = await Employee.findOne({
+        $or: [
+          { employeeId },
+          { id: employeeId },
+          { _id: (employeeId.match(/^[0-9a-fA-F]{24}$/) ? employeeId : null) }
+        ].filter(Boolean)
+      });
+      if (emp) {
+        employeeName = employeeName || emp.name;
+        department = department || emp.dept || emp.department || 'Operations';
+        designation = designation || emp.designation || 'Staff';
+      } else {
+        employeeName = employeeName || 'Employee';
+        department = department || 'Operations';
+        designation = designation || 'Specialist';
+      }
+    }
+
+    // 3. Resolve appraisalCycleId
+    let appraisalCycleId = req.body.appraisalCycleId;
+    if (!appraisalCycleId || appraisalCycleId === '60c72b2f9b1d8b2a3c9e0001') {
+      const activeCycle = await AppraisalCycleMaster.findOne({ status: { $in: ['Active', 'Draft', 'Initiated'] } });
+      if (activeCycle) {
+        appraisalCycleId = String(activeCycle._id);
+      } else {
+        appraisalCycleId = '60c72b2f9b1d8b2a3c9e0001';
+      }
+    }
+
+    // 4. Sequential collision-resistant goalCode generation
     const count = await EmployeeGoal.countDocuments();
-    const goalCode = `GOL-2026-${String(count + 1).padStart(4, '0')}`;
+    const latestGoal = await EmployeeGoal.findOne().sort({ createdAt: -1 });
+    let nextSeq = count + 1;
+    if (latestGoal && latestGoal.goalCode) {
+      const match = latestGoal.goalCode.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let goalCode = `GOL-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await EmployeeGoal.findOne({ goalCode });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      goalCode = `GOL-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await EmployeeGoal.findOne({ goalCode });
+      attempts++;
+    }
+
+    const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+    const endDate = req.body.endDate ? new Date(req.body.endDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
     const newGoal = new EmployeeGoal({
       ...req.body,
+      employeeId,
+      employeeName,
+      department,
+      designation,
+      kraName,
+      weightage,
+      appraisalCycleId,
+      startDate,
+      endDate,
       goalCode,
-      status: 'Submitted'
+      status: req.body.status || 'Submitted'
     });
 
     await newGoal.save();
@@ -468,28 +561,122 @@ router.put('/annual-reviews/:id/acknowledge', protect, async (req, res, next) =>
 router.get('/promotions', protect, async (req, res, next) => {
   try {
     const list = await PromotionRequest.find().sort({ createdAt: -1 });
-    res.json(list);
+    // Deduplicate list by requestId, _id, and active employee promotion
+    const seen = new Set();
+    const deduplicated = list.filter(p => {
+      const key = p.requestId || String(p._id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+
+      const empKey = `${p.employeeId || p.employeeName}_${p.proposedDesignation}_${p.status}`;
+      if (p.status !== 'Approved' && seen.has(empKey)) {
+        return false;
+      }
+      if (p.status !== 'Approved') {
+        seen.add(empKey);
+      }
+      return true;
+    });
+    res.json(deduplicated);
   } catch (err) { next(err); }
 });
 
 router.post('/promotions', protect, async (req, res, next) => {
   try {
+    const employeeId = req.body.employeeId || 'EMP-1002';
+    const proposedDesignation = (req.body.proposedDesignation || '').trim();
+    const proposedGrade = (req.body.proposedGrade || '').trim();
+
+    // 1. 10-Second Idempotency & Active Duplicate Check
+    const tenSecondsAgo = new Date(Date.now() - 10000);
     const existingDuplicate = await PromotionRequest.findOne({
-      employeeId: req.body.employeeId,
-      proposedDesignation: req.body.proposedDesignation,
-      createdAt: { $gte: new Date(Date.now() - 5000) }
+      $and: [
+        {
+          $or: [
+            { employeeId },
+            ...(req.body.employeeName ? [{ employeeName: req.body.employeeName }] : [])
+          ]
+        },
+        { proposedDesignation },
+        {
+          $or: [
+            { createdAt: { $gte: tenSecondsAgo } },
+            { status: { $in: ['Pending Verification', 'Submitted', 'Pending'] } }
+          ]
+        }
+      ]
     });
     if (existingDuplicate) {
       return res.status(200).json(existingDuplicate);
     }
 
-    const count = await PromotionRequest.countDocuments();
-    const requestId = `PRM-2026-${String(count + 1).padStart(4, '0')}`;
+    // 2. Auto-resolve missing employee details
+    let employeeName = req.body.employeeName;
+    let currentDepartment = req.body.currentDepartment;
+    let currentDesignation = req.body.currentDesignation;
+    let currentGrade = req.body.currentGrade;
+
+    if (!currentDepartment || !currentDesignation || !currentGrade || !employeeName) {
+      const emp = await Employee.findOne({
+        $or: [
+          { employeeId },
+          { id: employeeId },
+          { _id: (employeeId.match(/^[0-9a-fA-F]{24}$/) ? employeeId : null) }
+        ].filter(Boolean)
+      });
+      if (emp) {
+        employeeName = employeeName || emp.name;
+        currentDepartment = currentDepartment || emp.dept || emp.department || 'Operations';
+        currentDesignation = currentDesignation || emp.designation || 'Staff';
+        currentGrade = currentGrade || emp.grade || 'Grade B';
+      } else {
+        employeeName = employeeName || 'Employee';
+        currentDepartment = currentDepartment || 'Operations';
+        currentDesignation = currentDesignation || 'Specialist';
+        currentGrade = currentGrade || 'Grade B';
+      }
+    }
+
+    // 3. Collision-resistant sequential requestId generation
+    const currentCount = await PromotionRequest.countDocuments();
+    const seq = await Counter.getNextSequence('PRM-2026', currentCount);
+    let nextSeq = Math.max(seq, currentCount + 1);
+    const latestPromo = await PromotionRequest.findOne().sort({ createdAt: -1 });
+    if (latestPromo && latestPromo.requestId) {
+      const match = latestPromo.requestId.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let requestId = `PRM-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await PromotionRequest.findOne({ requestId });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      requestId = `PRM-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await PromotionRequest.findOne({ requestId });
+      attempts++;
+    }
+
+    const effectiveDate = req.body.effectiveDate ? new Date(req.body.effectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     const newPromotion = new PromotionRequest({
       ...req.body,
+      employeeId,
+      employeeName,
+      currentDepartment,
+      currentDesignation,
+      currentGrade,
+      proposedDesignation: proposedDesignation || 'Senior Specialist',
+      proposedGrade: proposedGrade || 'Grade C',
+      effectiveDate,
+      justification: req.body.justification || 'Exemplary performance appraisal rating and organizational leadership recommendation.',
       requestId,
-      status: 'Pending Verification',
+      status: req.body.status || 'Pending Verification',
       approvalHistory: [{
         status: 'Submitted',
         actorName: req.user?.name || 'Reporting Manager',
@@ -548,33 +735,113 @@ router.put('/promotions/:id/approve', protect, async (req, res, next) => {
 router.get('/increments', protect, async (req, res, next) => {
   try {
     const list = await SalaryRevisionRequest.find().sort({ createdAt: -1 });
-    res.json(list);
+    // Deduplicate by requestId and _id
+    const seen = new Set();
+    const deduplicated = list.filter(i => {
+      const key = i.requestId || String(i._id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    res.json(deduplicated);
   } catch (err) { next(err); }
 });
 
 router.post('/increments', protect, async (req, res, next) => {
   try {
+    const employeeId = req.body.employeeId || 'EMP-1002';
+    const revisedCtc = Number(req.body.revisedCtc) || Number(req.body.currentCtc) || 0;
+    const incrementPercentage = Number(req.body.incrementPercentage) || 0;
+
+    // 1. 10-Second Idempotency Check
+    const tenSecondsAgo = new Date(Date.now() - 10000);
     const existingDuplicate = await SalaryRevisionRequest.findOne({
-      employeeId: req.body.employeeId,
-      newSalary: req.body.newSalary,
-      createdAt: { $gte: new Date(Date.now() - 5000) }
+      employeeId,
+      revisedCtc,
+      incrementPercentage,
+      createdAt: { $gte: tenSecondsAgo }
     });
     if (existingDuplicate) {
       return res.status(200).json(existingDuplicate);
     }
 
-    const count = await SalaryRevisionRequest.countDocuments();
-    const requestId = `SRV-2026-${String(count + 1).padStart(4, '0')}`;
+    // 2. Resolve employee details if missing
+    let employeeName = req.body.employeeName;
+    let currentDepartment = req.body.currentDepartment;
+    let currentDesignation = req.body.currentDesignation;
+    let currentGrade = req.body.currentGrade || 'Grade C';
+
+    if (!currentDepartment || !currentDesignation || !employeeName) {
+      const emp = await Employee.findOne({
+        $or: [
+          { employeeId },
+          { id: employeeId },
+          { _id: (employeeId.match(/^[0-9a-fA-F]{24}$/) ? employeeId : null) }
+        ].filter(Boolean)
+      });
+      if (emp) {
+        employeeName = employeeName || emp.name;
+        currentDepartment = currentDepartment || emp.dept || emp.department || 'Operations';
+        currentDesignation = currentDesignation || emp.designation || 'Staff';
+        currentGrade = currentGrade || emp.grade || 'Grade C';
+      } else {
+        employeeName = employeeName || 'Employee';
+        currentDepartment = currentDepartment || 'Operations';
+        currentDesignation = currentDesignation || 'Specialist';
+      }
+    }
+
+    // 3. Collision-resistant sequential requestId generation using atomic Counter and collision loop
+    const currentCount = await SalaryRevisionRequest.countDocuments();
+    const seq = await Counter.getNextSequence('SRV-2026', currentCount);
+    let nextSeq = Math.max(seq, currentCount + 1);
+
+    const latestInc = await SalaryRevisionRequest.findOne().sort({ createdAt: -1 });
+    if (latestInc && latestInc.requestId) {
+      const match = latestInc.requestId.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let requestId = `SRV-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await SalaryRevisionRequest.findOne({ requestId });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      requestId = `SRV-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await SalaryRevisionRequest.findOne({ requestId });
+      attempts++;
+    }
+
+    const effectiveDate = req.body.effectiveDate ? new Date(req.body.effectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const reason = req.body.reason || req.body.justification || 'Performance appraisal merit increment';
+    const currentCtc = Number(req.body.currentCtc) || 1200000;
+    const incrementAmount = Number(req.body.incrementAmount) || Math.round((currentCtc * incrementPercentage) / 100);
 
     const newInc = new SalaryRevisionRequest({
       ...req.body,
+      employeeId,
+      employeeName,
       requestId,
-      revisionType: 'Annual Increment',
-      status: 'Pending Verification',
+      currentDepartment,
+      currentDesignation,
+      currentGrade,
+      currentCtc,
+      incrementPercentage,
+      incrementAmount,
+      revisedCtc: revisedCtc || (currentCtc + incrementAmount),
+      effectiveDate,
+      reason,
+      revisionType: req.body.revisionType || 'Annual Increment',
+      status: req.body.status || 'Pending Verification',
       approvalHistory: [{
         status: 'Submitted',
         actorName: req.user?.name || 'Reporting Manager',
-        comments: req.body.reason || 'Appraisal increment',
+        comments: reason,
         timestamp: new Date()
       }]
     });
@@ -615,20 +882,112 @@ router.put('/increments/:id/approve', protect, async (req, res, next) => {
 // ==========================================
 router.get('/pip', protect, async (req, res, next) => {
   try {
-    const list = await PipRecord.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(list);
+    const list = await PipRecord.find({
+      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }]
+    }).sort({ createdAt: -1 });
+    // Deduplicate by pipCode and _id
+    const seen = new Set();
+    const deduplicated = list.filter(p => {
+      const key = p.pipCode || String(p._id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    res.json(deduplicated);
   } catch (err) { next(err); }
 });
 
 router.post('/pip', protect, async (req, res, next) => {
   try {
-    const count = await PipRecord.countDocuments();
-    const pipCode = `PIP-2026-${String(count + 1).padStart(4, '0')}`;
+    const employeeId = req.body.employeeId || 'EMP-1002';
+
+    // 1. 10-Second Idempotency Check
+    const tenSecondsAgo = new Date(Date.now() - 10000);
+    const existingDuplicate = await PipRecord.findOne({
+      employeeId,
+      performanceGap: req.body.performanceGap,
+      createdAt: { $gte: tenSecondsAgo }
+    });
+    if (existingDuplicate) {
+      return res.status(200).json(existingDuplicate);
+    }
+
+    // 2. Resolve employee details if missing
+    let employeeName = req.body.employeeName;
+    let department = req.body.department;
+    let designation = req.body.designation;
+
+    if (!department || !designation || !employeeName) {
+      const emp = await Employee.findOne({
+        $or: [
+          { employeeId },
+          { id: employeeId },
+          { _id: (employeeId.match(/^[0-9a-fA-F]{24}$/) ? employeeId : null) }
+        ].filter(Boolean)
+      });
+      if (emp) {
+        employeeName = employeeName || emp.name;
+        department = department || emp.dept || emp.department || 'Operations';
+        designation = designation || emp.designation || 'Staff';
+      } else {
+        employeeName = employeeName || 'Employee';
+        department = department || 'Operations';
+        designation = designation || 'Specialist';
+      }
+    }
+
+    // 3. Collision-resistant sequential pipCode generation using atomic Counter and collision loop
+    const currentCount = await PipRecord.countDocuments();
+    const seq = await Counter.getNextSequence('PIP-2026', currentCount);
+    let nextSeq = Math.max(seq, currentCount + 1);
+
+    const latestPip = await PipRecord.findOne().sort({ createdAt: -1 });
+    if (latestPip && latestPip.pipCode) {
+      const match = latestPip.pipCode.match(/\d+$/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed >= nextSeq) {
+          nextSeq = parsed + 1;
+        }
+      }
+    }
+
+    let pipCode = `PIP-2026-${String(nextSeq).padStart(4, '0')}`;
+    let exists = await PipRecord.findOne({ pipCode });
+    let attempts = 0;
+    while (exists && attempts < 100) {
+      nextSeq++;
+      pipCode = `PIP-2026-${String(nextSeq).padStart(4, '0')}`;
+      exists = await PipRecord.findOne({ pipCode });
+      attempts++;
+    }
+
+    const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+    const durationDays = Number(req.body.durationDays) || 60;
+    const endDate = req.body.endDate ? new Date(req.body.endDate) : new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+    const performanceGap = req.body.performanceGap || 'Identified performance criteria gaps requiring structured development.';
+    const expectedPerformance = req.body.expectedPerformance || 'Achieve performance benchmark metrics aligned with department KPIs.';
+    const actionPlan = req.body.actionPlan || 'Bi-weekly manager coaching, structured checkpoints, and quota review.';
 
     const newPip = new PipRecord({
       ...req.body,
+      employeeId,
+      employeeName,
+      department,
+      designation,
       pipCode,
-      outcome: 'In Progress'
+      startDate,
+      endDate,
+      durationDays,
+      performanceGap,
+      expectedPerformance,
+      actionPlan,
+      reviewFrequency: req.body.reviewFrequency || 'Bi-Weekly',
+      outcome: 'In Progress',
+      objectives: req.body.objectives && req.body.objectives.length > 0 ? req.body.objectives : [
+        { objectiveName: 'Primary Performance Quota Target', target: expectedPerformance, weightage: 50, achievementPct: 0, dueDate: endDate },
+        { objectiveName: 'Daily Operational Compliance', target: '100% Compliance', weightage: 50, achievementPct: 0, dueDate: endDate }
+      ]
     });
 
     await newPip.save();

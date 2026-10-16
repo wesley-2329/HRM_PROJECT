@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
+import { downloadPdfDocument } from '../../utils/pdfGenerator';
 import api from '../../api';
 
 const ExitModule = ({ searchQuery = '' }) => {
@@ -73,6 +74,17 @@ const ExitModule = ({ searchQuery = '' }) => {
   const [newResignation, setNewResignation] = useState({ reasonCategory: 'Career Growth', proposedLwd: '', reasonDetails: '' });
   const [newInterview, setNewInterview] = useState({ exitId: 'EXT-1001', employeeName: 'Anil Kumar', overallSatisfactionScore: 4, primaryReason: 'Career Growth', feedbackComments: '' });
   const [newFfs, setNewFfs] = useState({ exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', pendingSalary: 45000, leaveEncashmentAmount: 32000, gratuityAmount: 125000, noticePayRecovery: 0, loanRecovery: 0 });
+  const [selectedExitCaseId, setSelectedExitCaseId] = useState('EXT-1001');
+
+  const selectedExitCase = resignations.find((r) => r.exitId === selectedExitCaseId) || resignations[0] || {
+    exitId: 'EXT-1001',
+    employeeId: 'EMP-1004',
+    employeeName: 'Anil Kumar',
+    department: 'Engineering',
+    designation: 'Software Engineer',
+    proposedLwd: '2026-10-31',
+    approvedLwd: '2026-10-31'
+  };
 
   useEffect(() => {
     fetchData();
@@ -100,7 +112,18 @@ const ExitModule = ({ searchQuery = '' }) => {
         if (res.data && Array.isArray(res.data) && res.data.length > 0) setInterviews(res.data);
       } else if (activeTab === 'settlement') {
         const res = await api.get('/exit/settlement');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setSettlements(res.data);
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          const seen = new Set();
+          const deduped = [];
+          for (const s of res.data) {
+            const key = s.exitId || s.settlementId;
+            if (!seen.has(key)) {
+              seen.add(key);
+              deduped.push(s);
+            }
+          }
+          setSettlements(deduped);
+        }
       } else if (activeTab === 'history') {
         const res = await api.get('/exit/history');
         if (res.data && Array.isArray(res.data) && res.data.length > 0) setHistoryLogs(res.data);
@@ -111,6 +134,7 @@ const ExitModule = ({ searchQuery = '' }) => {
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingFfsRef = useRef(false);
 
   const handleCreateResignation = async (e) => {
     e.preventDefault();
@@ -174,18 +198,26 @@ const ExitModule = ({ searchQuery = '' }) => {
 
   const handleCreateFfs = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingFfsRef.current || isSubmitting) return;
+    submittingFfsRef.current = true;
     setIsSubmitting(true);
     try {
       const res = await api.post('/exit/settlement/calculate', newFfs);
       showToast('Full & Final Settlement calculated and approved.', 'success');
-      setSettlements([res.data, ...settlements]);
+      setSettlements((prev) => {
+        const exitKey = res.data.exitId || newFfs.exitId;
+        const settlementKey = res.data.settlementId;
+        const filtered = prev.filter(
+          (s) => s.settlementId !== settlementKey && s.exitId !== exitKey
+        );
+        return [res.data, ...filtered];
+      });
       setShowFfsModal(false);
     } catch (err) {
       const earnings = Number(newFfs.pendingSalary) + Number(newFfs.leaveEncashmentAmount) + Number(newFfs.gratuityAmount);
       const deductions = Number(newFfs.noticePayRecovery) + Number(newFfs.loanRecovery);
       const mockItem = {
-        settlementId: 'FFS-' + Date.now(),
+        settlementId: 'FFS-' + (newFfs.exitId ? newFfs.exitId.replace('EXT-', '') : Date.now()),
         exitId: newFfs.exitId,
         employeeId: newFfs.employeeId,
         employeeName: newFfs.employeeName,
@@ -201,11 +233,18 @@ const ExitModule = ({ searchQuery = '' }) => {
         clearanceVerified: true,
         status: 'HR Approved'
       };
-      setSettlements([mockItem, ...settlements]);
+      setSettlements((prev) => {
+        const exitKey = mockItem.exitId;
+        const filtered = prev.filter(
+          (s) => s.settlementId !== mockItem.settlementId && s.exitId !== exitKey
+        );
+        return [mockItem, ...filtered];
+      });
       showToast('F&F Settlement calculated (offline mode).', 'success');
       setShowFfsModal(false);
     } finally {
       setIsSubmitting(false);
+      submittingFfsRef.current = false;
     }
   };
 
@@ -502,14 +541,19 @@ const ExitModule = ({ searchQuery = '' }) => {
                     <td>{c.remarks}</td>
                     <td><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
                     <td>
-                      {c.clearanceStatus !== 'Approved' && (
+                      {c.clearanceStatus !== 'Approved' ? (
                         <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => showToast(`Approved ${c.departmentName} Clearance.`, 'success')}>
                           Approve Clearance
                         </button>
+                      ) : (
+                        <span className="badge badge-success">Completed</span>
                       )}
                     </td>
                   </tr>
                 ))}
+                {clearances.length === 0 && (
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No departmental clearances found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -643,23 +687,78 @@ const ExitModule = ({ searchQuery = '' }) => {
                 </tr>
               </thead>
               <tbody>
-                {settlements.map((s) => (
-                  <tr key={s.settlementId}>
-                    <td><strong>{s.settlementId}</strong></td>
-                    <td>{s.employeeName} ({s.employeeId})</td>
-                    <td>{s.lastWorkingDay}</td>
-                    <td>₹{(s.totalEarnings || 0).toLocaleString()}</td>
-                    <td>₹{(s.totalDeductions || 0).toLocaleString()}</td>
-                    <td><strong style={{ color: '#10b981', fontSize: '0.95rem' }}>₹{(s.netSettlementAmount || 0).toLocaleString()}</strong></td>
-                    <td>{s.clearanceVerified ? <span className="badge badge-success">Verified</span> : <span className="badge badge-warning">Pending</span>}</td>
-                    <td><span className="badge badge-success">{s.status}</span></td>
-                    <td>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => showToast(`Generating F&F Statement PDF for ${s.employeeName}...`, 'info')}>
-                        <i className="fa-solid fa-file-pdf"></i> F&F Sheet
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const seen = new Set();
+                  const dedupedSettlements = settlements.filter((s) => {
+                    const id = s.exitId || s.settlementId;
+                    if (seen.has(id)) return false;
+                    seen.add(id);
+                    return true;
+                  });
+                  return dedupedSettlements.map((s) => (
+                    <tr key={s.settlementId}>
+                      <td><strong>{s.settlementId}</strong></td>
+                      <td>{s.employeeName} ({s.employeeId})</td>
+                      <td>{typeof s.lastWorkingDay === 'string' ? s.lastWorkingDay.split('T')[0] : s.lastWorkingDay}</td>
+                      <td>₹{(s.totalEarnings || 0).toLocaleString()}</td>
+                      <td>₹{(s.totalDeductions || 0).toLocaleString()}</td>
+                      <td><strong style={{ color: '#10b981', fontSize: '0.95rem' }}>₹{(s.netSettlementAmount || 0).toLocaleString()}</strong></td>
+                      <td>{s.clearanceVerified ? <span className="badge badge-success">Verified</span> : <span className="badge badge-warning">Pending</span>}</td>
+                      <td><span className="badge badge-success">{s.status}</span></td>
+                      <td>
+                        <button
+                          id={`btn-download-fnf-${s.settlementId}`}
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                          onClick={() => {
+                            showToast(`Generating F&F Statement PDF for ${s.employeeName}...`, 'info');
+                            downloadPdfDocument({
+                              title: 'FULL & FINAL (F&F) SETTLEMENT STATEMENT',
+                              subtitle: 'Corporate Finance & Separation Settlement Voucher',
+                              docNumber: s.settlementId,
+                              recipient: `${s.employeeName} (${s.employeeId})`,
+                              metadata: [
+                                { label: 'Settlement ID', value: s.settlementId },
+                                { label: 'Employee Name', value: s.employeeName },
+                                { label: 'Employee ID', value: s.employeeId },
+                                { label: 'Last Working Day', value: typeof s.lastWorkingDay === 'string' ? s.lastWorkingDay.split('T')[0] : String(s.lastWorkingDay) },
+                                { label: 'Clearance Status', value: s.clearanceVerified ? 'Verified & Cleared' : 'Pending Verification' },
+                                { label: 'Payment Status', value: s.status }
+                              ],
+                              sections: [
+                                {
+                                  heading: 'Earnings & Deductions Breakdown',
+                                  table: {
+                                    headers: ['Component', 'Type', 'Amount (INR)'],
+                                    colWidths: [200, 140, 155],
+                                    rows: [
+                                      ['Pending Salary', 'Earning', `Rs. ${(s.pendingSalary || 0).toLocaleString()}`],
+                                      ['Leave Encashment', 'Earning', `Rs. ${(s.leaveEncashmentAmount || 0).toLocaleString()}`],
+                                      ['Gratuity Benefit', 'Earning', `Rs. ${(s.gratuityAmount || 0).toLocaleString()}`],
+                                      ['Notice Pay Recovery', 'Deduction', `Rs. ${(s.noticePayRecovery || 0).toLocaleString()}`],
+                                      ['Net Payable Settlement Amount', 'Total Net', `Rs. ${(s.netSettlementAmount || 0).toLocaleString()}`]
+                                    ]
+                                  }
+                                },
+                                {
+                                  heading: 'Final Settlement Authorization',
+                                  paragraphs: [
+                                    'The net settlement amount stated above represents the final and absolute discharge of all liabilities arising out of employment with HR O Corp.',
+                                    'Payment has been authorized for disbursement into the employee registered bank account on record.'
+                                  ]
+                                }
+                              ],
+                              footer: 'Authorized Finance & Payroll Controller - Digitally Locked'
+                            }, `FnF_Settlement_${s.employeeName.replace(/\s+/g, '_')}_${s.settlementId}.pdf`);
+                            showToast(`F&F Settlement Statement downloaded for ${s.employeeName}.`, 'success');
+                          }}
+                        >
+                          <i className="fa-solid fa-file-pdf"></i> F&F Sheet
+                        </button>
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
@@ -670,99 +769,148 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* 8. NO DUE CERTIFICATE & EXIT DOCUMENTS VIEWS             */}
       {/* ======================================================== */}
       {(activeTab === 'no-due' || activeTab === 'documents') && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
-          <div className="card p-5">
-            <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>No Due Certificate (NDC) Generation</h3>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px border-dashed hsl(var(--border))' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <strong style={{ fontSize: '1rem', color: 'hsl(var(--primary))' }}>NDC-2026-1001</strong>
-                <span className="badge badge-success">Fully Cleared</span>
+        <div>
+          {/* Target Exit Case Selector Bar */}
+          <div className="card p-4 mb-4" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase' }}>Selected Exit Case for Documentation</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '2px' }}>
+                {selectedExitCase.employeeName} ({selectedExitCase.employeeId}) &mdash; <span style={{ color: 'hsl(var(--primary))' }}>{selectedExitCase.exitId}</span>
               </div>
-              <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem' }}>Employee: <strong>Anil Kumar (EMP-1004)</strong></p>
-              <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>All 8 department clearance checklists & asset returns verified and authorized.</p>
-              <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.82rem' }} onClick={() => {
-                showToast('Downloading Official No Due Certificate (NDC) PDF...', 'info');
-                const content = `====================================================
-NO DUE CERTIFICATE (NDC) - OFFICIAL CLEARANCE
-====================================================
-Company: HR O Corp
-Employee Name: Anil Kumar
-Employee ID: EMP-1004
-Department: Engineering
-Designation: Software Engineer
-Last Working Day: 2026-10-31
-
-STATUS: FULLY CLEARED & AUTHORIZED
-All department clearance checklists (IT, HR, Finance, Admin, Legal) and asset returns have been verified.
-
-Authorized Signatory:
-Gara Nandini (Head of HR Governance)
-Date: ${new Date().toLocaleDateString()}
-====================================================`;
-                const blob = new Blob([content], { type: 'application/pdf' });
-                const blobUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.setAttribute('download', 'No_Due_Certificate_Anil_Kumar_EMP1004.pdf');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(blobUrl);
-                showToast('No Due Certificate (NDC) downloaded successfully.', 'success');
-              }}>
-                <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download Official NDC PDF
-              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label htmlFor="select-ndc-exit-case" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Select Employee / Exit:</label>
+              <select
+                id="select-ndc-exit-case"
+                className="form-control"
+                value={selectedExitCaseId}
+                onChange={(e) => setSelectedExitCaseId(e.target.value)}
+                style={{ minWidth: '280px', fontSize: '0.82rem' }}
+              >
+                {resignations.map((r) => (
+                  <option key={r.exitId} value={r.exitId}>
+                    {r.employeeName} ({r.employeeId}) - {r.exitId} [{r.department}]
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div className="card p-5">
-            <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Official Exit Letters Generator</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { type: 'Relieving Letter', desc: 'Formal release confirmation with last working day statement', icon: 'fa-envelope-open-text' },
-                { type: 'Experience Certificate', desc: 'Tenure, designation history, and appreciation summary', icon: 'fa-award' },
-                { type: 'Full & Final Statement', desc: 'Complete breakdown of earnings, encashment, & deductions', icon: 'fa-file-invoice-dollar' }
-              ].map((doc) => (
-                <div key={doc.type} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <i className={`fa-solid ${doc.icon}`} style={{ color: 'hsl(var(--primary))' }}></i>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{doc.type}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{doc.desc}</div>
-                    </div>
-                  </div>
-                  <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => {
-                    showToast(`Generating official ${doc.type}...`, 'info');
-                    const content = `====================================================
-OFFICIAL DOCUMENT: ${doc.type.toUpperCase()}
-====================================================
-Company: HR O Corp
-Recipient: Anil Kumar (EMP-1004)
-Department: Engineering
-Designation: Software Engineer
-Issue Date: ${new Date().toLocaleDateString()}
-
-This is an official ${doc.type} issued by HR O Corp.
-All contractual terms, clearances, and Full & Final settlements have been completed.
-
-Authorized HR Signatory
-HR O Corp Management
-====================================================`;
-                    const blob = new Blob([content], { type: 'application/pdf' });
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.setAttribute('download', `${doc.type.replace(/\s+/g, '_')}_Anil_Kumar.pdf`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(blobUrl);
-                    showToast(`${doc.type} generated and downloaded.`, 'success');
-                  }}>
-                    Generate
-                  </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+            <div className="card p-5">
+              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>No Due Certificate (NDC) Generation</h3>
+              <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px border-dashed hsl(var(--border))' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <strong style={{ fontSize: '1rem', color: 'hsl(var(--primary))' }}>NDC-{selectedExitCase.exitId}-2026</strong>
+                  <span className="badge badge-success">Fully Cleared</span>
                 </div>
-              ))}
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem' }}>Employee: <strong>{selectedExitCase.employeeName} ({selectedExitCase.employeeId})</strong></p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Department: <strong>{selectedExitCase.department}</strong> | Designation: <strong>{selectedExitCase.designation || 'Software Engineer'}</strong></p>
+                <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Last Working Day: <strong>{selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31'}</strong> (All 8 clearances verified)</p>
+                <button
+                  id="btn-download-ndc-pdf"
+                  className="btn btn-primary"
+                  style={{ width: '100%', fontSize: '0.82rem' }}
+                  onClick={() => {
+                    showToast('Downloading Official No Due Certificate (NDC) PDF...', 'info');
+                    downloadPdfDocument({
+                      title: 'NO DUE CERTIFICATE (NDC) - OFFICIAL CLEARANCE',
+                      subtitle: 'HR O Central Governance & Exit Clearance Record',
+                      docNumber: `NDC-${selectedExitCase.exitId}-2026`,
+                      recipient: `${selectedExitCase.employeeName} (${selectedExitCase.employeeId})`,
+                      metadata: [
+                        { label: 'Employee Name', value: selectedExitCase.employeeName },
+                        { label: 'Employee ID', value: selectedExitCase.employeeId },
+                        { label: 'Department', value: selectedExitCase.department },
+                        { label: 'Designation', value: selectedExitCase.designation || 'Software Engineer' },
+                        { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31' },
+                        { label: 'Clearance Status', value: 'Fully Cleared & Authorized' },
+                        { label: 'Signatory', value: 'Head of HR Governance' }
+                      ],
+                      sections: [
+                        {
+                          heading: 'Department Clearance Sign-offs',
+                          table: {
+                            headers: ['Department', 'Verifier', 'Status', 'Date'],
+                            colWidths: [130, 140, 110, 115],
+                            rows: [
+                              ['Information Technology', 'IT Security Lead', 'Cleared (Assets Returned)', '2026-10-28'],
+                              ['Human Resources', 'HR Exit Coordinator', 'Cleared (Exit Interview Done)', '2026-10-29'],
+                              ['Finance & Accounts', 'Finance Manager', 'Cleared (F&F Settled)', '2026-10-30'],
+                              ['Administration & Facilities', 'Facility Lead', 'Cleared (Access Card Surrendered)', '2026-10-31']
+                            ]
+                          }
+                        },
+                        {
+                          heading: 'Authorization Confirmation',
+                          paragraphs: [
+                            'This document certifies that the aforementioned employee has successfully handed over all company assets and has zero outstanding financial or contractual obligations.'
+                          ]
+                        }
+                      ],
+                      footer: 'Official HR O Record - Verified by Corporate Human Resources'
+                    }, `No_Due_Certificate_${selectedExitCase.employeeName.replace(/\s+/g, '_')}_${selectedExitCase.employeeId}.pdf`);
+                    showToast('No Due Certificate (NDC) downloaded successfully.', 'success');
+                  }}
+                >
+                  <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download Official NDC PDF
+                </button>
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Official Exit Letters Generator</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[
+                  { type: 'Relieving Letter', idBtn: 'btn-generate-relieving', desc: 'Formal release confirmation with last working day statement', icon: 'fa-envelope-open-text' },
+                  { type: 'Experience Certificate', idBtn: 'btn-generate-experience', desc: 'Tenure, designation history, and appreciation summary', icon: 'fa-award' },
+                  { type: 'Full & Final Statement', idBtn: 'btn-generate-fnf', desc: 'Complete breakdown of earnings, encashment, & deductions', icon: 'fa-file-invoice-dollar' }
+                ].map((doc) => (
+                  <div key={doc.type} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <i className={`fa-solid ${doc.icon}`} style={{ color: 'hsl(var(--primary))' }}></i>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{doc.type}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{doc.desc}</div>
+                      </div>
+                    </div>
+                    <button
+                      id={doc.idBtn}
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                      onClick={() => {
+                        showToast(`Generating official ${doc.type}...`, 'info');
+                        downloadPdfDocument({
+                          title: `OFFICIAL DOCUMENT: ${doc.type.toUpperCase()}`,
+                          subtitle: 'HR O Corporate Separation Record',
+                          docNumber: `DOC-EXT-${Date.now().toString().slice(-6)}`,
+                          recipient: `${selectedExitCase.employeeName} (${selectedExitCase.employeeId})`,
+                          metadata: [
+                            { label: 'Employee Name', value: selectedExitCase.employeeName },
+                            { label: 'Employee ID', value: selectedExitCase.employeeId },
+                            { label: 'Department', value: selectedExitCase.department },
+                            { label: 'Designation', value: selectedExitCase.designation || 'Specialist' },
+                            { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31' }
+                          ],
+                          sections: [
+                            {
+                              heading: 'Statement of Record',
+                              paragraphs: [
+                                `This is an official ${doc.type} issued by HR O Corp for ${selectedExitCase.employeeName}. All contractual terms, clearances, and Full & Final settlements have been successfully verified and concluded.`,
+                                'We place on record our sincere appreciation for their contributions during their tenure and wish them continued success in their future professional endeavors.'
+                              ]
+                            }
+                          ],
+                          footer: 'Authorized HR Signatory - HR O Corp Management'
+                        }, `${doc.type.replace(/\s+/g, '_')}_${selectedExitCase.employeeName.replace(/\s+/g, '_')}.pdf`);
+                        showToast(`${doc.type} generated and downloaded.`, 'success');
+                      }}
+                    >
+                      Generate
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -772,33 +920,80 @@ HR O Corp Management
       {/* 9. ANALYTICS & AUDIT HISTORY VIEWS                       */}
       {/* ======================================================== */}
       {(activeTab === 'analytics' || activeTab === 'history') && (
-        <div className="card p-5">
-          <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Immutable Separation Audit Logs & History</h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+        <div className="card p-5" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontWeight: 700, whiteSpace: 'normal', overflowWrap: 'break-word' }}>
+            Immutable Separation Audit Logs & History
+          </h3>
+          <div style={{ overflowX: 'auto', width: '100%', maxWidth: '100%' }}>
+            <table className="table" style={{ width: '100%', tableLayout: 'fixed', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+              <colgroup>
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '24%' }} />
+                <col style={{ width: '12%' }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Audit ID</th>
-                  <th>Action</th>
-                  <th>Module</th>
-                  <th>Exit ID</th>
-                  <th>Performed By</th>
-                  <th>Details</th>
-                  <th>Timestamp</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Audit ID</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Action</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Module</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Exit ID</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Performed By</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Details</th>
+                  <th style={{ padding: '10px 8px', wordBreak: 'break-word' }}>Timestamp</th>
                 </tr>
               </thead>
               <tbody>
-                {historyLogs.map((h) => (
-                  <tr key={h.auditId}>
-                    <td><strong>{h.auditId}</strong></td>
-                    <td><span className="badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>{h.action}</span></td>
-                    <td>{h.module}</td>
-                    <td>{h.entityId}</td>
-                    <td>{h.performedBy} ({h.userRole})</td>
-                    <td>{h.changes}</td>
-                    <td>{h.timestamp}</td>
-                  </tr>
-                ))}
+                {historyLogs.map((h) => {
+                  let parsedChanges = h.changes;
+                  if (typeof parsedChanges === 'string') {
+                    try {
+                      const p = JSON.parse(parsedChanges);
+                      if (typeof p === 'object' && p !== null) parsedChanges = p;
+                    } catch (e) {}
+                  }
+
+                  return (
+                    <tr key={h.auditId}>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                        <strong>{h.auditId}</strong>
+                      </td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word' }}>
+                        <span className="badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', whiteSpace: 'normal', wordBreak: 'break-word', display: 'inline-block' }}>
+                          {h.action}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word' }}>{h.module}</td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{h.entityId}</td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word' }}>
+                        <div style={{ fontWeight: 600 }}>{h.performedBy}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>{h.userRole}</div>
+                      </td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'normal' }}>
+                        {typeof parsedChanges === 'object' && parsedChanges !== null ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '100%' }}>
+                            {Object.entries(parsedChanges).map(([k, v]) => {
+                              if (['_id', '__v', 'createdAt', 'updatedAt', 'organizationId'].includes(k)) return null;
+                              return (
+                                <span key={k} className="badge" style={{ fontSize: '0.72rem', background: 'rgba(99,102,241,0.08)', color: 'hsl(var(--primary))', whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'left' }}>
+                                  <strong>{k}:</strong> {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.82rem', wordBreak: 'break-word', whiteSpace: 'normal' }}>{String(h.changes || '-')}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '10px 8px', wordBreak: 'break-word', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+                        {h.timestamp}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -875,6 +1070,30 @@ HR O Corp Management
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Calculate Full & Final (F&F) Settlement</h3>
             <form onSubmit={handleCreateFfs}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px', fontWeight: 600 }}>Select Employee / Exit Case</label>
+                <select
+                  className="form-control"
+                  value={newFfs.exitId}
+                  onChange={(e) => {
+                    const sel = resignations.find((r) => r.exitId === e.target.value);
+                    if (sel) {
+                      setNewFfs({
+                        ...newFfs,
+                        exitId: sel.exitId,
+                        employeeId: sel.employeeId,
+                        employeeName: sel.employeeName
+                      });
+                    }
+                  }}
+                >
+                  {resignations.map((r) => (
+                    <option key={r.exitId} value={r.exitId}>
+                      {r.employeeName} ({r.employeeId}) - Exit ID: {r.exitId}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Pending Salary (₹)</label>
@@ -897,7 +1116,7 @@ HR O Corp Management
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowFfsModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                <button type="submit" id="btn-approve-lock-fnf" className="btn btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Processing...</> : 'Approve & Lock F&F'}
                 </button>
               </div>

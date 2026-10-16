@@ -213,7 +213,16 @@ router.post('/change-password', protect, async (req, res, next) => {
   }
 
   try {
-    const employee = await Employee.findById(req.user._id);
+    let employee = null;
+    if (req.user?._id && mongoose.Types.ObjectId.isValid(req.user._id)) {
+      employee = await Employee.findById(req.user._id);
+    }
+    if (!employee && req.user?.id) {
+      employee = await Employee.findOne({ id: req.user.id });
+    }
+    if (!employee && req.user?.email) {
+      employee = await Employee.findOne({ email: req.user.email.toLowerCase().trim() });
+    }
 
     if (!employee) {
       return res.status(404).json({ message: 'User not found' });

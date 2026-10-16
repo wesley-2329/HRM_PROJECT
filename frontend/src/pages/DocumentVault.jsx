@@ -25,6 +25,8 @@ const DocumentVault = ({ mode }) => {
 
   // Form states for uploading
   const [uploadDocName, setUploadDocName] = useState('');
+  const [isCustomDoc, setIsCustomDoc] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadCategory, setUploadCategory] = useState('Identity');
   const [uploadExpiry, setUploadExpiry] = useState('');
   const [uploadChangelog, setUploadChangelog] = useState('');
@@ -48,19 +50,31 @@ const DocumentVault = ({ mode }) => {
   }, [employees]);
 
   const [isScanning, setIsScanning] = useState(false);
+  const scanLockRef = useRef(false);
+  const [sendingAlertDocId, setSendingAlertDocId] = useState(null);
 
   // Expiry Compliance Checker Sweep
   const triggerComplianceScan = async () => {
     if (isScanning) return;
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
     setIsScanning(true);
+    const scanToastId = 'compliance-expiry-scan';
+
     try {
-      showToast('Running compliance and expiry monitoring scan...', 'info');
+      showToast('Running compliance and expiry monitoring scan...', 'info', { id: scanToastId });
       const res = await api.post('/vault/trigger-expiry-checks');
-      showToast(res.data.message + `. Checked: ${res.data.checkedCount}, Updated: ${res.data.updatedCount}`, 'success');
+      showToast(
+        `${res.data?.message || 'Compliance check completed successfully'}. Checked: ${res.data?.checkedCount ?? 0}, Updated: ${res.data?.updatedCount ?? 0}`,
+        'success',
+        { id: scanToastId }
+      );
       fetchVaultDocuments();
     } catch (err) {
-      showToast('Failed to run compliance scan.', 'error');
+      console.error('Scan error:', err);
+      showToast('Failed to run compliance scan.', 'error', { id: scanToastId });
     } finally {
+      scanLockRef.current = false;
       setIsScanning(false);
     }
   };
@@ -68,21 +82,31 @@ const DocumentVault = ({ mode }) => {
   // Helper: Get direct download URL
   const handleDownloadFile = async (docId, versionNum, fileName) => {
     try {
-      showToast(`Downloading version ${versionNum}...`, 'info');
+      const vNum = (versionNum && !isNaN(Number(versionNum))) ? Number(versionNum) : 1;
+      const safeName = fileName || `document_v${vNum}.pdf`;
+      showToast(`Downloading version ${vNum}...`, 'info');
       // Perform direct GET api download
-      const response = await api.get(`/vault/documents/${docId}/download/${versionNum}`, {
-        responseType: 'blob'
+      const response = await api.get(`/vault/documents/${docId}/download/${vNum}`, {
+        responseType: 'blob',
+        timeout: 20000
       });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.setAttribute('download', fileName);
+      link.setAttribute('download', safeName);
       document.body.appendChild(link);
       link.click();
-      link.parentNode.removeChild(link);
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          link.parentNode.removeChild(link);
+        }
+        window.URL.revokeObjectURL(blobUrl);
+      }, 2500);
+      showToast(`Downloaded ${safeName} successfully.`, 'success');
       // Reload documents to sync view audit entry
       fetchVaultDocuments();
     } catch (err) {
+      console.error('Vault download failed:', err);
       showToast('Download failed. File might be missing on disk.', 'error');
     }
   };
@@ -90,6 +114,7 @@ const DocumentVault = ({ mode }) => {
   // Save/Upload action
   const handleUploadDocument = async (e) => {
     e.preventDefault();
+    if (isUploading) return;
     if (!uploadDocName) return showToast('Document name is required', 'error');
     if (!uploadFile && !selectedDoc) return showToast('Please select a file to upload', 'error');
 
@@ -104,21 +129,27 @@ const DocumentVault = ({ mode }) => {
     }
     formData.append('changeSummary', uploadChangelog || (selectedDoc ? 'Updated version' : 'Initial upload'));
     
-    if (isHr && uploadOnBehalfEmpId) {
-      formData.append('employeeId', uploadOnBehalfEmpId);
+    const targetEmpId = isHr ? uploadOnBehalfEmpId : (user?.id || user?._id);
+    if (targetEmpId) {
+      formData.append('employeeId', targetEmpId);
     }
 
     try {
+      setIsUploading(true);
       showToast('Uploading file securely to vault...', 'info');
-      await api.post('/vault/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const res = await api.post('/vault/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000
       });
-      showToast('Secure document uploaded successfully.', 'success');
-      fetchVaultDocuments();
+      showToast(res.data?.message || 'Secure document uploaded successfully.', 'success');
+      await fetchVaultDocuments();
       setShowUploadModal(false);
       resetUploadForm();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Upload failed.', 'error');
+      console.error('Upload document error:', err);
+      showToast(err.response?.data?.message || err.message || 'Upload failed.', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -152,6 +183,7 @@ const DocumentVault = ({ mode }) => {
 
   const resetUploadForm = () => {
     setUploadDocName('');
+    setIsCustomDoc(false);
     setUploadCategory('Identity');
     setUploadExpiry('');
     setUploadChangelog('');
@@ -185,7 +217,7 @@ const DocumentVault = ({ mode }) => {
       expiryDate: null,
       updatedAt: '2026-06-15T12:00:00Z',
       versions: [
-        { version: 1, uploadedBy: 'Self', changeSummary: 'Initial Aadhaar Card verification submission.' }
+        { versionNumber: 1, fileName: 'Aadhaar_Card_Copy.pdf', uploadedBy: 'Self', changeSummary: 'Initial Aadhaar Card verification submission.' }
       ],
       auditTrail: [
         { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'Aadhaar copy uploaded' }
@@ -201,7 +233,7 @@ const DocumentVault = ({ mode }) => {
       expiryDate: null,
       updatedAt: '2026-06-15T12:00:00Z',
       versions: [
-        { version: 1, uploadedBy: 'Self', changeSummary: 'PAN Card for TDS withholding configuration.' }
+        { versionNumber: 1, fileName: 'PAN_Card_Copy.pdf', uploadedBy: 'Self', changeSummary: 'PAN Card for TDS withholding configuration.' }
       ],
       auditTrail: [
         { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'PAN Card copy uploaded' }
@@ -217,7 +249,7 @@ const DocumentVault = ({ mode }) => {
       expiryDate: null,
       updatedAt: '2026-06-16T12:00:00Z',
       versions: [
-        { version: 1, uploadedBy: 'Self', changeSummary: 'Degree Certificate upload for verification check.' }
+        { versionNumber: 1, fileName: 'Graduation_Certificate.pdf', uploadedBy: 'Self', changeSummary: 'Degree Certificate upload for verification check.' }
       ],
       auditTrail: [
         { action: 'Upload', actor: 'System', timestamp: '2026-06-16T12:00:00Z', notes: 'Graduation degree uploaded' }
@@ -328,7 +360,9 @@ const DocumentVault = ({ mode }) => {
             const isUploaded = !!item.record;
             const currentVer = (isUploaded && item.record.versions && item.record.versions.length > 0) 
               ? item.record.versions[item.record.versions.length - 1] 
-              : { versionNumber: 1, fileName: item.name || 'document.pdf' };
+              : { versionNumber: 1, fileName: `${(item.name || 'document').replace(/\s+/g, '_')}.pdf` };
+            const vNum = currentVer.versionNumber || currentVer.version || 1;
+            const vFileName = currentVer.fileName || `${(item.name || 'document').replace(/\s+/g, '_')}_v${vNum}.pdf`;
             
             let statusBadge = <span className="badge badge-secondary">Pending Upload</span>;
             if (isUploaded) {
@@ -356,8 +390,8 @@ const DocumentVault = ({ mode }) => {
 
                   {isUploaded ? (
                     <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', margin: '12px 0', background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                      <div><strong>Active Version:</strong> v{currentVer.versionNumber}</div>
-                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginTop: '2px' }}><strong>Filename:</strong> {currentVer.fileName}</div>
+                      <div><strong>Active Version:</strong> v{vNum}</div>
+                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginTop: '2px' }}><strong>Filename:</strong> {vFileName}</div>
                       {item.record.expiryDate && (
                         <div style={{ marginTop: '2px' }}>
                           <strong>Expiry Date:</strong> {new Date(item.record.expiryDate).toLocaleDateString()}
@@ -378,7 +412,7 @@ const DocumentVault = ({ mode }) => {
                       <button 
                         className="btn btn-secondary" 
                         style={{ flex: 1, padding: '6px 12px', fontSize: '0.78rem' }}
-                        onClick={() => handleDownloadFile(item.record._id, currentVer.versionNumber, currentVer.fileName)}
+                        onClick={() => handleDownloadFile(item.record._id, vNum, vFileName)}
                       >
                         <i className="fa-solid fa-download"></i> Get File
                       </button>
@@ -434,12 +468,14 @@ const DocumentVault = ({ mode }) => {
                     const currentVer = (doc.versions && doc.versions.length > 0)
                       ? doc.versions[doc.versions.length - 1]
                       : { versionNumber: 1, fileName: doc.documentName || 'document.pdf', uploadedAt: new Date(), changeSummary: 'Initial Document' };
+                    const vNum = currentVer.versionNumber || currentVer.version || 1;
+                    const vFileName = currentVer.fileName || `${(doc.documentName || 'document').replace(/\s+/g, '_')}_v${vNum}.pdf`;
                     return (
                       <tr key={doc._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.9rem' }}>
                         <td style={{ padding: '12px', fontWeight: 600 }}>{doc.employeeName} ({doc.employeeId})</td>
                         <td style={{ padding: '12px', fontWeight: 600 }}>{doc.documentName}</td>
                         <td style={{ padding: '12px' }}><span className="badge badge-info">{doc.category}</span></td>
-                        <td style={{ padding: '12px', fontWeight: 600 }}>v{currentVer.versionNumber}</td>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>v{vNum}</td>
                         <td style={{ padding: '12px' }}>{new Date(currentVer.uploadedAt).toLocaleDateString()}</td>
                         <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentVer.changeSummary}</td>
                         <td style={{ padding: '12px', textAlign: 'right' }}>
@@ -447,7 +483,7 @@ const DocumentVault = ({ mode }) => {
                             <button 
                               className="btn btn-secondary" 
                               style={{ padding: '6px 12px', fontSize: '0.78rem' }}
-                              onClick={() => handleDownloadFile(doc._id, currentVer.versionNumber, currentVer.fileName)}
+                              onClick={() => handleDownloadFile(doc._id, vNum, vFileName)}
                             >
                               <i className="fa-solid fa-download"></i> Download
                             </button>
@@ -519,6 +555,8 @@ const DocumentVault = ({ mode }) => {
                     const currentVer = (doc.versions && doc.versions.length > 0)
                       ? doc.versions[doc.versions.length - 1]
                       : { versionNumber: 1, fileName: doc.documentName || 'document.pdf' };
+                    const vNum = currentVer.versionNumber || currentVer.version || 1;
+                    const vFileName = currentVer.fileName || `${(doc.documentName || 'document').replace(/\s+/g, '_')}_v${vNum}.pdf`;
                     let statusBadge = <span className="badge badge-info">{doc.status}</span>;
                     if (doc.status === 'Approved') statusBadge = <span className="badge badge-success">Approved</span>;
                     if (doc.status === 'Pending Approval') statusBadge = <span className="badge badge-warning">Pending Review</span>;
@@ -530,7 +568,7 @@ const DocumentVault = ({ mode }) => {
                         <td style={{ padding: '12px', fontWeight: 600 }}>{doc.employeeName} ({doc.employeeId})</td>
                         <td style={{ padding: '12px', fontWeight: 600 }}>{doc.documentName}</td>
                         <td style={{ padding: '12px' }}>{doc.category}</td>
-                        <td style={{ padding: '12px' }}>v{currentVer.versionNumber}</td>
+                        <td style={{ padding: '12px' }}>v{vNum}</td>
                         <td style={{ padding: '12px' }}>{statusBadge}</td>
                         <td style={{ padding: '12px' }}>{doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : 'N/A'}</td>
                         <td style={{ padding: '12px', textAlign: 'right' }}>
@@ -538,7 +576,7 @@ const DocumentVault = ({ mode }) => {
                             <button 
                               className="btn btn-secondary" 
                               style={{ padding: '5px 10px', fontSize: '0.75rem' }}
-                              onClick={() => handleDownloadFile(doc._id, currentVer.versionNumber, currentVer.fileName)}
+                              onClick={() => handleDownloadFile(doc._id, vNum, vFileName)}
                             >
                               <i className="fa-solid fa-download"></i>
                             </button>
@@ -620,18 +658,29 @@ const DocumentVault = ({ mode }) => {
                         <td style={{ padding: '12px', textAlign: 'right' }}>
                           <button 
                             className="btn btn-secondary" 
-                            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                            style={{ 
+                              padding: '6px 12px', 
+                              fontSize: '0.78rem',
+                              cursor: sendingAlertDocId === doc._id ? 'not-allowed' : 'pointer',
+                              opacity: sendingAlertDocId === doc._id ? 0.75 : 1
+                            }}
+                            disabled={sendingAlertDocId === doc._id}
                             onClick={async () => {
+                              if (sendingAlertDocId) return;
+                              setSendingAlertDocId(doc._id);
+                              const alertToastId = `alert-${doc._id}`;
                               try {
                                 await api.post('/vault/trigger-expiry-checks');
-                                showToast('Compliance notification alert dispatched.', 'success');
+                                showToast(`Compliance notification alert dispatched for ${doc.documentName}.`, 'success', { id: alertToastId });
                                 fetchVaultDocuments();
                               } catch (e) {
-                                showToast('Error sending alerts.', 'error');
+                                showToast('Error sending alerts.', 'error', { id: alertToastId });
+                              } finally {
+                                setSendingAlertDocId(null);
                               }
                             }}
                           >
-                            <i className="fa-solid fa-paper-plane"></i> Send Alert
+                            <i className={`fa-solid ${sendingAlertDocId === doc._id ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i> {sendingAlertDocId === doc._id ? 'Sending...' : 'Send Alert'}
                           </button>
                         </td>
                       </tr>
@@ -712,24 +761,28 @@ const DocumentVault = ({ mode }) => {
 
             <h4 style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '10px' }}>Upload History Logs</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-              {selectedDoc.versions.map(v => (
-                <div key={v.versionNumber} style={{ border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-sm)', padding: '12px', background: 'hsl(var(--bg-main))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>Version {v.versionNumber}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>
-                      Uploaded: {new Date(v.uploadedAt).toLocaleString()} by User {v.uploadedBy}
+              {selectedDoc.versions.map((v, vIdx) => {
+                const vNum = v.versionNumber || v.version || (vIdx + 1);
+                const vFileName = v.fileName || `${(selectedDoc.documentName || 'document').replace(/\s+/g, '_')}_v${vNum}.pdf`;
+                return (
+                  <div key={vNum || vIdx} style={{ border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-sm)', padding: '12px', background: 'hsl(var(--bg-main))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>Version {vNum}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>
+                        Uploaded: {new Date(v.uploadedAt || Date.now()).toLocaleString()} by User {v.uploadedBy || 'System'}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', marginTop: '4px', fontStyle: 'italic' }}>"{v.changeSummary || 'Version update'}"</div>
                     </div>
-                    <div style={{ fontSize: '0.8rem', marginTop: '4px', fontStyle: 'italic' }}>"{v.changeSummary}"</div>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                      onClick={() => handleDownloadFile(selectedDoc._id, vNum, vFileName)}
+                    >
+                      <i className="fa-solid fa-download"></i> Get File
+                    </button>
                   </div>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                    onClick={() => handleDownloadFile(selectedDoc._id, v.versionNumber, v.fileName)}
-                  >
-                    <i className="fa-solid fa-download"></i> Get File
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <h4 style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '10px' }}>Security Audit Log (VIEWS, DOWNLOADS, APPROVALS)</h4>
@@ -766,25 +819,62 @@ const DocumentVault = ({ mode }) => {
 
               <div className="form-group">
                 <label>Document Name*</label>
-                {uploadDocName && !isHr ? (
+                {uploadDocName && !isHr && !isCustomDoc ? (
                   <input type="text" className="form-control" value={uploadDocName} disabled required />
                 ) : (
-                  <select className="form-control" value={uploadDocName} onChange={e => {
-                    setUploadDocName(e.target.value);
-                    const std = standardDocumentTypes.find(s => s.name === e.target.value);
-                    if (std) setUploadCategory(std.category);
-                  }} required>
-                    <option value="">Select Document Type...</option>
-                    {standardDocumentTypes.map(s => (
-                      <option key={s.name} value={s.name}>{s.name}</option>
-                    ))}
-                  </select>
+                  <>
+                    <select 
+                      className="form-control" 
+                      value={isCustomDoc ? '__custom__' : uploadDocName} 
+                      onChange={e => {
+                        if (e.target.value === '__custom__') {
+                          setIsCustomDoc(true);
+                          setUploadDocName('');
+                          setUploadCategory('General');
+                        } else {
+                          setIsCustomDoc(false);
+                          setUploadDocName(e.target.value);
+                          const std = standardDocumentTypes.find(s => s.name === e.target.value);
+                          if (std) setUploadCategory(std.category);
+                        }
+                      }} 
+                      required
+                    >
+                      <option value="">Select Document Type...</option>
+                      {standardDocumentTypes.map(s => (
+                        <option key={s.name} value={s.name}>{s.name}</option>
+                      ))}
+                      <option value="__custom__">+ Other (Custom Document Title)</option>
+                    </select>
+                    {isCustomDoc && (
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        style={{ marginTop: '8px' }} 
+                        placeholder="Type document name (e.g., NDA Agreement, Passport)..." 
+                        value={uploadDocName} 
+                        onChange={e => setUploadDocName(e.target.value)} 
+                        required 
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
               <div className="form-group">
                 <label>Document Category</label>
-                <input type="text" className="form-control" value={uploadCategory} disabled />
+                {isCustomDoc ? (
+                  <select className="form-control" value={uploadCategory} onChange={e => setUploadCategory(e.target.value)}>
+                    <option value="Identity">Identity</option>
+                    <option value="Employment">Employment</option>
+                    <option value="Financial">Financial</option>
+                    <option value="Academic">Academic</option>
+                    <option value="Compliance">Compliance</option>
+                    <option value="General">General</option>
+                  </select>
+                ) : (
+                  <input type="text" className="form-control" value={uploadCategory} disabled />
+                )}
               </div>
 
               <div className="form-group">
@@ -801,6 +891,12 @@ const DocumentVault = ({ mode }) => {
                   onChange={e => setUploadFile(e.target.files[0])} 
                   required 
                 />
+                {uploadFile && (
+                  <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '4px' }}>
+                    <i className="fa-solid fa-file-check" style={{ marginRight: '4px' }}></i>
+                    {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -816,10 +912,21 @@ const DocumentVault = ({ mode }) => {
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Upload Securely
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} 
+                  disabled={isUploading}
+                >
+                  <i className={`fa-solid ${isUploading ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`}></i>
+                  {isUploading ? 'Uploading Securely...' : 'Upload Securely'}
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowUploadModal(false); resetUploadForm(); }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  disabled={isUploading}
+                  onClick={() => { setShowUploadModal(false); resetUploadForm(); }}
+                >
                   Close
                 </button>
               </div>

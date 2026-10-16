@@ -36,8 +36,9 @@ export const decodeId = (hash) => {
 };
 
 export const getAvatarUrl = (emp) => {
-  if (emp?.avatar && typeof emp.avatar === 'string' && emp.avatar.trim() !== '') {
-    const avatar = emp.avatar.trim();
+  const avatarVal = emp?.avatar || emp?.profilePicture || emp?.profileImage;
+  if (avatarVal && typeof avatarVal === 'string' && avatarVal.trim() !== '') {
+    const avatar = avatarVal.trim();
     if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:')) {
       return avatar;
     }

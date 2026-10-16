@@ -243,10 +243,11 @@ router.get('/helpdesk', protect, async (req, res, next) => {
     let filter = {};
 
     if (req.user.role !== 'hr') {
+      const idList = [req.user.id, req.user.employeeId, req.user._id ? req.user._id.toString() : null].filter(Boolean);
       filter = {
         $or: [
-          { 'raisedBy.id': req.user.id },
-          { 'assignedTo.id': req.user.id }
+          { 'raisedBy.id': { $in: idList } },
+          { 'assignedTo.id': { $in: idList } }
         ]
       };
     }
@@ -256,42 +257,94 @@ router.get('/helpdesk', protect, async (req, res, next) => {
     if (category) filter.category = category;
 
     const tickets = await HelpdeskTicket.find(filter).sort({ createdAt: -1 });
-    res.json(tickets);
+
+    // Deduplicate records by ticketId and _id
+    const seen = new Set();
+    const uniqueTickets = [];
+    for (const t of tickets) {
+      const key = t.ticketId || t._id.toString();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueTickets.push(t);
+      }
+    }
+
+    res.json(uniqueTickets);
   } catch (err) { next(err); }
 });
 
 // Create Helpdesk Ticket
 router.post('/helpdesk', protect, async (req, res, next) => {
   try {
+    const { subject, description, category, subcategory, priority } = req.body;
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({ message: 'Ticket subject is required' });
+    }
+    if (!description || !description.trim()) {
+      return res.status(400).json({ message: 'Ticket description is required' });
+    }
+
+    const raisedById = req.user.employeeId || req.user.id || (req.user._id ? req.user._id.toString() : 'EMP-1001');
+
+    // 10-Second Idempotency Protection against duplicate submissions
+    const tenSecsAgo = new Date(Date.now() - 10000);
+    const existingRecent = await HelpdeskTicket.findOne({
+      'raisedBy.id': raisedById,
+      subject: subject.trim(),
+      createdAt: { $gte: tenSecsAgo }
+    });
+    if (existingRecent) {
+      return res.status(200).json(existingRecent);
+    }
+
+    // Collision-resistant sequential ticket ID generation
+    let maxNum = 1000;
+    const existingTickets = await HelpdeskTicket.find({}, 'ticketId');
+    for (const t of existingTickets) {
+      if (t.ticketId) {
+        const m = t.ticketId.match(/HD-(\d+)/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      }
+    }
     const count = await HelpdeskTicket.countDocuments();
-    const ticketId = `HD-${1000 + count + 1}`;
-    const slaHours = req.body.priority === 'Critical' ? 4 : req.body.priority === 'High' ? 12 : 24;
+    let nextSeq = Math.max(maxNum + 1, 1000 + count + 1);
+    let ticketId = `HD-${nextSeq}`;
+    while (await HelpdeskTicket.findOne({ ticketId })) {
+      nextSeq++;
+      ticketId = `HD-${nextSeq}`;
+    }
+
+    const ticketPriority = priority || 'Medium';
+    const slaHours = ticketPriority === 'Critical' ? 4 : ticketPriority === 'High' ? 12 : 24;
     const dueDate = new Date(Date.now() + slaHours * 60 * 60 * 1000);
 
     const newTicket = new HelpdeskTicket({
       ticketId,
-      category: req.body.category || 'IT Support',
-      subcategory: req.body.subcategory || 'General',
-      subject: req.body.subject,
-      description: req.body.description,
-      priority: req.body.priority || 'Medium',
+      category: category || 'IT Support',
+      subcategory: subcategory || 'General',
+      subject: subject.trim(),
+      description: description.trim(),
+      priority: ticketPriority,
       raisedBy: {
-        id: req.user.id,
-        name: req.user.name,
-        dept: req.user.dept || 'General',
+        id: raisedById,
+        name: req.user.name || 'Staff Member',
+        dept: req.user.dept || req.user.department || 'General',
         email: req.user.email || ''
       },
       slaHours,
       dueDate,
       history: [{
         action: 'Created',
-        actor: req.user.name,
+        actor: req.user.name || 'User',
         comment: 'Ticket opened by user'
       }]
     });
 
     await newTicket.save();
-    await logAudit(req, 'Helpdesk', ticketId, 'Created', '', 'Open', req.body.subject);
+    await logAudit(req, 'Helpdesk', ticketId, 'Created', '', 'Open', subject.trim());
     res.status(201).json(newTicket);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -335,39 +388,91 @@ router.get('/welfare', protect, async (req, res, next) => {
   try {
     let filter = {};
     if (req.user.role !== 'hr') {
-      filter['requestedBy.id'] = req.user.id;
+      const idList = [req.user.id, req.user.employeeId, req.user._id ? req.user._id.toString() : null].filter(Boolean);
+      filter['requestedBy.id'] = { $in: idList };
     }
     const requests = await WelfareRequest.find(filter).sort({ createdAt: -1 });
-    res.json(requests);
+
+    // Deduplicate by requestId and _id
+    const seen = new Set();
+    const uniqueRequests = [];
+    for (const r of requests) {
+      const key = r.requestId || r._id.toString();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueRequests.push(r);
+      }
+    }
+
+    res.json(uniqueRequests);
   } catch (err) { next(err); }
 });
 
 // Submit Welfare Request
 router.post('/welfare', protect, async (req, res, next) => {
   try {
+    const { welfareType, description, amount, documents } = req.body;
+    if (!welfareType) {
+      return res.status(400).json({ message: 'Welfare type is required' });
+    }
+    if (!description || !description.trim()) {
+      return res.status(400).json({ message: 'Description is required' });
+    }
+
+    const requestedById = req.user.employeeId || req.user.id || (req.user._id ? req.user._id.toString() : 'EMP-1001');
+
+    // 10-Second Idempotency Protection against duplicate submissions
+    const tenSecsAgo = new Date(Date.now() - 10000);
+    const existingRecent = await WelfareRequest.findOne({
+      'requestedBy.id': requestedById,
+      welfareType,
+      amount: amount || 0,
+      createdAt: { $gte: tenSecsAgo }
+    });
+    if (existingRecent) {
+      return res.status(200).json(existingRecent);
+    }
+
+    // Collision-resistant sequential request ID generation
+    let maxNum = 1000;
+    const existingRequests = await WelfareRequest.find({}, 'requestId');
+    for (const r of existingRequests) {
+      if (r.requestId) {
+        const m = r.requestId.match(/WEL-(\d+)/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      }
+    }
     const count = await WelfareRequest.countDocuments();
-    const requestId = `WEL-${1000 + count + 1}`;
+    let nextSeq = Math.max(maxNum + 1, 1000 + count + 1);
+    let requestId = `WEL-${nextSeq}`;
+    while (await WelfareRequest.findOne({ requestId })) {
+      nextSeq++;
+      requestId = `WEL-${nextSeq}`;
+    }
 
     const newReq = new WelfareRequest({
       requestId,
-      welfareType: req.body.welfareType,
-      description: req.body.description,
-      amount: req.body.amount || 0,
-      documents: req.body.documents || [],
+      welfareType,
+      description: description.trim(),
+      amount: amount || 0,
+      documents: documents || [],
       requestedBy: {
-        id: req.user.id,
-        name: req.user.name,
-        dept: req.user.dept || 'General'
+        id: requestedById,
+        name: req.user.name || 'Staff Member',
+        dept: req.user.dept || req.user.department || 'General'
       },
       history: [{
         status: 'Submitted',
-        updatedBy: req.user.name,
+        updatedBy: req.user.name || 'User',
         remarks: 'Welfare benefit requested'
       }]
     });
 
     await newReq.save();
-    await logAudit(req, 'Welfare', requestId, 'Requested', '', 'Submitted', req.body.welfareType);
+    await logAudit(req, 'Welfare', requestId, 'Requested', '', 'Submitted', welfareType);
     res.status(201).json(newReq);
   } catch (err) {
     res.status(400).json({ message: err.message });

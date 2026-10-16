@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { DataContext } from '../../context/DataContext';
 import { useToast } from '../../components/Toast';
 import api from '../../api';
 
 const PerformanceModule = ({ searchQuery = '' }) => {
   const { user } = useContext(AuthContext);
+  const { employees } = useContext(DataContext) || { employees: [] };
   const { showToast } = useToast();
 
   // Active Submodule Tab State
@@ -56,6 +58,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   const [showPipModal, setShowPipModal] = useState(false);
   const [showPipReviewModal, setShowPipReviewModal] = useState(false);
   const [selectedPip, setSelectedPip] = useState(null);
+  const [pipDualViewMode, setPipDualViewMode] = useState('both'); // 'both' | 'initiate' | 'review'
 
   // Chart References
   const distChartRef = useRef(null);
@@ -75,18 +78,20 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   });
 
   // Goal Form State
-  const [goalForm, setGoalForm] = useState({
+  const initialGoalForm = {
     employeeId: 'EMP-1002',
     employeeName: 'Akhil Sirivella',
     department: 'Human Resources',
     designation: 'HR Manager',
     kraName: 'HRMS Performance & Appraisal Module Deployment',
     target: 'Deploy Module 6 with 100% test coverage',
-    weightage: 40,
+    weightage: 25,
     priority: 'Critical',
-    startDate: '2026-04-01',
-    endDate: '2027-03-31'
-  });
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  };
+  const [goalForm, setGoalForm] = useState(initialGoalForm);
+  const submittingGoalRef = useRef(false);
 
   // Mid-Year Review Form State
   const [midYearForm, setMidYearForm] = useState({
@@ -112,7 +117,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   });
 
   // Promotion Form State
-  const [promoForm, setPromoForm] = useState({
+  const initialPromoForm = {
     employeeId: 'EMP-1002',
     employeeName: 'Akhil Sirivella',
     currentDepartment: 'Human Resources',
@@ -120,12 +125,14 @@ const PerformanceModule = ({ searchQuery = '' }) => {
     currentGrade: 'Grade C',
     proposedDesignation: 'Senior HR Director',
     proposedGrade: 'Grade D',
-    effectiveDate: '2026-09-01',
+    effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     justification: 'Exceeded performance goals with 5.0 Rating in Annual Review.'
-  });
+  };
+  const [promoForm, setPromoForm] = useState(initialPromoForm);
+  const submittingPromoRef = useRef(false);
 
   // Increment Form State
-  const [incForm, setIncForm] = useState({
+  const initialIncForm = {
     employeeId: 'EMP-1002',
     employeeName: 'Akhil Sirivella',
     currentDepartment: 'Human Resources',
@@ -133,23 +140,28 @@ const PerformanceModule = ({ searchQuery = '' }) => {
     currentGrade: 'Grade C',
     currentCtc: 1800000,
     incrementPercentage: 15,
-    effectiveDate: '2026-09-01',
+    effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    revisionType: 'Annual Increment',
     reason: 'Outstanding Performance Rating (5.0)'
-  });
+  };
+  const [incForm, setIncForm] = useState(initialIncForm);
+  const submittingIncRef = useRef(false);
 
   // PIP Form State
-  const [pipForm, setPipForm] = useState({
+  const initialPipForm = {
     employeeId: 'EMP-1009',
     employeeName: 'Rohan Das',
     department: 'Sales & Marketing',
     designation: 'Sales Executive',
-    startDate: '2026-07-01',
-    endDate: '2026-08-31',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     durationDays: 60,
     performanceGap: 'Lead conversion rate 45% below quota target.',
     expectedPerformance: 'Achieve minimum 85% lead conversion quota.',
     actionPlan: 'Weekly sales coaching and daily pipeline CRM updates.'
-  });
+  };
+  const [pipForm, setPipForm] = useState(initialPipForm);
+  const submittingPipRef = useRef(false);
 
   // Load Module Data
   const fetchAllPerformanceData = async () => {
@@ -181,10 +193,30 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       setKpis(kpiRes.data || []);
       setGoals(goalRes.data || []);
       setMidYearReviews(midRes.data || []);
-      setAnnualReviews(annRes.data || []);
-      setPromotions(prmRes.data || []);
+      const rawPromos = prmRes.data || [];
+      const seenPromos = new Set();
+      const dedupedPromos = rawPromos.filter(p => {
+        if (!p) return false;
+        const idKey = p.requestId || String(p._id);
+        if (seenPromos.has(idKey)) return false;
+        seenPromos.add(idKey);
+        const empKey = `${p.employeeId || p.employeeName}_${p.proposedDesignation}_${p.status}`;
+        if (p.status !== 'Approved' && seenPromos.has(empKey)) return false;
+        if (p.status !== 'Approved') seenPromos.add(empKey);
+        return true;
+      });
+      setPromotions(dedupedPromos);
       setIncrements(incRes.data || []);
-      setPips(pipRes.data || []);
+      const rawPips = pipRes.data || [];
+      const seenPips = new Set();
+      const dedupedPips = rawPips.filter(p => {
+        if (!p) return false;
+        const key = p.pipCode || String(p._id);
+        if (seenPips.has(key)) return false;
+        seenPips.add(key);
+        return true;
+      });
+      setPips(dedupedPips);
       setAuditLogs(auditRes.data || []);
     } catch (err) {
       console.error('Error fetching performance data', err);
@@ -278,20 +310,74 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreateGoal = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingGoalRef.current || isSubmitting) return;
+
+    const w = Number(goalForm.weightage);
+    if (isNaN(w) || w <= 0 || w > 100) {
+      showToast('Goal weightage must be between 1% and 100%', 'error');
+      return;
+    }
+
+    // Deduplicate goals by goalCode / _id before calculating existing allocated weightage
+    const uniqueGoalsForEmp = (goals || []).filter(g => {
+      if (!g) return false;
+      const empMatch = (g.employeeId && goalForm.employeeId && String(g.employeeId).trim().toLowerCase() === String(goalForm.employeeId).trim().toLowerCase());
+      const isActive = !g.status || (g.status !== 'Cancelled' && g.status !== 'Rejected');
+      return empMatch && isActive;
+    }).filter((g, idx, arr) => arr.findIndex(x => (x._id && g._id && String(x._id) === String(g._id)) || (x.goalCode && g.goalCode && x.goalCode === g.goalCode)) === idx);
+
+    const existingWeight = uniqueGoalsForEmp.reduce((sum, g) => sum + (Number(g.weightage) || 0), 0);
+
+    if (existingWeight + w > 100) {
+      showToast(`Total weightage cannot exceed 100%. Current allocated for employee: ${existingWeight}%`, 'error');
+      return;
+    }
+
+    submittingGoalRef.current = true;
     setIsSubmitting(true);
     try {
-      const res = await api.post('/performance/goals', { ...goalForm, appraisalCycleId: cycles[0]?._id || '60c72b2f9b1d8b2a3c9e0001' });
+      const activeCycle = cycles.find(c => c.status === 'Active') || cycles[0];
+      const payload = {
+        ...goalForm,
+        weightage: w,
+        appraisalCycleId: activeCycle?._id || cycles[0]?._id || '60c72b2f9b1d8b2a3c9e0001',
+        startDate: goalForm.startDate || new Date().toISOString().split('T')[0],
+        endDate: goalForm.endDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+
+      const res = await api.post('/performance/goals', payload);
       if (res.data) {
-        setGoals(prev => [...prev, res.data]);
+        // Immediate in-place state reflection: prepend the newly saved goal and deduplicate
+        setGoals(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resCode = res.data.goalCode || null;
+          const exists = prev.some(g =>
+            (resId && g._id && String(g._id) === resId) ||
+            (resCode && g.goalCode && g.goalCode === resCode)
+          );
+          if (exists) {
+            return prev.map(g =>
+              ((resId && g._id && String(g._id) === resId) ||
+               (resCode && g.goalCode && g.goalCode === resCode))
+                ? res.data
+                : g
+            );
+          }
+          const filteredPrev = prev.filter(g =>
+            !(resId && g._id && String(g._id) === resId) &&
+            !(resCode && g.goalCode && g.goalCode === resCode)
+          );
+          return [res.data, ...filteredPrev];
+        });
       }
       showToast('Employee Goal assigned successfully.', 'success');
       setShowGoalModal(false);
       fetchAllPerformanceData();
     } catch (err) {
-      showToast('Error assigning goal', 'error');
+      showToast(err.response?.data?.message || 'Error assigning goal', 'error');
     } finally {
       setIsSubmitting(false);
+      submittingGoalRef.current = false;
     }
   };
 
@@ -376,20 +462,58 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreatePromotion = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingPromoRef.current || isSubmitting) return;
+
+    if (!promoForm.proposedDesignation || !promoForm.proposedDesignation.trim()) {
+      showToast('Please specify the Proposed Designation.', 'error');
+      return;
+    }
+    if (!promoForm.proposedGrade || !promoForm.proposedGrade.trim()) {
+      showToast('Please specify the Proposed Grade.', 'error');
+      return;
+    }
+
+    submittingPromoRef.current = true;
     setIsSubmitting(true);
     try {
-      const res = await api.post('/performance/promotions', promoForm);
+      const payload = {
+        ...promoForm,
+        effectiveDate: promoForm.effectiveDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+      const res = await api.post('/performance/promotions', payload);
       if (res.data) {
-        setPromotions(prev => [...prev, res.data]);
+        // Immediate in-place state reflection: prepend the newly saved promotion record and deduplicate
+        setPromotions(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resReqId = res.data.requestId || null;
+          const resEmpId = res.data.employeeId;
+          const resEmpName = res.data.employeeName;
+          const resDesig = res.data.proposedDesignation;
+          const isPending = res.data.status !== 'Approved';
+
+          const matchesRecord = (p) =>
+            (resId && p._id && String(p._id) === resId) ||
+            (resReqId && p.requestId && p.requestId === resReqId) ||
+            (isPending && p.status !== 'Approved' &&
+              ((resEmpId && p.employeeId === resEmpId) || (resEmpName && p.employeeName === resEmpName)) &&
+              p.proposedDesignation === resDesig);
+
+          const exists = prev.some(matchesRecord);
+          if (exists) {
+            return prev.map(p => matchesRecord(p) ? res.data : p);
+          }
+          const filteredPrev = prev.filter(p => p._id !== res.data._id).filter(p => !matchesRecord(p));
+          return [res.data, ...filteredPrev];
+        });
       }
-      showToast('Promotion recommendation submitted.', 'success');
+      showToast('Promotion recommendation submitted successfully.', 'success');
       setShowPromoModal(false);
       fetchAllPerformanceData();
     } catch (err) {
-      showToast('Error submitting promotion recommendation', 'error');
+      showToast(err.response?.data?.message || 'Error submitting promotion recommendation', 'error');
     } finally {
       setIsSubmitting(false);
+      submittingPromoRef.current = false;
     }
   };
 
@@ -405,30 +529,67 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreateIncrement = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (submittingIncRef.current || isSubmitting) return;
+
     const current = Number(incForm.currentCtc);
     const pct = Number(incForm.incrementPercentage);
+    if (isNaN(current) || current <= 0) {
+      showToast('Please enter a valid Current CTC.', 'error');
+      return;
+    }
+    if (isNaN(pct) || pct <= 0 || pct > 100) {
+      showToast('Increment percentage must be between 1% and 100%.', 'error');
+      return;
+    }
+
+    submittingIncRef.current = true;
+    setIsSubmitting(true);
     const incAmt = Math.round((current * pct) / 100);
     const revCtc = current + incAmt;
     try {
-      const res = await api.post('/performance/increments', {
+      const payload = {
         ...incForm,
+        currentCtc: current,
+        incrementPercentage: pct,
         incrementAmount: incAmt,
         revisedCtc: revCtc,
         revisedGross: Math.round(revCtc * 0.75),
-        revisedBasic: Math.round(revCtc * 0.50)
-      });
+        revisedBasic: Math.round(revCtc * 0.50),
+        effectiveDate: incForm.effectiveDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+      const res = await api.post('/performance/increments', payload);
       if (res.data) {
-        setIncrements(prev => [...prev, res.data]);
+        // Immediate in-place state reflection: prepend the newly saved increment record and deduplicate without overwriting
+        setIncrements(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resReqId = res.data.requestId || null;
+          const exists = prev.some(i =>
+            (resId && i._id && String(i._id) === resId) ||
+            (resReqId && i.requestId && i.requestId === resReqId)
+          );
+          if (exists) {
+            return prev.map(i =>
+              ((resId && i._id && String(i._id) === resId) ||
+               (resReqId && i.requestId && i.requestId === resReqId))
+                ? res.data
+                : i
+            );
+          }
+          const filteredPrev = prev.filter(i => i._id !== res.data._id).filter(i =>
+            !(resId && i._id && String(i._id) === resId) &&
+            !(resReqId && i.requestId && i.requestId === resReqId)
+          );
+          return [res.data, ...filteredPrev];
+        });
       }
-      showToast('Increment recommendation submitted.', 'success');
+      showToast('Increment recommendation submitted successfully.', 'success');
       setShowIncModal(false);
       fetchAllPerformanceData();
     } catch (err) {
-      showToast('Error submitting increment recommendation', 'error');
+      showToast(err.response?.data?.message || 'Error submitting increment recommendation', 'error');
     } finally {
       setIsSubmitting(false);
+      submittingIncRef.current = false;
     }
   };
 
@@ -444,7 +605,22 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   const handleCreatePip = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingPipRef.current || isSubmitting) return;
+
+    if (!pipForm.employeeId) {
+      showToast('Please select or specify an Employee.', 'error');
+      return;
+    }
+    if (!pipForm.performanceGap || !pipForm.performanceGap.trim()) {
+      showToast('Please specify the Performance Gap Identified.', 'error');
+      return;
+    }
+    if (!pipForm.expectedPerformance || !pipForm.expectedPerformance.trim()) {
+      showToast('Please specify the Expected Performance Target.', 'error');
+      return;
+    }
+
+    submittingPipRef.current = true;
     setIsSubmitting(true);
     try {
       const res = await api.post('/performance/pip', {
@@ -455,15 +631,38 @@ const PerformanceModule = ({ searchQuery = '' }) => {
         ]
       });
       if (res.data) {
-        setPips(prev => [...prev, res.data]);
+        // Immediate in-place state reflection: prepend the newly saved PIP record and deduplicate without deleting previous records
+        setPips(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resPipCode = res.data.pipCode || null;
+          const exists = prev.some(p =>
+            (resId && p._id && String(p._id) === resId) ||
+            (resPipCode && p.pipCode && p.pipCode === resPipCode)
+          );
+          if (exists) {
+            return prev.map(p =>
+              ((resId && p._id && String(p._id) === resId) ||
+               (resPipCode && p.pipCode && p.pipCode === resPipCode))
+                ? res.data
+                : p
+            );
+          }
+          const filteredPrev = prev.filter(p => p._id !== res.data._id).filter(p =>
+            !(resId && p._id && String(p._id) === resId) &&
+            !(resPipCode && p.pipCode && p.pipCode === resPipCode)
+          );
+          return [res.data, ...filteredPrev];
+        });
       }
       showToast('PIP initiated for employee.', 'success');
       setShowPipModal(false);
+      setPipForm(initialPipForm);
       fetchAllPerformanceData();
     } catch (err) {
-      showToast('Error creating PIP', 'error');
+      showToast(err.response?.data?.message || 'Error creating PIP', 'error');
     } finally {
       setIsSubmitting(false);
+      submittingPipRef.current = false;
     }
   };
 
@@ -732,26 +931,51 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       {/* TAB 3: FRAMEWORK & TEMPLATES */}
       {activeTab === 'framework' && (
         <div className="animate-fade-in-up">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Configurable Rating Scales and Performance Template Breakdown</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Configurable performance rating scale tiers, score thresholds, and multi-component evaluation weightage breakdown.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             
             {/* Rating Scales */}
             <div className="card">
               <div className="card-title"><i className="fa-solid fa-star"></i> Configurable Rating Scales</div>
-              <div className="table-responsive">
-                <table className="custom-table" style={{ width: '100%' }}>
+              <div className="table-responsive" style={{ border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                <table className="custom-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '28%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '18%' }} />
+                  </colgroup>
                   <thead>
-                    <tr><th>Rating</th><th>Label</th><th>Min Score</th><th>Max Score</th><th>Category</th></tr>
+                    <tr>
+                      <th style={{ textAlign: 'center', padding: '10px 8px' }}>Rating</th>
+                      <th style={{ textAlign: 'left', padding: '10px 12px' }}>Label</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px' }}>Min Score</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px' }}>Max Score</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px' }}>Category</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {ratingScales.map(rs => (
                       <tr key={rs._id}>
-                        <td><strong style={{ color: 'hsl(var(--primary))' }}>{rs.ratingValue}.0 ★</strong></td>
-                        <td>{rs.ratingLabel}</td>
-                        <td>{rs.minScore}%</td>
-                        <td>{rs.maxScore}%</td>
-                        <td><span className="badge badge-primary">{rs.performanceCategory}</span></td>
+                        <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                          <strong style={{ color: 'hsl(var(--primary))' }}>{rs.ratingValue}.0 ★</strong>
+                        </td>
+                        <td style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600 }}>{rs.ratingLabel}</td>
+                        <td style={{ textAlign: 'center', padding: '10px 8px' }}>{rs.minScore}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 8px' }}>{rs.maxScore}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                          <span className="badge badge-primary">{rs.performanceCategory}</span>
+                        </td>
                       </tr>
                     ))}
+                    {ratingScales.length === 0 && (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>No rating scales configured.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -760,22 +984,44 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             {/* Performance Templates */}
             <div className="card">
               <div className="card-title"><i className="fa-solid fa-sliders"></i> Performance Template Breakdown</div>
-              <div className="table-responsive">
-                <table className="custom-table" style={{ width: '100%' }}>
+              <div className="table-responsive" style={{ border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                <table className="custom-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '28%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '12%' }} />
+                  </colgroup>
                   <thead>
-                    <tr><th>Template</th><th>KRA %</th><th>KPI %</th><th>Competency %</th><th>Behaviour %</th><th>Total</th></tr>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '10px 10px' }}>Template</th>
+                      <th style={{ textAlign: 'center', padding: '10px 6px' }}>KRA %</th>
+                      <th style={{ textAlign: 'center', padding: '10px 6px' }}>KPI %</th>
+                      <th style={{ textAlign: 'center', padding: '10px 6px' }}>Competency %</th>
+                      <th style={{ textAlign: 'center', padding: '10px 6px' }}>Behaviour %</th>
+                      <th style={{ textAlign: 'center', padding: '10px 6px' }}>Total</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {templates.map(pt => (
                       <tr key={pt._id}>
-                        <td><strong>{pt.templateName}</strong></td>
-                        <td>{pt.kraWeightage}%</td>
-                        <td>{pt.kpiWeightage}%</td>
-                        <td>{pt.competencyWeightage}%</td>
-                        <td>{pt.behaviourWeightage}%</td>
-                        <td><span className="badge badge-success">100%</span></td>
+                        <td style={{ textAlign: 'left', padding: '10px 10px' }}>
+                          <strong>{pt.templateName}</strong>
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '10px 6px' }}>{pt.kraWeightage}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 6px' }}>{pt.kpiWeightage}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 6px' }}>{pt.competencyWeightage}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 6px' }}>{pt.behaviourWeightage}%</td>
+                        <td style={{ textAlign: 'center', padding: '10px 6px' }}>
+                          <span className="badge badge-success">100%</span>
+                        </td>
                       </tr>
                     ))}
+                    {templates.length === 0 && (
+                      <tr><td colSpan="6" style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>No performance templates defined.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -785,91 +1031,39 @@ const PerformanceModule = ({ searchQuery = '' }) => {
           {/* Competency Master Table */}
           <div className="card">
             <div className="card-title"><i className="fa-solid fa-brain"></i> Competency Master Index</div>
-            <table className="custom-table">
-              <thead>
-                <tr><th>Code</th><th>Competency Name</th><th>Type</th><th>Description</th><th>Weightage</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                {competencies.map(comp => (
-                  <tr key={comp._id}>
-                    <td><strong>{comp.competencyCode}</strong></td>
-                    <td>{comp.competencyName}</td>
-                    <td><span className="badge badge-info">{comp.competencyType}</span></td>
-                    <td>{comp.description}</td>
-                    <td>{comp.weightage}%</td>
-                    <td><span className="badge badge-success">{comp.status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: KRA, KPI & GOAL SETTING */}
-      {activeTab === 'kras-kpis' && (
-        <div className="animate-fade-in-up">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>KRAs, KPIs & Goal Setting Hub</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Assign KRA/KPI objectives to employees and track milestone progress.</p>
-            </div>
-            {isAllowed('create_goal') && (
-              <button className="btn btn-primary" onClick={() => setShowGoalModal(true)}>
-                <i className="fa-solid fa-plus"></i> Assign Employee Goal
-              </button>
-            )}
-          </div>
-
-          <div className="card">
-            <div className="table-responsive">
-              <table className="custom-table">
+            <div className="table-responsive" style={{ border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+              <table className="custom-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '30%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '10%' }} />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>Goal Code</th>
-                    <th>Employee Name</th>
-                    <th>Department</th>
-                    <th>KRA / Objective Title</th>
-                    <th>Target</th>
-                    <th>Weightage</th>
-                    <th>Progress %</th>
-                    <th>Goal Status</th>
-                    <th>Approval Status</th>
-                    <th>Action</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>Code</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>Competency Name</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>Type</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>Description</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>Weightage</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {goals.map(g => (
-                    <tr key={g._id}>
-                      <td><strong>{g.goalCode}</strong></td>
-                      <td>{g.employeeName}</td>
-                      <td>{g.department}</td>
-                      <td>{g.kraName}</td>
-                      <td>{g.target}</td>
-                      <td>{g.weightage}%</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ fontSize: '0.85rem' }}>{g.achievementPct || 0}%</strong>
-                          <div style={{ width: '60px', height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: `${g.achievementPct || 0}%`, height: '100%', background: 'hsl(var(--primary))' }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`badge ${g.goalStatus === 'On Track' || g.goalStatus === 'Completed' ? 'badge-success' : 'badge-warning'}`}>
-                          {g.goalStatus}
-                        </span>
-                      </td>
-                      <td><span className="badge badge-success">{g.status}</span></td>
-                      <td>
-                        <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setSelectedGoal(g); setShowGoalProgressModal(true); }}>
-                          <i className="fa-solid fa-pen-to-square"></i> Update Progress
-                        </button>
-                      </td>
+                  {competencies.map(comp => (
+                    <tr key={comp._id}>
+                      <td style={{ textAlign: 'left', padding: '10px 12px' }}><strong>{comp.competencyCode}</strong></td>
+                      <td style={{ textAlign: 'left', padding: '10px 12px' }}>{comp.competencyName}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 12px' }}><span className="badge badge-info">{comp.competencyType}</span></td>
+                      <td style={{ textAlign: 'left', padding: '10px 12px' }}>{comp.description}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 12px' }}>{comp.weightage}%</td>
+                      <td style={{ textAlign: 'center', padding: '10px 12px' }}><span className="badge badge-success">{comp.status}</span></td>
                     </tr>
                   ))}
-                  {goals.length === 0 && (
-                    <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No employee goals assigned yet.</td></tr>
+                  {competencies.length === 0 && (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>No competencies indexed.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -877,6 +1071,107 @@ const PerformanceModule = ({ searchQuery = '' }) => {
           </div>
         </div>
       )}
+
+      {/* TAB 4: KRA, KPI & GOAL SETTING */}
+      {activeTab === 'kras-kpis' && (() => {
+        const filteredGoals = (goals || []).filter((g, index, self) => {
+          if (!g) return false;
+          return self.findIndex(item =>
+            (item._id && g._id && String(item._id) === String(g._id)) ||
+            (item.goalCode && g.goalCode && item.goalCode === g.goalCode)
+          ) === index;
+        });
+
+        return (
+          <div className="animate-fade-in-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>KRAs, KPIs & Goal Setting Hub</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Assign KRA/KPI objectives to employees and track milestone progress.</p>
+              </div>
+              {isAllowed('create_goal') && (
+                <button
+                  id="btn-open-assign-goal"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
+                    setGoalForm({
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
+                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      department: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
+                      designation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
+                      kraName: 'HRMS Performance & Appraisal Module Deployment',
+                      target: 'Deploy Module 6 with 100% test coverage',
+                      weightage: 25,
+                      priority: 'Critical',
+                      startDate: new Date().toISOString().split('T')[0],
+                      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    });
+                    setShowGoalModal(true);
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Assign Employee Goal
+                </button>
+              )}
+            </div>
+
+            <div className="card">
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Goal Code</th>
+                      <th>Employee Name</th>
+                      <th>Department</th>
+                      <th>KRA / Objective Title</th>
+                      <th>Target</th>
+                      <th>Weightage</th>
+                      <th>Progress %</th>
+                      <th>Goal Status</th>
+                      <th>Approval Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGoals.map(g => (
+                      <tr key={g._id || g.goalCode}>
+                        <td><strong>{g.goalCode}</strong></td>
+                        <td>{g.employeeName}</td>
+                        <td>{g.department}</td>
+                        <td>{g.kraName}</td>
+                        <td>{g.target}</td>
+                        <td>{g.weightage}%</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <strong style={{ fontSize: '0.85rem' }}>{g.achievementPct || 0}%</strong>
+                            <div style={{ width: '60px', height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: `${g.achievementPct || 0}%`, height: '100%', background: 'hsl(var(--primary))' }}></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`badge ${g.goalStatus === 'On Track' || g.goalStatus === 'Completed' ? 'badge-success' : 'badge-warning'}`}>
+                            {g.goalStatus}
+                          </span>
+                        </td>
+                        <td><span className="badge badge-success">{g.status}</span></td>
+                        <td>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setSelectedGoal(g); setShowGoalProgressModal(true); }}>
+                            <i className="fa-solid fa-pen-to-square"></i> Update Progress
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredGoals.length === 0 && (
+                      <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No employee goals assigned yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* TAB 5: MID-YEAR REVIEW */}
       {activeTab === 'mid-year' && (
@@ -1004,185 +1299,278 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       )}
 
       {/* TAB 7: PROMOTION RECOMMENDATIONS */}
-      {activeTab === 'promotions' && (
-        <div className="animate-fade-in-up">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Promotion Recommendations & Employee Master Sync</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Automated eligibility verification. Final approval updates Designation, Grade, and Position in Employee Master.</p>
-            </div>
-            {isAllowed('recommend_promo') && (
-              <button className="btn btn-primary" onClick={() => setShowPromoModal(true)}>
-                <i className="fa-solid fa-plus"></i> Recommend Promotion
-              </button>
-            )}
-          </div>
+      {activeTab === 'promotions' && (() => {
+        const filteredPromotions = (promotions || []).filter((p, index, self) => {
+          if (!p) return false;
+          return self.findIndex(item =>
+            (item._id && p._id && String(item._id) === String(p._id)) ||
+            (item.requestId && p.requestId && item.requestId === p.requestId) ||
+            (item.status !== 'Approved' && p.status !== 'Approved' &&
+             ((item.employeeId && p.employeeId && item.employeeId === p.employeeId) ||
+              (item.employeeName && p.employeeName && item.employeeName === p.employeeName)) &&
+             item.proposedDesignation === p.proposedDesignation)
+          ) === index;
+        });
 
-          <div className="card">
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Employee Name</th>
-                    <th>Department</th>
-                    <th>Current Designation & Grade</th>
-                    <th>Proposed Designation & Grade</th>
-                    <th>Effective Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {promotions.map(p => (
-                    <tr key={p._id}>
-                      <td><strong>{p.requestId}</strong></td>
-                      <td>{p.employeeName}</td>
-                      <td>{p.currentDepartment}</td>
-                      <td>{p.currentDesignation} ({p.currentGrade})</td>
-                      <td><strong style={{ color: 'hsl(var(--primary))' }}>{p.proposedDesignation} ({p.proposedGrade})</strong></td>
-                      <td>{new Date(p.effectiveDate).toLocaleDateString()}</td>
-                      <td><span className={`badge ${p.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{p.status}</span></td>
-                      <td>
-                        {p.status !== 'Approved' ? (
-                          <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleApprovePromotionSubmit(p._id, 'Approved')}>
-                            Approve Promotion
-                          </button>
-                        ) : <span className="badge badge-success">Employee Master Updated</span>}
-                      </td>
+        return (
+          <div className="animate-fade-in-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Promotion Recommendations & Employee Master Sync</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Automated eligibility verification. Final approval updates Designation, Grade, and Position in Employee Master.</p>
+              </div>
+              {isAllowed('recommend_promo') && (
+                <button
+                  id="btn-open-recommend-promotion"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
+                    setPromoForm({
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
+                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      currentDepartment: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
+                      currentDesignation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
+                      currentGrade: defaultEmp ? (defaultEmp.grade || 'Grade C') : 'Grade C',
+                      proposedDesignation: 'Senior Specialist',
+                      proposedGrade: 'Grade D',
+                      effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      justification: 'Exceeded performance appraisal benchmark metrics with outstanding rating.'
+                    });
+                    setShowPromoModal(true);
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Recommend Promotion
+                </button>
+              )}
+            </div>
+
+            <div className="card">
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Request ID</th>
+                      <th>Employee Name</th>
+                      <th>Department</th>
+                      <th>Current Designation & Grade</th>
+                      <th>Proposed Designation & Grade</th>
+                      <th>Effective Date</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                  {promotions.length === 0 && (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No promotion recommendations logged.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredPromotions.map(p => (
+                      <tr key={p._id || p.requestId}>
+                        <td><strong>{p.requestId}</strong></td>
+                        <td>{p.employeeName}</td>
+                        <td>{p.currentDepartment}</td>
+                        <td>{p.currentDesignation} ({p.currentGrade})</td>
+                        <td><strong style={{ color: 'hsl(var(--primary))' }}>{p.proposedDesignation} ({p.proposedGrade})</strong></td>
+                        <td>{new Date(p.effectiveDate).toLocaleDateString()}</td>
+                        <td><span className={`badge ${p.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{p.status}</span></td>
+                        <td>
+                          {p.status !== 'Approved' ? (
+                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleApprovePromotionSubmit(p._id, 'Approved')}>
+                              Approve Promotion
+                            </button>
+                          ) : <span className="badge badge-success">Employee Master Updated</span>}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredPromotions.length === 0 && (
+                      <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No promotion recommendations logged.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* TAB 8: INCREMENT RECOMMENDATIONS */}
-      {activeTab === 'increments' && (
-        <div className="animate-fade-in-up">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Increment Recommendations & Payroll Integration</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>CTC & Salary Component calculation engine. Finance sign-off updates Payroll structure atomically.</p>
-            </div>
-            {isAllowed('recommend_inc') && (
-              <button className="btn btn-primary" onClick={() => setShowIncModal(true)}>
-                <i className="fa-solid fa-plus"></i> Recommend Increment
-              </button>
-            )}
-          </div>
+      {activeTab === 'increments' && (() => {
+        const filteredIncrements = (increments || []).filter((inc, index, self) => {
+          if (!inc) return false;
+          return self.findIndex(item =>
+            (item._id && inc._id && String(item._id) === String(inc._id)) ||
+            (item.requestId && inc.requestId && item.requestId === inc.requestId)
+          ) === index;
+        });
 
-          <div className="card">
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Employee Name</th>
-                    <th>Current CTC</th>
-                    <th>Increment %</th>
-                    <th>Increment Amount</th>
-                    <th>Revised CTC</th>
-                    <th>Effective Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {increments.map(inc => (
-                    <tr key={inc._id}>
-                      <td><strong>{inc.requestId}</strong></td>
-                      <td>{inc.employeeName}</td>
-                      <td>₹{(inc.currentCtc || 0).toLocaleString()}</td>
-                      <td><span className="badge badge-primary">+{inc.incrementPercentage}%</span></td>
-                      <td>₹{(inc.incrementAmount || 0).toLocaleString()}</td>
-                      <td><strong style={{ color: 'hsl(var(--success))' }}>₹{(inc.revisedCtc || 0).toLocaleString()}</strong></td>
-                      <td>{new Date(inc.effectiveDate).toLocaleDateString()}</td>
-                      <td><span className={`badge ${inc.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{inc.status}</span></td>
-                      <td>
-                        {inc.status !== 'Approved' ? (
-                          <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleApproveIncrementSubmit(inc._id, 'Approved')}>
-                            Finance Sign-off
-                          </button>
-                        ) : <span className="badge badge-success">Payroll Synced</span>}
-                      </td>
+        return (
+          <div className="animate-fade-in-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Increment Recommendations & Payroll Integration</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>CTC & Salary Component calculation engine. Finance sign-off updates Payroll structure atomically.</p>
+              </div>
+              {isAllowed('recommend_inc') && (
+                <button
+                  id="btn-open-recommend-increment"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
+                    const defaultSalary = defaultEmp ? (Number(defaultEmp.salary) || Number(defaultEmp.ctc) || 1200000) : 1200000;
+                    setIncForm({
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
+                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      currentDepartment: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
+                      currentDesignation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
+                      currentGrade: defaultEmp ? (defaultEmp.grade || 'Grade C') : 'Grade C',
+                      currentCtc: defaultSalary,
+                      incrementPercentage: 12,
+                      effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      revisionType: 'Annual Increment',
+                      reason: 'Outstanding performance appraisal review rating.'
+                    });
+                    setShowIncModal(true);
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Recommend Increment
+                </button>
+              )}
+            </div>
+
+            <div className="card">
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Request ID</th>
+                      <th>Employee Name</th>
+                      <th>Current CTC</th>
+                      <th>Increment %</th>
+                      <th>Increment Amount</th>
+                      <th>Revised CTC</th>
+                      <th>Effective Date</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                  {increments.length === 0 && (
-                    <tr><td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>No increment recommendations recorded.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredIncrements.map(inc => (
+                      <tr key={inc._id || inc.requestId}>
+                        <td><strong>{inc.requestId}</strong></td>
+                        <td>{inc.employeeName}</td>
+                        <td>₹{(inc.currentCtc || 0).toLocaleString()}</td>
+                        <td><span className="badge badge-primary">+{inc.incrementPercentage}%</span></td>
+                        <td>₹{(inc.incrementAmount || 0).toLocaleString()}</td>
+                        <td><strong style={{ color: 'hsl(var(--success))' }}>₹{(inc.revisedCtc || 0).toLocaleString()}</strong></td>
+                        <td>{new Date(inc.effectiveDate).toLocaleDateString()}</td>
+                        <td><span className={`badge ${inc.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{inc.status}</span></td>
+                        <td>
+                          {inc.status !== 'Approved' ? (
+                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleApproveIncrementSubmit(inc._id, 'Approved')}>
+                              Finance Sign-off
+                            </button>
+                          ) : <span className="badge badge-success">Payroll Synced</span>}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredIncrements.length === 0 && (
+                      <tr><td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>No increment recommendations recorded.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* TAB 9: PIP LIFECYCLE ENGINE */}
-      {activeTab === 'pip' && (
-        <div className="animate-fade-in-up">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Performance Improvement Plan (PIP) Lifecycle</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Initiate PIP, track multi-objective progress, log periodic review feedback, and sign off outcomes.</p>
-            </div>
-            {isAllowed('manage_pip') && (
-              <button className="btn btn-primary" onClick={() => setShowPipModal(true)}>
-                <i className="fa-solid fa-plus"></i> Initiate New PIP
-              </button>
-            )}
-          </div>
+      {activeTab === 'pip' && (() => {
+        const filteredPips = (pips || []).filter((p, index, self) => {
+          if (!p) return false;
+          return self.findIndex(item =>
+            (item._id && p._id && String(item._id) === String(p._id)) ||
+            (item.pipCode && p.pipCode && item.pipCode === p.pipCode)
+          ) === index;
+        });
 
-          <div className="card">
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>PIP Code</th>
-                    <th>Employee Name</th>
-                    <th>Department</th>
-                    <th>Duration</th>
-                    <th>Performance Gap</th>
-                    <th>Review Frequency</th>
-                    <th>Outcome Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pips.map(p => (
-                    <tr key={p._id}>
-                      <td><strong>{p.pipCode}</strong></td>
-                      <td>{p.employeeName}</td>
-                      <td>{p.department}</td>
-                      <td>{p.durationDays} Days</td>
-                      <td>{p.performanceGap}</td>
-                      <td><span className="badge badge-info">{p.reviewFrequency}</span></td>
-                      <td>
-                        <span className={`badge ${p.outcome === 'Successfully Completed' ? 'badge-success' : p.outcome === 'Unsuccessful' ? 'badge-danger' : 'badge-warning'}`}>
-                          {p.outcome}
-                        </span>
-                      </td>
-                      <td>
-                        <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setSelectedPip(p); setShowPipReviewModal(true); }}>
-                          <i className="fa-solid fa-clipboard-user"></i> Periodic Review
-                        </button>
-                      </td>
+        return (
+          <div className="animate-fade-in-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Performance Improvement Plan (PIP) Lifecycle</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Initiate PIP, track multi-objective progress, log periodic review feedback, and sign off outcomes.</p>
+              </div>
+              {isAllowed('manage_pip') && (
+                <button
+                  id="btn-open-initiate-pip"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
+                    setPipForm({
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1009',
+                      employeeName: defaultEmp ? defaultEmp.name : 'Rohan Das',
+                      department: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Sales & Marketing') : 'Sales & Marketing',
+                      designation: defaultEmp ? (defaultEmp.designation || 'Sales Executive') : 'Sales Executive',
+                      startDate: new Date().toISOString().split('T')[0],
+                      endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      durationDays: 60,
+                      performanceGap: 'Lead conversion rate 45% below quota target.',
+                      expectedPerformance: 'Achieve minimum 85% lead conversion quota.',
+                      actionPlan: 'Weekly sales coaching and daily pipeline CRM updates.'
+                    });
+                    setShowPipReviewModal(false);
+                    setPipDualViewMode('both');
+                    setShowPipModal(true);
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Initiate New PIP
+                </button>
+              )}
+            </div>
+
+            <div className="card">
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>PIP Code</th>
+                      <th>Employee Name</th>
+                      <th>Department</th>
+                      <th>Duration</th>
+                      <th>Performance Gap</th>
+                      <th>Review Frequency</th>
+                      <th>Outcome Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                  {pips.length === 0 && (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No active PIP records.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredPips.map(p => (
+                      <tr key={p._id || p.pipCode}>
+                        <td><strong>{p.pipCode}</strong></td>
+                        <td>{p.employeeName}</td>
+                        <td>{p.department}</td>
+                        <td>{p.durationDays} Days</td>
+                        <td>{p.performanceGap}</td>
+                        <td><span className="badge badge-info">{p.reviewFrequency}</span></td>
+                        <td>
+                          <span className={`badge ${p.outcome === 'Successfully Completed' ? 'badge-success' : p.outcome === 'Unsuccessful' ? 'badge-danger' : 'badge-warning'}`}>
+                            {p.outcome}
+                          </span>
+                        </td>
+                        <td>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setShowPipModal(false); setPipDualViewMode('both'); setSelectedPip(p); setShowPipReviewModal(true); }}>
+                            <i className="fa-solid fa-clipboard-user"></i> Periodic Review
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredPips.length === 0 && (
+                      <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No active PIP records.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* TAB 10: REPORTS & EXPORTS */}
       {activeTab === 'reports' && (
@@ -1310,13 +1698,43 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       {/* MODAL: ASSIGN GOAL */}
       {showGoalModal && (
         <div className="modal-backdrop active" onClick={() => setShowGoalModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header">
-              <h4>Assign Employee KRA / Goal</h4>
+              <h4><i className="fa-solid fa-bullseye"></i> Assign Employee KRA / Goal</h4>
               <button className="close-btn" onClick={() => setShowGoalModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleCreateGoal}>
-              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">Select Employee *</label>
+                  <select
+                    className="form-control"
+                    value={goalForm.employeeId}
+                    onChange={(e) => {
+                      const empId = e.target.value;
+                      const emp = (employees || []).find(x => x.id === empId || x._id === empId || x.employeeId === empId);
+                      if (emp) {
+                        setGoalForm({
+                          ...goalForm,
+                          employeeId: emp.id || emp.employeeId || emp._id,
+                          employeeName: emp.name,
+                          department: emp.dept || emp.department || 'Operations',
+                          designation: emp.designation || 'Staff'
+                        });
+                      } else {
+                        setGoalForm({ ...goalForm, employeeId: empId });
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {(employees || []).map(emp => (
+                      <option key={emp._id || emp.id} value={emp.id || emp.employeeId || emp._id}>
+                        {emp.name} ({emp.id || emp.employeeId || 'N/A'}) - {emp.dept || emp.department || 'Operations'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="form-label">Employee ID *</label>
                   <input type="text" className="form-control" value={goalForm.employeeId} onChange={(e) => setGoalForm({ ...goalForm, employeeId: e.target.value })} required />
@@ -1324,6 +1742,14 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                 <div>
                   <label className="form-label">Employee Name *</label>
                   <input type="text" className="form-control" value={goalForm.employeeName} onChange={(e) => setGoalForm({ ...goalForm, employeeName: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="form-label">Department</label>
+                  <input type="text" className="form-control" value={goalForm.department || 'Operations'} onChange={(e) => setGoalForm({ ...goalForm, department: e.target.value })} />
+                </div>
+                <div>
+                  <label className="form-label">Designation</label>
+                  <input type="text" className="form-control" value={goalForm.designation || 'Staff'} onChange={(e) => setGoalForm({ ...goalForm, designation: e.target.value })} />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label className="form-label">KRA / Objective Title *</label>
@@ -1335,7 +1761,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                 </div>
                 <div>
                   <label className="form-label">Weightage (%) *</label>
-                  <input type="number" className="form-control" value={goalForm.weightage} onChange={(e) => setGoalForm({ ...goalForm, weightage: Number(e.target.value) })} required />
+                  <input type="number" className="form-control" min="1" max="100" value={goalForm.weightage} onChange={(e) => setGoalForm({ ...goalForm, weightage: Number(e.target.value) })} required />
                 </div>
                 <div>
                   <label className="form-label">Priority</label>
@@ -1346,11 +1772,19 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                     <option value="Critical">Critical</option>
                   </select>
                 </div>
+                <div>
+                  <label className="form-label">Start Date *</label>
+                  <input type="date" className="form-control" value={goalForm.startDate ? String(goalForm.startDate).split('T')[0] : ''} onChange={(e) => setGoalForm({ ...goalForm, startDate: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="form-label">End Date *</label>
+                  <input type="date" className="form-control" value={goalForm.endDate ? String(goalForm.endDate).split('T')[0] : ''} onChange={(e) => setGoalForm({ ...goalForm, endDate: e.target.value })} required />
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowGoalModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Assigning...</> : 'Assign Goal'}
+                <button type="submit" id="btn-assign-employee-goal" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Assigning Goal...</> : <><i className="fa-solid fa-check"></i> Assign Goal</>}
                 </button>
               </div>
             </form>
@@ -1519,20 +1953,59 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       {/* MODAL: RECOMMEND PROMOTION */}
       {showPromoModal && (
         <div className="modal-backdrop active" onClick={() => setShowPromoModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header">
-              <h4>Submit Promotion Recommendation</h4>
+              <h4><i className="fa-solid fa-chart-line-up"></i> Submit Promotion Recommendation</h4>
               <button className="close-btn" onClick={() => setShowPromoModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleCreatePromotion}>
-              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label className="form-label">Employee ID *</label>
-                  <input type="text" className="form-control" value={promoForm.employeeId} onChange={(e) => setPromoForm({ ...promoForm, employeeId: e.target.value })} required />
+              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">Select Employee *</label>
+                  <select
+                    className="form-control"
+                    value={promoForm.employeeId}
+                    onChange={(e) => {
+                      const empId = e.target.value;
+                      const emp = (employees || []).find(x => x.id === empId || x._id === empId || x.employeeId === empId);
+                      if (emp) {
+                        setPromoForm({
+                          ...promoForm,
+                          employeeId: emp.id || emp.employeeId || emp._id,
+                          employeeName: emp.name,
+                          currentDepartment: emp.dept || emp.department || 'Operations',
+                          currentDesignation: emp.designation || 'Staff',
+                          currentGrade: emp.grade || 'Grade C'
+                        });
+                      } else {
+                        setPromoForm({ ...promoForm, employeeId: empId });
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {(employees || []).map(emp => (
+                      <option key={emp._id || emp.id} value={emp.id || emp.employeeId || emp._id}>
+                        {emp.name} ({emp.id || emp.employeeId || 'N/A'}) - {emp.dept || emp.department || 'Operations'}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="form-label">Employee Name *</label>
-                  <input type="text" className="form-control" value={promoForm.employeeName} onChange={(e) => setPromoForm({ ...promoForm, employeeName: e.target.value })} required />
+                  <label className="form-label">Employee ID</label>
+                  <input type="text" className="form-control" value={promoForm.employeeId} readOnly style={{ opacity: 0.85, background: 'var(--bg-secondary)' }} />
+                </div>
+                <div>
+                  <label className="form-label">Employee Name</label>
+                  <input type="text" className="form-control" value={promoForm.employeeName} readOnly style={{ opacity: 0.85, background: 'var(--bg-secondary)' }} />
+                </div>
+                <div>
+                  <label className="form-label">Current Department</label>
+                  <input type="text" className="form-control" value={promoForm.currentDepartment || 'Operations'} readOnly style={{ opacity: 0.85, background: 'var(--bg-secondary)' }} />
+                </div>
+                <div>
+                  <label className="form-label">Current Designation & Grade</label>
+                  <input type="text" className="form-control" value={`${promoForm.currentDesignation || 'Staff'} (${promoForm.currentGrade || 'Grade C'})`} readOnly style={{ opacity: 0.85, background: 'var(--bg-secondary)' }} />
                 </div>
                 <div>
                   <label className="form-label">Proposed Designation *</label>
@@ -1543,14 +2016,18 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                   <input type="text" className="form-control" value={promoForm.proposedGrade} onChange={(e) => setPromoForm({ ...promoForm, proposedGrade: e.target.value })} required />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">Effective Date *</label>
+                  <input type="date" className="form-control" value={promoForm.effectiveDate ? String(promoForm.effectiveDate).split('T')[0] : ''} onChange={(e) => setPromoForm({ ...promoForm, effectiveDate: e.target.value })} required />
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
                   <label className="form-label">Business Justification *</label>
-                  <textarea className="form-control" rows="3" value={promoForm.justification} onChange={(e) => setPromoForm({ ...promoForm, justification: e.target.value })} required></textarea>
+                  <textarea className="form-control" rows="3" value={promoForm.justification} onChange={(e) => setPromoForm({ ...promoForm, justification: e.target.value })} placeholder="State performance achievements, appraisal scores, and business justification..." required></textarea>
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPromoModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Recommendation'}
+                <button type="submit" id="btn-recommend-promotion" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting Recommendation...</> : <><i className="fa-solid fa-chart-line-up"></i> Recommend Promotion</>}
                 </button>
               </div>
             </form>
@@ -1569,8 +2046,45 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <form onSubmit={handleCreateIncrement}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label">Employee Name *</label>
-                  <input type="text" className="form-control" value={incForm.employeeName} onChange={(e) => setIncForm({ ...incForm, employeeName: e.target.value })} required />
+                  <label className="form-label">Select Employee *</label>
+                  <select
+                    className="form-control"
+                    value={incForm.employeeId}
+                    onChange={(e) => {
+                      const empId = e.target.value;
+                      const emp = (employees || []).find(x => x.id === empId || x._id === empId);
+                      if (emp) {
+                        setIncForm({
+                          ...incForm,
+                          employeeId: emp.id || emp._id,
+                          employeeName: emp.name,
+                          currentDepartment: emp.dept || emp.department || 'General',
+                          currentDesignation: emp.designation || 'Staff',
+                          currentCtc: Number(emp.salary) || Number(emp.ctc) || incForm.currentCtc || 1200000
+                        });
+                      } else {
+                        setIncForm({ ...incForm, employeeId: empId });
+                      }
+                    }}
+                    required
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {(employees || []).map(emp => (
+                      <option key={emp._id || emp.id} value={emp.id || emp._id}>
+                        {emp.name} ({emp.id || 'N/A'}) - {emp.dept || emp.department || 'General'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Department</label>
+                    <input type="text" className="form-control" value={incForm.currentDepartment} readOnly style={{ opacity: 0.8 }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Designation</label>
+                    <input type="text" className="form-control" value={incForm.currentDesignation} readOnly style={{ opacity: 0.8 }} />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Current CTC (₹) *</label>
@@ -1586,8 +2100,8 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowIncModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Increment'}
+                <button type="submit" id="btn-recommend-increment" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : <><i className="fa-solid fa-money-bill-trend-up"></i> Recommend Increment</>}
                 </button>
               </div>
             </form>
@@ -1595,83 +2109,334 @@ const PerformanceModule = ({ searchQuery = '' }) => {
         </div>
       )}
 
-      {/* MODAL: INITIATE PIP */}
-      {showPipModal && (
-        <div className="modal-backdrop active" onClick={() => setShowPipModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
-            <div className="modal-header">
-              <h4>Initiate Performance Improvement Plan (PIP)</h4>
-              <button className="close-btn" onClick={() => setShowPipModal(false)}>&times;</button>
-            </div>
-            <form onSubmit={handleCreatePip}>
-              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label className="form-label">Employee ID *</label>
-                  <input type="text" className="form-control" value={pipForm.employeeId} onChange={(e) => setPipForm({ ...pipForm, employeeId: e.target.value })} required />
-                </div>
-                <div>
-                  <label className="form-label">Employee Name *</label>
-                  <input type="text" className="form-control" value={pipForm.employeeName} onChange={(e) => setPipForm({ ...pipForm, employeeName: e.target.value })} required />
-                </div>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label className="form-label">Performance Gap Identified *</label>
-                  <textarea className="form-control" rows="2" value={pipForm.performanceGap} onChange={(e) => setPipForm({ ...pipForm, performanceGap: e.target.value })} required></textarea>
-                </div>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label className="form-label">Expected Performance Target *</label>
-                  <textarea className="form-control" rows="2" value={pipForm.expectedPerformance} onChange={(e) => setPipForm({ ...pipForm, expectedPerformance: e.target.value })} required></textarea>
-                </div>
+      {/* BUG 046 FIX: DUAL NON-OVERLAPPING CONTAINER OR ISOLATED SINGLE MODALS */}
+      {showPipModal && showPipReviewModal && selectedPip ? (
+        <div 
+          className="modal-backdrop active" 
+          id="pip-dual-modal-backdrop" 
+          onClick={() => { setShowPipModal(false); setShowPipReviewModal(false); }}
+        >
+          <div className="dual-modal-wrapper" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1300px' }}>
+            <div className="pip-dual-view-tabs">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--primary))' }}>
+                  <i className="fa-solid fa-layer-group"></i> PIP Lifecycle Workspace
+                </span>
+                <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>Isolated Side-by-Side</span>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowPipModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Initiating...</> : 'Initiate PIP'}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button 
+                  type="button" 
+                  className={`btn btn-sm ${pipDualViewMode === 'both' ? 'btn-primary' : 'btn-secondary'}`} 
+                  style={{ padding: '5px 12px', fontSize: '0.75rem' }} 
+                  onClick={() => setPipDualViewMode('both')}
+                >
+                  <i className="fa-solid fa-table-columns"></i> Side-by-Side
+                </button>
+                <button 
+                  type="button" 
+                  className={`btn btn-sm ${pipDualViewMode === 'initiate' ? 'btn-primary' : 'btn-secondary'}`} 
+                  style={{ padding: '5px 12px', fontSize: '0.75rem' }} 
+                  onClick={() => setPipDualViewMode('initiate')}
+                >
+                  <i className="fa-solid fa-play"></i> Initiate Form Only
+                </button>
+                <button 
+                  type="button" 
+                  className={`btn btn-sm ${pipDualViewMode === 'review' ? 'btn-primary' : 'btn-secondary'}`} 
+                  style={{ padding: '5px 12px', fontSize: '0.75rem' }} 
+                  onClick={() => setPipDualViewMode('review')}
+                >
+                  <i className="fa-solid fa-clipboard-user"></i> Review Log Only
+                </button>
+                <button 
+                  type="button" 
+                  className="close-btn" 
+                  style={{ marginLeft: '12px', fontSize: '1.25rem', cursor: 'pointer', background: 'none', border: 'none' }} 
+                  onClick={() => { setShowPipModal(false); setShowPipReviewModal(false); }}
+                >
+                  &times;
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: PERIODIC PIP REVIEW */}
-      {showPipReviewModal && selectedPip && (
-        <div className="modal-backdrop active" onClick={() => setShowPipReviewModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h4>Periodic PIP Review Log: {selectedPip.pipCode}</h4>
-              <button className="close-btn" onClick={() => setShowPipReviewModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleAddPipReviewSubmit}>
-              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Progress Rating</label>
-                  <select name="rating" className="form-control" defaultValue="Satisfactory Progress">
-                    <option value="Satisfactory Progress">Satisfactory Progress</option>
-                    <option value="Needs Accelerated Effort">Needs Accelerated Effort</option>
-                    <option value="Unsatisfactory">Unsatisfactory</option>
-                  </select>
+
+            {/* Panel 1: Initiate PIP Form */}
+            {(pipDualViewMode === 'both' || pipDualViewMode === 'initiate') && (
+              <div 
+                className="modal-content pip-panel-box" 
+                id="pip-dual-initiate-panel"
+                style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+              >
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h4 style={{ margin: 0 }}><i className="fa-solid fa-play" style={{ color: 'hsl(var(--primary))' }}></i> Initiate Performance Improvement Plan (PIP)</h4>
+                    <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>New Action Plan</span>
+                  </div>
+                  <button className="close-btn" onClick={() => setShowPipModal(false)}>&times;</button>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">PIP Outcome Status</label>
-                  <select name="outcome" className="form-control" defaultValue={selectedPip.outcome || 'In Progress'}>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Successfully Completed">Successfully Completed</option>
-                    <option value="Extended">Extended</option>
-                    <option value="Unsuccessful">Unsuccessful</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Manager Feedback Notes *</label>
-                  <textarea name="managerFeedback" className="form-control" rows="3" placeholder="Detail employee progress during review window..." required></textarea>
-                </div>
+                <form onSubmit={handleCreatePip}>
+                  <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Select Employee *</label>
+                      <select
+                        className="form-control"
+                        value={pipForm.employeeId}
+                        onChange={(e) => {
+                          const empId = e.target.value;
+                          const emp = (employees || []).find(x => x.id === empId || x._id === empId || x.employeeId === empId);
+                          if (emp) {
+                            setPipForm({
+                              ...pipForm,
+                              employeeId: emp.id || emp.employeeId || emp._id,
+                              employeeName: emp.name,
+                              department: emp.dept || emp.department || 'Operations',
+                              designation: emp.designation || 'Staff'
+                            });
+                          } else {
+                            setPipForm({ ...pipForm, employeeId: empId });
+                          }
+                        }}
+                        required
+                      >
+                        <option value="">-- Choose Employee --</option>
+                        {(employees || []).map(emp => (
+                          <option key={emp._id || emp.id} value={emp.id || emp.employeeId || emp._id}>
+                            {emp.name} ({emp.id || emp.employeeId || 'N/A'}) - {emp.dept || emp.department || 'General'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Employee ID *</label>
+                      <input type="text" className="form-control" value={pipForm.employeeId} onChange={(e) => setPipForm({ ...pipForm, employeeId: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Employee Name *</label>
+                      <input type="text" className="form-control" value={pipForm.employeeName} onChange={(e) => setPipForm({ ...pipForm, employeeName: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Department</label>
+                      <input type="text" className="form-control" value={pipForm.department} onChange={(e) => setPipForm({ ...pipForm, department: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Designation</label>
+                      <input type="text" className="form-control" value={pipForm.designation} onChange={(e) => setPipForm({ ...pipForm, designation: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Duration (Days)</label>
+                      <input type="number" className="form-control" value={pipForm.durationDays} onChange={(e) => setPipForm({ ...pipForm, durationDays: Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Review Frequency</label>
+                      <select className="form-control" value={pipForm.reviewFrequency || 'Bi-Weekly'} onChange={(e) => setPipForm({ ...pipForm, reviewFrequency: e.target.value })}>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Bi-Weekly">Bi-Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Performance Gap Identified *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.performanceGap} onChange={(e) => setPipForm({ ...pipForm, performanceGap: e.target.value })} required></textarea>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Expected Performance Target *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.expectedPerformance} onChange={(e) => setPipForm({ ...pipForm, expectedPerformance: e.target.value })} required></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowPipModal(false)}>Cancel</button>
+                    <button type="submit" id="btn-initiate-pip" className="btn btn-primary" disabled={isSubmitting}>
+                      {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Initiating...</> : <><i className="fa-solid fa-play"></i> Initiate PIP</>}
+                    </button>
+                  </div>
+                </form>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowPipReviewModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save PIP Review</button>
+            )}
+
+            {/* Panel 2: Periodic Review Log */}
+            {(pipDualViewMode === 'both' || pipDualViewMode === 'review') && (
+              <div 
+                className="modal-content pip-panel-box" 
+                id="pip-dual-review-panel"
+                style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+              >
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h4 style={{ margin: 0 }}><i className="fa-solid fa-clipboard-user" style={{ color: 'hsl(var(--warning))' }}></i> Periodic PIP Review Log: {selectedPip.pipCode}</h4>
+                    <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Review in Progress</span>
+                  </div>
+                  <button className="close-btn" onClick={() => setShowPipReviewModal(false)}>&times;</button>
+                </div>
+                <form onSubmit={handleAddPipReviewSubmit}>
+                  <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Progress Rating</label>
+                      <select name="rating" className="form-control" defaultValue="Satisfactory Progress">
+                        <option value="Satisfactory Progress">Satisfactory Progress</option>
+                        <option value="Needs Accelerated Effort">Needs Accelerated Effort</option>
+                        <option value="Unsatisfactory">Unsatisfactory</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">PIP Outcome Status</label>
+                      <select name="outcome" className="form-control" defaultValue={selectedPip.outcome || 'In Progress'}>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Successfully Completed">Successfully Completed</option>
+                        <option value="Extended">Extended</option>
+                        <option value="Unsuccessful">Unsuccessful</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Manager Feedback Notes *</label>
+                      <textarea name="managerFeedback" className="form-control" rows="3" placeholder="Detail employee progress during review window..." required></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowPipReviewModal(false)}>Cancel</button>
+                    <button type="submit" id="btn-save-pip-review" className="btn btn-primary">Save PIP Review</button>
+                  </div>
+                </form>
               </div>
-            </form>
+            )}
           </div>
         </div>
+      ) : (
+        <>
+          {/* MODAL: INITIATE PIP (Single Mode) */}
+          {showPipModal && (
+            <div className="modal-backdrop active" id="modal-initiate-pip-backdrop" onClick={() => setShowPipModal(false)}>
+              <div className="modal-content pip-panel-box" id="modal-initiate-pip" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px', maxHeight: '85vh', overflowY: 'auto' }}>
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h4 style={{ margin: 0 }}>Initiate Performance Improvement Plan (PIP)</h4>
+                    <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>New Plan</span>
+                  </div>
+                  <button className="close-btn" onClick={() => setShowPipModal(false)}>&times;</button>
+                </div>
+                <form onSubmit={handleCreatePip}>
+                  <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Select Employee *</label>
+                      <select
+                        className="form-control"
+                        value={pipForm.employeeId}
+                        onChange={(e) => {
+                          const empId = e.target.value;
+                          const emp = (employees || []).find(x => x.id === empId || x._id === empId || x.employeeId === empId);
+                          if (emp) {
+                            setPipForm({
+                              ...pipForm,
+                              employeeId: emp.id || emp.employeeId || emp._id,
+                              employeeName: emp.name,
+                              department: emp.dept || emp.department || 'Operations',
+                              designation: emp.designation || 'Staff'
+                            });
+                          } else {
+                            setPipForm({ ...pipForm, employeeId: empId });
+                          }
+                        }}
+                        required
+                      >
+                        <option value="">-- Choose Employee --</option>
+                        {(employees || []).map(emp => (
+                          <option key={emp._id || emp.id} value={emp.id || emp.employeeId || emp._id}>
+                            {emp.name} ({emp.id || emp.employeeId || 'N/A'}) - {emp.dept || emp.department || 'General'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Employee ID *</label>
+                      <input type="text" className="form-control" value={pipForm.employeeId} onChange={(e) => setPipForm({ ...pipForm, employeeId: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Employee Name *</label>
+                      <input type="text" className="form-control" value={pipForm.employeeName} onChange={(e) => setPipForm({ ...pipForm, employeeName: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Department</label>
+                      <input type="text" className="form-control" value={pipForm.department} onChange={(e) => setPipForm({ ...pipForm, department: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Designation</label>
+                      <input type="text" className="form-control" value={pipForm.designation} onChange={(e) => setPipForm({ ...pipForm, designation: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Duration (Days)</label>
+                      <input type="number" className="form-control" value={pipForm.durationDays} onChange={(e) => setPipForm({ ...pipForm, durationDays: Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Review Frequency</label>
+                      <select className="form-control" value={pipForm.reviewFrequency || 'Bi-Weekly'} onChange={(e) => setPipForm({ ...pipForm, reviewFrequency: e.target.value })}>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Bi-Weekly">Bi-Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Performance Gap Identified *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.performanceGap} onChange={(e) => setPipForm({ ...pipForm, performanceGap: e.target.value })} required></textarea>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Expected Performance Target *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.expectedPerformance} onChange={(e) => setPipForm({ ...pipForm, expectedPerformance: e.target.value })} required></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowPipModal(false)}>Cancel</button>
+                    <button type="submit" id="btn-initiate-pip" className="btn btn-primary" disabled={isSubmitting}>
+                      {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Initiating...</> : <><i className="fa-solid fa-play"></i> Initiate PIP</>}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: PERIODIC PIP REVIEW (Single Mode) */}
+          {showPipReviewModal && selectedPip && (
+            <div className="modal-backdrop active" id="modal-pip-review-backdrop" onClick={() => setShowPipReviewModal(false)}>
+              <div className="modal-content pip-panel-box" id="modal-pip-review" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', maxHeight: '85vh', overflowY: 'auto' }}>
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h4 style={{ margin: 0 }}>Periodic PIP Review Log: {selectedPip.pipCode}</h4>
+                    <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Periodic Log</span>
+                  </div>
+                  <button className="close-btn" onClick={() => setShowPipReviewModal(false)}>&times;</button>
+                </div>
+                <form onSubmit={handleAddPipReviewSubmit}>
+                  <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Progress Rating</label>
+                      <select name="rating" className="form-control" defaultValue="Satisfactory Progress">
+                        <option value="Satisfactory Progress">Satisfactory Progress</option>
+                        <option value="Needs Accelerated Effort">Needs Accelerated Effort</option>
+                        <option value="Unsatisfactory">Unsatisfactory</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">PIP Outcome Status</label>
+                      <select name="outcome" className="form-control" defaultValue={selectedPip.outcome || 'In Progress'}>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Successfully Completed">Successfully Completed</option>
+                        <option value="Extended">Extended</option>
+                        <option value="Unsuccessful">Unsuccessful</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Manager Feedback Notes *</label>
+                      <textarea name="managerFeedback" className="form-control" rows="3" placeholder="Detail employee progress during review window..." required></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowPipReviewModal(false)}>Cancel</button>
+                    <button type="submit" id="btn-save-pip-review" className="btn btn-primary">Save PIP Review</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
     </div>

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
@@ -10,9 +10,87 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownTimeoutRef = useRef(null);
+  const [dropdownTimeout, setDropdownTimeout] = useState(null);
+  const optionsScrollRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleMouseEnter = (name) => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
+    setActiveDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    const timeout = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150);
+    dropdownTimeoutRef.current = timeout;
+    setDropdownTimeout(timeout);
+  };
+
+  const scrollOptions = (direction) => {
+    if (optionsScrollRef.current) {
+      optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
+    }
+  };
+
+  const hashId = user?.id ? encodeId(user.id) : '';
+
+  const searchIndex = [
+    { title: 'My Dashboard', desc: 'Punch clock, tasks, announcements & upcoming events', path: `/employee/${hashId}/emp-dashboard`, icon: 'fa-house', category: 'Overview' },
+    { title: 'Org Structure', desc: 'Browse company hierarchy & direct reporting tree', path: '/organization', icon: 'fa-sitemap', category: 'Governance' },
+    { title: 'Policy Repository', desc: 'Acknowledge company code of conduct & guidelines', path: `/employee/${hashId}/emp-policies`, icon: 'fa-building-columns', category: 'Governance' },
+    { title: 'Attendance Tracker', desc: 'Clock-in timestamps, monthly hours & logs', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-fingerprint', category: 'Work & Time' },
+    { title: 'Leave Management', desc: 'Apply for leaves, view balances & manager decisions', path: `/employee/${hashId}/emp-leaves`, icon: 'fa-calendar-day', category: 'Work & Time' },
+    { title: 'Daily Timesheets', desc: 'Log work hours, project tasks & review shifts', path: `/employee/${hashId}/emp-timesheet`, icon: 'fa-clock-rotate-left', category: 'Work & Time' },
+    { title: 'My Projects', desc: 'Current project milestones, assignments & status', path: `/employee/${hashId}/emp-projects`, icon: 'fa-briefcase', category: 'Work & Time' },
+    { title: 'Payslips & Tax Forms', desc: 'Download PDF salary slips & tax breakdown', path: `/employee/${hashId}/emp-payslips`, icon: 'fa-file-invoice-dollar', category: 'Finance' },
+    { title: 'Claims & Advances', desc: 'Submit reimbursement claims & advance requests', path: `/employee/${hashId}/emp-expenses`, icon: 'fa-receipt', category: 'Finance' },
+    { title: 'Goals & Appraisals', desc: 'OKRs, quarterly targets & performance feedback', path: `/employee/${hashId}/emp-performance`, icon: 'fa-award', category: 'Career' },
+    { title: 'Training Courses', desc: 'Browse L&D modules, enrollments & certificates', path: `/employee/${hashId}/emp-training`, icon: 'fa-book-open-reader', category: 'Career' },
+    { title: 'Company Engagement', desc: 'Surveys, polls, shout-outs & recognition board', path: `/employee/${hashId}/emp-engagement`, icon: 'fa-comments', category: 'Career' },
+    { title: 'Team Discussions', desc: 'General topics, ideas & office announcements', path: `/employee/${hashId}/emp-discussions`, icon: 'fa-users-line', category: 'Engagement' },
+    { title: 'Daily Reports', desc: 'Submit daily accomplishments & blockers', path: `/employee/${hashId}/emp-reports`, icon: 'fa-clipboard-list', category: 'Engagement' },
+    { title: 'Helpdesk Support', desc: 'Raise IT, HR or facilities support tickets', path: `/employee/${hashId}/emp-helpdesk`, icon: 'fa-headset', category: 'Engagement' },
+    { title: 'My Profile', desc: 'Personal info, emergency contacts & avatar', path: `/employee/${hashId}/emp-profile`, icon: 'fa-user', category: 'Account' },
+    { title: 'Account Settings', desc: 'Theme colors, security preferences & notifications', path: `/employee/${hashId}/emp-settings`, icon: 'fa-gear', category: 'Account' },
+    { title: 'Alerts Center', desc: 'Direct messages, status changes & system alerts', path: `/employee/${hashId}/emp-notifications`, icon: 'fa-bell', category: 'Alerts' }
+  ];
+
+  const filteredSuggestions = searchQuery.trim() === '' ? [] : searchIndex.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 7);
+
+  const handleSelectSuggestion = (path) => {
+    navigate(path);
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && filteredSuggestions.length > 0) {
+      handleSelectSuggestion(filteredSuggestions[0].path);
+    } else if (e.key === 'Escape') {
+      setShowSearchDropdown(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -22,6 +100,9 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       if (!e.target.closest('.emp-menu-item')) {
         setActiveDropdown(null);
       }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -30,7 +111,6 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   if (!user) return null;
 
   const unreadCount = notifications ? notifications.filter(n => !n.read).length : 0;
-  const hashId = encodeId(user.id);
 
   const handleNavClick = (mod) => {
     setActiveDropdown(null);
@@ -54,6 +134,14 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   };
 
   const toggleDropdown = (name) => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
     setActiveDropdown(prev => prev === name ? null : name);
   };
 
@@ -77,17 +165,17 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
         <div style={{ display: 'flex', gap: '6px', marginRight: '8px', marginLeft: '4px', flexShrink: 0 }}>
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => scrollOptions(-1)} 
             className="btn btn-secondary"
-            title="Navigate Back"
+            title="Scroll Navigation Left"
             style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
             <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
           </button>
           <button 
-            onClick={() => navigate(1)} 
+            onClick={() => scrollOptions(1)} 
             className="btn btn-secondary"
-            title="Navigate Forward"
+            title="Scroll Navigation Right"
             style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
@@ -96,7 +184,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       </div>
 
       {/* 2. Scrollable Navigation Options ONLY */}
-      <div className="emp-options-scroll-section">
+      <div className="emp-options-scroll-section" ref={optionsScrollRef}>
         <nav className="emp-nav-menu">
           
           {/* Dashboard Link */}
@@ -111,7 +199,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Directory & Governance Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('governance')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['org-structure', 'emp-policies']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('governance')}
@@ -145,7 +233,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* My Operations Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('operations')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-attendance', 'emp-payroll', 'emp-documents']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('operations')}
@@ -189,7 +277,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Growth & Performance Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('growth')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('growth')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-pip', 'emp-learning', 'recruitment', 'emp-engagement']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('growth')}
@@ -243,7 +331,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Finance & Exit Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('finance')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('finance')}
@@ -287,7 +375,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Workplace & Hub Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => setActiveDropdown('workplace')} onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('workplace')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-tasks', 'emp-meetings', 'emp-reports', 'emp-helpdesk']) ? 'active' : ''}`}
               onClick={() => toggleDropdown('workplace')}
@@ -344,13 +432,75 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
       <div className="emp-header-right">
         {/* Global Search */}
-        <div className="emp-search">
+        <div className="emp-search" ref={searchContainerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
           <i className="fa-solid fa-search"></i>
           <input
             type="text"
             placeholder="Search features, tools or docs..."
-            onChange={(e) => onSearch && onSearch(e.target.value)}
+            value={searchQuery}
+            onFocus={() => setShowSearchDropdown(true)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearchQuery(val);
+              setShowSearchDropdown(true);
+              if (onSearch) onSearch(val);
+            }}
+            onKeyDown={handleSearchKeyDown}
           />
+          {showSearchDropdown && filteredSuggestions.length > 0 && (
+            <div
+              className="search-suggestions-dropdown"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                width: '320px',
+                background: 'hsl(var(--bg-card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.25)',
+                zIndex: 99999,
+                overflow: 'hidden',
+                padding: '4px'
+              }}
+            >
+              <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Quick Navigation ({filteredSuggestions.length})
+              </div>
+              {filteredSuggestions.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSelectSuggestion(item.path)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.desc}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
+                    {item.category}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Notifications */}

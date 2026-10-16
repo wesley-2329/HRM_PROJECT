@@ -1062,6 +1062,22 @@ let mockTrainingPrograms = [
     ],
     scheduleDate: new Date(Date.now() + 5 * 86400000),
     status: "Scheduled"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9f8021",
+    programId: "TRN-1002",
+    title: "Cloud DevOps & Kubernetes Orchestration",
+    category: "Technical & Engineering",
+    mode: "Classroom",
+    durationHours: 12,
+    trainer: { id: "TRN-VAL-01", name: "Dr. Rajesh Kumar (External SME)", type: "External" },
+    venue: { name: "Auditorium Hall A", location: "HQ Bangalore", link: "" },
+    capacity: 25,
+    enrolledEmployees: [
+      { id: "EMP-1003", name: "Karthik Potur", dept: "Engineering", status: "Confirmed" }
+    ],
+    scheduleDate: new Date(Date.now() + 10 * 86400000),
+    status: "Scheduled"
   }
 ];
 

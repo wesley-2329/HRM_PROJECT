@@ -42,6 +42,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
   const [newProgram, setNewProgram] = useState({ title: '', category: 'Technical & Engineering', mode: 'Classroom', durationHours: 8, trainerName: 'Dr. Rajesh Kumar', venueName: 'Auditorium Hall A', capacity: 30 });
   const [newSkill, setNewSkill] = useState({ skillName: '', category: 'Core Technical', department: 'Engineering', requiredLevel: 4, currentLevel: 2 });
   const [selectedItem, setSelectedItem] = useState(null);
+  const [enrollingProgId, setEnrollingProgId] = useState(null);
 
   useEffect(() => {
     fetchModuleData();
@@ -122,12 +123,20 @@ const TrainingModule = ({ searchQuery = '' }) => {
   };
 
   const handleEnrollProgram = async (progId) => {
+    if (!progId) {
+      showToast('Program identifier is missing', 'error');
+      return;
+    }
+    setEnrollingProgId(progId);
     try {
-      await api.post(`/training/programs/${progId}/enroll`);
+      await api.post(`/training/programs/${progId}/enroll`, { programId: progId });
       showToast('Enrolled in training program successfully!', 'success');
-      fetchModuleData();
+      await fetchModuleData();
     } catch (err) {
-      showToast('Enrollment failed', 'error');
+      const errMsg = err.response?.data?.message || 'Enrollment failed. Please try again.';
+      showToast(errMsg, 'error');
+    } finally {
+      setEnrollingProgId(null);
     }
   };
 
@@ -157,10 +166,10 @@ const TrainingModule = ({ searchQuery = '' }) => {
         boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{
-              background: 'linear-gradient(135deg, #10b981, #3b82f6)',
-              color: '#fff',
+              background: 'linear-gradient(135deg, #059669, #2563eb)',
+              color: '#ffffff',
               padding: '10px 14px',
               borderRadius: '12px',
               fontSize: '1.25rem'
@@ -169,7 +178,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
             </span>
             Module 8: Training & Competency Evaluation
           </h1>
-          <p style={{ margin: '6px 0 0 0', color: 'hsl(var(--muted-foreground))', fontSize: '0.95rem' }}>
+          <p style={{ margin: '6px 0 0 0', color: 'hsl(var(--text-secondary))', fontSize: '0.95rem', fontWeight: 500 }}>
             Enterprise L&D Suite — TNA, Annual Plans, Skill & Competency Matrices, Training Calendars & Certificates.
           </p>
         </div>
@@ -216,9 +225,9 @@ const TrainingModule = ({ searchQuery = '' }) => {
               alignItems: 'center',
               gap: '8px',
               transition: 'all 0.2s ease',
-              background: activeTab === tab.id ? 'linear-gradient(135deg, #10b981, #059669)' : 'hsl(var(--bg-card))',
-              color: activeTab === tab.id ? '#ffffff' : 'hsl(var(--foreground))',
-              boxShadow: activeTab === tab.id ? '0 4px 14px rgba(16,185,129,0.35)' : 'none'
+              background: activeTab === tab.id ? 'linear-gradient(135deg, #059669, #047857)' : 'hsl(var(--bg-card))',
+              color: activeTab === tab.id ? '#ffffff' : 'hsl(var(--text-primary))',
+              boxShadow: activeTab === tab.id ? '0 4px 14px rgba(5,150,105,0.35)' : 'none'
             }}
           >
             <i className={`fa-solid ${tab.icon}`}></i>
@@ -232,34 +241,34 @@ const TrainingModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #10b981' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>SCHEDULED PROGRAMS</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#10b981' }}>{metrics.totalTrainingPrograms}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #047857', backgroundColor: 'hsl(var(--bg-card))' }}>
+              <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SCHEDULED PROGRAMS</div>
+              <div className="stat-value-emerald" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#047857' }}>{metrics.totalTrainingPrograms}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #3b82f6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>TNA REQUESTS</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#3b82f6' }}>{metrics.tnaRequestsTotal}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>{metrics.approvedTnaRequests} HR Approved</div>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #1d4ed8', backgroundColor: 'hsl(var(--bg-card))' }}>
+              <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>TNA REQUESTS</div>
+              <div className="stat-value-blue" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#1d4ed8' }}>{metrics.tnaRequestsTotal}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.approvedTnaRequests} HR Approved</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #8b5cf6' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>ISSUED CERTIFICATES</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#8b5cf6' }}>{metrics.issuedCertificates}</div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #6d28d9', backgroundColor: 'hsl(var(--bg-card))' }}>
+              <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>ISSUED CERTIFICATES</div>
+              <div className="stat-value-purple" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6d28d9' }}>{metrics.issuedCertificates}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #f59e0b' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>SKILL GAP CLOSURE</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#f59e0b' }}>{metrics.skillGapClosurePercentage}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #b45309', backgroundColor: 'hsl(var(--bg-card))' }}>
+              <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SKILL GAP CLOSURE</div>
+              <div className="stat-value-amber" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#b45309' }}>{metrics.skillGapClosurePercentage}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
             </div>
           </div>
 
           {/* Quick Actions Bar */}
           <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '14px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem', marginRight: '8px', color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions:</span>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', marginRight: '8px', color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions:</span>
             <button className="btn btn-primary" onClick={() => setShowTnaModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
               <i className="fa-solid fa-magnifying-glass-chart"></i> Submit TNA Request
             </button>
@@ -273,26 +282,59 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
           {/* Upcoming Programs List */}
           <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📅 Featured Upcoming Training Workshops</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📅 Featured Upcoming Training Workshops</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', width: '100%' }}>
-              {programs.map(p => (
-                <div key={p._id} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <span className="badge badge-info">{p.category}</span>
-                      <span className="badge badge-success">{p.mode}</span>
+              {programs.map(p => {
+                const progIdentifier = p.programId || p._id;
+                const isEnrolling = enrollingProgId === progIdentifier;
+                const currentUserId = user?.employeeId || user?.id || user?._id;
+                const isEnrolled = p.enrolledEmployees && p.enrolledEmployees.some(e =>
+                  (e.id && (e.id === currentUserId || e.id === user?.id || e.id === user?.employeeId || e.id === user?._id?.toString())) ||
+                  (user?.name && e.name && e.name.toLowerCase() === user.name.toLowerCase())
+                );
+
+                return (
+                  <div key={p._id || p.programId} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span className="badge badge-info">{p.category}</span>
+                        <span className="badge badge-success">{p.mode}</span>
+                      </div>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{p.title}</h4>
+                      <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
+                        👨‍🏫 Trainer: {p.trainer?.name} | 📍 Venue: {p.venue?.name}
+                      </p>
                     </div>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{p.title}</h4>
-                    <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                      👨‍🏫 Trainer: {p.trainer?.name} | 📍 Venue: {p.venue?.name}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 600 }}>⏱️ {p.durationHours} Hours | Capacity: {p.capacity}</span>
+                      {isEnrolled ? (
+                        <button
+                          className="btn btn-sm btn-success"
+                          disabled
+                          style={{ borderRadius: '6px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        >
+                          <i className="fa-solid fa-check"></i> Enrolled
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleEnrollProgram(progIdentifier)}
+                          disabled={isEnrolling}
+                          style={{ borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        >
+                          {isEnrolling ? (
+                            <>
+                              <i className="fa-solid fa-spinner fa-spin"></i> Enrolling...
+                            </>
+                          ) : (
+                            'Enroll Now'
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>⏱️ {p.durationHours} Hours | Capacity: {p.capacity}</span>
-                    <button className="btn btn-sm btn-primary" onClick={() => handleEnrollProgram(p.programId)} style={{ borderRadius: '6px' }}>Enroll Now</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -302,7 +344,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'tna' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🔍 Training Needs Analysis (TNA)</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>🔍 Training Needs Analysis (TNA)</h3>
             <button className="btn btn-primary" onClick={() => setShowTnaModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Submit TNA Request
             </button>
@@ -311,7 +353,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
                   <th style={{ padding: '12px' }}>TNA ID</th>
                   <th style={{ padding: '12px' }}>Employee & Dept</th>
                   <th style={{ padding: '12px' }}>Requested Skill</th>
@@ -323,11 +365,11 @@ const TrainingModule = ({ searchQuery = '' }) => {
               </thead>
               <tbody>
                 {tnas.map(t => (
-                  <tr key={t._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                  <tr key={t._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-primary))' }}>
                     <td style={{ padding: '12px', fontWeight: 700 }}>{t.tnaId}</td>
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 600 }}>{t.employee?.name}</div>
-                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{t.employee?.dept}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{t.employee?.dept}</span>
                     </td>
                     <td style={{ padding: '12px', fontWeight: 600 }}>{t.requestedSkill}</td>
                     <td style={{ padding: '12px', fontSize: '0.85rem' }}>L{t.currentProficiency} → L{t.targetProficiency} (Gap: {t.targetProficiency - t.currentProficiency})</td>
@@ -345,26 +387,26 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 3: ANNUAL TRAINING PLAN */}
       {activeTab === 'annual-plan' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📋 FY2026 Annual Corporate Training Plan</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📋 FY2026 Annual Corporate Training Plan</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {annualPlans.map(plan => (
               <div key={plan._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{plan.title} ({plan.year})</h4>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{plan.title} ({plan.year})</h4>
                   <span className="badge badge-success">{plan.status}</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '12px' }}>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Allocated Budget</div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981' }}>₹{plan.allocatedBudget?.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>Allocated Budget</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#047857' }}>₹{plan.allocatedBudget?.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Utilized Budget</div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#3b82f6' }}>₹{plan.utilizedBudget?.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>Utilized Budget</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1d4ed8' }}>₹{plan.utilizedBudget?.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Planned Courses</div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f59e0b' }}>{plan.plannedCoursesCount} Modules</div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>Planned Courses</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#b45309' }}>{plan.plannedCoursesCount} Modules</div>
                   </div>
                 </div>
               </div>
@@ -377,7 +419,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'calendar' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📅 Training Calendar & Scheduling</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📅 Training Calendar & Scheduling</h3>
             <button className="btn btn-primary" onClick={() => setShowProgramModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Schedule Program
             </button>
@@ -386,7 +428,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
                   <th style={{ padding: '12px' }}>Program ID</th>
                   <th style={{ padding: '12px' }}>Title & Category</th>
                   <th style={{ padding: '12px' }}>Mode & Duration</th>
@@ -398,7 +440,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
               </thead>
               <tbody>
                 {programs.map(p => (
-                  <tr key={p._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                  <tr key={p._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-primary))' }}>
                     <td style={{ padding: '12px', fontWeight: 700 }}>{p.programId}</td>
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 600 }}>{p.title}</div>
@@ -420,17 +462,17 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 5: TRAINERS & VENUES */}
       {activeTab === 'trainers-venues' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>👨‍🏫 Trainer & Venue Repository</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>👨‍🏫 Trainer & Venue Repository</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', width: '100%' }}>
             {trainersVenues.map(tv => (
               <div key={tv._id} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span className="badge badge-info">{tv.type}</span>
-                  <span style={{ color: '#f59e0b', fontWeight: 700 }}>⭐ {tv.rating} / 5</span>
+                  <span style={{ color: '#b45309', fontWeight: 700 }}>⭐ {tv.rating} / 5</span>
                 </div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{tv.name}</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{tv.specialization || tv.category}</p>
-                <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>📍 {tv.location} | Capacity: {tv.capacity}</div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{tv.name}</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>{tv.specialization || tv.category}</p>
+                <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>📍 {tv.location} | Capacity: {tv.capacity}</div>
               </div>
             ))}
           </div>
@@ -441,7 +483,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'skill-matrix' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📊 Organizational Skill & Competency Matrix</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📊 Organizational Skill & Competency Matrix</h3>
             <button className="btn btn-primary" onClick={() => setShowSkillModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Record Skill Entry
             </button>
@@ -450,7 +492,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
                   <th style={{ padding: '12px' }}>Skill ID</th>
                   <th style={{ padding: '12px' }}>Skill Name & Category</th>
                   <th style={{ padding: '12px' }}>Employee</th>
@@ -462,7 +504,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
               </thead>
               <tbody>
                 {skills.map(s => (
-                  <tr key={s._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                  <tr key={s._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-primary))' }}>
                     <td style={{ padding: '12px', fontWeight: 700 }}>{s.skillId}</td>
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 600 }}>{s.skillName}</div>
@@ -470,7 +512,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
                     </td>
                     <td style={{ padding: '12px', fontSize: '0.85rem' }}>{s.employee?.name}</td>
                     <td style={{ padding: '12px', fontWeight: 700 }}>Level {s.requiredLevel}</td>
-                    <td style={{ padding: '12px', fontWeight: 700, color: '#3b82f6' }}>Level {s.currentLevel}</td>
+                    <td style={{ padding: '12px', fontWeight: 700, color: '#1d4ed8' }}>Level {s.currentLevel}</td>
                     <td style={{ padding: '12px' }}>
                       <span className={`badge ${s.gapScore > 1 ? 'badge-danger' : 'badge-success'}`}>Gap: {s.gapScore}</span>
                     </td>
@@ -486,17 +528,17 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 7: ASSESSMENTS & CERTIFICATIONS */}
       {activeTab === 'assessments' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🎓 Online Assessments & Digital Certifications</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>🎓 Online Assessments & Digital Certifications</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', width: '100%' }}>
             {assessments.map(a => (
               <div key={a._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <span className="badge badge-info mb-2">Certification Exam</span>
-                  <h4 style={{ margin: '4px 0 8px 0', fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>{a.title}</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>Passing Score: {a.passingMarks}% | Questions: {a.totalQuestions}</p>
+                  <h4 style={{ margin: '4px 0 8px 0', fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{a.title}</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>Passing Score: {a.passingMarks}% | Questions: {a.totalQuestions}</p>
                 </div>
                 <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>📜 {a.certificateName}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 600 }}>📜 {a.certificateName}</span>
                   <button className="btn btn-sm btn-primary" onClick={() => handleIssueCertificate(a._id)} style={{ borderRadius: '6px' }}>Take Exam & Issue Cert</button>
                 </div>
               </div>
@@ -508,11 +550,11 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 8: LEARNING PORTAL & HISTORY */}
       {activeTab === 'portal' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📚 My Learning Portal & Completion Records</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📚 My Learning Portal & Completion Records</h3>
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
                   <th style={{ padding: '12px' }}>Program Title</th>
                   <th style={{ padding: '12px' }}>Employee</th>
                   <th style={{ padding: '12px' }}>Completion Date</th>
@@ -523,11 +565,11 @@ const TrainingModule = ({ searchQuery = '' }) => {
               </thead>
               <tbody>
                 {history.map(h => (
-                  <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                  <tr key={h._id} style={{ borderBottom: '1px solid hsl(var(--border))', color: 'hsl(var(--text-primary))' }}>
                     <td style={{ padding: '12px', fontWeight: 600 }}>{h.programTitle}</td>
                     <td style={{ padding: '12px', fontSize: '0.85rem' }}>{h.employeeName}</td>
                     <td style={{ padding: '12px', fontSize: '0.85rem' }}>{new Date(h.completionDate).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px', fontWeight: 700, color: '#10b981' }}>{h.scoreObtained}%</td>
+                    <td style={{ padding: '12px', fontWeight: 700, color: '#047857' }}>{h.scoreObtained}%</td>
                     <td style={{ padding: '12px' }}><span className="badge badge-success">{h.status}</span></td>
                     <td style={{ padding: '12px' }}>
                       {h.certificateUrl && <a href={h.certificateUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline" style={{ borderRadius: '6px', fontSize: '0.75rem' }}>View Cert</a>}
@@ -543,11 +585,11 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 9: ANALYTICS & AUDITS */}
       {activeTab === 'analytics' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📊 Training Audit Trail & KPI Analytics</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📊 Training Audit Trail & KPI Analytics</h3>
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                <tr style={{ borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
                   <th style={{ padding: '12px' }}>Timestamp</th>
                   <th style={{ padding: '12px' }}>Entity</th>
                   <th style={{ padding: '12px' }}>Entity ID</th>
@@ -558,13 +600,13 @@ const TrainingModule = ({ searchQuery = '' }) => {
               </thead>
               <tbody>
                 {auditLogs.map(l => (
-                  <tr key={l._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.85rem', color: 'hsl(var(--foreground))' }}>
+                  <tr key={l._id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.85rem', color: 'hsl(var(--text-primary))' }}>
                     <td style={{ padding: '12px' }}>{new Date(l.timestamp).toLocaleString()}</td>
                     <td style={{ padding: '12px', fontWeight: 600 }}>{l.entityType}</td>
                     <td style={{ padding: '12px', fontWeight: 700 }}>{l.entityId}</td>
                     <td style={{ padding: '12px' }}><span className="badge badge-info">{l.action}</span></td>
                     <td style={{ padding: '12px' }}>{l.performedBy?.name} ({l.performedBy?.role})</td>
-                    <td style={{ padding: '12px', color: 'hsl(var(--muted-foreground))' }}>{l.comments}</td>
+                    <td style={{ padding: '12px', color: 'hsl(var(--text-secondary))' }}>{l.comments}</td>
                   </tr>
                 ))}
               </tbody>

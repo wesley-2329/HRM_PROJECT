@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { useToast } from '../../components/Toast';
 import { DataContext } from '../../context/DataContext';
+import { downloadPdfDocument } from '../../utils/pdfGenerator';
 
 const HRCompliancePage = ({ currentSubModule }) => {
   const navigate = useNavigate();
@@ -228,9 +229,66 @@ const HRCompliancePage = ({ currentSubModule }) => {
 
   // Internal Audit Reports mock
   const auditReports = [
-    { filename: 'Q1_Statutory_Compliance_Report_2026.pdf', date: '2026-04-15', size: '1.4 MB', author: 'Anjali Sharma (Internal Auditor)' },
-    { filename: 'ISO_27001_Compliance_Statement_2026.pdf', date: '2026-05-15', size: '890 KB', author: 'Vipul Shah (CISO)' },
-    { filename: 'POSH_Annual_Compliance_Audit_2026.pdf', date: '2026-06-30', size: '2.1 MB', author: 'POSH ICC Committee' }
+    {
+      title: 'Q1 Statutory Compliance Report 2026',
+      filename: 'Q1_Statutory_Compliance_Report_2026.pdf',
+      date: '2026-04-15',
+      size: '1.4 MB',
+      author: 'Anjali Sharma (Internal Auditor)',
+      standard: 'Statutory Labor Laws & Regulations',
+      findings: [
+        '1. All EPFO, ESIC, and Professional Tax monthly remittances reconciled with zero outstanding variance.',
+        '2. Annual statutory employee health and safety inspection passed with full certification.',
+        '3. Zero regulatory non-conformance penalties or citations issued by authorities during Q1 2026.'
+      ],
+      tableHeaders: ['Statutory Act', 'Filing Period', 'Compliance Status', 'Audit Sign-off'],
+      tableRows: [
+        ['Employees Provident Fund (EPF)', 'Monthly Q1 2026', '100% Remitted (ECR Generated)', 'Verified'],
+        ['Employees State Insurance (ESI)', 'Monthly Q1 2026', '100% Reconciled & Paid', 'Verified'],
+        ['Payment of Gratuity Act', 'Annual 2026', 'Trust Fund Fully Provisioned', 'Verified'],
+        ['Professional Tax (PT)', 'Quarterly Q1 2026', 'State Returns Filed On-time', 'Verified']
+      ]
+    },
+    {
+      title: 'ISO 27001 Compliance Statement 2026',
+      filename: 'ISO_27001_Compliance_Statement_2026.pdf',
+      date: '2026-05-15',
+      size: '890 KB',
+      author: 'Vipul Shah (CISO)',
+      standard: 'ISO/IEC 27001:2022 ISMS Standard',
+      findings: [
+        '1. Human resource security controls (Annex A.6) vetted across all new onboardings and separation checklists.',
+        '2. RBAC access privileges periodically reviewed and certified across enterprise HRMS systems.',
+        '3. Physical and cryptographic controls for employee document vault fully compliant with zero vulnerabilities.'
+      ],
+      tableHeaders: ['ISMS Control Domain', 'Clause Ref', 'Verification Status', 'Assurance Level'],
+      tableRows: [
+        ['Information Security Policies', 'Clause 5.1', 'Approved by Board & Published', 'Level 5 (Optimized)'],
+        ['Human Resource Security', 'Annex A.6', 'Background Verification 100% Done', 'Level 5 (Optimized)'],
+        ['Access Control & Encryption', 'Annex A.9', 'AES-256 Vault Encryption Active', 'Level 5 (Optimized)'],
+        ['Incident Management', 'Annex A.16', 'Zero High/Critical Incidents Logged', 'Level 5 (Optimized)']
+      ]
+    },
+    {
+      title: 'POSH Annual Compliance Audit 2026',
+      filename: 'POSH_Annual_Compliance_Audit_2026.pdf',
+      date: '2026-06-30',
+      size: '2.1 MB',
+      author: 'POSH ICC Committee',
+      standard: 'POSH Act 2013 Statutory Compliance',
+      findings: [
+        '1. Internal Complaints Committee (ICC) constituted in full compliance with presiding female officer and external NGO representative.',
+        '2. Mandatory employee sensitization training completed by 100% of workforce with digital verification.',
+        '3. Annual POSH report filed with District Officer within statutory deadline with zero unresolved grievances.'
+      ],
+      tableHeaders: ['Compliance Obligation', 'Statutory Section', 'Status Summary', 'Authority Status'],
+      tableRows: [
+        ['ICC Constitution & Quorum', 'Section 4(2)', 'Compliant (External Member Included)', 'Fully Constituted'],
+        ['Workforce Sensitization', 'Section 19(c)', '100% Completed Across Locations', 'Certified'],
+        ['Annual Report Submission', 'Section 21(1)', 'Submitted to District Officer', 'Official Receipt On Record'],
+        ['Complaints Resolution Cycle', 'Section 11-13', 'Zero Pending Inquiries at Year-end', '100% Resolved']
+      ]
+    }
   ];
 
   // Load Audits
@@ -572,7 +630,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
   return (
     <div className="portal-container" style={{ padding: '0 0 24px 0' }}>
       {/* Header Info Panel */}
-      <div className="welcome-card-banner" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, #1e1b4b 100%)', color: '#fff', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px', marginBottom: '24px' }}>
+      <div className="welcome-card-banner no-print" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, #1e1b4b 100%)', color: '#fff', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '12px', marginBottom: '24px' }}>
         <div style={{ maxWidth: '70%' }}>
           <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#fff', marginBottom: '6px' }}>HR Governance & Compliance Hub</h2>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.5 }}>
@@ -583,7 +641,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
       </div>
 
       {/* Top Horizontal Sub-tab bar */}
-      <div className="card" style={{ padding: '8px', marginBottom: '24px', overflowX: 'auto', display: 'flex', gap: '6px' }}>
+      <div className="card no-print" style={{ padding: '8px', marginBottom: '24px', overflowX: 'auto', display: 'flex', gap: '6px' }}>
         {tabsList.map(tab => (
           <button
             key={tab.id}
@@ -613,7 +671,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           
           {/* HR Audit Sub-Tabs */}
-          <div className="card" style={{ padding: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
+          <div className="card no-print" style={{ padding: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
             <button className={`btn ${auditSubTab === 'dashboard' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => { setAuditSubTab('dashboard'); setSelectedAudit(null); }} style={{ padding: '6px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <i className="fa-solid fa-chart-simple"></i> Dashboard & Plans
             </button>
@@ -1398,7 +1456,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           
           {/* Inner Approval Matrix Navigation Tab Bar */}
-          <div className="card" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
+          <div className="card no-print" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
             <button 
               className={`btn ${matrixSubTab === 'dashboard' ? 'btn-primary' : 'btn-secondary'}`} 
               onClick={() => setMatrixSubTab('dashboard')} 
@@ -2256,7 +2314,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           
           {/* Tracker Sub-Tabs */}
-          <div className="card" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
+          <div className="card no-print" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
             <button 
               className={`btn ${obsInnerTab === 'dashboard' ? 'btn-primary' : 'btn-secondary'}`} 
               onClick={() => { setObsInnerTab('dashboard'); setSelectedObs(null); }}
@@ -2779,12 +2837,26 @@ const HRCompliancePage = ({ currentSubModule }) => {
           {/* REPORTS PANEL */}
           {obsInnerTab === 'reports' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* Dedicated Print-Only Report Header */}
+              <div className="print-only" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: '12px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '16pt', fontWeight: 800, margin: 0, color: '#0f172a' }}>HR Observations Compliance Reports</h2>
+                    <p style={{ fontSize: '9pt', color: '#475569', margin: '4px 0 0 0' }}>Regulatory Standalone Lists, Target Overdues & Closure Verification Audit Sheet</p>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: '8.5pt', color: '#475569' }}>
+                    <div>Report Date: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                    <div style={{ fontWeight: 600, color: '#0f172a' }}>HR Governance & Compliance</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>HR Observations Compliance Reports</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '2px' }}>Review regulatory standalone lists and audit-ready closure histories.</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => window.print()}>
+                <button id="btn-print-report-sheet" className="btn btn-primary" onClick={() => window.print()}>
                   <i className="fa-solid fa-print" style={{ marginRight: '6px' }}></i> Print Report Sheet
                 </button>
               </div>
@@ -2869,7 +2941,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           
           {/* Action Tracker Sub-Tabs */}
-          <div className="card" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
+          <div className="card no-print" style={{ padding: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', border: '1px solid var(--border-color)' }}>
             <button 
               className={`btn ${actionInnerTab === 'dashboard' ? 'btn-primary' : 'btn-secondary'}`} 
               onClick={() => { setActionInnerTab('dashboard'); setSelectedAction(null); }}
@@ -3586,34 +3658,44 @@ const HRCompliancePage = ({ currentSubModule }) => {
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Size: {rep.size} | Prepared by: {rep.author}</p>
                 </div>
                 <button
+                  id={`btn-download-${rep.filename.replace(/\.pdf$/, '')}`}
                   className="btn btn-secondary w-full"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => {
                     showToast(`Downloading report: ${rep.filename}`, 'info');
-                    const content = `====================================================
-REGULATORY AUDIT REPORT ARCHIVE: ${rep.title ? rep.title.toUpperCase() : 'AUDIT REPORT'}
-====================================================
-Filename: ${rep.filename}
-Filing Date: ${new Date(rep.date).toLocaleDateString()}
-Prepared By: ${rep.author || 'Compliance Auditor'}
-Compliance Standard: Statutory & ISO Standards
-
-AUDIT SUMMARY FINDINGS:
-1. All regulatory filings verified & compliant.
-2. Zero penalty notices or non-conformance observations recorded.
-3. Systemic audit verification complete.
-
-HR O Corp Compliance Office
-====================================================`;
-                    const blob = new Blob([content], { type: 'application/pdf' });
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.setAttribute('download', rep.filename || 'Audit_Report.pdf');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(blobUrl);
+                    downloadPdfDocument({
+                      title: `REGULATORY AUDIT REPORT: ${rep.title.toUpperCase()}`,
+                      subtitle: 'Governance & Regulatory Compliance Archive',
+                      docNumber: rep.filename.replace(/\.pdf$/, ''),
+                      recipient: `Prepared By: ${rep.author}`,
+                      metadata: [
+                        { label: 'Document Title', value: rep.title },
+                        { label: 'Filename', value: rep.filename },
+                        { label: 'Filing Date', value: new Date(rep.date).toLocaleDateString() },
+                        { label: 'Compliance Standard', value: rep.standard || 'Statutory & ISO Standards' },
+                        { label: 'Document Size', value: rep.size },
+                        { label: 'Prepared By', value: rep.author }
+                      ],
+                      sections: [
+                        {
+                          heading: 'Audit Summary Findings',
+                          paragraphs: rep.findings || [
+                            '1. All regulatory filings and statutory registers verified & 100% compliant.',
+                            '2. Zero penalty notices or non-conformance observations recorded during review cycle.',
+                            '3. Systemic audit verification complete across all operational departments.'
+                          ]
+                        },
+                        ...(rep.tableHeaders && rep.tableRows ? [{
+                          heading: 'Verification & Compliance Checklist Matrix',
+                          table: {
+                            headers: rep.tableHeaders,
+                            colWidths: [150, 140, 120, 85],
+                            rows: rep.tableRows
+                          }
+                        }] : [])
+                      ],
+                      footer: 'HR O Corp Compliance Office - Verified & Digitally Certified'
+                    }, rep.filename);
                     showToast(`${rep.filename} downloaded successfully.`, 'success');
                   }}
                 >

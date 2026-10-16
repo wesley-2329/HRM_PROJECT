@@ -14,6 +14,35 @@ const RecruitmentModule = () => {
   // Current Role Filter for RBAC testing
   const [selectedRole, setSelectedRole] = useState(user?.role || 'hr_admin');
 
+  const RECRUITMENT_TABS = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'department_head', 'hiring_manager', 'reporting_manager', 'finance', 'payroll'] },
+    { id: 'requisitions', label: 'Manpower Requisition', icon: 'fa-file-signature', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'department_head', 'hiring_manager', 'reporting_manager'] },
+    { id: 'positions', label: 'Position Approval', icon: 'fa-sitemap', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'management', 'department_head'] },
+    { id: 'budgets', label: 'Vacancy Budget', icon: 'fa-wallet', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'management', 'finance', 'department_head'] },
+    { id: 'resume-analysis', label: 'Resume Parser & JD Match', icon: 'fa-file-pdf', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'hiring_manager', 'reporting_manager', 'candidate', 'employee'] },
+    { id: 'candidates', label: 'Candidate 360° DB', icon: 'fa-user-tie', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'hiring_manager', 'department_head'] },
+    { id: 'talent-pool', label: 'Talent Pool Engine', icon: 'fa-database', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'employee', 'hiring_manager'] },
+    { id: 'costs', label: 'Cost Tracking', icon: 'fa-hand-holding-dollar', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'recruiter', 'management', 'finance', 'payroll'] },
+    { id: 'reports', label: 'Reports & Export', icon: 'fa-file-excel', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'hr_executive', 'management', 'finance', 'department_head'] },
+    { id: 'audit', label: 'Audit Logs', icon: 'fa-shield-halved', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'management'] },
+    { id: 'masters', label: 'Master Tables', icon: 'fa-list-check', allowedRoles: ['super_admin', 'hr_admin', 'hr', 'management'] },
+    { id: 'career-portal', label: 'Candidate Career Portal', icon: 'fa-globe', allowedRoles: ['*'] }
+  ];
+
+  const visibleTabs = RECRUITMENT_TABS.filter(tab =>
+    tab.allowedRoles.includes('*') ||
+    tab.allowedRoles.includes(selectedRole) ||
+    selectedRole === 'hr' ||
+    selectedRole === 'hr_admin' ||
+    selectedRole === 'super_admin'
+  );
+
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some(t => t.id === activeTab)) {
+      setActiveTab(visibleTabs[0].id);
+    }
+  }, [selectedRole, visibleTabs, activeTab]);
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDept, setFilterDept] = useState('All');
@@ -70,7 +99,7 @@ const RecruitmentModule = () => {
     employmentType: 'Full-Time',
     vacancyCount: 1,
     annualCtcPerPosition: 1200000,
-    targetHireDate: '',
+    targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     justification: '',
     priorityLevel: 'Medium'
   });
@@ -120,31 +149,74 @@ const RecruitmentModule = () => {
   const [commMsg, setCommMsg] = useState('');
   const [commMedium, setCommMedium] = useState('Email');
 
-  // Load all module data
-  const fetchAllRecruitmentData = async () => {
+  // Load all module data with role scope
+  const fetchAllRecruitmentData = async (roleOverride) => {
+    const role = roleOverride || selectedRole;
     setLoading(true);
     try {
       const [dashRes, reqRes, posRes, budRes, resRes, candRes, tpRes, costRes, masterRes, auditRes] = await Promise.all([
-        api.get('/recruitment/dashboard').catch(() => ({ data: null })),
-        api.get('/recruitment/requisitions').catch(() => ({ data: [] })),
-        api.get('/recruitment/positions').catch(() => ({ data: [] })),
-        api.get('/recruitment/budgets').catch(() => ({ data: [] })),
-        api.get('/recruitment/resumes').catch(() => ({ data: [] })),
-        api.get('/candidates').catch(() => ({ data: [] })),
-        api.get('/recruitment/talent-pool').catch(() => ({ data: [] })),
-        api.get('/recruitment/costs').catch(() => ({ data: [] })),
-        api.get('/recruitment/masters').catch(() => ({ data: [] })),
-        api.get('/recruitment/audit-logs').catch(() => ({ data: [] }))
+        api.get(`/recruitment/dashboard?role=${role}`).catch(() => ({ data: null })),
+        api.get(`/recruitment/requisitions?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/positions?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/budgets?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/resumes?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/candidates?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/talent-pool?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/costs?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/masters?role=${role}`).catch(() => ({ data: [] })),
+        api.get(`/recruitment/audit-logs?role=${role}`).catch(() => ({ data: [] }))
       ]);
 
       setDashboardData(dashRes.data);
-      setRequisitions(reqRes.data || []);
+      // Deduplicate requisitions by _id and reqNumber to prevent duplicate row rendering
+      const rawReqs = Array.isArray(reqRes.data) ? reqRes.data : [];
+      const seenReqIds = new Set();
+      const seenReqNums = new Set();
+      const dedupedReqs = rawReqs.filter(r => {
+        if (!r) return false;
+        const idKey = r._id ? String(r._id) : null;
+        const numKey = r.reqNumber ? String(r.reqNumber) : null;
+        if (idKey && seenReqIds.has(idKey)) return false;
+        if (numKey && seenReqNums.has(numKey)) return false;
+        if (idKey) seenReqIds.add(idKey);
+        if (numKey) seenReqNums.add(numKey);
+        return true;
+      });
+      setRequisitions(dedupedReqs);
       setPositions(posRes.data || []);
-      setBudgets(budRes.data || []);
+      // Deduplicate budgets by _id and budgetRequestNumber
+      const rawBuds = Array.isArray(budRes.data) ? budRes.data : [];
+      const seenBudIds = new Set();
+      const seenBudNums = new Set();
+      const dedupedBuds = rawBuds.filter(b => {
+        if (!b) return false;
+        const idKey = b._id ? String(b._id) : null;
+        const numKey = b.budgetRequestNumber ? String(b.budgetRequestNumber) : null;
+        if (idKey && seenBudIds.has(idKey)) return false;
+        if (numKey && seenBudNums.has(numKey)) return false;
+        if (idKey) seenBudIds.add(idKey);
+        if (numKey) seenBudNums.add(numKey);
+        return true;
+      });
+      setBudgets(dedupedBuds);
       setResumes(resRes.data || []);
       setCandidates(candRes.data || []);
       setTalentPool(tpRes.data || []);
-      setCosts(costRes.data || []);
+      // Deduplicate costs by _id and costId
+      const rawCosts = Array.isArray(costRes.data) ? costRes.data : [];
+      const seenCostIds = new Set();
+      const seenCostNums = new Set();
+      const dedupedCosts = rawCosts.filter(c => {
+        if (!c) return false;
+        const idKey = c._id ? String(c._id) : null;
+        const numKey = c.costId ? String(c.costId) : null;
+        if (idKey && seenCostIds.has(idKey)) return false;
+        if (numKey && seenCostNums.has(numKey)) return false;
+        if (idKey) seenCostIds.add(idKey);
+        if (numKey) seenCostNums.add(numKey);
+        return true;
+      });
+      setCosts(dedupedCosts);
       setMasters(masterRes.data || []);
       setAuditLogs(auditRes.data || []);
     } catch (err) {
@@ -156,8 +228,8 @@ const RecruitmentModule = () => {
   };
 
   useEffect(() => {
-    fetchAllRecruitmentData();
-  }, []);
+    fetchAllRecruitmentData(selectedRole);
+  }, [selectedRole]);
 
   // Initialize Dashboard Charts
   useEffect(() => {
@@ -245,20 +317,65 @@ const RecruitmentModule = () => {
   }, [activeTab]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // Handlers
   const handleCreateRequisition = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      await api.post('/recruitment/requisitions', reqForm);
+      if (!reqForm.jobTitle || !reqForm.jobTitle.trim()) {
+        showToast('Please enter a Job Position Title.', 'warning');
+        return;
+      }
+
+      const res = await api.post('/recruitment/requisitions', reqForm);
+      if (res.data) {
+        setRequisitions(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resNum = res.data.reqNumber || null;
+          const exists = prev.some(r => 
+            (resId && r._id && String(r._id) === resId) || 
+            (resNum && r.reqNumber && r.reqNumber === resNum)
+          );
+          if (exists) {
+            return prev.map(r => 
+              ((resId && r._id && String(r._id) === resId) || 
+               (resNum && r.reqNumber && r.reqNumber === resNum)) 
+                ? res.data 
+                : r
+            );
+          }
+          const filteredPrev = prev.filter(r => 
+            !(resId && r._id && String(r._id) === resId) && 
+            !(resNum && r.reqNumber && r.reqNumber === resNum)
+          );
+          return [res.data, ...filteredPrev];
+        });
+      }
       showToast('Manpower Requisition submitted successfully.', 'success');
       setShowReqModal(false);
+      setReqForm({
+        jobTitle: '',
+        department: 'Engineering',
+        grade: 'Grade A',
+        designation: 'Software Engineer',
+        costCenter: 'CC-101',
+        employmentType: 'Full-Time',
+        vacancyCount: 1,
+        annualCtcPerPosition: 1200000,
+        targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        justification: '',
+        priorityLevel: 'Medium'
+      });
       fetchAllRecruitmentData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Error submitting requisition', 'error');
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -318,15 +435,61 @@ const RecruitmentModule = () => {
   const handleCreateBudget = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      await api.post('/recruitment/budgets', budgetForm);
-      showToast('Vacancy budget request created.', 'success');
+      if (!budgetForm.positionTitle || !budgetForm.positionTitle.trim()) {
+        showToast('Please enter a Position Title.', 'warning');
+        return;
+      }
+
+      const res = await api.post('/recruitment/budgets', {
+        ...budgetForm,
+        costCenter: budgetForm.costCenter || 'CC-101',
+        annualCtcBudget: Number(budgetForm.annualCtcBudget) || 0,
+        recruitmentCostBudget: Number(budgetForm.recruitmentCostBudget) || 0,
+        totalFinancialImpact: (Number(budgetForm.annualCtcBudget) || 0) + (Number(budgetForm.recruitmentCostBudget) || 0)
+      });
+
+      if (res.data) {
+        setBudgets(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resNum = res.data.budgetRequestNumber || null;
+          const exists = prev.some(b => 
+            (resId && b._id && String(b._id) === resId) || 
+            (resNum && b.budgetRequestNumber && b.budgetRequestNumber === resNum)
+          );
+          if (exists) {
+            return prev.map(b => 
+              ((resId && b._id && String(b._id) === resId) || 
+               (resNum && b.budgetRequestNumber && b.budgetRequestNumber === resNum)) 
+                ? res.data 
+                : b
+            );
+          }
+          const filteredPrev = prev.filter(b => 
+            !(resId && b._id && String(b._id) === resId) && 
+            !(resNum && b.budgetRequestNumber && b.budgetRequestNumber === resNum)
+          );
+          return [res.data, ...filteredPrev];
+        });
+      }
+
+      showToast('Vacancy budget request created and saved successfully.', 'success');
       setShowBudgetModal(false);
+      setBudgetForm({
+        positionTitle: '',
+        department: 'Engineering',
+        costCenter: 'CC-101',
+        annualCtcBudget: 1500000,
+        recruitmentCostBudget: 150000
+      });
       fetchAllRecruitmentData();
     } catch (err) {
-      showToast('Error creating budget request', 'error');
+      showToast(err.response?.data?.message || 'Error creating budget request', 'error');
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -343,25 +506,42 @@ const RecruitmentModule = () => {
 
   const handleUploadResume = async (e) => {
     e.preventDefault();
+    if (uploadingResume) return;
     if (!resumeUploadFile) {
       showToast('Please choose a PDF or DOC resume file.', 'warning');
       return;
     }
     const formData = new FormData();
     formData.append('resume', resumeUploadFile);
-    formData.append('targetRole', targetRole);
-    formData.append('targetJdSkills', targetSkills);
+    formData.append('targetRole', targetRole || 'Senior Full Stack Engineer');
+    formData.append('targetJdSkills', targetSkills || 'React.js, Node.js, Express, MongoDB, Docker, AWS');
 
     setUploadingResume(true);
     try {
-      await api.post('/recruitment/resumes/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      // Do not hardcode Content-Type header so browser / Axios computes multipart/form-data boundary automatically
+      const res = await api.post('/recruitment/resumes/upload', formData, {
+        headers: { 'Content-Type': undefined },
+        timeout: 30000
       });
-      showToast('Resume parsed & candidate profile extracted.', 'success');
+
+      if (res.data) {
+        setResumes(prev => {
+          const exists = prev.some(r => r._id === res.data._id);
+          if (exists) {
+            return prev.map(r => r._id === res.data._id ? res.data : r);
+          }
+          return [res.data, ...prev];
+        });
+      }
+
+      showToast('Resume parsed & candidate profile extracted successfully.', 'success');
       setResumeUploadFile(null);
+      const fileInput = document.getElementById('resume-file-input');
+      if (fileInput) fileInput.value = '';
       fetchAllRecruitmentData();
     } catch (err) {
-      showToast('Error analyzing resume', 'error');
+      const errMsg = err.response?.data?.message || err.message || 'Error analyzing resume';
+      showToast(errMsg, 'error');
     } finally {
       setUploadingResume(false);
     }
@@ -436,15 +616,65 @@ const RecruitmentModule = () => {
   const handleCreateCost = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      await api.post('/recruitment/costs', costForm);
-      showToast('Recruitment expense recorded.', 'success');
+      if (!costForm.amount || Number(costForm.amount) <= 0) {
+        showToast('Please enter a valid expense amount.', 'warning');
+        return;
+      }
+
+      const res = await api.post('/recruitment/costs', {
+        ...costForm,
+        amount: Number(costForm.amount) || 0,
+        department: costForm.department || 'Engineering',
+        costCategory: costForm.costCategory || 'Job Portal',
+        costCenter: costForm.costCenter || 'CC-101'
+      });
+
+      if (res.data) {
+        // Immediately update costs state in-place on the very first attempt!
+        setCosts(prev => {
+          const resId = res.data._id ? String(res.data._id) : null;
+          const resNum = res.data.costId || null;
+          const exists = prev.some(c => 
+            (resId && c._id && String(c._id) === resId) || 
+            (resNum && c.costId && c.costId === resNum)
+          );
+          if (exists) {
+            return prev.map(c => 
+              ((resId && c._id && String(c._id) === resId) || 
+               (resNum && c.costId && c.costId === resNum)) 
+                ? res.data 
+                : c
+            );
+          }
+          const filteredPrev = prev.filter(c => 
+            !(resId && c._id && String(c._id) === resId) && 
+            !(resNum && c.costId && c.costId === resNum)
+          );
+          return [res.data, ...filteredPrev];
+        });
+      }
+
+      showToast('Recruitment expense recorded and saved successfully.', 'success');
       setShowCostModal(false);
+      setCostForm({
+        reqNumber: '',
+        candidateId: '',
+        costCategory: 'Job Portal',
+        vendorName: 'Naukri.com',
+        department: 'Engineering',
+        costCenter: 'CC-101',
+        amount: 25000,
+        description: ''
+      });
       fetchAllRecruitmentData();
     } catch (err) {
-      showToast('Error saving recruitment cost', 'error');
+      showToast(err.response?.data?.message || 'Error saving recruitment cost', 'error');
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -470,24 +700,125 @@ const RecruitmentModule = () => {
 
   // RBAC permissions helper
   const isAllowed = (action) => {
-    // Actions: 'create_req', 'approve_req', 'manage_budgets', 'manage_costs', 'view_reports', 'candidate_edit'
+    // Actions: 'create_req', 'approve_req', 'create_position', 'approve_position', 'manage_budgets', 'manage_costs', 'view_reports', 'candidate_edit', 'assign_recruiter'
     if (selectedRole === 'super_admin' || selectedRole === 'hr' || selectedRole === 'hr_admin') return true;
-    if (selectedRole === 'recruiter' || selectedRole === 'hr_executive') {
+    if (selectedRole === 'recruiter') {
       return ['create_req', 'candidate_edit', 'view_reports', 'manage_costs'].includes(action);
     }
-    if (selectedRole === 'department_head' || selectedRole === 'reporting_manager' || selectedRole === 'hiring_manager') {
+    if (selectedRole === 'hr_executive') {
+      return ['create_req', 'create_position', 'candidate_edit', 'view_reports', 'manage_costs'].includes(action);
+    }
+    if (selectedRole === 'department_head') {
+      return ['create_req', 'approve_req', 'create_position', 'view_reports'].includes(action);
+    }
+    if (selectedRole === 'reporting_manager' || selectedRole === 'hiring_manager') {
       return ['create_req', 'approve_req', 'view_reports'].includes(action);
     }
     if (selectedRole === 'finance') {
       return ['manage_budgets', 'manage_costs', 'view_reports', 'approve_req'].includes(action);
     }
+    if (selectedRole === 'payroll') {
+      return ['manage_costs', 'view_reports'].includes(action);
+    }
     if (selectedRole === 'management') {
-      return ['approve_req', 'manage_budgets', 'view_reports'].includes(action);
+      return ['approve_req', 'approve_position', 'manage_budgets', 'manage_costs', 'view_reports', 'assign_recruiter'].includes(action);
     }
     if (selectedRole === 'employee' || selectedRole === 'candidate') {
       return ['view_reports'].includes(action);
     }
+    return false;
+  };
+
+  // Role-filtered collections for UI views (deduplicated by _id and reqNumber)
+  const filteredRequisitions = requisitions.filter((reqItem, index, self) => {
+    if (!reqItem) return false;
+    // Deduplication guard: ensure only first occurrence of _id or reqNumber renders
+    const isFirst = self.findIndex(r => 
+      (r._id && reqItem._id && String(r._id) === String(reqItem._id)) || 
+      (r.reqNumber && reqItem.reqNumber && r.reqNumber === reqItem.reqNumber)
+    ) === index;
+    if (!isFirst) return false;
+
+    if (selectedRole === 'super_admin' || selectedRole === 'hr' || selectedRole === 'hr_admin' || selectedRole === 'management') return true;
+    if (selectedRole === 'department_head' || selectedRole === 'reporting_manager' || selectedRole === 'hiring_manager') {
+      return !reqItem.department || reqItem.department === 'Engineering' || (user?.dept && reqItem.department === user.dept);
+    }
+    if (selectedRole === 'recruiter' || selectedRole === 'hr_executive') {
+      return reqItem.assignedRecruiterId === user?.id || !reqItem.assignedRecruiterId || reqItem.status === 'Approved';
+    }
+    if (selectedRole === 'finance') {
+      return ['HR Verified', 'Finance Verified', 'Approved'].includes(reqItem.status);
+    }
+    if (selectedRole === 'payroll' || selectedRole === 'employee' || selectedRole === 'candidate') {
+      return reqItem.status === 'Approved';
+    }
     return true;
+  });
+
+  const filteredPositions = positions.filter(pos => {
+    if (selectedRole === 'super_admin' || selectedRole === 'hr' || selectedRole === 'hr_admin' || selectedRole === 'management') return true;
+    if (selectedRole === 'department_head' || selectedRole === 'hiring_manager') {
+      return !pos.department || pos.department === 'Engineering' || (user?.dept && pos.department === user.dept);
+    }
+    if (selectedRole === 'employee' || selectedRole === 'candidate') {
+      return pos.status === 'Approved';
+    }
+    return true;
+  });
+
+  const filteredBudgets = budgets.filter((b, index, self) => {
+    if (!b) return false;
+    // Deduplication guard: ensure only first occurrence of _id or budgetRequestNumber renders
+    const isFirst = self.findIndex(item => 
+      (item._id && b._id && String(item._id) === String(b._id)) || 
+      (item.budgetRequestNumber && b.budgetRequestNumber && item.budgetRequestNumber === b.budgetRequestNumber)
+    ) === index;
+    if (!isFirst) return false;
+
+    if (selectedRole === 'super_admin' || selectedRole === 'hr' || selectedRole === 'hr_admin' || selectedRole === 'management' || selectedRole === 'finance') return true;
+    if (selectedRole === 'department_head') {
+      return !b.department || b.department === 'Engineering' || (user?.dept && b.department === user.dept);
+    }
+    if (selectedRole === 'employee' || selectedRole === 'candidate') {
+      return b.overallStatus === 'Approved';
+    }
+    return true;
+  });
+
+  const filteredCosts = costs.filter((c, index, self) => {
+    if (!c) return false;
+    // Deduplication guard: ensure only first occurrence of _id or costId renders
+    const isFirst = self.findIndex(item => 
+      (item._id && c._id && String(item._id) === String(c._id)) || 
+      (item.costId && c.costId && item.costId === c.costId)
+    ) === index;
+    if (!isFirst) return false;
+
+    if (selectedRole === 'candidate') return false;
+    if (selectedRole === 'super_admin' || selectedRole === 'hr' || selectedRole === 'hr_admin' || selectedRole === 'management' || selectedRole === 'finance' || selectedRole === 'payroll') return true;
+    if (selectedRole === 'department_head' || selectedRole === 'recruiter') {
+      return !c.department || c.department === 'Engineering' || (user?.dept && c.department === user.dept);
+    }
+    return true;
+  });
+
+  const handleRoleChange = (newRole) => {
+    setSelectedRole(newRole);
+    const roleLabels = {
+      super_admin: 'Super Admin',
+      hr: 'HR Admin',
+      hr_executive: 'HR Executive',
+      recruiter: 'Recruitment Executive',
+      department_head: 'Department Head',
+      reporting_manager: 'Reporting Manager',
+      finance: 'Finance Team',
+      hiring_manager: 'Hiring Manager',
+      management: 'Executive Management',
+      payroll: 'Payroll Team',
+      employee: 'Employee (Referrals)',
+      candidate: 'Candidate (Career Portal)'
+    };
+    showToast(`Switched RBAC view to: ${roleLabels[newRole] || newRole}`, 'info', { id: 'rbac-view-change' });
   };
 
   return (
@@ -509,7 +840,7 @@ const RecruitmentModule = () => {
           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Current Role RBAC View:</span>
           <select 
             value={selectedRole} 
-            onChange={(e) => setSelectedRole(e.target.value)}
+            onChange={(e) => handleRoleChange(e.target.value)}
             className="form-control"
             style={{ width: '180px', padding: '4px 8px', fontSize: '0.8rem' }}
           >
@@ -531,20 +862,7 @@ const RecruitmentModule = () => {
 
       {/* Submodule Navigation Tabs */}
       <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', borderBottom: '1px solid hsl(var(--border))', marginBottom: '24px' }}>
-        {[
-          { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
-          { id: 'requisitions', label: 'Manpower Requisition', icon: 'fa-file-signature' },
-          { id: 'positions', label: 'Position Approval', icon: 'fa-sitemap' },
-          { id: 'budgets', label: 'Vacancy Budget', icon: 'fa-wallet' },
-          { id: 'resume-analysis', label: 'Resume Parser & JD Match', icon: 'fa-file-pdf' },
-          { id: 'candidates', label: 'Candidate 360° DB', icon: 'fa-user-tie' },
-          { id: 'talent-pool', label: 'Talent Pool Engine', icon: 'fa-database' },
-          { id: 'costs', label: 'Cost Tracking', icon: 'fa-hand-holding-dollar' },
-          { id: 'reports', label: 'Reports & Export', icon: 'fa-file-excel' },
-          { id: 'audit', label: 'Audit Logs', icon: 'fa-shield-halved' },
-          { id: 'masters', label: 'Master Tables', icon: 'fa-list-check' },
-          { id: 'career-portal', label: 'Candidate Career Portal', icon: 'fa-globe' }
-        ].map(tab => (
+        {visibleTabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -643,7 +961,17 @@ const RecruitmentModule = () => {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Workflow: Department → Reporting Manager → HR Verification → Finance Verification → Management Approval → Recruiter Assignment</p>
             </div>
             {isAllowed('create_req') && (
-              <button className="btn btn-primary" onClick={() => setShowReqModal(true)}>
+              <button 
+                className="btn btn-primary" 
+                id="btn-open-create-requisition"
+                onClick={() => {
+                  setReqForm(prev => ({
+                    ...prev,
+                    targetHireDate: prev.targetHireDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                  }));
+                  setShowReqModal(true);
+                }}
+              >
                 <i className="fa-solid fa-plus"></i> Create Manpower Requisition
               </button>
             )}
@@ -667,7 +995,7 @@ const RecruitmentModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {requisitions.map(reqItem => (
+                  {filteredRequisitions.map(reqItem => (
                     <tr key={reqItem._id}>
                       <td><strong>{reqItem.reqNumber}</strong></td>
                       <td>{reqItem.jobTitle}</td>
@@ -693,7 +1021,7 @@ const RecruitmentModule = () => {
                           >
                             <i className="fa-solid fa-timeline"></i> Workflow
                           </button>
-                          {isAllowed('approve_req') && (
+                          {isAllowed('assign_recruiter') && (
                             <button 
                               className="btn btn-secondary" 
                               style={{ padding: '4px 8px', fontSize: '0.75rem' }}
@@ -706,13 +1034,62 @@ const RecruitmentModule = () => {
                       </td>
                     </tr>
                   ))}
-                  {requisitions.length === 0 && (
-                    <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No requisitions created. Click Create Manpower Requisition to start.</td></tr>
+                  {filteredRequisitions.length === 0 && (
+                    <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>No manpower requisitions accessible under the selected role.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* Dedicated Non-overlapping Requisition Workflow Timeline Panel */}
+          {selectedReqForApproval && !showApprovalModal && (
+            <div className="card requisition-panel-box animate-fade-in-up" style={{ marginTop: '20px', border: '1px solid hsl(var(--border))' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
+                  <i className="fa-solid fa-timeline"></i> Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}
+                </h4>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => setShowApprovalModal(true)}>
+                    <i className="fa-solid fa-expand"></i> Expand Actions
+                  </button>
+                  <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => setSelectedReqForApproval(null)}>
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
+                <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                  Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                {(selectedReqForApproval.approvals || [
+                  { step: 1, role: 'Reporting Manager', status: 'Approved' },
+                  { step: 2, role: 'HR Verification', status: 'Pending' },
+                  { step: 3, role: 'Finance Verification', status: 'Pending' },
+                  { step: 4, role: 'Management Approval', status: 'Pending' }
+                ]).map((appStep, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                    <div style={{
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
+                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem'
+                    }}>
+                      {appStep.step}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appStep.role}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Status: <strong>{appStep.status}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -724,9 +1101,11 @@ const RecruitmentModule = () => {
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Position Approval & Organization Validation</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Validate requested positions against Department Headcount, Grade caps, and Org Chart structures.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => setShowPosModal(true)}>
-              <i className="fa-solid fa-plus"></i> Request New Position
-            </button>
+            {isAllowed('create_position') && (
+              <button className="btn btn-primary" onClick={() => setShowPosModal(true)}>
+                <i className="fa-solid fa-plus"></i> Request New Position
+              </button>
+            )}
           </div>
 
           <div className="card">
@@ -746,7 +1125,7 @@ const RecruitmentModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {positions.map(pos => (
+                  {filteredPositions.map(pos => (
                     <tr key={pos._id}>
                       <td><strong>{pos.requestNumber}</strong></td>
                       <td>{pos.positionTitle}</td>
@@ -765,16 +1144,16 @@ const RecruitmentModule = () => {
                         </span>
                       </td>
                       <td>
-                        {pos.status === 'Pending' ? (
+                        {pos.status === 'Pending' && isAllowed('approve_position') ? (
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleApprovePosition(pos._id, 'Approved')}>Approve</button>
                             <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleApprovePosition(pos._id, 'Rejected')}>Reject</button>
                           </div>
-                        ) : '--'}
+                        ) : (pos.status === 'Pending' ? <span className="badge badge-warning">Pending Review</span> : '--')}
                       </td>
                     </tr>
                   ))}
-                  {positions.length === 0 && (
+                  {filteredPositions.length === 0 && (
                     <tr><td colSpan="9" style={{ textAlign: 'center', padding: '20px' }}>No position approval requests logged.</td></tr>
                   )}
                 </tbody>
@@ -792,9 +1171,24 @@ const RecruitmentModule = () => {
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Vacancy Budget Approval & Cost Center Allocation</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Validate financial impact (CTC + Recruitment Expenses) against Cost Center Availability.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => setShowBudgetModal(true)}>
-              <i className="fa-solid fa-plus"></i> Request Vacancy Budget
-            </button>
+            {isAllowed('manage_budgets') && (
+              <button 
+                className="btn btn-primary" 
+                id="btn-open-create-budget"
+                onClick={() => {
+                  setBudgetForm({
+                    positionTitle: '',
+                    department: 'Engineering',
+                    costCenter: 'CC-101',
+                    annualCtcBudget: 1500000,
+                    recruitmentCostBudget: 150000
+                  });
+                  setShowBudgetModal(true);
+                }}
+              >
+                <i className="fa-solid fa-plus"></i> Request Vacancy Budget
+              </button>
+            )}
           </div>
 
           <div className="card">
@@ -815,7 +1209,7 @@ const RecruitmentModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {budgets.map(b => (
+                  {filteredBudgets.map(b => (
                     <tr key={b._id}>
                       <td><strong>{b.budgetRequestNumber}</strong></td>
                       <td>{b.positionTitle}</td>
@@ -831,13 +1225,17 @@ const RecruitmentModule = () => {
                         <span className={`badge ${b.managementApprovalStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{b.managementApprovalStatus}</span>
                       </td>
                       <td>
-                        {b.overallStatus !== 'Approved' ? (
+                        {b.overallStatus !== 'Approved' && isAllowed('manage_budgets') ? (
                           <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleApproveBudget(b._id, 'Approved', 'Approved')}>Sign Off</button>
-                        ) : <span className="badge badge-success">Allocated</span>}
+                        ) : b.overallStatus === 'Approved' ? (
+                          <span className="badge badge-success">Allocated</span>
+                        ) : (
+                          <span className="badge badge-warning">Awaiting Approval</span>
+                        )}
                       </td>
                     </tr>
                   ))}
-                  {budgets.length === 0 && (
+                  {filteredBudgets.length === 0 && (
                     <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No vacancy budget requests found.</td></tr>
                   )}
                 </tbody>
@@ -866,7 +1264,7 @@ const RecruitmentModule = () => {
                 </div>
                 <div className="form-group">
                   <label>Upload Resume File (PDF / DOC / DOCX)</label>
-                  <input type="file" className="form-control" accept=".pdf,.doc,.docx" onChange={(e) => setResumeUploadFile(e.target.files[0])} required />
+                  <input id="resume-file-input" type="file" className="form-control" accept=".pdf,.doc,.docx" onChange={(e) => setResumeUploadFile(e.target.files[0])} required />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={uploadingResume}>
                   {uploadingResume ? <><i className="fa-solid fa-spinner fa-spin"></i> Parsing NLP Skills...</> : <><i className="fa-solid fa-microchip"></i> Parse Resume & Calculate Score</>}
@@ -880,14 +1278,24 @@ const RecruitmentModule = () => {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
                 The Resume Parser extracts candidate technical skills, education, certifications, and experience. It compares extracted profile tokens against Job Descriptions to produce a <strong>JD Match Score</strong>, <strong>Skill Gap Comparison Matrix</strong>, and <strong>Duplicate Candidate Detection</strong>.
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ padding: '12px', background: 'hsla(var(--primary), 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                <div id="widget-automated-extraction" style={{ padding: '12px', background: 'hsla(var(--primary), 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Automated Extraction</span>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>98.4% Accuracy</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>
+                    {resumes.length > 0 ? `${resumes.length} Parsed (98.4%)` : '98.4% Accuracy'}
+                  </div>
                 </div>
-                <div style={{ padding: '12px', background: 'hsla(142, 72%, 29%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+                <div id="widget-jd-match-score" style={{ padding: '12px', background: 'hsla(217, 91%, 60%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg JD Match Score</span>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2563eb' }}>
+                    {resumes.length > 0 ? `${Math.round(resumes.reduce((acc, r) => acc + (r.jdMatchScore || 0), 0) / resumes.length)}%` : '85% Avg'}
+                  </div>
+                </div>
+                <div id="widget-duplicate-detection" style={{ padding: '12px', background: 'hsla(142, 72%, 29%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Duplicate Detection</span>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--success))' }}>Active</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
+                    {resumes.some(r => r.isDuplicate) ? `${resumes.filter(r => r.isDuplicate).length} Flagged` : 'Active'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1052,19 +1460,23 @@ const RecruitmentModule = () => {
                       <td>
                         {cand.offerReleased === 'Yes' ? (
                           <span className="badge badge-success">Offer Released</span>
-                        ) : (
+                        ) : isAllowed('candidate_edit') ? (
                           <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => { setOfferCand(cand); setShowOfferModal(true); }}>
                             Release Offer
                           </button>
+                        ) : (
+                          <span className="badge badge-secondary">Pending HR Action</span>
                         )}
                       </td>
                       <td>
                         {cand.stage === 'joined' ? (
                           <span className="badge badge-success">Onboarded</span>
-                        ) : (
+                        ) : isAllowed('candidate_edit') ? (
                           <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleConfirmJoining(cand._id)}>
                             Confirm Join
                           </button>
+                        ) : (
+                          <span className="badge badge-secondary">Pending HR Action</span>
                         )}
                       </td>
                       <td>
@@ -1163,7 +1575,23 @@ const RecruitmentModule = () => {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Track Job Portals, Agency Fees, Advertising, Travel Expenses, and Assessment tool expenditures.</p>
             </div>
             {isAllowed('manage_costs') && (
-              <button className="btn btn-primary" onClick={() => setShowCostModal(true)}>
+              <button 
+                className="btn btn-primary" 
+                id="btn-open-record-expense"
+                onClick={() => {
+                  setCostForm({
+                    reqNumber: '',
+                    candidateId: '',
+                    costCategory: 'Job Portal',
+                    vendorName: 'Naukri.com',
+                    department: 'Engineering',
+                    costCenter: 'CC-101',
+                    amount: 25000,
+                    description: ''
+                  });
+                  setShowCostModal(true);
+                }}
+              >
                 <i className="fa-solid fa-plus"></i> Record Expense Entry
               </button>
             )}
@@ -1185,7 +1613,7 @@ const RecruitmentModule = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {costs.map(c => (
+                  {filteredCosts.map(c => (
                     <tr key={c._id}>
                       <td><strong>{c.costId}</strong></td>
                       <td><span className="badge badge-info">{c.costCategory}</span></td>
@@ -1197,7 +1625,7 @@ const RecruitmentModule = () => {
                       <td><span className="badge badge-success">Approved</span></td>
                     </tr>
                   ))}
-                  {costs.length === 0 && (
+                  {filteredCosts.length === 0 && (
                     <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No recruitment expenses recorded.</td></tr>
                   )}
                 </tbody>
@@ -1358,137 +1786,305 @@ const RecruitmentModule = () => {
         </div>
       )}
 
-      {/* MODAL: CREATE REQUISITION */}
-      {showReqModal && (
-        <div className="modal-backdrop active" onClick={() => setShowReqModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-            <div className="modal-header">
-              <h4><i className="fa-solid fa-file-signature"></i> Create Manpower Requisition</h4>
-              <button className="close-btn" onClick={() => setShowReqModal(false)}>&times;</button>
+      {/* BUG 022 FIX: DUAL NON-OVERLAPPING MODAL CONTAINER OR SINGLE MODAL */}
+      {showReqModal && showApprovalModal && selectedReqForApproval ? (
+        <div className="modal-backdrop active" onClick={() => { setShowReqModal(false); setShowApprovalModal(false); }}>
+          <div className="dual-modal-wrapper" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content requisition-panel-box" style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '88vh' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h4 style={{ margin: 0 }}><i className="fa-solid fa-file-signature"></i> Create Manpower Requisition</h4>
+                  <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>Side-by-Side</span>
+                </div>
+                <button className="close-btn" onClick={() => setShowReqModal(false)}>&times;</button>
+              </div>
+              <form onSubmit={handleCreateRequisition}>
+                <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label className="form-label">Job Position Title *</label>
+                    <input type="text" className="form-control" value={reqForm.jobTitle} onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Department *</label>
+                    <select className="form-control" value={reqForm.department} onChange={(e) => setReqForm({ ...reqForm, department: e.target.value })}>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Sales & Marketing">Sales & Marketing</option>
+                      <option value="Product Design">Product Design</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Grade Band</label>
+                    <select className="form-control" value={reqForm.grade} onChange={(e) => setReqForm({ ...reqForm, grade: e.target.value })}>
+                      <option value="Grade A">Grade A (Junior)</option>
+                      <option value="Grade B">Grade B (Mid-Level)</option>
+                      <option value="Grade C">Grade C (Senior/Lead)</option>
+                      <option value="Grade D">Grade D (Executive)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Cost Center</label>
+                    <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="form-label">Vacancy Count *</label>
+                    <input type="number" className="form-control" min="1" value={reqForm.vacancyCount} onChange={(e) => setReqForm({ ...reqForm, vacancyCount: Number(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Annual CTC / Position (₹) *</label>
+                    <input type="number" className="form-control" value={reqForm.annualCtcPerPosition} onChange={(e) => setReqForm({ ...reqForm, annualCtcPerPosition: Number(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Target Hire Date *</label>
+                    <input type="date" className="form-control" value={reqForm.targetHireDate} onChange={(e) => setReqForm({ ...reqForm, targetHireDate: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Priority Level</label>
+                    <select className="form-control" value={reqForm.priorityLevel} onChange={(e) => setReqForm({ ...reqForm, priorityLevel: e.target.value })}>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label className="form-label">Business Justification</label>
+                    <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={isSubmitting} id="btn-create-manpower-requisition">
+                    {isSubmitting ? (
+                      <><i className="fa-solid fa-spinner fa-spin"></i> Creating Requisition...</>
+                    ) : (
+                      <><i className="fa-solid fa-check"></i> Create Manpower Requisition</>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleCreateRequisition}>
-              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div>
-                  <label className="form-label">Job Position Title *</label>
-                  <input type="text" className="form-control" value={reqForm.jobTitle} onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} required />
-                </div>
-                <div>
-                  <label className="form-label">Department *</label>
-                  <select className="form-control" value={reqForm.department} onChange={(e) => setReqForm({ ...reqForm, department: e.target.value })}>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="Product Design">Product Design</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Grade Band</label>
-                  <select className="form-control" value={reqForm.grade} onChange={(e) => setReqForm({ ...reqForm, grade: e.target.value })}>
-                    <option value="Grade A">Grade A (Junior)</option>
-                    <option value="Grade B">Grade B (Mid-Level)</option>
-                    <option value="Grade C">Grade C (Senior/Lead)</option>
-                    <option value="Grade D">Grade D (Executive)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Cost Center</label>
-                  <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label">Vacancy Count *</label>
-                  <input type="number" className="form-control" min="1" value={reqForm.vacancyCount} onChange={(e) => setReqForm({ ...reqForm, vacancyCount: Number(e.target.value) })} required />
-                </div>
-                <div>
-                  <label className="form-label">Annual CTC / Position (₹) *</label>
-                  <input type="number" className="form-control" value={reqForm.annualCtcPerPosition} onChange={(e) => setReqForm({ ...reqForm, annualCtcPerPosition: Number(e.target.value) })} required />
-                </div>
-                <div>
-                  <label className="form-label">Target Hire Date *</label>
-                  <input type="date" className="form-control" value={reqForm.targetHireDate} onChange={(e) => setReqForm({ ...reqForm, targetHireDate: e.target.value })} required />
-                </div>
-                <div>
-                  <label className="form-label">Priority Level</label>
-                  <select className="form-control" value={reqForm.priorityLevel} onChange={(e) => setReqForm({ ...reqForm, priorityLevel: e.target.value })}>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
-                  </select>
-                </div>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label className="form-label">Business Justification</label>
-                  <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Requisition'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* MODAL: WORKFLOW APPROVAL VIEW */}
-      {showApprovalModal && selectedReqForApproval && (
-        <div className="modal-backdrop active" onClick={() => setShowApprovalModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-            <div className="modal-header">
-              <h4>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
-              <button className="close-btn" onClick={() => setShowApprovalModal(false)}>&times;</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-                  Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
-                </p>
+            <div className="modal-content requisition-panel-box" style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '88vh' }}>
+              <div className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h4 style={{ margin: 0 }}>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
+                  <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>Side-by-Side</span>
+                </div>
+                <button className="close-btn" onClick={() => setShowApprovalModal(false)}>&times;</button>
               </div>
+              <div className="modal-body">
+                <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
+                  <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                    Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
+                  </p>
+                </div>
 
-              {/* Stepper Steps */}
-              <h5 style={{ fontWeight: 700, marginBottom: '12px' }}>Multi-Level Approval Workflow Matrix</h5>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                {(selectedReqForApproval.approvals || [
-                  { step: 1, role: 'Reporting Manager', status: 'Approved' },
-                  { step: 2, role: 'HR Verification', status: 'Pending' },
-                  { step: 3, role: 'Finance Verification', status: 'Pending' },
-                  { step: 4, role: 'Management Approval', status: 'Pending' }
-                ]).map((appStep, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '50%',
-                      background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
-                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem'
-                    }}>
-                      {appStep.step}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{appStep.role}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Status: <strong>{appStep.status}</strong> {appStep.comments ? `— "${appStep.comments}"` : ''}
+                <h5 style={{ fontWeight: 700, marginBottom: '12px' }}>Multi-Level Approval Workflow Matrix</h5>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                  {(selectedReqForApproval.approvals || [
+                    { step: 1, role: 'Reporting Manager', status: 'Approved' },
+                    { step: 2, role: 'HR Verification', status: 'Pending' },
+                    { step: 3, role: 'Finance Verification', status: 'Pending' },
+                    { step: 4, role: 'Management Approval', status: 'Pending' }
+                  ]).map((appStep, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                      <div style={{
+                        width: '32px', height: '32px', borderRadius: '50%',
+                        background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
+                        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem'
+                      }}>
+                        {appStep.step}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{appStep.role}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          Status: <strong>{appStep.status}</strong> {appStep.comments ? `— "${appStep.comments}"` : ''}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {/* Comments box */}
-              <div className="form-group">
-                <label className="form-label">Approver Comments</label>
-                <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
+                <div className="form-group">
+                  <label className="form-label">Approver Comments</label>
+                  <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
+                </div>
               </div>
-            </div>
-            <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>Close</button>
-              <button type="button" className="btn btn-danger" onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
-              <button type="button" className="btn btn-warning" onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
-              <button type="button" className="btn btn-primary" onClick={() => handleApprovalSubmit('Approve')}>Approve Next Step</button>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>Close</button>
+                <button type="button" className="btn btn-danger" onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
+                <button type="button" className="btn btn-warning" onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
+                <button type="button" className="btn btn-primary" onClick={() => handleApprovalSubmit('Approve')}>Approve Next Step</button>
+              </div>
             </div>
           </div>
         </div>
+      ) : (
+        <>
+          {/* MODAL: CREATE REQUISITION */}
+          {showReqModal && (
+            <div className="modal-backdrop active" onClick={() => setShowReqModal(false)}>
+              <div className="modal-content requisition-panel-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h4 style={{ margin: 0 }}><i className="fa-solid fa-file-signature"></i> Create Manpower Requisition</h4>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {filteredRequisitions.length > 0 && (
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                        onClick={() => { setSelectedReqForApproval(filteredRequisitions[0]); setShowApprovalModal(true); }}
+                      >
+                        <i className="fa-solid fa-timeline"></i> Compare Timeline
+                      </button>
+                    )}
+                    <button className="close-btn" onClick={() => setShowReqModal(false)}>&times;</button>
+                  </div>
+                </div>
+                <form onSubmit={handleCreateRequisition}>
+                  <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div>
+                      <label className="form-label">Job Position Title *</label>
+                      <input type="text" className="form-control" value={reqForm.jobTitle} onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Department *</label>
+                      <select className="form-control" value={reqForm.department} onChange={(e) => setReqForm({ ...reqForm, department: e.target.value })}>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Human Resources">Human Resources</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Sales & Marketing">Sales & Marketing</option>
+                        <option value="Product Design">Product Design</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Grade Band</label>
+                      <select className="form-control" value={reqForm.grade} onChange={(e) => setReqForm({ ...reqForm, grade: e.target.value })}>
+                        <option value="Grade A">Grade A (Junior)</option>
+                        <option value="Grade B">Grade B (Mid-Level)</option>
+                        <option value="Grade C">Grade C (Senior/Lead)</option>
+                        <option value="Grade D">Grade D (Executive)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Cost Center</label>
+                      <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="form-label">Vacancy Count *</label>
+                      <input type="number" className="form-control" min="1" value={reqForm.vacancyCount} onChange={(e) => setReqForm({ ...reqForm, vacancyCount: Number(e.target.value) })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Annual CTC / Position (₹) *</label>
+                      <input type="number" className="form-control" value={reqForm.annualCtcPerPosition} onChange={(e) => setReqForm({ ...reqForm, annualCtcPerPosition: Number(e.target.value) })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Target Hire Date *</label>
+                      <input type="date" className="form-control" value={reqForm.targetHireDate} onChange={(e) => setReqForm({ ...reqForm, targetHireDate: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="form-label">Priority Level</label>
+                      <select className="form-control" value={reqForm.priorityLevel} onChange={(e) => setReqForm({ ...reqForm, priorityLevel: e.target.value })}>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Business Justification</label>
+                      <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary" disabled={isSubmitting} id="btn-create-manpower-requisition">
+                      {isSubmitting ? (
+                        <><i className="fa-solid fa-spinner fa-spin"></i> Creating Requisition...</>
+                      ) : (
+                        <><i className="fa-solid fa-check"></i> Create Manpower Requisition</>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: WORKFLOW APPROVAL VIEW */}
+          {showApprovalModal && selectedReqForApproval && (
+            <div className="modal-backdrop active" onClick={() => setShowApprovalModal(false)}>
+              <div className="modal-content requisition-panel-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+                <div className="modal-header">
+                  <h4>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isAllowed('create_req') && (
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                        onClick={() => setShowReqModal(true)}
+                      >
+                        <i className="fa-solid fa-plus"></i> Open Create Panel
+                      </button>
+                    )}
+                    <button className="close-btn" onClick={() => setShowApprovalModal(false)}>&times;</button>
+                  </div>
+                </div>
+                <div className="modal-body">
+                  <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
+                    <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                      Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <h5 style={{ fontWeight: 700, marginBottom: '12px' }}>Multi-Level Approval Workflow Matrix</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                    {(selectedReqForApproval.approvals || [
+                      { step: 1, role: 'Reporting Manager', status: 'Approved' },
+                      { step: 2, role: 'HR Verification', status: 'Pending' },
+                      { step: 3, role: 'Finance Verification', status: 'Pending' },
+                      { step: 4, role: 'Management Approval', status: 'Pending' }
+                    ]).map((appStep, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                        <div style={{
+                          width: '32px', height: '32px', borderRadius: '50%',
+                          background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
+                          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem'
+                        }}>
+                          {appStep.step}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{appStep.role}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            Status: <strong>{appStep.status}</strong> {appStep.comments ? `— "${appStep.comments}"` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Approver Comments</label>
+                    <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>Close</button>
+                  <button type="button" className="btn btn-danger" onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
+                  <button type="button" className="btn btn-warning" onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
+                  <button type="button" className="btn btn-primary" onClick={() => handleApprovalSubmit('Approve')}>Approve Next Step</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* MODAL: ASSIGN RECRUITER */}
@@ -1729,8 +2325,12 @@ const RecruitmentModule = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCostModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Saving...</> : 'Save Expense Entry'}
+                <button type="submit" className="btn btn-primary" id="btn-save-cost-entry" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <><i className="fa-solid fa-spinner fa-spin"></i> Saving Expense...</>
+                  ) : (
+                    <><i className="fa-solid fa-floppy-disk"></i> Save Expense Entry</>
+                  )}
                 </button>
               </div>
             </form>
@@ -1747,34 +2347,34 @@ const RecruitmentModule = () => {
               <button className="close-btn" onClick={() => setShowPosModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleCreatePosition}>
-              <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
+              <div className="modal-body position-approval-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+                <div className="form-group">
                   <label className="form-label">Position Title *</label>
-                  <input type="text" className="form-control" value={posForm.positionTitle} onChange={(e) => setPosForm({ ...posForm, positionTitle: e.target.value })} required />
+                  <input type="text" className="form-control" style={{ height: '42px' }} value={posForm.positionTitle} onChange={(e) => setPosForm({ ...posForm, positionTitle: e.target.value })} required />
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Department *</label>
-                  <select className="form-control" value={posForm.department} onChange={(e) => setPosForm({ ...posForm, department: e.target.value })}>
+                  <select className="form-control" style={{ height: '42px' }} value={posForm.department} onChange={(e) => setPosForm({ ...posForm, department: e.target.value })}>
                     <option value="Engineering">Engineering</option>
                     <option value="Human Resources">Human Resources</option>
                     <option value="Finance">Finance</option>
                   </select>
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Designation *</label>
-                  <input type="text" className="form-control" value={posForm.designation} onChange={(e) => setPosForm({ ...posForm, designation: e.target.value })} required />
+                  <input type="text" className="form-control" style={{ height: '42px' }} value={posForm.designation} onChange={(e) => setPosForm({ ...posForm, designation: e.target.value })} required />
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Grade Band</label>
-                  <input type="text" className="form-control" value={posForm.grade} onChange={(e) => setPosForm({ ...posForm, grade: e.target.value })} />
+                  <input type="text" className="form-control" style={{ height: '42px' }} value={posForm.grade} onChange={(e) => setPosForm({ ...posForm, grade: e.target.value })} />
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Current Headcount</label>
-                  <input type="number" className="form-control" value={posForm.currentHeadcount} onChange={(e) => setPosForm({ ...posForm, currentHeadcount: Number(e.target.value) })} />
+                  <input type="number" className="form-control" style={{ height: '42px' }} value={posForm.currentHeadcount} onChange={(e) => setPosForm({ ...posForm, currentHeadcount: Number(e.target.value) })} />
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Proposed Headcount *</label>
-                  <input type="number" className="form-control" value={posForm.proposedHeadcount} onChange={(e) => setPosForm({ ...posForm, proposedHeadcount: Number(e.target.value) })} required />
+                  <input type="number" className="form-control" style={{ height: '42px' }} value={posForm.proposedHeadcount} onChange={(e) => setPosForm({ ...posForm, proposedHeadcount: Number(e.target.value) })} required />
                 </div>
               </div>
               <div className="modal-footer">
@@ -1809,6 +2409,20 @@ const RecruitmentModule = () => {
                   </select>
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Cost Center Allocation *</label>
+                  <select 
+                    className="form-control" 
+                    value={budgetForm.costCenter || 'CC-101'} 
+                    onChange={(e) => setBudgetForm({ ...budgetForm, costCenter: e.target.value })} 
+                    required
+                  >
+                    <option value="CC-101">CC-101 (Engineering Core)</option>
+                    <option value="CC-102">CC-102 (Product & Design)</option>
+                    <option value="CC-103">CC-103 (HR & Talent)</option>
+                    <option value="CC-104">CC-104 (Finance & Operations)</option>
+                  </select>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Annual CTC Budget (₹) *</label>
                   <input type="number" className="form-control" value={budgetForm.annualCtcBudget} onChange={(e) => setBudgetForm({ ...budgetForm, annualCtcBudget: Number(e.target.value) })} required />
                 </div>
@@ -1819,8 +2433,12 @@ const RecruitmentModule = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowBudgetModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</> : 'Submit Budget Request'}
+                <button type="submit" className="btn btn-primary" id="btn-save-vacancy-budget" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <><i className="fa-solid fa-spinner fa-spin"></i> Saving Budget Request...</>
+                  ) : (
+                    <><i className="fa-solid fa-floppy-disk"></i> Save Budget Request</>
+                  )}
                 </button>
               </div>
             </form>

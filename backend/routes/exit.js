@@ -223,14 +223,24 @@ router.post('/interview', protect, async (req, res, next) => {
 router.get('/settlement', protect, async (req, res, next) => {
   try {
     const list = await FullFinalSettlement.find().sort({ createdAt: -1 });
-    res.json(list);
+    // Deduplicate settlements by exitId / settlementId to prevent duplicate rows in register
+    const seen = new Set();
+    const deduped = [];
+    for (const item of list) {
+      const key = item.exitId || item.settlementId;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduped.push(item);
+      }
+    }
+    res.json(deduped);
   } catch (err) { next(err); }
 });
 
 router.post('/settlement/calculate', protect, async (req, res, next) => {
   try {
     const body = req.body;
-    const settlementId = 'FFS-' + Date.now();
+    const exitId = body.exitId || 'EXT-1001';
     const pendingSalary = Number(body.pendingSalary) || 45000;
     const leaveEncashment = Number(body.leaveEncashmentAmount) || 30000;
     const gratuity = Number(body.gratuityAmount) || 125000;
@@ -243,9 +253,31 @@ router.post('/settlement/calculate', protect, async (req, res, next) => {
 
     const netSettlementAmount = totalEarnings - totalDeductions;
 
+    let ffs = await FullFinalSettlement.findOne({ exitId });
+    if (ffs) {
+      // Clean up any extraneous duplicate entries for the same exitId if present
+      await FullFinalSettlement.deleteMany({ exitId, _id: { $ne: ffs._id } });
+      ffs.pendingSalary = pendingSalary;
+      ffs.leaveEncashmentAmount = leaveEncashment;
+      ffs.leaveEncashmentDays = Number(body.leaveEncashmentDays) || 15;
+      ffs.gratuityAmount = gratuity;
+      ffs.totalEarnings = totalEarnings;
+      ffs.noticePayRecovery = noticeRecovery;
+      ffs.loanRecovery = loanRecovery;
+      ffs.assetDamageRecovery = assetRecovery;
+      ffs.totalDeductions = totalDeductions;
+      ffs.netSettlementAmount = netSettlementAmount;
+      ffs.clearanceVerified = true;
+      ffs.status = 'HR Approved';
+      await ffs.save();
+      await logAudit(req, 'UPDATE_FF_SETTLEMENT', 'FullFinalSettlement', ffs.settlementId, ffs);
+      return res.json(ffs);
+    }
+
+    const settlementId = 'FFS-' + Date.now();
     const newFFS = await FullFinalSettlement.create({
       settlementId,
-      exitId: body.exitId || 'EXT-1001',
+      exitId,
       employeeId: body.employeeId || 'EMP-1004',
       employeeName: body.employeeName || 'Anil Kumar',
       lastWorkingDay: body.lastWorkingDay || new Date(),
@@ -265,7 +297,15 @@ router.post('/settlement/calculate', protect, async (req, res, next) => {
 
     await logAudit(req, 'CALCULATE_FF_SETTLEMENT', 'FullFinalSettlement', settlementId, newFFS);
     res.status(201).json(newFFS);
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.code === 11000 && req.body.exitId) {
+      try {
+        const existing = await FullFinalSettlement.findOne({ exitId: req.body.exitId });
+        if (existing) return res.json(existing);
+      } catch (innerErr) {}
+    }
+    next(err);
+  }
 });
 
 // ==========================================

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
@@ -10,22 +10,93 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownTimeoutRef = useRef(null);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
+  const optionsScrollRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+  const scrollOptions = (direction) => {
+    if (optionsScrollRef.current) {
+      optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
+    }
+  };
+
+  const searchIndex = [
+    { title: 'Overview Dashboard', desc: 'HR executive KPIs, live analytics & attendance', path: '/hr/dashboard', icon: 'fa-chart-line', category: 'Overview' },
+    { title: 'Employee Master', desc: 'Manage employees, documents & status', path: '/hr/employee-management', icon: 'fa-users', category: 'Workforce' },
+    { title: 'Org Structure', desc: 'Organization hierarchy & reporting lines', path: '/organization', icon: 'fa-sitemap', category: 'Workforce' },
+    { title: 'Attendance Log', desc: 'Real-time punches, biometric logs & regularization', path: '/hr/attendance', icon: 'fa-clipboard-user', category: 'Operations' },
+    { title: 'Leave Management', desc: 'Leave requests, quota balances & approvals', path: '/hr/leave-management', icon: 'fa-calendar-check', category: 'Operations' },
+    { title: 'Timesheet Records', desc: 'Daily work logs, project hours & activity', path: '/hr/timesheet-records', icon: 'fa-clock', category: 'Operations' },
+    { title: 'Shift Roster', desc: 'Shift scheduling, rotation plans & assignments', path: '/hr/shift-roster', icon: 'fa-calendar-week', category: 'Operations' },
+    { title: 'Payroll Processing', desc: 'Salary computation, pay slips & tax deductions', path: '/hr/payroll-processing', icon: 'fa-file-invoice-dollar', category: 'Operations' },
+    { title: 'Recruitment & ATS', desc: 'Job postings, applicant pipeline & stages', path: '/hr/recruitment-ats', icon: 'fa-briefcase', category: 'Talent & Growth' },
+    { title: 'Onboarding Workflow', desc: 'New hire checklists, asset handover & IT tasks', path: '/hr/onboarding-workflow', icon: 'fa-user-plus', category: 'Talent & Growth' },
+    { title: 'Performance & Goals', desc: 'OKRs, KPIs, appraisals, 360 reviews & PIP', path: '/hr/performance-goals', icon: 'fa-bullseye', category: 'Talent & Growth' },
+    { title: 'Training Programs', desc: 'L&D courses, certifications & attendance', path: '/hr/training-programs', icon: 'fa-graduation-cap', category: 'Talent & Growth' },
+    { title: 'Employee Engagement', desc: 'Surveys, polls, rewards & town hall discussions', path: '/hr/employee-engagement', icon: 'fa-heart', category: 'Talent & Growth' },
+    { title: 'HR Budgeting & Cost', desc: 'Workforce cost planning, allocations & analytics', path: '/hr/hr-budgeting', icon: 'fa-coins', category: 'Finance & Exit' },
+    { title: 'Statutory Compliance', desc: 'PF, ESI, PT, LWF, challans & statutory returns', path: '/hr/statutory-compliance', icon: 'fa-scale-balanced', category: 'Finance & Exit' },
+    { title: 'Exit Workflow & F&F', desc: 'Resignations, clearances & full-final settlement', path: '/hr/exit-management', icon: 'fa-door-open', category: 'Finance & Exit' },
+    { title: 'Policy Repository', desc: 'Company policies & employee acknowledgements', path: '/hr/policy-repository', icon: 'fa-book-bookmark', category: 'Governance' },
+    { title: 'Statutory & HR Audit', desc: 'Compliance audit trails & regulatory registry', path: '/hr/hr-audit', icon: 'fa-clipboard-check', category: 'Governance' },
+    { title: 'Compliance Calendar', desc: 'Filing schedules & statutory deadlines', path: '/hr/compliance-calendar', icon: 'fa-calendar-days', category: 'Governance' },
+    { title: 'Approval Matrix', desc: 'Multi-level workflow authorizations', path: '/hr/approval-matrix', icon: 'fa-sitemap', category: 'Governance' },
+    { title: 'Observation Tracker', desc: 'Audit observations, corrective actions & closures', path: '/hr/observation-tracker', icon: 'fa-magnifying-glass', category: 'Governance' },
+    { title: 'HR Analytics', desc: 'Headcount metrics, turnover & compensation', path: '/hr/hr-analytics', icon: 'fa-chart-pie', category: 'Analytics' },
+    { title: 'Reports & Audits', desc: 'Department cost indices & compliance summaries', path: '/hr/reports-audits', icon: 'fa-chart-pie', category: 'Analytics' },
+    { title: 'Alert Center', desc: 'System notifications, broadcast alerts & logs', path: '/hr/notification-system', icon: 'fa-bell', category: 'Analytics' },
+    { title: 'My Profile', desc: 'Account details, contact info & security', path: '/hr/hr-profile', icon: 'fa-user', category: 'Account' },
+    { title: 'System Settings', desc: 'Platform configuration & access preferences', path: '/hr/settings-profile', icon: 'fa-gear', category: 'Account' }
+  ];
+
+  const filteredSuggestions = searchQuery.trim() === '' ? [] : searchIndex.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 7);
 
   const handleMouseEnter = (name) => {
-    if (dropdownTimeout) clearTimeout(dropdownTimeout);
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
     setActiveDropdown(name);
   };
 
   const handleMouseLeave = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
     const timeout = setTimeout(() => {
       setActiveDropdown(null);
     }, 150);
+    dropdownTimeoutRef.current = timeout;
     setDropdownTimeout(timeout);
   };
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleSelectSuggestion = (path) => {
+    navigate(path);
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && filteredSuggestions.length > 0) {
+      handleSelectSuggestion(filteredSuggestions[0].path);
+    } else if (e.key === 'Escape') {
+      setShowSearchDropdown(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -34,6 +105,9 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       }
       if (!e.target.closest('.hr-menu-item')) {
         setActiveDropdown(null);
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
       }
     };
     document.addEventListener('click', handleClickOutside);
@@ -66,6 +140,14 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   };
 
   const toggleDropdown = (name) => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
     setActiveDropdown(prev => prev === name ? null : name);
   };
 
@@ -80,17 +162,17 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
         <div style={{ display: 'flex', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => scrollOptions(-1)} 
             className="btn btn-secondary"
-            title="Navigate Back"
+            title="Scroll Navigation Left"
             style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
             <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
           </button>
           <button 
-            onClick={() => navigate(1)} 
+            onClick={() => scrollOptions(1)} 
             className="btn btn-secondary"
-            title="Navigate Forward"
+            title="Scroll Navigation Right"
             style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
@@ -99,7 +181,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       </div>
 
       {/* 2. Scrollable Navigation Options ONLY */}
-      <div className="hr-options-scroll-section">
+      <div className="hr-options-scroll-section" ref={optionsScrollRef}>
         <nav className="hr-nav-menu">
           
           {/* 1. Overview */}
@@ -374,18 +456,31 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 7. Support & Analytics Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('support')} onMouseLeave={handleMouseLeave}>
+          <div 
+            className="hr-menu-item" 
+            id="nav-item-support"
+            onMouseEnter={() => handleMouseEnter('support')} 
+            onMouseLeave={handleMouseLeave}
+          >
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics', 'notification-system']) ? 'active' : ''}`}
+              id="nav-support-trigger"
               onClick={() => toggleDropdown('support')}
             >
               <i className="fa-solid fa-circle-info"></i>
               Support & Reports
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'support' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'support' ? 'open' : ''}`} style={{ minWidth: '280px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'support' ? 'open' : ''}`} 
+              id="nav-support-dropdown-panel"
+              style={{ minWidth: '280px' }}
+              onMouseEnter={() => handleMouseEnter('support')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('hr-tickets') ? 'active' : ''}`}
+                id="nav-dropdown-hr-tickets"
                 onClick={() => handleNavClick('hr-tickets')}
               >
                 <i className="fa-solid fa-headset"></i>
@@ -396,6 +491,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               </a>
               <a
                 className={`hr-dropdown-item ${isTabActive('reports-analytics') ? 'active' : ''}`}
+                id="nav-dropdown-reports-analytics"
                 onClick={() => handleNavClick('reports-analytics')}
               >
                 <i className="fa-solid fa-chart-pie"></i>
@@ -406,6 +502,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
               </a>
               <a
                 className={`hr-dropdown-item ${isTabActive('notification-system') ? 'active' : ''}`}
+                id="nav-dropdown-notification-system"
                 onClick={() => handleNavClick('notification-system')}
               >
                 <i className="fa-solid fa-bell"></i>
@@ -421,13 +518,75 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
       <div className="hr-header-right">
         {/* Global Search */}
-        <div className="hr-search">
+        <div className="hr-search" ref={searchContainerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
           <i className="fa-solid fa-search"></i>
           <input
             type="text"
             placeholder="Search staff, cards or codes..."
-            onChange={(e) => onSearch && onSearch(e.target.value)}
+            value={searchQuery}
+            onFocus={() => setShowSearchDropdown(true)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearchQuery(val);
+              setShowSearchDropdown(true);
+              if (onSearch) onSearch(val);
+            }}
+            onKeyDown={handleSearchKeyDown}
           />
+          {showSearchDropdown && filteredSuggestions.length > 0 && (
+            <div
+              className="search-suggestions-dropdown"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                width: '320px',
+                background: 'hsl(var(--bg-card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.25)',
+                zIndex: 99999,
+                overflow: 'hidden',
+                padding: '4px'
+              }}
+            >
+              <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Quick Navigation ({filteredSuggestions.length})
+              </div>
+              {filteredSuggestions.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSelectSuggestion(item.path)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.desc}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
+                    {item.category}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Notifications */}

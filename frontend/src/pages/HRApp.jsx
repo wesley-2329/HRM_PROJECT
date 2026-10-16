@@ -627,13 +627,23 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         }
       });
       showToast('Profile picture uploaded successfully.', 'success');
-      if (res.data?.avatar && uploadTargetEmpId === user?.id && setUser) {
-        setUser(prev => prev ? ({ ...prev, avatar: res.data.avatar }) : prev);
+      const newAvatarUrl = res.data?.avatar || res.data?.profilePicture;
+      if (newAvatarUrl) {
+        setEmployees(prev => prev.map(emp => 
+          (emp.id === uploadTargetEmpId || emp._id === uploadTargetEmpId) 
+            ? { ...emp, avatar: newAvatarUrl, profilePicture: newAvatarUrl, profileImage: newAvatarUrl } 
+            : emp
+        ));
+        if (uploadTargetEmpId === user?.id && setUser) {
+          setUser(prev => prev ? ({ ...prev, avatar: newAvatarUrl, profilePicture: newAvatarUrl, profileImage: newAvatarUrl }) : prev);
+        }
       }
-      fetchEmployees();
+      if (fetchEmployees) fetchEmployees();
       if (uploadTargetEmpId === user?.id && loadUser) {
         await loadUser();
       }
+      window.dispatchEvent(new Event('userProfileUpdated'));
+      window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: newAvatarUrl }));
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || 'Failed to upload profile picture.', 'error');
@@ -1163,7 +1173,17 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             {filteredEmployees.map(emp => (
               <div key={emp.id} className="emp-card">
                 <div style={{ position: 'relative', display: 'inline-block', margin: '0 auto' }}>
-                  <img src={getAvatarUrl(emp)} alt={emp.name} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img 
+                    src={getAvatarUrl(emp)} 
+                    alt={emp.name} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      const gender = (emp?.gender || 'Male').toLowerCase();
+                      const fill = gender === 'female' ? '%23ec4899' : '%233b82f6';
+                      e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${fill}"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg>`;
+                    }}
+                    style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} 
+                  />
                   <button 
                     type="button"
                     onClick={() => triggerAvatarUpload(emp.id)} 
@@ -1793,6 +1813,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                   if (targetEmp) {
                     setSelectedEmpForPayslip(targetEmp);
                     setPayslipActive(true);
+                    showToast(`Payslip generated successfully for ${targetEmp.name} (${payslipMonth})!`, 'success');
                   }
                 }}>
                   <div className="form-group">
@@ -1811,7 +1832,9 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                       <option value="March 2026">March 2026</option>
                     </select>
                   </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Generate Payslip & Review</button>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <i className="fa-solid fa-file-invoice-dollar"></i> Generate Payslip
+                  </button>
                 </form>
               </div>
 
@@ -2628,7 +2651,15 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
                 Configure global settings, define automated payslip cycles, select header highlighting color themes, and update administrative credentials.
               </p>
-              <img src="/secure_vault_illustration.jpg" alt="Security Illustration" className="illustration-card-img" />
+              <img 
+                src="/secure_vault_illustration.jpg" 
+                alt="Security Illustration" 
+                className="illustration-card-img" 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250' fill='%236366f1'><rect width='400' height='250' rx='12' fill='%23f1f5f9'/><circle cx='200' cy='110' r='40' fill='%236366f1' opacity='0.2'/><path d='M200 90 v40 M180 110 h40' stroke='%236366f1' stroke-width='4' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' fill='%23475569' font-size='14' font-family='sans-serif' font-weight='600'>HR O Security Vault</text></svg>";
+                }}
+              />
             </div>
 
             {/* Right Forms Column */}
@@ -2747,7 +2778,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       onClose={() => setPayslipActive(false)}
       employee={selectedEmpForPayslip}
       month={payslipMonth}
-      onPrint={() => { showToast(`Payslip invoice sent to printer!`, 'success'); setPayslipActive(false); }}
+      showToast={showToast}
     />
 
     <AddWalkinModal
