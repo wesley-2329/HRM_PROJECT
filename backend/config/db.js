@@ -57,8 +57,8 @@ const connectDB = async () => {
 
   cachedPromise = mongoose.connect(connUri, {
     maxPoolSize: 10,
-    minPoolSize: 1,
-    maxIdleTimeMS: 10000,
+    minPoolSize: 2,
+    maxIdleTimeMS: 60000,
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 5000,
   });
@@ -75,5 +75,14 @@ const connectDB = async () => {
     return null;
   }
 };
+
+mongoose.connection.on('disconnected', () => {
+  cachedConn = null;
+  cachedPromise = null;
+});
+
+mongoose.connection.on('reconnected', () => {
+  cachedConn = mongoose.connection;
+});
 
 module.exports = connectDB;

@@ -969,6 +969,7 @@ const RecruitmentModule = () => {
                     ...prev,
                     targetHireDate: prev.targetHireDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
                   }));
+                  setShowApprovalModal(false);
                   setShowReqModal(true);
                 }}
               >
@@ -1017,7 +1018,16 @@ const RecruitmentModule = () => {
                           <button 
                             className="btn btn-secondary" 
                             style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                            onClick={() => { setSelectedReqForApproval(reqItem); setShowApprovalModal(true); }}
+                            onClick={() => {
+                              setSelectedReqForApproval(reqItem);
+                              const targetBox = document.getElementById('box-requisition-workflow-timeline');
+                              if (targetBox) {
+                                targetBox.scrollIntoView({ behavior: 'smooth' });
+                              } else {
+                                setShowReqModal(false);
+                                setShowApprovalModal(true);
+                              }
+                            }}
                           >
                             <i className="fa-solid fa-timeline"></i> Workflow
                           </button>
@@ -1042,54 +1052,195 @@ const RecruitmentModule = () => {
             </div>
           </div>
 
-          {/* Dedicated Non-overlapping Requisition Workflow Timeline Panel */}
-          {selectedReqForApproval && !showApprovalModal && (
-            <div className="card requisition-panel-box animate-fade-in-up" style={{ marginTop: '20px', border: '1px solid hsl(var(--border))' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          {/* Bug 022 Fix: Dedicated non-overlapping workspace displaying both "Create Manpower Requisition" box and "Requisition Workflow Timeline" box side-by-side */}
+          <div className="requisition-workspace-grid" id="requisition-workspace-grid" style={{ marginTop: '24px' }}>
+            
+            {/* Box 1: Create Manpower Requisition */}
+            <div className="card requisition-panel-box" id="box-create-manpower-requisition" style={{ border: '1px solid hsl(var(--border))' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px' }}>
                 <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
-                  <i className="fa-solid fa-timeline"></i> Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}
+                  <i className="fa-solid fa-file-signature"></i> Create Manpower Requisition
                 </h4>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => setShowApprovalModal(true)}>
-                    <i className="fa-solid fa-expand"></i> Expand Actions
+                <span className="badge badge-primary">New Headcount</span>
+              </div>
+
+              <form onSubmit={handleCreateRequisition}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                  <div>
+                    <label className="form-label">Job Position Title *</label>
+                    <input 
+                      type="text" 
+                      id="jobPositionTitleInput"
+                      className="form-control" 
+                      value={reqForm.jobTitle} 
+                      onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} 
+                      placeholder="e.g. Lead Backend Engineer"
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Department *</label>
+                    <select className="form-control" value={reqForm.department} onChange={(e) => setReqForm({ ...reqForm, department: e.target.value })}>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Sales & Marketing">Sales & Marketing</option>
+                      <option value="Product Design">Product Design</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Grade Band</label>
+                    <select className="form-control" value={reqForm.grade} onChange={(e) => setReqForm({ ...reqForm, grade: e.target.value })}>
+                      <option value="Grade A">Grade A (Junior)</option>
+                      <option value="Grade B">Grade B (Mid-Level)</option>
+                      <option value="Grade C">Grade C (Senior/Lead)</option>
+                      <option value="Grade D">Grade D (Executive)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Cost Center</label>
+                    <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
+                  </div>
+                  <div>
+                    <label className="form-label">Vacancy Count *</label>
+                    <input type="number" className="form-control" min="1" value={reqForm.vacancyCount} onChange={(e) => setReqForm({ ...reqForm, vacancyCount: Number(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Annual CTC / Position (₹) *</label>
+                    <input type="number" className="form-control" value={reqForm.annualCtcPerPosition} onChange={(e) => setReqForm({ ...reqForm, annualCtcPerPosition: Number(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Target Hire Date *</label>
+                    <input type="date" className="form-control" value={reqForm.targetHireDate} onChange={(e) => setReqForm({ ...reqForm, targetHireDate: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="form-label">Priority Level</label>
+                    <select className="form-control" value={reqForm.priorityLevel} onChange={(e) => setReqForm({ ...reqForm, priorityLevel: e.target.value })}>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label className="form-label">Business Justification</label>
+                    <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={() => setReqForm({
+                      jobTitle: '',
+                      department: 'Engineering',
+                      grade: 'Grade B',
+                      costCenter: 'CC-ENG-101',
+                      vacancyCount: 1,
+                      annualCtcPerPosition: 1200000,
+                      targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                      priorityLevel: 'Medium',
+                      justification: ''
+                    })}
+                  >
+                    Reset Form
                   </button>
-                  <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => setSelectedReqForApproval(null)}>
-                    Dismiss
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    disabled={isSubmitting} 
+                    id="btn-create-manpower-requisition"
+                  >
+                    {isSubmitting ? (
+                      <><i className="fa-solid fa-spinner fa-spin"></i> Submitting...</>
+                    ) : (
+                      <><i className="fa-solid fa-check"></i> Create Manpower Requisition</>
+                    )}
                   </button>
                 </div>
-              </div>
-
-              <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-                  Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                {(selectedReqForApproval.approvals || [
-                  { step: 1, role: 'Reporting Manager', status: 'Approved' },
-                  { step: 2, role: 'HR Verification', status: 'Pending' },
-                  { step: 3, role: 'Finance Verification', status: 'Pending' },
-                  { step: 4, role: 'Management Approval', status: 'Pending' }
-                ]).map((appStep, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
-                    <div style={{
-                      width: '28px', height: '28px', borderRadius: '50%',
-                      background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
-                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem'
-                    }}>
-                      {appStep.step}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appStep.role}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Status: <strong>{appStep.status}</strong></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              </form>
             </div>
-          )}
+
+            {/* Box 2: Requisition Workflow Timeline */}
+            <div className="card requisition-panel-box" id="box-requisition-workflow-timeline" style={{ border: '1px solid hsl(var(--border))' }}>
+              {(() => {
+                const activeTimelineReq = selectedReqForApproval || (filteredRequisitions.length > 0 ? filteredRequisitions[0] : null);
+                return (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
+                        <i className="fa-solid fa-timeline"></i> Requisition Workflow Timeline: {activeTimelineReq ? activeTimelineReq.reqNumber : 'No Requisition Selected'}
+                      </h4>
+                      {activeTimelineReq && (
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '3px 8px', fontSize: '0.75rem' }} 
+                          onClick={() => { setSelectedReqForApproval(activeTimelineReq); setShowApprovalModal(true); }}
+                        >
+                          <i className="fa-solid fa-expand"></i> Expand Actions
+                        </button>
+                      )}
+                    </div>
+
+                    {activeTimelineReq ? (
+                      <>
+                        <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
+                          <h5 style={{ fontWeight: 700, margin: 0 }}>{activeTimelineReq.jobTitle} ({activeTimelineReq.department})</h5>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                            Vacancies: {activeTimelineReq.vacancyCount} | Estimated Budget: ₹{(activeTimelineReq.totalBudgetEstimated || 0).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <h5 style={{ fontWeight: 700, marginBottom: '12px', fontSize: '0.9rem' }}>Multi-Level Approval Workflow Matrix</h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                          {(activeTimelineReq.approvals || [
+                            { step: 1, role: 'Reporting Manager', status: 'Approved' },
+                            { step: 2, role: 'HR Verification', status: 'Pending' },
+                            { step: 3, role: 'Finance Verification', status: 'Pending' },
+                            { step: 4, role: 'Management Approval', status: 'Pending' }
+                          ]).map((appStep, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+                              <div style={{
+                                width: '30px', height: '30px', borderRadius: '50%',
+                                background: appStep.status === 'Approved' ? 'hsl(var(--success))' : appStep.status === 'Rejected' ? 'hsl(var(--danger))' : 'hsl(var(--warning))',
+                                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem'
+                              }}>
+                                {appStep.step}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{appStep.role}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                  Status: <strong>{appStep.status}</strong> {appStep.comments ? `— "${appStep.comments}"` : ''}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: '16px' }}>
+                          <label className="form-label">Approver Comments</label>
+                          <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button type="button" className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
+                          <button type="button" className="btn btn-warning" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
+                          <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleApprovalSubmit('Approve')}>Approve Next Step</button>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        <i className="fa-solid fa-timeline" style={{ fontSize: '2rem', marginBottom: '8px', opacity: 0.5 }}></i>
+                        <p>No requisition records available to display timeline.</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+          </div>
         </div>
       )}
 
@@ -1597,9 +1748,9 @@ const RecruitmentModule = () => {
             )}
           </div>
 
-          <div className="card">
+          <div className="card" id="card-recruitment-cost-tracking">
             <div className="table-responsive">
-              <table className="custom-table">
+              <table className="custom-table" id="table-recruitment-costs">
                 <thead>
                   <tr>
                     <th>Cost ID</th>
@@ -1614,7 +1765,7 @@ const RecruitmentModule = () => {
                 </thead>
                 <tbody>
                   {filteredCosts.map(c => (
-                    <tr key={c._id}>
+                    <tr key={c._id || c.costId} id={`row-cost-${c.costId || c._id}`}>
                       <td><strong>{c.costId}</strong></td>
                       <td><span className="badge badge-info">{c.costCategory}</span></td>
                       <td>{c.vendorName || '--'}</td>
@@ -1787,19 +1938,72 @@ const RecruitmentModule = () => {
       )}
 
       {/* BUG 022 FIX: DUAL NON-OVERLAPPING MODAL CONTAINER OR SINGLE MODAL */}
-      {showReqModal && showApprovalModal && selectedReqForApproval ? (
-        <div className="modal-backdrop active" onClick={() => { setShowReqModal(false); setShowApprovalModal(false); }}>
+      {showReqModal && showApprovalModal && (selectedReqForApproval || filteredRequisitions.length > 0) ? (() => {
+        const activeModalReq = selectedReqForApproval || filteredRequisitions[0];
+        return (
+        <div 
+          className="modal-backdrop active" 
+          onClick={() => { setShowReqModal(false); setShowApprovalModal(false); }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '24px 16px',
+            boxSizing: 'border-box',
+            overflowY: 'auto'
+          }}
+        >
           <div className="dual-modal-wrapper" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-content requisition-panel-box" style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '88vh' }}>
-              <div className="modal-header">
+            <div 
+              className="modal-content requisition-panel-box" 
+              style={{ 
+                margin: 0, 
+                width: '100%', 
+                maxWidth: '100%', 
+                maxHeight: '88vh',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="modal-header" style={{ flexShrink: 0, margin: 0, padding: '16px 20px', borderBottom: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <h4 style={{ margin: 0 }}><i className="fa-solid fa-file-signature"></i> Create Manpower Requisition</h4>
                   <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>Side-by-Side</span>
                 </div>
-                <button className="close-btn" onClick={() => setShowReqModal(false)}>&times;</button>
+                <button className="close-btn" onClick={() => setShowReqModal(false)} aria-label="Close modal">&times;</button>
               </div>
-              <form onSubmit={handleCreateRequisition}>
-                <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <form 
+                onSubmit={handleCreateRequisition}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  margin: 0
+                }}
+              >
+                <div 
+                  className="modal-body" 
+                  style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '14px',
+                    overflowY: 'auto',
+                    flex: 1,
+                    minHeight: 0,
+                    padding: '16px 20px'
+                  }}
+                >
                   <div>
                     <label className="form-label">Job Position Title *</label>
                     <input type="text" className="form-control" value={reqForm.jobTitle} onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} required />
@@ -1853,7 +2057,19 @@ const RecruitmentModule = () => {
                     <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div 
+                  className="modal-footer"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '14px 20px',
+                    borderTop: '1px solid hsl(var(--border))',
+                    flexShrink: 0,
+                    background: 'hsl(var(--bg-card))'
+                  }}
+                >
                   <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={isSubmitting} id="btn-create-manpower-requisition">
                     {isSubmitting ? (
@@ -1866,25 +2082,44 @@ const RecruitmentModule = () => {
               </form>
             </div>
 
-            <div className="modal-content requisition-panel-box" style={{ margin: 0, width: '100%', maxWidth: '100%', maxHeight: '88vh' }}>
-              <div className="modal-header">
+            <div 
+              className="modal-content requisition-panel-box" 
+              style={{ 
+                margin: 0, 
+                width: '100%', 
+                maxWidth: '100%', 
+                maxHeight: '88vh',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="modal-header" style={{ flexShrink: 0, margin: 0, padding: '16px 20px', borderBottom: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <h4 style={{ margin: 0 }}>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
+                  <h4 style={{ margin: 0 }}>Requisition Workflow Timeline: {activeModalReq.reqNumber}</h4>
                   <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>Side-by-Side</span>
                 </div>
-                <button className="close-btn" onClick={() => setShowApprovalModal(false)}>&times;</button>
+                <button className="close-btn" onClick={() => setShowApprovalModal(false)} aria-label="Close modal">&times;</button>
               </div>
-              <div className="modal-body">
+              <div 
+                className="modal-body"
+                style={{
+                  overflowY: 'auto',
+                  flex: 1,
+                  minHeight: 0,
+                  padding: '16px 20px'
+                }}
+              >
                 <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                  <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
+                  <h5 style={{ fontWeight: 700, margin: 0 }}>{activeModalReq.jobTitle} ({activeModalReq.department})</h5>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-                    Vacancies: {selectedReqForApproval.vacancyCount} | Estimated Budget: ₹{(selectedReqForApproval.totalBudgetEstimated || 0).toLocaleString()}
+                    Vacancies: {activeModalReq.vacancyCount} | Estimated Budget: ₹{(activeModalReq.totalBudgetEstimated || 0).toLocaleString()}
                   </p>
                 </div>
 
                 <h5 style={{ fontWeight: 700, marginBottom: '12px' }}>Multi-Level Approval Workflow Matrix</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                  {(selectedReqForApproval.approvals || [
+                  {(activeModalReq.approvals || [
                     { step: 1, role: 'Reporting Manager', status: 'Approved' },
                     { step: 2, role: 'HR Verification', status: 'Pending' },
                     { step: 3, role: 'Finance Verification', status: 'Pending' },
@@ -1913,7 +2148,18 @@ const RecruitmentModule = () => {
                   <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
                 </div>
               </div>
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <div 
+                className="modal-footer" 
+                style={{ 
+                  display: 'flex', 
+                  gap: '8px', 
+                  justifyContent: 'flex-end',
+                  padding: '14px 20px',
+                  borderTop: '1px solid hsl(var(--border))',
+                  flexShrink: 0,
+                  background: 'hsl(var(--bg-card))'
+                }}
+              >
                 <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>Close</button>
                 <button type="button" className="btn btn-danger" onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
                 <button type="button" className="btn btn-warning" onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
@@ -1922,15 +2168,69 @@ const RecruitmentModule = () => {
             </div>
           </div>
         </div>
-      ) : (
+        );
+      })() : (
         <>
           {/* MODAL: CREATE REQUISITION */}
           {showReqModal && (
-            <div className="modal-backdrop active" onClick={() => setShowReqModal(false)}>
-              <div className="modal-content requisition-panel-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-                <div className="modal-header">
+            <div 
+              className="modal-backdrop active" 
+              id="modal-backdrop-create-requisition"
+              onClick={() => setShowReqModal(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 99999,
+                padding: '24px 16px',
+                boxSizing: 'border-box',
+                overflowY: 'auto'
+              }}
+            >
+              <div 
+                className="modal-content requisition-panel-box" 
+                id="modal-box-create-requisition"
+                onClick={(e) => e.stopPropagation()} 
+                style={{
+                  margin: 'auto',
+                  width: '100%',
+                  maxWidth: '680px',
+                  maxHeight: 'min(90vh, 760px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                  transform: 'none',
+                  position: 'relative',
+                  zIndex: 100000,
+                  background: 'hsl(var(--bg-card))',
+                  border: '1px solid hsl(var(--border))'
+                }}
+              >
+                <div 
+                  className="modal-header" 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 24px',
+                    borderBottom: '1px solid hsl(var(--border))',
+                    flexShrink: 0,
+                    margin: 0
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <h4 style={{ margin: 0 }}><i className="fa-solid fa-file-signature"></i> Create Manpower Requisition</h4>
+                    <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
+                      <i className="fa-solid fa-file-signature"></i> Create Manpower Requisition
+                    </h4>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {filteredRequisitions.length > 0 && (
@@ -1943,14 +2243,43 @@ const RecruitmentModule = () => {
                         <i className="fa-solid fa-timeline"></i> Compare Timeline
                       </button>
                     )}
-                    <button className="close-btn" onClick={() => setShowReqModal(false)}>&times;</button>
+                    <button className="close-btn" onClick={() => setShowReqModal(false)} aria-label="Close modal">&times;</button>
                   </div>
                 </div>
-                <form onSubmit={handleCreateRequisition}>
-                  <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <form 
+                  onSubmit={handleCreateRequisition}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    minHeight: 0,
+                    overflow: 'hidden',
+                    margin: 0
+                  }}
+                >
+                  <div 
+                    className="modal-body" 
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      gap: '14px',
+                      overflowY: 'auto',
+                      flex: 1,
+                      minHeight: 0,
+                      padding: '18px 24px'
+                    }}
+                  >
                     <div>
                       <label className="form-label">Job Position Title *</label>
-                      <input type="text" className="form-control" value={reqForm.jobTitle} onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} required />
+                      <input 
+                        type="text" 
+                        id="modalJobPositionTitleInput"
+                        className="form-control" 
+                        value={reqForm.jobTitle} 
+                        onChange={(e) => setReqForm({ ...reqForm, jobTitle: e.target.value })} 
+                        placeholder="e.g. Lead Backend Engineer"
+                        required 
+                      />
                     </div>
                     <div>
                       <label className="form-label">Department *</label>
@@ -1973,7 +2302,7 @@ const RecruitmentModule = () => {
                     </div>
                     <div>
                       <label className="form-label">Cost Center</label>
-                      <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
+                      <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
                     </div>
                     <div>
                       <label className="form-label">Vacancy Count *</label>
@@ -2001,7 +2330,19 @@ const RecruitmentModule = () => {
                       <textarea className="form-control" rows="3" value={reqForm.justification} onChange={(e) => setReqForm({ ...reqForm, justification: e.target.value })} placeholder="State necessity for headcount expansion..." required></textarea>
                     </div>
                   </div>
-                  <div className="modal-footer">
+                  <div 
+                    className="modal-footer"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      borderTop: '1px solid hsl(var(--border))',
+                      flexShrink: 0,
+                      background: 'hsl(var(--bg-card))'
+                    }}
+                  >
                     <button type="button" className="btn btn-secondary" onClick={() => setShowReqModal(false)}>Cancel</button>
                     <button type="submit" className="btn btn-primary" disabled={isSubmitting} id="btn-create-manpower-requisition">
                       {isSubmitting ? (
@@ -2018,10 +2359,59 @@ const RecruitmentModule = () => {
 
           {/* MODAL: WORKFLOW APPROVAL VIEW */}
           {showApprovalModal && selectedReqForApproval && (
-            <div className="modal-backdrop active" onClick={() => setShowApprovalModal(false)}>
-              <div className="modal-content requisition-panel-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-                <div className="modal-header">
-                  <h4>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
+            <div 
+              className="modal-backdrop active" 
+              onClick={() => setShowApprovalModal(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 99999,
+                padding: '24px 16px',
+                boxSizing: 'border-box',
+                overflowY: 'auto'
+              }}
+            >
+              <div 
+                className="modal-content requisition-panel-box" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{ 
+                  margin: 'auto',
+                  width: '100%',
+                  maxWidth: '680px',
+                  maxHeight: 'min(90vh, 760px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                  transform: 'none',
+                  position: 'relative',
+                  zIndex: 100000,
+                  background: 'hsl(var(--bg-card))',
+                  border: '1px solid hsl(var(--border))'
+                }}
+              >
+                <div 
+                  className="modal-header"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 24px',
+                    borderBottom: '1px solid hsl(var(--border))',
+                    flexShrink: 0,
+                    margin: 0
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Requisition Workflow Timeline: {selectedReqForApproval.reqNumber}</h4>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {isAllowed('create_req') && (
                       <button 
@@ -2033,10 +2423,18 @@ const RecruitmentModule = () => {
                         <i className="fa-solid fa-plus"></i> Open Create Panel
                       </button>
                     )}
-                    <button className="close-btn" onClick={() => setShowApprovalModal(false)}>&times;</button>
+                    <button className="close-btn" onClick={() => setShowApprovalModal(false)} aria-label="Close modal">&times;</button>
                   </div>
                 </div>
-                <div className="modal-body">
+                <div 
+                  className="modal-body"
+                  style={{
+                    overflowY: 'auto',
+                    flex: 1,
+                    minHeight: 0,
+                    padding: '18px 24px'
+                  }}
+                >
                   <div style={{ marginBottom: '16px', padding: '12px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
                     <h5 style={{ fontWeight: 700, margin: 0 }}>{selectedReqForApproval.jobTitle} ({selectedReqForApproval.department})</h5>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
@@ -2075,7 +2473,18 @@ const RecruitmentModule = () => {
                     <input type="text" id="approvalCommentsInput" className="form-control" placeholder="Add decision remarks..." />
                   </div>
                 </div>
-                <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <div 
+                  className="modal-footer" 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '8px', 
+                    justifyContent: 'flex-end',
+                    padding: '14px 24px',
+                    borderTop: '1px solid hsl(var(--border))',
+                    flexShrink: 0,
+                    background: 'hsl(var(--bg-card))'
+                  }}
+                >
                   <button type="button" className="btn btn-secondary" onClick={() => setShowApprovalModal(false)}>Close</button>
                   <button type="button" className="btn btn-danger" onClick={() => handleApprovalSubmit('Reject')}>Reject</button>
                   <button type="button" className="btn btn-warning" onClick={() => handleApprovalSubmit('Hold')}>Hold</button>
@@ -2286,14 +2695,88 @@ const RecruitmentModule = () => {
 
       {/* MODAL: RECORD COST ENTRY */}
       {showCostModal && (
-        <div className="modal-backdrop active" onClick={() => setShowCostModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h4>Record Recruitment Expense Entry</h4>
-              <button className="close-btn" onClick={() => setShowCostModal(false)}>&times;</button>
+        <div 
+          className="modal-backdrop active" 
+          id="modal-backdrop-record-cost"
+          onClick={() => setShowCostModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '24px 16px',
+            boxSizing: 'border-box',
+            overflowY: 'auto'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            id="modal-box-record-cost"
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              margin: 'auto',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: 'min(90vh, 650px)',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              transform: 'none',
+              position: 'relative',
+              zIndex: 100000,
+              background: 'hsl(var(--bg-card))',
+              border: '1px solid hsl(var(--border))'
+            }}
+          >
+            <div 
+              className="modal-header"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderBottom: '1px solid hsl(var(--border))',
+                flexShrink: 0,
+                margin: 0
+              }}
+            >
+              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
+                <i className="fa-solid fa-file-invoice-dollar"></i> Record Recruitment Expense Entry
+              </h4>
+              <button className="close-btn" onClick={() => setShowCostModal(false)} aria-label="Close modal">&times;</button>
             </div>
-            <form onSubmit={handleCreateCost}>
-              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form 
+              onSubmit={handleCreateCost}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                minHeight: 0,
+                overflow: 'hidden',
+                margin: 0
+              }}
+            >
+              <div 
+                className="modal-body" 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '12px',
+                  overflowY: 'auto',
+                  flex: 1,
+                  minHeight: 0,
+                  padding: '18px 20px'
+                }}
+              >
                 <div className="form-group">
                   <label className="form-label">Expense Category *</label>
                   <select className="form-control" value={costForm.costCategory} onChange={(e) => setCostForm({ ...costForm, costCategory: e.target.value })}>
@@ -2323,7 +2806,19 @@ const RecruitmentModule = () => {
                   <input type="number" className="form-control" value={costForm.amount} onChange={(e) => setCostForm({ ...costForm, amount: Number(e.target.value) })} required />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div 
+                className="modal-footer"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '14px 20px',
+                  borderTop: '1px solid hsl(var(--border))',
+                  flexShrink: 0,
+                  background: 'hsl(var(--bg-card))'
+                }}
+              >
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCostModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" id="btn-save-cost-entry" disabled={isSubmitting}>
                   {isSubmitting ? (

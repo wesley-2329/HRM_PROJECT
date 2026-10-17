@@ -1,0 +1,3272 @@
+Bug ID
+Title
+Description
+Bug -001
+Credentails already entered 
+The login page should ask for the 
+credentails when the user is from new IP 
+address
+Bug -002
+Secure HR notepad
+Under overview ->secure HR notepad is 
+suppsoed to save the notes which is 
+working right but when the notes are being 
+saved the alert pop up is hidden on the top 
+panel 
+Bug -003
+Confirmation dialog shows 
+"OK/Cancel" instead of "Yes/No" 
+options on delete action
+Under overview -> secure HR notepad 
+,when the saved data is deleted 
+Bug -005
+UI elements on the top panel are 
+overlapping each other
+Login-> Dashboard
+Bug -006
+Aadhar Number field in "Add 
+Employee" allows more than 12 
+characters
+Login-> Expand "workforce -> employee 
+directory "
+Bug- 007
+Phone Number field in "Add 
+Employee" allows more than 10 
+characters
+Login-> Expand "workforce -> employee 
+directory "
+Bug - 008
+No confirmation popup shown after 
+saving employee details in "Add 
+Employee" feature
+Login-> Expand "workforce -> employee 
+directory " -> add employee
+Bug - 009
+Phone number and Aadhar details 
+overflow outside their container 
+under "View Details & Doc section
+Login-> Expand "workforce -> employee 
+directory " -> add employee-> save 
+employee details 
+Bug - 010
+No input fields for Address and 
+Emergency Contact in "Add 
+Employee" form, though they appear 
+in "View Details"
+Login-> Expand "workforce -> employee 
+directory " -> add employee-> save 
+employee details 
+Bug - 011
+Uploaded profile picture not 
+displayed in profile; employee name 
+shown instead
+Login-> Expand "workforce -> employee 
+directory " -> add employee-> save 
+employee details ->core employee grid 
+Bug - 012
+"Duplicate" error thrown while 
+adding a new employee \(even when 
+details are unique\
+Login-> Expand "workforce -> employee 
+directory " -> add employee-> save 
+employee details
+Bug - 013
+Adding a company with "Inactive" 
+status fails with an error; retry shows 
+duplicate error instead of saving
+Login -> workforce->org setup->company 
+hierachy->company profile->register 
+compnay 
+Bug- 014 
+Adding a Business unit with "Inactive" 
+status fails with an error; retry shows 
+duplicate error instead of saving
+Login -> workforce->org setup->company 
+hierachy->Business unit  profile->add 
+Business unit 
+Bug- 015
+Adding a cost centers  with "Inactive" 
+status fails with an error; retry shows 
+duplicate error instead of saving
+Login -> workforce->org setup->company 
+hierachy->cost centers ->add cost centers 
+Bug -016 
+Adding a departments   with 
+"Inactive" status fails with an error; 
+retry shows duplicate error instead of 
+saving
+Login -> workforce->org setup-
+>department structure -> department 
+Bug -017
+Confirmation popup not clearly 
+visible and PDF download fails on 
+"Generate Payslip" action
+When the user clicks the "Generate 
+Payslip" button, the system is expected to 
+show a clear confirmation popup indicating 
+the payslip was generated successfully, and 
+allow the user to download the payslip as a 
+PDF. Currently, the confirmation popup 
+does not display clearly \(e.g., appears cut 
+off, overlapping, too brief, or not visibly 
+rendered\and the "Download PDF" action 
+
+download, downloads as corrupted/empty, 
+or the download action produces no 
+response.
+Bug 018
+Unable to upload document under 
+"Confidential Document Vault
+When the user attempts to upload a 
+document to the Confidential Document 
+Vault section, the upload action fails to 
+complete. The document either does not 
+upload at all, gets stuck in a 
+loading/processing state indefinitely, or 
+returns an error without a clear 
+explanation, preventing the user from 
+securely storing confidential files
+Bug 018
+Download version undefined" error 
+when downloading a file from 
+Employee Vault
+When a user attempts to download a file 
+stored in the Employee Vault, the system 
+throws an error referencing an undefined 
+version \(e.g., "download version 
+undefined"\stead of successfully 
+downloading the file. This suggests the 
+file's version metadata is not being 
+correctly passed, fetched, or resolved by 
+the application when the download 
+request is triggered, causing the download 
+to fail.
+Bug 019
+Run Expiry Scan" confirmation popup 
+not visible on first click; requires 
+multiple clicks, causing popups to 
+stack and appear one by one
+When the user clicks the 
+"Run Expiry Scan" 
+button, the confirmation popup does not 
+appear visibly on the first click. The user 
+
+after which the popups appear one after 
+another \(stacked/queued\instead of a 
+single confirmation popup appearing 
+immediately after the first click. This 
+indicates the popup may be rendering 
+behind other elements, failing to trigger on 
+click, or multiple click events are being 
+queued and rendered sequentially rather 
+than being debounced or deduplicated.
+Bug 020
+Current Role" RBAC view filter not 
+working under Enterprise 
+Recruitment & Onboarding module
+Under the 
+Enterprise Recruitment & 
+Onboarding
+ module, the Role-Based 
+Access Control \(RBAC\ filter for 
+"Current 
+Role"
+ is not functioning as expected. When 
+a user applies or selects this filter, the 
+displayed data/view does not update or 
+restrict based on the selected role, 
+meaning users may see data/options that 
+should be filtered according to role-based 
+permissions, or the filter has no visible 
+effect on the view at all.
+Bug 021
+Create Manpower Requisition" 
+
+attempts\o create the table with 
+entered details
+When the user clicks the 
+"Create 
+Manpower Requisition"
+ button after 
+entering the required details, the table 
+with the entered data does not get created 
+on the first click. The user has to click the 
+
+table finally renders with the correct 
+details. This suggests the button click event 
+is either not registering properly on the 
+first attempt, the form submission/API call 
+is failing silently, or there's a delay/race 
+condition where the table render is not 
+synced with the actual data creation 
+response.
+Bug 022
+Create Manpower Requisition" box 
+overlapping/colliding with 
+"Requisition Workflow Timeline" box
+On the Manpower Requisition screen, the 
+"Create Manpower Requisition" 
+box/section is visually colliding 
+\(overlapping\ith the 
+"Requisition 
+Workflow Timeline"
+ box. This layout/UI 
+issue causes both sections to be partially or 
+fully obscured, making it difficult for the 
+user to read content or interact with 
+elements in either section
+Bug 023
+Duplicate entries being recorded in 
+the Manpower Requisitions Hub table
+The 
+Manpower Requisitions Hub
+ table is 
+recording duplicate entries for the same 
+requisition. Instead of a single record being 
+created per requisition submission, 
+multiple identical \(or near-identical\ows 
+appear in the table, leading to data 
+redundancy and potential confusion during 
+tracking, reporting, or approval workflows.
+Bug 024
+Data entered in "Vacancy Budget 
+Approval & Cost Center Allocation" 
+not saving to the table on first 
+attempt
+When a user enters data into the 
+Vacancy 
+Budget Approval & Cost Center Allocation 
+section and attempts to save it, the data 
+does not get saved/recorded in the table 
+on the first attempt. This suggests the save 
+action may be failing silently, not triggering 
+the correct API call on the first try, or 
+there's a timing/sync issue between the 
+
+consistent with a pattern of similar "first-
+click fails" issues seen elsewhere in the 
+application.
+Bug 025
+Error analyzing resume" thrown in 
+Resume Parser and JD Matching 
+
+ATS
+Under 
+
+
+, when 
+a user attempts to analyze/parse a resume 
+against a job description \(JD\the system 
+throws an 
+"Error analyzing resume" 
+message instead of successfully parsing the 
+resume and returning the JD match results. 
+This prevents recruiters from using the 
+automated resume screening/matching 
+functionality.
+Bug 026
+Recorded expense entry not saving to 
+the table on first attempt under Cost 
+Tracking & Cost-Per-Hire Calculator
+Under 
+
+
+Hire Calculator
+, when a user enters and 
+records an expense entry, the data does 
+not get saved to the table on the first 
+attempt. This is consistent with a recurring 
+"first attempt fails" pattern observed 
+across multiple modules in the application, 
+suggesting a possible shared root cause in 
+how save/submit actions are handled
+Bug 027
+Misaligned table layout in 
+"Configurable Rating Scales and 
+Performance Template Breakdown" 
+under Appraisal, Increments & PIP 
+Lifecycle
+Under 
+
+
+Lifecycle
+, the 
+"Configurable Rating Scales 
+and Performance Template Breakdown" 
+table has layout/alignment issues. The data 
+within the table is not properly placed 
+
+content appears misaligned, shifted, or 
+inconsistent with the table headers, 
+making the information difficult to read 
+and interpret accurately.
+Bug 028
+Assign Employee Goal" under KRAs, 
+KPIs & Goal Setting Hub saves only 
+
+duplicate values
+Under 
+
+
+Hub
+, when a user attempts to assign an 
+employee goal, the save action does not 
+
+attempts for the goal to actually save, and 
+as a result, 
+duplicate goal entries
+ get 
+created/recorded instead of a single clean 
+
+attempt save failure" pattern observed 
+across multiple other modules in the 
+application.
+Bug 029
+Recommend Promotion" button not 
+saving data to the table on first click
+Under 
+
+Appraisal
+, when a user clicks the 
+"Recommend Promotion"
+ button after 
+entering the relevant details, the data is 
+not saved/added to the table on the first 
+attempt. The entry only appears after 
+repeated clicks, consistent with the 
+recurring "first-click save failure" pattern 
+already observed across multiple other 
+modules in the application.
+Bug 030
+Recommend Increment" button only 
+saves the first record; entering a 
+second record deletes/overwrites the 
+first without saving the new one
+Under 
+
+
+& Payroll Integration
+, the 
+"Recommend 
+Increment"
+ action only successfully saves 
+the 
+first
+ record entered. When the user 
+attempts to enter and save a 
+second 
+increment recommendation, the previously 
+saved first entry gets deleted/removed, 
+and the new \(second\ry is also not 
+
+no valid records 
+remaining in the table after the second 
+attempt. This indicates the form/table 
+state may not be correctly resetting or 
+appending new records, and may instead 
+be overwriting or clearing existing data 
+instead of adding to it.
+Bug 031
+Duplicate records being saved for 
+"Recommend Promotion" action
+Following up on the previously reported 
+issue where the 
+"Recommend Promotion" 
+button does not save data on the first click 
+
+repeated click attempts result in 
+duplicate 
+promotion recommendation records
+ being 
+saved to the table. Instead of a single entry 
+per recommendation, multiple identical \(or 
+near-identical\ows are created, leading to 
+data redundancy in a critical HR/appraisal 
+process.
+Bug 032
+Same data-loss bug in Performance 
+
+saving a second record deletes the 
+first without saving the new one
+Under 
+
+
+Plan \(PIP\fecycle
+, the same behavior 
+reported in "Increment Recommendations 
+& Payroll Integration" is occurring here. 
+Only the 
+first
+ PIP record entered gets saved 
+successfully. When the user attempts to 
+add a 
+second
+ PIP record, the previously 
+saved first entry gets deleted/removed 
+from the table, and the new \(second\ry 
+
+no valid records after the second attempt.
+Bug 033
+Font colors in Dashboard Overview 
+are not legible/clear
+On the 
+Dashboard Overview
+ screen, the 
+font colors used for text/data display are 
+not clearly legible. This may be due to low 
+contrast between the text color and 
+background color, overly light/faded font 
+shades, or color combinations that make it 
+difficult for users to read key information 
+
+and accessibility of the dashboard.
+Bug 034
+Support & Reports" navigation tab 
+overlapping with search bar in top 
+navigation
+In the top navigation bar, the 
+"Support & 
+Reports"
+ menu item is visually 
+colliding/overlapping with the 
+search bar 
+\(placeholder text appears to read 
+something like "...ards or cod..." based on 
+the visible fragment\Both elements are 
+rendering on top of each other in the same 
+space, making the tab label and the search 
+box placeholder text unreadable and the 
+search bar unusable/inaccessible.
+Bug 035
+Open New Ticket" feature not 
+working under IT & HR Helpdesk 
+Support Desk
+Under the 
+
+section, the 
+"Open New Ticket"
+ feature is 
+not functioning as expected. When a user 
+attempts to raise a new support ticket, the 
+
+either not created, the form doesn't 
+submit, or no confirmation/ticket ID is 
+generated, preventing users from logging IT 
+or HR support requests.
+Bug 036
+Dropdown options in "Request 
+Welfare Support" form not visible 
+until selected
+In the 
+"Request Welfare Support"
+ popup 
+\(under Welfare Support\ the 
+"Welfare 
+Type"
+ dropdown does not display its list of 
+options when clicked/opened. The 
+dropdown appears to expand \(or show a 
+highlighted state\but no visible option list 
+
+user seems to only get a value populated 
+\(e.g., "Education Support"\fter already 
+selecting it, without being able to see the 
+available options during selection. This 
+suggests the dropdown's option list may be 
+rendering with incorrect visibility/z-index, 
+transparent/matching background color, or 
+not rendering at all until an option is 
+somehow chosen.
+Bug 037
+Export downloads \(CSV/PDF/XLSX\ 
+not working under "HR Budget & 
+Financial Reports Export
+Under the 
+HR Budget & Financial Reports 
+Export
+ section, clicking the export buttons 
+\(e.g., "Export \(PDF/XLSX\, "Export \(XLSX\, 
+
+Annual HR Budget Report, Budget Variance 
+& Forecast, Recruitment Cost ROI Report, 
+Welfare Expenditure Register, and 
+
+not successfully download the file. The 
+download either does not initiate, fails 
+silently, or produces an empty/corrupted 
+file, preventing users from exporting HR 
+budget and financial reports
+Bug -039
+View" button not functioning for 
+Challan Receipt documents under 
+Statutory Compliance Document 
+Vault
+Under the 
+Statutory Compliance 
+Document Vault
+, clicking the 
+"View" 
+button on Challan Receipt documents \(e.g., 
+"PF ECR Payment Receipt Jul 2026"\oes 
+
+either nothing happens on click, a blank 
+page/viewer appears, or an error is thrown, 
+preventing users from viewing the 
+uploaded compliance document.
+fix both of them and check whther its closed
+Raw JSON data dumped unformatted 
+in "Details" column of Immutable 
+Statutory Audit Logs Logs table, 
+causing horizontal overflow
+In the 
+Immutable Statutory Audit Logs 
+table \(under Finance & Exit or Budget 
+module\the last column displays the 
+raw, 
+unformatted JSON object
+ for each audit 
+entry instead of a human-readable 
+summary of the change/details. This causes 
+the table to overflow significantly beyond 
+the visible screen width, forcing users to 
+scroll horizontally to read a wall of 
+unstructured JSON text. Additionally, the 
+table title itself appears clipped at the left 
+edge \(showing "...mmutable Budget Audit 
+Logs..." instead of "Immutable Budget 
+Audit Logs..."\and the "Audit ID" column 
+values also appear truncated/cut off on the 
+left.
+Bug -041
+Duplicate records being created 
+under Automated Full & Final \(F&F\
+Settlement Register
+Under the 
+Automated Full & Final \(F&F\
+Settlement Register
+, duplicate entries are 
+being created for the same employee 
+settlement. Instead of a single record being 
+generated per F&F settlement processed, 
+multiple identical \(or near-identical\ows 
+appear in the register, leading to data 
+
+recurring "duplicate record on 
+save/submit" pattern already observed 
+across several other modules in the 
+application.
+Bug -042
+Download NDC PDF" and "Generate" 
+\(Exit Letters\uttons show success 
+popup but no actual document is 
+produced
+Under 
+No Due Certificate \(NDC\
+Generation
+ and 
+Official Exit Letters 
+Generator
+, clicking 
+"Download Official 
+NDC PDF"
+ or any of the 
+"Generate" 
+buttons \(Relieving Letter, Experience 
+Certificate, Full & Final Statement\triggers 
+a success/confirmation popup, but no 
+actual file is downloaded or generated. The 
+UI falsely indicates success while failing to 
+deliver the underlying document, 
+misleading users into believing the action 
+completed correctly
+Bug -043
+
+navigation/UI elements overlapping 
+and misaligned in print preview
+When printing the 
+HR Observations 
+Compliance Reports
+ \(via "Print Report 
+Sheet"\the print preview/output does not 
+render a clean, report-only layout. Instead, 
+it includes leftover application UI elements 
+
+menu items like "Talent & Growth," 
+"Finance," "Governance," and the search 
+bar\tab bars \(Observation Dashboard, 
+Create Observation, etc.\and page chrome 
+
+other. This indicates the print stylesheet is 
+not properly hiding non-report UI elements 
+or restructuring the layout for print, 
+resulting in a cluttered, unprofessional 
+printed/exported output
+Bug -044
+Download Report" button not 
+functioning under Internal Regulatory 
+Audit Archives \(Governance module\
+Under 
+
+Audit Archives
+, clicking the 
+"Download 
+Report"
+ button on any of the listed audit 
+documents \(e.g., 
+"Q1_Statutory_Compliance_Report_2026.p
+df," 
+"ISO_27001_Compliance_Statement_2026.
+pdf," 
+"POSH_Annual_Compliance_Audit_2026.p
+df"\oes not download the file. No file is 
+saved to the user's device, and no visible 
+error message is shown to indicate the 
+failure.
+Bug -045
+i" icon dropdown menu \(Support 
+Tickets / Reports & Audits / Alert 
+Center\ closes before it can be clicked
+Hovering over the 
+"i" \(info\icon
+ in the top 
+navigation bar triggers a dropdown menu 
+
+Support Tickets
+, 
+Reports & Audits
+, and 
+Alert Center
+. 
+However, the menu is not 
+
+cursor moves from the icon toward the 
+dropdown options to select one, the menu 
+closes/vanishes before the user can click 
+any item, making the entire menu 
+unusable.
+Employee portal
+Bug -046
+Initiate PIP" form and "Periodic 
+PIP Review Log" panel 
+colliding/overlapping on screen
+Under 
+
+Lifecycle Engine
+, the 
+"Initiate PIP" 
+form \(with fields like Performance Gap 
+Identified, Expected Performance 
+Target, Cancel/Initiate PIP buttons\and 
+the 
+"Periodic PIP Review Log: PIP-
+2026-0002"
+ panel \(with Progress 
+Rating, PIP Outcome Status, etc.\
+both rendering stacked directly on top 
+of/immediately below each other 
+without proper spacing or separation, 
+making the page look cluttered and 
+causing visual collision between two 
+distinct, unrelated forms/panels on the 
+same view.
+Bug -047
+Font legibility issue in Light 
+
+contrast under Module 8: Training 
+& Competency Evaluation 
+dashboard
+Under 
+
+
+Overview
+, when viewed in 
+Light 
+Theme
+, several text elements are 
+rendering with low contrast against 
+their backgrounds, making them hard 
+to read. This includes the module title 
+\("Module 8: Training & Competency 
+Evaluation"\its description text, and 
+the stat card labels/numbers \(e.g., 
+"SCHEDULED PROGRAMS," "TNA 
+REQUESTS," "ISSUED CERTIFICATES," 
+"SKILL GAP CLOSURE" and their sub-
+labels like "0 Completed this month," 
+"0 HR Approved," "Avg Score: 86.2%," 
+"Budget Utilization: 74.5%"\he text 
+appears faded/washed out rather than 
+clearly legible dark text on the light 
+background.
+Bug -048
+"Enroll Now" button fails with 400 
+Bad Request on Training Program 
+enrollment
+Clicking the "Enroll Now" button on a 
+training program card \(under Growth 
+
+enroll the user. The API call to the 
+enroll endpoint returns a 400 Bad 
+Request error, and enrollment is not 
+completed. This occurs on multiple 
+training program records \(TRN-1001, 
+TRN-1002\suggesting a systemic issue 
+rather than one bad record.
+Bug -049
+UI alignment/spacing issue in 
+"Request Position Approval" 
+modal form fields
+On the "Request Position Approval" 
+modal \(Governance/Operations 
+module\the form fields are not 
+properly aligned within the two-
+column grid layout. Input boxes and 
+labels across rows \(Position 
+Title/Department, Designation/Grade 
+Band, Current Headcount/Proposed 
+Headcount\ appear cramped or 
+misaligned, giving a visually 
+inconsistent/colliding appearance 
+instead of clean, evenly-spaced grid 
+alignment. This is a cosmetic/UI issue 
+and does not affect functionality.
+Bug -050
+Resume parsing fails with 500 
+Internal Server Error on "Parse 
+Resume & Calculate Score
+When a user uploads a resume file and 
+clicks "Parse Resume & Calculate 
+
+Recruitment module\the 
+parsing/analysis fails. The API call to 
+upload the resume returns a 500 
+Internal Server Error, so the resume is 
+not parsed and no score is calculated.
+Bug -051
+View" action on Budget Planning 
+Register does not open/display 
+budget details
+In the "Annual HR Budget Planning 
+
+Budget Planning\clicking the "View" 
+action link/icon against any budget row 
+does not display any details, modal, or 
+navigation to a detail view. No visible 
+response occurs on click.
+Bug -052
+Notifications API times out 
+\(8000ms exceeded\r 
+triggering "Transfer" on Budget 
+Allocation, with UI thread 
+violations
+When a user clicks "Transfer" on a 
+budget allocation row \(Finance & Exit 
+
+action itself completes successfully 
+\(confirmed by the "Transfer allocation 
+request initiated" toast\However, the 
+console immediately logs an AxiosError 
+indicating the notifications API call 
+timed out after 8000ms. Additionally, 
+multiple [Violation] 'message' handler 
+took Nms warnings appear \(up to 
+1926ms\indicating the main thread is 
+being blocked for unusually long 
+periods around this action.
+Bug -053
+Raw/unformatted JSON payload 
+displayed in Audit Logs table 
+instead of readable data
+In the "Immutable Budget Audit Logs & 
+Revision Timeline" table \(Finance & 
+
+column for CREATE_BUDGET actions 
+renders the raw, unparsed JSON object 
+\(e.g., {"budgetId":"BDG-
+1790683637521","financialYear":"FY 
+2026-2027",...}\directly in the UI 
+instead of formatting it into readable 
+labels/values. This makes the audit log 
+difficult to read for end users and 
+exposes internal field names/data 
+structure directly in the UI.
+Bug -054
+Welfare Budget" and "Welfare 
+Expense" tabs display the same 
+table with no distinguishable data
+
+& Cost Analytics, the "Welfare Budget" 
+and "Welfare Expense" tabs appear to 
+render identical content \("Employee 
+Welfare Expenditures & Vendor 
+Invoices" table with Expense ID, 
+Activity, Category, Vendor, Date, 
+Beneficiaries, Total Amount, Status 
+columns\here is no visible 
+differentiation between budgeted 
+welfare allocation \(which should show 
+planned/proposed amounts\ and 
+actual welfare expenses \(which should 
+show incurred/logged spend\
+Bug -055
+Welfare Budget module APIs 
+return 401 Unauthorized, falling 
+back to stateful/cached data
+Multiple API calls related to the 
+Welfare Budget module fail with 401 
+\(Unauthorized\uding POST 
+/api/budget/welfare-expense, GET 
+/api/budget/welfare  and GET 
+/api/policies/employee-status. The 
+console shows the app silently falling 
+back to a "stateful fallback for budget 
+module" when the real API call fails, 
+meaning the data shown on screen 
+may not reflect live/accurate backend 
+data. This could explain why Welfare 
+Budget and Welfare Expense appear 
+identical  the UI may be displaying 
+stale fallback/mock data rather than 
+real API responses.
+Bug -056
+	"Submit Ticket" button fails with 
+"e.preventDefault is not a function" 
+JavaScript error
+When submitting the "Raise a Ticket" / HR 
+Query form \(accessible from the Employee 
+Profile page\, clicking "Submit Ticket" 
+throws an uncaught JavaScript error in the 
+console: TypeError: e.preventDefault is not 
+a function. The form submission does not 
+complete, and the ticket is not created.
+Bug -057
+Personal Details form fails to save 
+
+function" error; fields reset with 
+no success/error message
+On the Employee Profile page, when a 
+user fills in Personal Details fields 
+\(Street/Area, City, State, PIN Code, 
+Emergency Contact, etc.\and clicks 
+"Save Changes," the same uncaught 
+JavaScript error seen in  \(TypeError: 
+e.preventDefault is not a function \ is 
+thrown. As a result, none of the 
+entered data is saved/persisted, all 
+entered field values disappear/reset, 
+and no success or error message is 
+displayed to the user, leaving them 
+unaware that the save failed.
+Bug -058
+"Upload Profile Picture" fails with 
+request timeout, shows generic error 
+message
+On the Employee Profile page, clicking 
+"Upload Profile Picture" and attempting to 
+upload an image fails. The UI displays a 
+generic "Failed to upload profile picture" 
+error toast, while the console shows an 
+AxiosError: timeout of 8000ms exceeded 
+indicating the upload request is not 
+completing within the configured timeout 
+window.
+Bug -059
+"Update Password" fails with 
+"User not found" error
+On the Employee Profile page, clicking 
+"Update Password" fails and returns a 
+"User not found" error, even though 
+the user is actively logged in and 
+viewing their own profile \(Aditya, EMP-
+0002\he password is not updated.
+Bug -060
+Column misalignment in "Multi-
+Department No Due Clearance 
+Tasks" table
+On the Exit Workflow & Full & Final 
+\(F&F\e, under the "Department 
+Clearances" tab, the "Multi-
+Department No Due Clearance Tasks" 
+table has inconsistent column 
+alignment. Data values in rows do not 
+line up cleanly under their respective 
+column headers \(e.g., Clearance 
+Department, Approver Name, Action 
+Date, Remarks/Handover Notes\
+making the table harder to scan and 
+read accurately.
+Bug -061
+	"View Course" button on Training 
+Reminders card does not function
+On the Employee Dashboard, under 
+the "Training Reminders" section, 
+clicking the "View Course" button for 
+an assigned training \(e.g., "Secure 
+Coding & Manifest V3 Guidelines"\
+
+user is not navigated to the course 
+content or training module.
+Bug -062
+
+"Timesheet validation failed: Cast 
+to date failed for value" error
+On the Attendance page \(Operations 
+
+Clock malfunctions. The UI displays a 
+persistent error banner:Timesheet 
+validation failed: clockIn: Cast to date 
+failed for value "00:47" \(type string\at 
+path "clockIn"
+Bug -063
+Top navigation bar arrows \(< >\
+do not scroll the menu when 
+clicked
+The left and right arrow buttons next 
+to the HR O logo in the top navigation 
+bar are meant to scroll the menu 
+horizontally. Clicking the right arrow 
+\(>\does not move the nav bar, so 
+menu items hidden beyond the visible 
+area \(e.g., the truncated item after 
+"Finance & Exit"\cannot be reached 
+with the arrows.
+Bug -064
+Dropdown of the last \(truncated\
+nav menu closes when clicking its 
+options \(Tasks, Meetings, Daily 
+Reports, Helpdesk Support\
+The last top-navigation item after 
+"Finance & Exit" is partly cut off, with 
+
+Opening it shows a dropdown with 
+Tasks, Meetings, Daily Reports and 
+Helpdesk Support. When the user 
+moves the cursor onto an option to 
+click it, the dropdown disappears, so 
+none of the options can be selected. 
+The dropdown also renders far from its 
+trigger, below the search bar on the 
+right, rather than directly under the 
+menu item. 
+Bug -065
+Database Disconnected, Showing 
+
+frequently on the Employee 
+Dashboard
+While using the HR O Employee Portal, 
+an orange banner intermittently 
+appears at the top of the page reading 
+
+
+Bug -066
+
+of the punch-in time; Shift Timer 
+displays an implausible elapsed 
+time
+On the Attendance Punch Clock 
+
+
+
+actual punch-in time. The Shift Timer 
+displays 330:33:23, which is not a valid 
+shift duration. The widget is not 
+reading or displaying the stored clock-
+in timestamp.
+Bug -067
+
+
+results or suggestions
+The global search bar in the top 
+navigation is meant to help users find 
+features and tools. When a term such 
+
+
+
+is not taken to any page. The search is 
+effectively non-functional.
+Bug -068
+
+broken on the Security & Config 
+page
+On the Employee Settings page 
+\(Security & Config\the illustration 
+under the description text fails to load. 
+A broken image icon with the alt text 
+
+of the graphic. The page looks 
+unfinished and leaves a gap in the 
+layout.
+Bug -069
+
+Register still does not open 
+budget details \(retest failed\
+
+
+
+
+budget row produces no modal, 
+drawer, or page navigation. The issue 
+was reported on 29-Sep and persists 
+on 14-Oct.
+Bug -070
+
+blank page with no tables or 
+charts
+In HR Budgeting & Cost Analytics, 
+
+highlights the tab but renders no 
+content. There are no tables, charts, 
+loading indicator, empty-state 
+message or error message, so the user 
+cannot tell whether data is missing or 
+the page failed to load.
+Bug -071
+
+a blank page with no tables or 
+charts
+
+in HR Budgeting & Cost Analytics 
+renders no tables, charts or messages. 
+The behavior matches the Cost 
+Analytics tab
+Bug -072
+
+modal has excessive empty space 
+above and below, and is not 
+properly centered
+In the Enterprise Recruitment & 
+
+
+large blank area at the top of the 
+overlay. The modal sits low on the 
+screen and its content is pushed partly 
+out of view. Extra space is also 
+reported at the bottom. The modal 
+looks mispositioned and the form is 
+hard to use without scrolling.
+Bug -073
+Duplicate module and table 
+rendered on Recruitment ATS 
+after recording a new expense 
+entry
+
+recording a new expense entry creates 
+
+Cost Tracking & Cost-Per-Hire 
+
+
+
+twice, which suggests the entire 
+module is rendered a second time 
+instead of the existing table updating.
+Steps to Reproduce
+Expected Result
+Actual Result
+1. Launching the URL
+2. Entering the credentails 
+3. Click Login
+Everytime a new user tries to 
+logs in the credential text box  
+should be empty 
+When a new user lanuched the 
+URL and tries to create a new 
+user ,can see credentials 
+already been entered there 
+1.Login with credentails 
+2. Click overview on the top left corner
+3. scroll down and click on secure HR notepad 
+4.Type title note and Confidential notes 
+5.Select "General" under the dropdown 
+6. Click save 
+Everytime when a new data is 
+saved the alert pop up should 
+be visible
+When a new data is saved the 
+alert pop up hides under the 
+top panel
+1.Login with credentails 
+2. Click overview on the top left corner
+3. scroll down and click on secure HR notepad 
+4.Type title note and Confidential notes 
+5.Select "General" under the dropdown 
+6. Click save 
+7.Delete the saved data
+The confirmation popup should 
+display the message "Are you 
+sure you want to delete?" with 
+two options: 
+"Yes"
+ and 
+"No"
+The confirmation popup 
+displays the message "Are you 
+sure you want to delete?" but 
+the button options are 
+"OK" 
+and 
+"Cancel"
+ instead of "Yes" 
+and "No"
+All options on the top panel 
+should be displayed with proper 
+spacing/alignment, with no 
+overlapping elements, ensuring 
+each option is clearly visible and 
+clickable
+The options on the top panel 
+appear overlapped on top of 
+each other, making it difficult to 
+identify or click individual items
+1.Log in with credentials
+2.Expand workforce-> employee directory
+3.Navigate to the "Add Employee" screen
+4. Go to the Aadhar Number field
+ 5.Enter more than 12 digits/characters
+6.observe that it allows more than 12 
+characters without restriction
+The Aadhar Number field should 
+restrict input to exactly 12 digits 
+and should not allow entry of 
+more than 12 characters. It 
+should also ideally validate that 
+only numeric values are 
+accepted.
+The Aadhar Number field allows 
+entry of more than 12 
+characters, with no validation or 
+character limit enforced.
+1.Log in with credentials
+2.Expand workforce-> employee directory
+3.Navigate to the "Add Employee" screen
+4. Go to the phone Number field
+ 5.Enter more than 10 digits/characters
+6.observe that it allows more than 10 
+characters without restriction
+The Phone Number field should 
+restrict input to exactly 10 digits 
+and should not allow entry of 
+more than 10 characters. It 
+should also ideally validate that 
+only numeric values are 
+accepted.
+The phoneNumber field allows 
+entry of more than 10 
+characters, with no validation or 
+character limit enforced.
+1.Log in to the application
+2.Observe the top panel/header section 
+3.Notice that the options/icons/menu items 
+are overlapping one another instead of being 
+properly spaced
+1.Log in with credentials
+2.Expand workforce-> employee directory
+3.Navigate to the "Add Employee" screen
+4.Fill in all required employee details
+ 5.Click the "Save" button
+6.Observe the screen after saving
+After successfully saving the 
+employee details, a 
+confirmation popup/message 
+\(e.g., "Employee details saved 
+successfully"\hould be 
+displayed to the user.
+No confirmation popup or 
+success message is displayed 
+after saving the employee 
+details, leaving the user unsure 
+whether the data was saved 
+successfully.
+1.Log in to the application
+2.Add a new employee with phone number 
+and Aadhar details
+Navigate to "View Details" for that employee
+3.Go to the Documents section
+4.Observe the display of Phone Number and 
+Aadhar details
+Phone number and Aadhar 
+details should be displayed 
+neatly within their designated 
+container/box, with proper 
+alignment, padding, and text 
+wrapping
+The Phone number and Aadhar 
+details overflow outside their 
+container/box, making the UI 
+look untidy and unprofessional
+1.Log in to the application
+2.Add a new employee 
+Navigate to "View Details" for that employee
+3.Go to the Documents section
+4.Observe the display of address and 
+emergency contact
+The "Add Employee" form 
+should include input fields for 
+"Address" and "Emergency 
+Contact" so that users can enter 
+this data at the time of 
+employee creation, consistent 
+with what is displayed in "View 
+Details".
+The "Add Employee" form does 
+not have fields to enter Address 
+and Emergency Contact details, 
+but these fields/sections are 
+shown \(empty or with 
+placeholder\ "View Details", 
+creating an inconsistency 
+between data entry and data 
+display screens.
+1.Log in to the application
+2.Add a new employee
+3.Navigate to "Core employees grid" for that 
+employee
+4.Click on the camera image and add a profile 
+picture 
+The uploaded profile picture 
+should be displayed in the 
+employee's profile picture 
+placeholder.
+Instead of displaying the 
+uploaded profile picture, the 
+profile picture section shows 
+the employee's name \(likely as 
+initials/text placeholder\even 
+though a picture was 
+successfully uploaded.
+1.Log in to the application
+2.Add a new employee by filling all the details 
+unique
+3.click on save employee detail
+The employee should be added 
+successfully without any error, 
+provided all entered details 
+\(e.g., Employee ID, Aadhar 
+Number, Phone Number, Email\
+are unique and not already 
+existing in the system.
+A "Duplicate" error is displayed, 
+preventing the employee from 
+being added, even though the 
+entered details appear to be 
+unique/new
+1.Log in to the application
+2.Navigate to workforce->org setup-
+>company hierachy->company profile
+3.Fill in company details and set Status as 
+"Inactive"
+4.Click "Save"
+5.Observe the error shown
+6.Attempt to save the same details again
+Observe the second error message
+The company details should be 
+saved successfully with 
+"Inactive" status selected, 
+without any errors.
+On the first attempt, the details 
+are not saved and an error 
+code/message is displayed: 
+Error code 
+On the second attempt \(retry\a 
+different message is shown: 
+Company details getting saved
+1.Log in to the application
+2.Navigate to workforce->org setup-
+>company hierachy-> Business unit 
+3.Fill in business unit details  and set Status as 
+"Inactive"
+4.Click "Save"
+5.Observe the error shown
+6.Attempt to save the same details again
+Observe the second error message
+The business unit details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+The business unit details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+On the second attempt \(retry\a 
+different message is shown: 
+Company details getting saved
+1.Log in to the application
+2.Navigate to workforce->org setup-
+>company hierachy-> Cost centers 
+3.Fill in cost centre details  and set Status as 
+"Inactive"
+4.Click "Save"
+5.Observe the error shown
+6.Attempt to save the same details again
+Observe the second error message
+The business unit details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+The business unit details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+On the second attempt \(retry\a 
+different message is shown: 
+Company details getting saved
+1.Log in to the application
+2.Navigate to workforce->org setup-
+>department structures -> department 
+3.Fill in cost centre details  and set Status as 
+"Inactive"
+4.Click "Save"
+5.Observe the error shown
+6.Attempt to save the same details again
+Observe the second error message
+The department  details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+The business unit details should 
+be saved successfully with 
+"Inactive" status selected, 
+without any errors.
+On the second attempt \(retry\a 
+different message is shown: 
+Company details getting saved
+1.Log in to the application/portal.
+2.Navigate to the Payslip / Payroll section.
+3.Select the relevant month/employee for 
+which the payslip needs to be generated.
+4.Click the "Generate Payslip" button
+5.Observe the confirmation popup that 
+appears after generation.
+6.Click "Download PDF" to download the 
+generated payslip.
+1.After clicking "Generate 
+Payslip," a clear, readable 
+confirmation popup should 
+appear confirming successful 
+generation.
+2.Clicking "Download PDF" 
+should successfully download a 
+valid, readable PDF copy of the 
+payslip to the user's device.
+1.The confirmation popup 
+appears but is not clearly 
+visible/readable \(e.g., poor 
+rendering, disappears too fast, 
+or is visually broken\
+2.Clicking "Download PDF" does 
+
+or the download fails/errors 
+out.
+1.Log in to the application/portal.
+2.Navigate to the Confidential Document 
+Vault section.
+3.Click "Upload Document" \(or equivalent 
+button\
+4.Select a file from the local device \(e.g., PDF, 
+DOCX, image\
+5.Click "Upload" / "Submit" to complete the 
+upload.
+6.Observe the result.
+1.The selected document should 
+upload successfully to the 
+Confidential Document Vault.
+2.A confirmation message or 
+updated file list should appear, 
+showing the newly uploaded 
+document.
+3.The document should be 
+securely stored and 
+retrievable/viewable later.
+
+either no progress occurs, it 
+hangs indefinitely, an error 
+message appears, or the upload 
+silently fails with no document 
+added to the vault.
+1.Log in to the application/portal.
+2.Navigate to the Employee Vault section.
+3.Locate a file that has been previously 
+uploaded/stored.
+4.Click the "Download" option/icon for that 
+file.
+5.Observe the error message displayed.
+1.Clicking "Download" should 
+successfully download the 
+correct, latest \(or selected\
+version of the file to the user's 
+device.
+2.No error should be displayed 
+if the file and its version data 
+exist correctly in the system.
+An error is displayed: 
+"download version undefined"
+, 
+and the file fails to download.
+1.Log in to the application/portal.
+2.Navigate to the section containing the "Run 
+Expiry Scan" button
+3.Click the "Run Expiry Scan" button once.
+4.Observe that no confirmation popup is 
+visibly shown.
+
+times\
+6.Observe the popups appearing one by one 
+after the repeated clicks
+1.On the first click of "Run 
+Expiry Scan," a single 
+confirmation popup should 
+appear immediately and clearly, 
+confirming the scan has been 
+triggered.
+2.Repeated clicks \(if the scan is 
+already running/queued\hould 
+either be ignored, disabled, or 
+show a single relevant message 
+
+1.No popup appears on the first 
+click.
+2.Multiple clicks cause multiple 
+popups to appear one after 
+another, indicating each click is 
+being separately 
+queued/registered instead of 
+the button being disabled or 
+debounced after the first click.
+1.Log in to the application/portal.
+2.Navigate to the module and locate the RBAC 
+/ role-based view filter option \(labeled 
+"Current Role"\
+3.Select or apply a specific role from the 
+"Current Role" filter.
+4.Observe the resulting view/data displayed.
+1.Selecting a role under the 
+"Current Role" filter should 
+dynamically update the view to 
+show only the data, options, or 
+permissions relevant to that 
+selected role.
+2.Users should not be able to 
+see data/actions outside the 
+scope of the selected role's 
+permissions.
+The view does not change or 
+filter correctly when a role is 
+selected under "Current Role" 
+
+unfiltered, shows incorrect role-
+based data, or the filter 
+selection has no effect at all.
+1.Log in to the application/portal.
+2.Navigate to the Manpower Requisition 
+section
+3.Enter the required details in the form fields.
+4.Click the "Create Manpower Requisition" 
+button once.
+5.Observe that the table is not 
+created/displayed.
+
+times\
+7.Observe that the table eventually gets 
+created with the entered details.
+On the first click of "Create 
+Manpower Requisition," the 
+table should be created 
+immediately and display the 
+entered details accurately, 
+without requiring repeated 
+clicks.
+1.The table is not created on the 
+first click.
+2.Only after clicking the button 
+
+appear with the entered details 
+
+delayed response handling.
+1.Log in to the application/portal.
+2.Navigate to the Manpower Requisition 
+section
+3.Observe the layout where the "Create 
+Manpower Requisition" box and the 
+"Requisition Workflow Timeline" box are 
+displayed on the same screen/page.
+4.Note the visual overlap/collision between 
+the two boxes.
+.
+1.Both the "Create Manpower 
+Requisition" box and the 
+"Requisition Workflow 
+Timeline" box should be 
+displayed in their own clearly 
+defined, non-overlapping areas.
+2.All content and interactive 
+elements in both sections 
+should be fully visible and 
+usable, regardless of screen 
+size/resolution.
+The two boxes overlap/collide 
+with each other, causing 
+content to be cut off, hidden, or 
+visually broken, and potentially 
+blocking user interaction with 
+elements underneath.
+1.Log in to the application/portal.
+2.Navigate to the Manpower Requisition 
+section and create a new requisition \(fill in 
+details and submit\
+3.Navigate to the Manpower Requisitions Hub 
+table.
+4.Search/filter for the newly created 
+requisition entry.
+5.Observe the number of rows/records 
+displayed for that single requisition.
+Each requisition submission 
+should create exactly 
+one 
+corresponding entry in the 
+Manpower Requisitions Hub 
+table.
+Multiple duplicate entries 
+appear in the Manpower 
+Requisitions Hub table for what 
+should be a single requisition 
+submission.
+1.Log in to the application/portal.
+2.Navigate to the Vacancy Budget Approval & 
+Cost Center Allocation section.
+3.Enter the required data \(budget details, cost 
+center allocation, etc.\to the form fields.
+4.Click "Save" \(or equivalent action button\
+once..
+5.Check the table to see if the entered data 
+has been recorded.
+6.If not saved, repeat the save action and 
+observe..
+On the first attempt, the 
+entered data should be saved 
+successfully and immediately 
+reflected in the table.
+The entered data is not saved to 
+the table on the first attempt; 
+the save action appears to fail 
+or not register correctly, 
+requiring a repeat attempt.
+1.Log in to the application/portal.
+
+
+3.Upload a candidate resume \(note file 
+format/size\.
+4.Select or link the relevant Job Description 
+\(JD\or matching.
+5.Trigger the "Analyze" / "Parse" action.
+6.Observe the result.
+The uploaded resume should be 
+parsed successfully, and the 
+system should display the JD 
+matching results \(e.g., match 
+score, key skills matched, gaps, 
+etc.\without errors.
+The system throws an 
+"Error 
+analyzing resume"
+ message, 
+and no parsing/matching results 
+are generated.
+1.Log in to the application/portal.
+
+
+Per-Hire Calculator.
+3.Click "Record Entry" \(or equivalent\o add a 
+new expense.
+4.Enter the required expense details.
+5.Click "Save" / "Submit" once.
+6.Check the table to see if the entered 
+expense has been recorded.
+7.If not saved, repeat the save action and 
+observe.
+On the first attempt, the 
+entered expense data should be 
+saved successfully and 
+immediately reflected in the 
+Cost Tracking table.
+The entered expense data is not 
+saved to the table on the first 
+attempt; the save action 
+appears to fail or not register 
+correctly, requiring repeated 
+attempts.
+1.Log in to the application/portal.
+
+
+Lifecycle..
+3.Locate the "Configurable Rating Scales and 
+Performance Template Breakdown" table.
+4.Observe the alignment of column headers 
+versus the data rows beneath them.
+5.Observe whether data values appear under 
+their correct corresponding column headers.
+1.The table should display with 
+
+headers should correctly align 
+with their respective data rows 
+2.All data \(rating scale values, 
+performance template details, 
+etc.\should be clearly placed 
+within the correct cells, with 
+consistent spacing/formatting.
+
+data appears misplaced, shifted, 
+or not properly aligned under 
+the correct column headers, 
+making the table difficult to 
+read and potentially leading to 
+misinterpretation of 
+rating/performance data.
+1.Log in to the application/portal.
+
+
+3.Select an employee and enter goal details 
+\(KRA/KPI, target, etc.\nder "Assign 
+Employee Goal."
+4.Click "Save" / "Assign" once.
+5.Check whether the goal appears against the 
+employee's record.
+
+times until it registers.
+7.Review the employee's assigned goals 
+list/table.
+On the first attempt, the goal 
+should be assigned and saved 
+successfully against the 
+employee, with only 
+one
+ entry 
+created per assignment.
+1.The goal does not save on the 
+
+attempts to save successfully.
+2.Multiple duplicate goal entries 
+are created for the same 
+assignment due to the repeated 
+attempts.
+1.Log in to the application/portal.
+
+& Appraisal.
+3.Enter the required details for a promotion 
+recommendation \(employee, new role/grade, 
+justification, etc.\
+4.Click the "Recommend Promotion" button 
+once.
+5.Check the table to see if the 
+recommendation entry has been added.
+6.If not saved, click the button again and 
+observe.
+On the first click, the 
+"Recommend Promotion" 
+action should immediately save 
+the entered details and add a 
+corresponding row to the table
+The data is not saved to the 
+table on the first click; the entry 
+only appears after multiple 
+attempts.
+1.Log in to the application/portal.
+
+
+& Payroll Integration.
+3.Enter details for the first employee's 
+increment recommendation and click 
+"Recommend Increment."
+4.Verify the first record appears correctly in 
+the table.
+5.Without refreshing, enter details for a 
+second employee's increment 
+recommendation..
+6.Click "Recommend Increment" again.
+7.Observe the table.
+1.Each new increment 
+recommendation should be 
+added to the table as a new 
+row, without affecting or 
+deleting previously saved 
+records.
+2.After step 6, the table should 
+show both the first and second 
+increment records.
+1.After entering and saving the 
+second record, the first record 
+disappears from the table.
+2.The second record is also not 
+saved, leaving the table with no 
+valid data \(or missing the newly 
+entered data\
+1.Log in to the application/portal.
+
+& Appraisal.
+3.Enter the required details for a promotion 
+recommendation \(employee, new role/grade, 
+justification, etc.\
+4.Click the "Recommend Promotion" button 
+\(as noted in the earlier bug, this may require 
+multiple clicks before the entry appears\
+5.Navigate to the promotion 
+recommendations table.
+6.Search/filter for the specific employee's 
+recommendation entry.
+7.Observe the number of rows/records 
+created for that single recommendation 
+action.
+Each "Recommend Promotion" 
+action should result in exactly 
+one
+ corresponding entry in the 
+table, regardless of how many 
+times the button was clicked 
+before the save registered.
+Multiple duplicate records are 
+saved in the table for what 
+should be a single promotion 
+recommendation.
+1.Log in to the application/portal.
+
+
+Plan \(PIP\ifecycle.
+3.Enter details for the first employee's PIP 
+record and save it.
+4.Verify the first record appears correctly in 
+the table.
+5.Without refreshing, enter details for a 
+second employee's PIP record.
+6.Save the second record.
+7.Observe the table
+1.Each new PIP record should 
+be 
+added
+ to the table as a new 
+row, without affecting or 
+deleting previously saved 
+records.
+2.After step 6, the table should 
+display both the first and 
+second PIP records.
+1.After entering and saving the 
+second record, the first record 
+disappears from the table.
+2.The second record is also not 
+saved, resulting in no valid PIP 
+data remaining in the table
+1.Log in to the application/portal.
+2.Navigate to the Dashboard Overview screen.
+3.Observe the text/font colors used across 
+various widgets, labels, values, and headings.
+4.Attempt to read the content under normal 
+viewing conditions \(standard monitor 
+brightness, no zoom\
+1.All text on the Dashboard 
+Overview should have sufficient 
+color contrast against its 
+background, following 
+readability/accessibility 
+standards \(e.g., WCAG AA 
+contrast ratio of at least 4.5:1 
+for normal text\
+2.Users should be able to clearly 
+read all labels, values, and 
+headings without strain, 
+regardless of screen or lighting 
+conditions.
+Font colors on the Dashboard 
+Overview are not legible/clear 
+
+contrast, or blends with the 
+background, making it hard to 
+read.
+1.Log in to the application/portal.
+2.Land on the Dashboard Overview \(or any 
+
+
+Employee Experience & Engagement.
+3.Observe the top navigation bar, specifically 
+the area around "Support & Reports" and the 
+search bar to its right.
+1.The "Support & Reports" 
+navigation tab and the search 
+bar should each occupy their 
+own distinct, non-overlapping 
+space in the navigation bar.
+2.Both the tab label and the 
+search bar placeholder text 
+should be fully visible and 
+legible.
+3.The search bar should be fully 
+clickable/usable without being 
+obstructed.
+1.The "Support & Reports" tab 
+text overlaps with the search 
+bar, causing both to render 
+illegibly on top of one another.
+2.This likely also blocks or 
+interferes with clicking/using 
+the search bar in this state.
+1.Log in to the application/portal.
+
+Desk.
+3.Click "Open New Ticket" \(or equivalent 
+button\
+4.Fill in the required ticket details \(category, 
+description, priority, etc.\
+5.Click "Submit" / "Create Ticket."
+6.Observe the result.
+1.A new ticket should be 
+created successfully with the 
+entered details.
+2.The user should receive a 
+confirmation \(e.g., ticket ID, 
+success message\ and see the 
+new ticket reflected in the ticket 
+list/table.
+The "Open New Ticket" action 
+
+to create, no confirmation is 
+shown, or the ticket doesn't 
+appear in the list after 
+submission.
+1.Log in to the application/portal.
+2.Navigate to Welfare Support.
+3.Click to open the "Request Welfare 
+Support" form/popup.
+4.Click on the "Welfare Type" dropdown field.
+5.Observe whether a list of selectable options 
+appears below/near the dropdown.
+Clicking the "Welfare Type" 
+dropdown should display a 
+clearly visible list of all available 
+options \(e.g., Education 
+Support, Medical Support, etc.\
+for the user to choose from.
+No visible list of options appears 
+when the dropdown is 
+
+are not visible until \(or unless\
+already selected, making it 
+impossible for the user to see 
+and choose from available 
+choices properly.
+1.Log in to the application/portal.
+2.Navigate to HR Budget & Financial Reports 
+Export section.
+3.Click the Export button on any report card 
+\(e.g., "Export \(PDF/XLSX\ under Annual HR 
+Budget Report\
+4.Observe whether the file downloads.
+5.Repeat for the remaining report cards 
+\(Budget Variance & Forecast, Recruitment 
+Cost ROI Report, Welfare Expenditure 
+Register, Manpower Headcount Financials\
+Clicking any "Export" button 
+should successfully download a 
+valid, correctly formatted file 
+\(PDF or XLSX/CSV as labeled\
+containing the corresponding 
+report data.
+The export/download does not 
+
+file downloads, or the download 
+fails/produces an unusable file.
+1.Log in to the application/portal.
+2.Navigate to Statutory Compliance 
+Document Vault.
+3.Locate a document tagged as "Challan 
+Receipt" \(e.g., "PF ECR Payment Receipt Jul 
+2026"\
+4.Click the "View" button on that document 
+card.
+5.Observe the result
+Clicking "View" should open the 
+uploaded PDF document 
+\(Challan Receipt\in a 
+viewer/new tab, allowing the 
+user to read its contents.
+Clicking "View" does not open 
+
+blank/broken viewer, or an 
+error occurs.
+1.Log in to the application/portal.
+2.Navigate to the Immutable Statutory Audit 
+Logs section \(under Finance/Budget module\
+3.Observe the table columns: Audit ID, Action, 
+Module, Entity ID, Performed By, and the final 
+details/data column.
+4.Observe the content displayed in the last 
+column for each row.
+5.Observe the left edge of the screen for the 
+table title and "Audit ID" values.
+The details column should 
+display a concise, human-
+readable summary of the audit 
+change \(e.g., "Proposed Budget: 
+
+
+key-value highlights\not a raw 
+JSON dump.
+The table should fit within the 
+visible viewport width, with long 
+content wrapped, truncated 
+with an ellipsis, or made 
+expandable \(e.g., "View Details" 
+link/modal\ather than 
+overflowing horizontally.
+The table should fit within the 
+visible viewport width, with long 
+content wrapped, truncated 
+with an ellipsis, or made 
+expandable \(e.g., "View Details" 
+link/modal\ather than 
+overflowing horizontally.
+The table title \("Immutable 
+Budget Audit Logs & Revision 
+Timeline"\nd all column values 
+\(e.g., Audit ID\hould be fully 
+visible, not clipped at the screen 
+edge.
+1.The last column shows the 
+complete raw JSON object as 
+plain text, causing the table to 
+overflow far beyond the screen 
+width
+2.The table title and Audit ID 
+values are cut off/clipped at the 
+left edge of the screen.
+3.Users must scroll extensively 
+to read audit details, and the 
+raw JSON format is not 
+readable/user-friendly.
+1.Log in to the application/portal.
+2.Navigate to Automated Full & Final \(F&F\
+Settlement Register.
+3.Process/generate an F&F settlement for an 
+employee \(enter/confirm relevant exit and 
+settlement details\
+4.click approve and lock Fnf
+5.Review the F&F Settlement Register table.
+6.Observe the number of rows/records 
+created for that single settlement.
+Each F&F settlement action 
+should result in exactly 
+one 
+corresponding entry in the 
+Settlement Register.
+Multiple duplicate records are 
+created in the F&F Settlement 
+Register for what should be a 
+single settlement entry.
+1.Log in to the application/portal.
+2.Navigate to the No Due Certificate \(NDC\
+Generation section.
+3.Click "Download Official NDC PDF" for a fully 
+cleared employee \(e.g., NDC-2026-1001, Anil 
+Kumar\
+4.Observe the success popup, then check if a 
+file is actually downloaded.
+5.Navigate to Official Exit Letters Generator.
+6.Click "Generate" next to Relieving Letter, 
+Experience Certificate, and Full & Final 
+Statement one by one.
+7.Observe the success popup for each, then 
+check if a corresponding document/file is 
+actually produced or downloaded.
+1.Clicking "Download Official 
+NDC PDF" should download a 
+valid, correctly generated PDF 
+of the No Due Certificate.
+2.Clicking "Generate" for each 
+exit letter type should either 
+download the generated 
+document or make it available 
+for download/viewing, matching 
+the success message shown.
+A success popup appears in all 
+cases, but 
+no actual document 
+is downloaded or generated
+
+the download/generate action 
+does not produce any file, 
+despite the UI indicating 
+success.
+1.Log in to the application/portal.
+
+
+3.Locate the "HR Observations Compliance 
+Reports" section.
+4.Click "Print Report Sheet."
+5.Observe the resulting print preview/output 
+layout.
+1.The print output should show 
+a clean, report-formatted view 
+containing only the relevant 
+report content \(e.g., "Report 4: 
+Overdue Target Observations," 
+"Report 3: Pending Verification 
+Closure Review," table data, 
+etc.\
+2.All navigation bars, tabs, 
+buttons, and other interactive 
+UI elements should be 
+hidden/excluded from the print 
+view.
+3.Report tables and headers 
+should be properly aligned and 
+readable on the printed page.
+1.The print preview shows the 
+full application UI overlapping 
+
+navigation bar, tab menus, and 
+buttons all appear cluttered and 
+misaligned together at the top 
+of the printed page, rather than 
+being hidden.
+2.This makes the printed report 
+look unprofessional and harder 
+to read, with overlapping text in 
+the nav area
+1.Log in to the application/portal.
+
+Regulatory Audit Archives.
+3.Locate any of the listed audit report cards 
+\(e.g., 
+Q1_Statutory_Compliance_Report_2026.pdf\
+.
+4.Click the "Download Report" button.
+5.Observe whether the file downloads.
+6.Repeat for the other two report cards to 
+confirm if the issue is consistent across all 
+documents
+Clicking "Download Report" 
+should successfully download 
+the corresponding PDF file \(e.g., 
+Q1_Statutory_Compliance_Rep
+ort_2026.pdf\o the user's 
+device.
+Clicking "Download Report" 
+
+no response, no file saved, and 
+no error shown to the user
+1.Log in to the application/portal.
+2.Hover the mouse over the "i" icon in the top 
+navigation bar \(next to Governance 
+dropdown\
+3.Observe the dropdown menu appearing 
+with "Support Tickets," "Reports & Audits," 
+and "Alert Center."
+4.Try moving the cursor down/into the 
+dropdown to click one of the options.
+5.Observe the menu closing before the click 
+can register.
+The dropdown menu should 
+remain open and interactive 
+while the cursor moves from the 
+"i" icon into the dropdown area, 
+allowing the user to successfully 
+click and select any of the three 
+options.
+The dropdown appears on 
+hover but disappears as soon as 
+the cursor moves toward it, 
+preventing any option from 
+
+making "Support Tickets," 
+"Reports & Audits," and "Alert 
+Center" inaccessible via this 
+menu.
+1.Log in to the application/portal.
+
+Lifecycle Engine.
+3.Trigger both the "Initiate PIP" form and 
+the "Periodic PIP Review Log" panel to 
+display on screen \(e.g., by initiating a new 
+PIP while a review log for an existing PIP 
+is also open/expanded\
+4.Scroll down and observe how the two 
+sections are positioned relative to each 
+other.
+1.The "Initiate PIP" form and 
+the "Periodic PIP Review 
+Log" panel should each be 
+displayed as clearly 
+separated, distinct 
+
+separate modals, tabs, or 
+with adequate 
+spacing/dividers between 
+
+clearly distinguish which 
+fields belong to which action.
+2.Only one of these should 
+logically be open/active at a 
+time, or they should be 
+visually and functionally 
+isolated if shown together.
+Both panels appear 
+collided/stacked with 
+minimal to no separation, 
+making it unclear where one 
+section ends and the other 
+begins, and creating a 
+confusing, cluttered UI.
+1.Log in to the application/portal.
+2.Switch the application to Light Theme 
+\(using the theme toggle icon in the top 
+nav\
+
+
+Overview.
+4.Observe the module header card and 
+the four stat cards \(Scheduled Programs, 
+TNA Requests, Issued Certificates, Skill 
+Gap Closure\.
+All text in Light Theme 
+should have sufficient color 
+contrast against its 
+background \(following 
+WCAG AA standards, 
+minimum 4.5:1 for normal 
+text\so headings, labels, and 
+values are clearly legible.
+Text across the module 
+header and stat cards 
+appears faded/low-contrast 
+in Light Theme, making it 
+difficult to read titles, labels, 
+and sub-values clearly.
+1. Log in to HR O platform.
+
+Learning & Dev.
+3. Locate a training program card
+4. Click the "Enroll Now" button.
+
+Console/Network tab to observe the 
+request.
+User should be successfully 
+enrolled in the training 
+program, with a 
+confirmation message/UI 
+update \(e.g., button changes 
+to "Enrolled" or a success 
+toast appears\
+POST request to
+/api/training/programs/TRN-
+1002/enroll
+fails with 400 \(Bad Request\
+Console shows:
+Failed to load resource: the 
+server responded with a 
+status of 400 \(\
+. No enrollment confirmation 
+is shown to the user; the 
+action silently fails from the 
+user's perspective.
+1. Log in to HR O platform.
+2. Navigate to the module where position 
+requests are raised \(e.g., 
+Operations/Governance\.
+3. Click the action that opens "Request 
+Position Approval" modal.
+4. Observe the spacing/alignment of 
+input fields and labels across the two-
+column layout.
+All form field rows \(label + 
+input box pairs\should have 
+consistent padding, margin, 
+and vertical alignment across 
+both columns, with uniform 
+spacing between rows and 
+no visual crowding.
+Input boxes and labels 
+appear unevenly 
+spaced/misaligned across 
+the two-column grid, 
+creating a visually 
+inconsistent or "colliding" 
+layout.
+1. Log in to HR O platform.
+
+Recruitment \(resume screening section\
+3. Enter skills \(e.g., "React.js, Node.js, 
+Express, MongoDB, Docker"\
+4. Under "Upload Resume File," choose a 
+file 
+5. Click "Parse Resume & Calculate 
+Score."
+
+tab to observe the request.
+Resume should upload 
+successfully, get parsed, and 
+return a calculated score 
+with extracted details \(skills 
+match, accuracy, etc.\
+reflected in the "Automated 
+Extraction" and related score 
+widgets.
+POST request 
+to/api/recruitment/resumes
+/uploadfails with 500 
+\(Internal Server Error\
+Console shows:POST 
+https://hrorbit-
+sigma.vercel.app/api/recruit
+ment/resumes/upload 500 
+\(Internal Server Error\o 
+score or parsed data is 
+returned to the user; an 
+"analyzing error" is shown 
+instead.
+1. Log in to HR O platform.
+
+Planning.
+3. Locate the "Annual HR Budget Planning 
+Register" table.
+4. Click "View" under the Actions column 
+for any budget row 
+
+drawer, or new page opens.
+6. Check DevTools Console for any 
+errors/network calls triggered.
+Clicking "View" should open 
+a detail view \(modal, drawer, 
+or dedicated page\ showing 
+
+e.g., full breakdown of 
+Proposed/Approved/Utilized 
+amounts, cost center details, 
+approval history, and status 
+timeline for that Budget ID.
+Clicking "View" produces no 
+
+no modal, no navigation, no 
+error message. DevTools 
+console shows 
+no errors, 
+warnings, or network 
+activity
+ at all, suggesting the 
+button may have no click 
+handler attached or the 
+handler is silently failing 
+without any exception being 
+thrown.
+1. Log in to HR O platform.
+
+Allocation.
+3. Click "Transfer" next to any active 
+allocation
+4. Observe the "Transfer allocation 
+request initiated" toast appears.
+
+6. Observe the timeout error and 
+violation warnings logged.
+The Transfer action should 
+complete without triggering 
+unrelated errors. The 
+notifications API should 
+respond within a reasonable 
+time \(or fail gracefully 
+without a hard 
+timeout/console error\ 
+no long-running message 
+handler violations should 
+occur that could freeze or lag 
+the UI.
+Console logs:Error fetching 
+notifications: AxiosError: 
+timeout of 8000ms exceeded 
+\(at h.ontimeout\ along with 
+four [Violation] 'message' 
+handler took Nms warnings 
+
+the notifications fetch 
+and/or an associated event 
+handler is blocking or badly 
+delayed, likely triggered as a 
+side effect of the Transfer 
+action.
+1. Log in to HR O platform.
+
+
+History.
+3. Locate the "Immutable Budget Audit 
+Logs & Revision Timeline" table.
+4. Observe any row with Action = 
+CREATE_BUDGET
+The audit log should display 
+the change details in a 
+
+e.g., a formatted summary 
+\("Proposed Budget: 
+
+
+Category: Recruitment..."\r 
+a collapsible "View Details" 
+control, rather than raw 
+JSON text spilling 
+across/beyond the table 
+column.
+The full raw JSON string 
+\(including internal keys like 
+_id, updatedBy, createdAt\
+rendered as plain text in the 
+table cell, overflowing the 
+visible column width and 
+requiring horizontal scrolling 
+to read.
+1. Log in to HR O platform.
+
+Budgeting & Cost Analytics.
+
+table shown.
+
+compare the table shown.
+5. Observe both tabs render the same 
+columns and appear to show the same 
+type of data \(expense records\rather 
+than "Welfare Budget" showing budget 
+allocation data.
+"Welfare Budget" tab should 
+show budget planning data 
+\(proposed/approved welfare 
+budget amounts, categories, 
+
+Budget Planning register\
+"Welfare Expense" tab 
+should show actual logged 
+expenditures/vendor 
+invoices against that budget. 
+The two views should be 
+visibly distinct in structure 
+and purpose.
+Both tabs display the same 
+"Employee Welfare 
+Expenditures & Vendor 
+Invoices" table structure 
+with expense-level data 
+\(WFX-1790686136387, WFX-
+1790686036251, etc.\ with 
+no separate budget 
+allocation view.
+1. Log in to HR O platform.
+
+
+Budget tab.
+
+4. Observe 401 errors for 
+/api/budget/welfare-expense 
+/api/budget/welfare , and 
+/api/policies/employee-status 
+5. Note the "Using stateful fallback for 
+budget module" warning.
+All API calls should authenticate 
+successfully using the logged-in 
+user's session/token and return 
+live data. No 401 errors should 
+occur for an authenticated user 
+with appropriate permissions.
+The app falls back to 
+cached/stateful data instead 
+of showing an error to the 
+user, masking the underlying 
+auth failure.
+,
+1. Log in to HR O platform.
+2. Navigate to Employee Profile page 
+\(/employee/RU1QLTAwMDI/emp-
+profile\.
+3. Open the ticket-raising form \(Category: 
+"HR Query"\
+4. Select a Priority \(e.g., "Low"\
+5. Optionally enter a description.
+6. Click "Submit Ticket."
+7. Observe DevTools Console for the 
+error.
+The ticket should be 
+submitted successfully, with 
+a confirmation message 
+shown to the user and the 
+ticket created in the 
+backend/ticketing system.
+Console throws: Uncaught 
+\(in promise\TypeError: 
+e.preventDefault is not a 
+function originating from the 
+form's onSubmit handler 
+\(index-
+B8_YZ7Xk.js:143:5085\he 
+ticket submission fails 
+silently from the user's 
+
+error feedback is shown, and 
+no ticket is created.
+.1. Log in to HR O platform.
+2. Navigate to Employee Profile 
+\(/employee/RU1QLTAwMDI/emp-
+profile\.
+3. Fill in one or more Personal Details 
+fields \(e.g., Street/Area, City, State, PIN 
+Code, Emergency Contact\
+4. Click "Save Changes."
+5. Observe that all entered field values 
+vanish and no confirmation message 
+appears.
+
+the error.
+On clicking "Save Changes," the 
+entered personal details should 
+be validated and saved to the 
+backend, with a success 
+message/toast confirming the 
+update. If a field is invalid, an 
+appropriate inline validation 
+error should be shown instead.
+Console throws: Uncaught 
+\(in promise\TypeError: 
+e.preventDefault is not a 
+function at the same 
+onSubmit handler \( index-
+B8_YZ7Xk.js:143:5085\All 
+entered field data is 
+lost/reset, and no success or 
+failure feedback is shown to 
+the user.
+1. Log in to HR O platform.
+2. Navigate to Employee Profile 
+\(/employee/RU1QLTAwMDI/emp-profile\
+3. Click "Upload Profile Picture."
+4. Select an image file and attempt to upload.
+5. Observe the "Failed to upload profile 
+picture" toast message.
+
+timeout error.
+The selected image should 
+upload successfully within a 
+reasonable time, and the profile 
+picture should update with a 
+success confirmation shown to 
+the user.
+Upload fails with a toast 
+message: "Failed to upload 
+profile picture." Console 
+shows: AxiosError: timeout 
+of 8000ms exceeded \(at 
+h.ontimeout\, indicating the 
+request is timing out rather 
+than being rejected outright 
+
+slow/unresponsive backend 
+endpoint or an oversized file 
+not being handled gracefully.
+1. Log in to HR O platform as an 
+employee \(e.g., Aditya, EMP-0002\
+2.Navigate to Employee Profile
+3. Locate and click "Update Password."
+4. Enter current and new password 
+details \(if prompted\
+5. Submit the change.
+6. Observe the "User not found" error 
+returned.
+The logged-in user's 
+password should update 
+successfully, with a 
+confirmation message 
+shown. Since the user is 
+authenticated and viewing 
+their own profile, the system 
+should correctly resolve their 
+user ID/record for the 
+password update request.
+The action fails with a "User 
+not found" error, despite the 
+user being logged in and on 
+their own valid profile page. 
+No password change is 
+applied.
+1. Log in to HR O platform.
+
+Workflow & Full & Final \(F&F\
+3. Click the "Department Clearances" tab.
+4. Observe the "Multi-Department No 
+Due Clearance Tasks" table and compare 
+column header positions against the data 
+rows below.
+All column headers 
+\(Clearance ID, Exit ID, 
+Clearance Department, 
+Approver Name, Action 
+Date, Remarks/Handover 
+Notes, Status, Action\should 
+align consistently with their 
+corresponding data values 
+across every row, regardless 
+of varying text length in any 
+cell.
+Column data appears 
+unevenly spaced/misaligned 
+
+likely due to variable-length 
+content \(e.g., longer 
+department names or 
+remarks\not being handled 
+with fixed/consistent column 
+widths, causing the table to 
+look visually uneven.
+1. Log in to HR O platform.
+2.Navigate to My Dashboard
+3. Scroll to the "Training Reminders" 
+section.
+4. Click "View Course" under "Secure 
+Coding & Manifest V3 Guidelines."
+5. Observe no navigation, modal, or 
+response occurs.
+6. Check DevTools Console/Network tab 
+for any related errors or requests.
+Clicking "View Course" 
+should navigate the user to 
+the relevant training/course 
+page \(e.g., Learning & Dev 
+module\or open the course 
+content in a modal, allowing 
+the user to 
+continue/complete the 
+assigned training.
+No visible action occurs on 
+
+no modal, no error message 
+shown to the user. The 
+console at the time of testing 
+shows only unrelated 
+background errors \(repeated 
+notification fetch failures: 
+AxiosError: timeout of 
+8000ms exceeded, Network 
+Error, and 
+net::ERR_INTERNET_DISCON
+NECTED on 
+/api/notifications\with no 
+error specifically tied to the 
+"View Course" click.
+1. Log in to HR O platform.
+
+\(Overview tab\
+3. Observe the "Attendance Punch Clock" 
+
+"Clocked In" with an abnormal Shift 
+Timer value and no clock-in time.
+4. Attempt to click "Punch Out" \(or 
+"Punch In" if status resets\
+5. Observe the red error banner at the 
+top: "Timesheet validation failed: clockIn: 
+Cast to date failed for value..."
+6. Check DevTools Console for related 
+errors.
+Punch In should record a 
+valid date-time value for 
+clock-in, and Punch Out 
+should successfully close out 
+the shift using that stored 
+value. The Shift Timer should 
+reflect actual elapsed time 
+since a valid punch-in, and 
+"Clocked in at" should 
+display the correct 
+timestamp. No validation 
+errors should occur during 
+normal punch in/out 
+operations.
+The timesheet record fails 
+backend validation because 
+the clockIn ield is being 
+stored/sent as a bare time 
+string \("00:47"\rather than a 
+valid date object, causing a 
+Mongoose/schema cast 
+error: Cast to date failed for 
+value "00:47" \(type string\at 
+path "clockIn".
+1. Log in to the HR O platform.
+2. Open any page \(e.g., Notifications at 
+/employee/RU1QLTAwMDI/emp-
+notifications\
+3. Observe the top nav bar, where the 
+last item after "Finance & Exit" is cut off.
+4. Click the right arrow \(>\at the top left, 
+next to the logo.
+5. Observe that the nav bar does not 
+scroll or shift.
+Clicking the right arrow should 
+scroll the nav bar so the hidden 
+menu items become visible. 
+Clicking the left arrow should 
+scroll it back.
+Clicking the arrows has no 
+visible effect. The nav bar 
+stays in place, and the cut-
+off menu item remains 
+partially hidden and hard to 
+access.
+1. Log in to the HR O platform.
+2. Open any page \(e.g., 
+/employee/RU1QLTAwMDI/emp-
+notifications\
+3. Hover over or click the truncated menu 
+item after "Finance & Exit".
+4. Observe the dropdown with Tasks, 
+Meetings, Daily Reports and Helpdesk 
+Support.
+5. Move the cursor to one of the options 
+and click it.
+6. Observe that the dropdown closes 
+before the click registers.
+The dropdown stays open 
+while the cursor moves from 
+the trigger to the options. 
+Clicking an option navigates 
+to that page \(Tasks, 
+Meetings, Daily Reports, 
+Helpdesk Support\he 
+dropdown appears directly 
+beneath its parent menu 
+item.
+The dropdown closes as 
+soon as the user moves 
+toward an option, so no 
+option can be clicked. The 
+dropdown is also offset from 
+its trigger and overlaps the 
+search bar area.
+1. Log in to the HR O platform as an employee 
+\(e.g., Aditya\
+2. Navigate to My Dashboard 
+\(/employee/RU1QLTAwMDI/emp-dashboard\
+3. Use the application normally, moving 
+between modules.
+
+
+intermittently.
+5. Note the time of each occurrence and 
+which action preceded it.
+The application maintains a 
+stable database connection. 
+Live data loads consistently, 
+and the offline banner 
+appears only during a 
+genuine outage.
+
+
+
+often during normal use, and 
+the dashboard shows cached 
+data in place of live data. The 
+dashboard values \(0/12 Days 
+attendance, 15 Days leave 
+balance, 0 Meetings\may be 
+stale.
+1. Log in to the HR O platform as an 
+employee \(e.g., Aditya\
+
+\(Overview tab\r view the punch clock 
+on the dashboard.
+
+
+the Shift Timer.
+5. Refresh the page and observe both 
+again.
+
+
+
+
+Timer counts up from zero, 
+reflecting the time elapsed 
+since that punch-in. The 
+values persist after a page 
+refresh.
+
+and no punch-in time is 
+displayed. The Shift Timer 
+shows 330:33:23 \(about 13.8 
+days\with the status stuck at 
+
+1. Log in to the HR O platform as an 
+employee \(e.g., Aditya\
+2. Open My Dashboard 
+\(/employee/RU1QLTAwMDI/emp-
+dashboard\
+. Click the search bar in the top right.
+4. Type a term that matches a feature 
+
+
+5. Press Enter or wait for suggestions.
+6. Observe that nothing appears or 
+happens.
+Typing a term shows 
+matching features or tools in 
+a dropdown \(e.g., Payroll, 
+Payslips, Salary\, or Enter 
+opens a results page. If 
+
+
+shown. Selecting a result 
+navigates to that page.
+No suggestions, results or 
+messages are shown, and no 
+navigation occurs. The user 
+gets no feedback that the 
+search was attempted.
+1. Log in to the HR O platform as an 
+employee \(e.g., Aditya\
+2. Open the Settings page 
+\(/employee/RU1QLTAwMDI/emp-
+settings\
+
+at the top.
+4. Observe the broken image icon with 
+
+
+by Img, and check the failing image 
+request.
+The security illustration loads 
+and displays correctly beside 
+or below the section 
+description.
+A broken image icon with 
+
+
+the graphic does not render.
+1. Log in to the HR O platform as an employee 
+\(e.g., Aditya\
+
+& Cost Analytics.
+
+
+row \(e.g., BDG-1790683637521\
+5. Observe that nothing happens.
+6. Check the DevTools Console and Network 
+tab.
+
+details of that budget record 
+\(amounts, cost center, category, 
+status, approval history\ a 
+modal, drawer, or detail page.
+No visible response on click. 
+The console shows only 
+Tracking Prevention 
+warnings \(browser privacy 
+messages\and no errors, 
+which again suggests the 
+button has no working click 
+handler or the handler fails 
+silently.
+1. Log in to the HR O platform as an 
+employee \(e.g., Aditya\
+
+Budgeting & Cost Analytics.
+
+4. Observe the content area below the 
+tabs.
+5. Check the DevTools Console and 
+Network tabs.
+The tab shows cost analytics 
+data, such as cost 
+breakdown tables and charts 
+by department, category and 
+cost center. If no data exists, 
+
+
+The content area is 
+completely blank. The 
+console shows only Tracking 
+Prevention warnings 
+\(\(Tracking Prevention 
+blocked access to storage for 
+https://cdn.jsdelivr.net/npm
+/chart.js\
+1. Log in to the HR O platform as an 
+employee \(e.g., Aditya\
+
+Budgeting & Cost Analytics.
+
+4. Observe the content area below the 
+tabs.
+5. Check the DevTools Console and 
+Network tabs.
+The tab shows budget 
+forecast and variance data, 
+such as planned vs. actual 
+spend, variance amounts and 
+percentages, and trend 
+charts. If no data exists, it 
+
+message.
+The content area is blank, 
+with no data, loading state 
+or error message.
+1. Log in to the HR O platform as an HR user 
+\(e.g., Venkat\
+2. Open Enterprise Recruitment & Onboarding 
+3. Click the option to create a Manpower 
+
+it\
+4. Observe the vertical position and spacing of 
+
+5. Repeat with DevTools closed and at 
+different browser zoom levels.
+The modal opens vertically 
+centered, or at a consistent 
+offset from the top, with 
+balanced spacing above and 
+below. The full form header 
+and first fields are visible 
+without scrolling the page, 
+and the modal body scrolls 
+internally if the content is 
+taller than the screen.
+The modal appears near the 
+bottom of the viewport with 
+a large empty gap above it, 
+and the lower form fields 
+\(Grade Band, Cost Center\
+are cut off. Extra spacing is 
+also reported at the bottom.
+1. Log in to the HR O platform as an HR 
+user \(e.g., Venkat\
+
+ATS
+3. Open the Cost Tracking tab.
+
+details and submit.
+5. Scroll down the page and observe a 
+second Module 5 section with another 
+cost table.
+6. Refresh the page and check whether 
+the duplicate remains.
+The new entry appears as an 
+additional row in the existing 
+cost table. Only one Module 
+5 section and one cost table 
+are shown.
+A duplicate Module 5 section 
+and cost table appear below 
+the original after the new 
+entry is submitted.
+Environment
+Severity
+Priority
+Status
+Reported By
+Date Reported
+Edge / Chrome
+High
+P1 - Urgent
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P3
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P3
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P3
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P4
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P4
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+low
+P4
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P4
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P3
+closed
+Parkavi
+9/12/2026
+Edge / Chrome
+High
+P1
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+high
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High 
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High 
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High 
+P2
+open
+Edge / Chrome
+High 
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+9/11/2026
+Edge / Chrome
+High 
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Critical
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+closed
+Parkavi
+Edge / Chrome
+High
+P2
+closed
+Parkavi
+Edge / Chrome
+High
+P2
+closed
+Parkavi
+Edge / Chrome
+Medium
+High
+closed
+Parkavi
+Edge / Chrome
+High
+High
+open
+Edge / Chrome
+Medium
+High
+closed
+Parkavi
+Edge / Chrome
+Critical
+High
+open
+c
+Critical
+High
+open
+Edge / Chrome
+Medium
+High
+open
+Edge / Chrome
+Critical
+P2
+open
+Edge / Chrome
+High
+High
+open
+Edge / Chrome
+Medium
+P3
+open
+Edge / Chrome
+Medium
+P3
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Low
+P3
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Medium
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Medium
+P3 - Low
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Critical
+P1
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+Low
+P3
+open
+Edge / Chrome
+Medium
+P2
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+High
+P1
+open
+Edge / Chrome
+Medium
+P2
+open
+Bug fixed 
+Date Fixed
+Comments
+yes
+21.09.26
+Repro'd on 2 machines
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+No
+16.10.26
+Success on updating the profile 
+picture pop up comes but the 
+profile picture is not getting 
+updated 
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+22.09.26
+yes
+16.10.26
+yes
+16.10.26
+yes
+16.10.26
+yes
+16.10.26
+yes
+16.10.26
+Instead of "Requisition 
+workflow timeline" ,Enterprise 
+Recruitment and onboarding 
+appears twice
+yes
+16.10.26
+yes
+16.10.26
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes
+yes

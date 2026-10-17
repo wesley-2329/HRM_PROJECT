@@ -517,32 +517,42 @@ const ExitModule = ({ searchQuery = '' }) => {
         <div className="card p-5">
           <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Multi-Department No Due Clearance Tasks</h3>
           <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+            <table className="table" style={{ width: '100%', minWidth: '850px', tableLayout: 'fixed', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+              <colgroup>
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '10%' }} />
+              </colgroup>
               <thead>
-                <tr>
-                  <th>Clearance ID</th>
-                  <th>Exit ID</th>
-                  <th>Clearance Department</th>
-                  <th>Approver Name</th>
-                  <th>Action Date</th>
-                  <th>Remarks / Handover Notes</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                <tr style={{ borderBottom: '2px solid hsl(var(--border))' }}>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>Clearance ID</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>Exit ID</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle' }}>Clearance Department</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle' }}>Approver Name</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>Action Date</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle' }}>Remarks / Handover Notes</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle' }}>Status</th>
+                  <th style={{ padding: '12px 10px', textAlign: 'left', verticalAlign: 'middle' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {clearances.map((c) => (
-                  <tr key={c.clearanceId}>
-                    <td><strong>{c.clearanceId}</strong></td>
-                    <td>{c.exitId}</td>
-                    <td><strong style={{ color: 'hsl(var(--primary))' }}>{c.departmentName}</strong></td>
-                    <td>{c.approverName}</td>
-                    <td>{c.actionDate || 'Pending'}</td>
-                    <td>{c.remarks}</td>
-                    <td><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
-                    <td>
+                  <tr key={c.clearanceId} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><strong>{c.clearanceId}</strong></td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.exitId}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}><strong style={{ color: 'hsl(var(--primary))' }}>{c.departmentName}</strong></td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.approverName}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.actionDate || 'Pending'}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.remarks}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle' }}>
                       {c.clearanceStatus !== 'Approved' ? (
-                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => showToast(`Approved ${c.departmentName} Clearance.`, 'success')}>
+                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} onClick={() => showToast(`Approved ${c.departmentName} Clearance.`, 'success')}>
                           Approve Clearance
                         </button>
                       ) : (

@@ -43,40 +43,83 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     setDropdownTimeout(timeout);
   };
 
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (optionsScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = optionsScrollRef.current;
+      setCanScrollLeft(scrollLeft > 2);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = optionsScrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll);
+      const t1 = setTimeout(checkScroll, 100);
+      const t2 = setTimeout(checkScroll, 500);
+      return () => {
+        el.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, []);
+
   const scrollOptions = (direction) => {
     if (optionsScrollRef.current) {
       optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
+      setTimeout(checkScroll, 350);
     }
   };
 
   const hashId = user?.id ? encodeId(user.id) : '';
 
   const searchIndex = [
-    { title: 'My Dashboard', desc: 'Punch clock, tasks, announcements & upcoming events', path: `/employee/${hashId}/emp-dashboard`, icon: 'fa-house', category: 'Overview' },
-    { title: 'Org Structure', desc: 'Browse company hierarchy & direct reporting tree', path: '/organization', icon: 'fa-sitemap', category: 'Governance' },
-    { title: 'Policy Repository', desc: 'Acknowledge company code of conduct & guidelines', path: `/employee/${hashId}/emp-policies`, icon: 'fa-building-columns', category: 'Governance' },
-    { title: 'Attendance Tracker', desc: 'Clock-in timestamps, monthly hours & logs', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-fingerprint', category: 'Work & Time' },
-    { title: 'Leave Management', desc: 'Apply for leaves, view balances & manager decisions', path: `/employee/${hashId}/emp-leaves`, icon: 'fa-calendar-day', category: 'Work & Time' },
-    { title: 'Daily Timesheets', desc: 'Log work hours, project tasks & review shifts', path: `/employee/${hashId}/emp-timesheet`, icon: 'fa-clock-rotate-left', category: 'Work & Time' },
-    { title: 'My Projects', desc: 'Current project milestones, assignments & status', path: `/employee/${hashId}/emp-projects`, icon: 'fa-briefcase', category: 'Work & Time' },
-    { title: 'Payslips & Tax Forms', desc: 'Download PDF salary slips & tax breakdown', path: `/employee/${hashId}/emp-payslips`, icon: 'fa-file-invoice-dollar', category: 'Finance' },
-    { title: 'Claims & Advances', desc: 'Submit reimbursement claims & advance requests', path: `/employee/${hashId}/emp-expenses`, icon: 'fa-receipt', category: 'Finance' },
-    { title: 'Goals & Appraisals', desc: 'OKRs, quarterly targets & performance feedback', path: `/employee/${hashId}/emp-performance`, icon: 'fa-award', category: 'Career' },
-    { title: 'Training Courses', desc: 'Browse L&D modules, enrollments & certificates', path: `/employee/${hashId}/emp-training`, icon: 'fa-book-open-reader', category: 'Career' },
-    { title: 'Company Engagement', desc: 'Surveys, polls, shout-outs & recognition board', path: `/employee/${hashId}/emp-engagement`, icon: 'fa-comments', category: 'Career' },
-    { title: 'Team Discussions', desc: 'General topics, ideas & office announcements', path: `/employee/${hashId}/emp-discussions`, icon: 'fa-users-line', category: 'Engagement' },
-    { title: 'Daily Reports', desc: 'Submit daily accomplishments & blockers', path: `/employee/${hashId}/emp-reports`, icon: 'fa-clipboard-list', category: 'Engagement' },
-    { title: 'Helpdesk Support', desc: 'Raise IT, HR or facilities support tickets', path: `/employee/${hashId}/emp-helpdesk`, icon: 'fa-headset', category: 'Engagement' },
-    { title: 'My Profile', desc: 'Personal info, emergency contacts & avatar', path: `/employee/${hashId}/emp-profile`, icon: 'fa-user', category: 'Account' },
-    { title: 'Account Settings', desc: 'Theme colors, security preferences & notifications', path: `/employee/${hashId}/emp-settings`, icon: 'fa-gear', category: 'Account' },
-    { title: 'Alerts Center', desc: 'Direct messages, status changes & system alerts', path: `/employee/${hashId}/emp-notifications`, icon: 'fa-bell', category: 'Alerts' }
+    { title: 'My Dashboard', desc: 'Punch clock, tasks, announcements & upcoming events', path: `/employee/${hashId}/emp-dashboard`, icon: 'fa-house', category: 'Overview', keywords: 'dashboard home overview punch clock events announcements metrics' },
+    { title: 'Payroll & Salary Slips', desc: 'Download PDF salary slips & tax breakdown', path: `/employee/${hashId}/emp-payslips`, icon: 'fa-file-invoice-dollar', category: 'Finance', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips' },
+    { title: 'Attendance Tracker', desc: 'Clock-in timestamps, monthly hours & logs', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-fingerprint', category: 'Operations', keywords: 'attendance punch clock clock-in clock-out shift timer hours calendar punctual biometric logs overview' },
+    { title: 'Leave Management', desc: 'Apply for leaves, view balances & manager decisions', path: `/employee/${hashId}/emp-leaves`, icon: 'fa-calendar-day', category: 'Operations', keywords: 'leave leaves apply casual sick earned time off holiday absence balance vacation quota' },
+    { title: 'Daily Timesheets', desc: 'Log work hours, project tasks & review shifts', path: `/employee/${hashId}/emp-timesheet`, icon: 'fa-clock-rotate-left', category: 'Operations', keywords: 'timesheet timesheets daily hours project activity work log shifts logs' },
+    { title: 'Tasks & Checklists', desc: 'Organize, schedule, and mark daily checklist cards', path: `/employee/${hashId}/emp-tasks`, icon: 'fa-list-check', category: 'Workplace', keywords: 'tasks task checklist todo assigned deadlines priority workplace' },
+    { title: 'Meetings & Calendar', desc: 'View calendar appointments and join online rooms', path: `/employee/${hashId}/emp-meetings`, icon: 'fa-video', category: 'Workplace', keywords: 'meetings meeting video call schedule calendar appointments sync room' },
+    { title: 'Daily Reports', desc: 'Submit daily accomplishments & blockers', path: `/employee/${hashId}/emp-reports`, icon: 'fa-clipboard-list', category: 'Workplace', keywords: 'daily reports report blockers updates accomplishments timesheet summary work' },
+    { title: 'Helpdesk Support', desc: 'Raise IT, HR or facilities support tickets', path: `/employee/${hashId}/emp-helpdesk`, icon: 'fa-headset', category: 'Workplace', keywords: 'helpdesk support ticket tickets query complaint assist it hr facilities technical' },
+    { title: 'Policy Repository', desc: 'Acknowledge company code of conduct & guidelines', path: `/employee/${hashId}/emp-policies`, icon: 'fa-building-columns', category: 'Governance', keywords: 'policies policy rules compliance conduct handbook policy repository governance guidelines' },
+    { title: 'Org Structure', desc: 'Browse company hierarchy & direct reporting tree', path: '/organization', icon: 'fa-sitemap', category: 'Governance', keywords: 'org structure hierarchy chart departments reporting lines leadership team directory' },
+    { title: 'Performance & PIP', desc: 'Check appraisal reviews and feedback metrics', path: `/employee/${hashId}/emp-pip`, icon: 'fa-star-half-stroke', category: 'Growth', keywords: 'performance pip appraisal okr kpi goals reviews feedback ratings evaluations' },
+    { title: 'Learning & Dev', desc: 'Access training courses and build career skills', path: `/employee/${hashId}/emp-learning`, icon: 'fa-book-open', category: 'Growth', keywords: 'learning training courses certifications l&d development skills workshops modules' },
+    { title: 'Career Portal', desc: 'Internal job postings and referral tracking', path: `/employee/${hashId}/recruitment`, icon: 'fa-user-plus', category: 'Growth', keywords: 'career recruitment jobs internal postings openings referrals vacancy applicant' },
+    { title: 'Engagement & Welfare', desc: 'Recognitions, employee benefits & surveys', path: `/employee/${hashId}/emp-engagement`, icon: 'fa-heart-pulse', category: 'Growth', keywords: 'engagement welfare rewards recognition surveys shout-outs benefits town hall polls' },
+    { title: 'Claims & Advances', desc: 'Submit reimbursement claims & advance requests', path: `/employee/${hashId}/emp-expenses`, icon: 'fa-receipt', category: 'Finance', keywords: 'expenses claims reimbursement advances receipts money travel bills finance' },
+    { title: 'Statutory Compliance', desc: 'PF, ESI, PT, and compliance details', path: `/employee/${hashId}/statutory-compliance`, icon: 'fa-scale-balanced', category: 'Finance', keywords: 'statutory compliance pf esi pt provident fund tax labor laws challans' },
+    { title: 'Exit & F&F Portal', desc: 'Resignations, clearances, & No Due Certificate', path: `/employee/${hashId}/exit-management`, icon: 'fa-door-open', category: 'Finance', keywords: 'exit resignation clearance full final settlement ndc no due certificate handover' },
+    { title: 'My Profile', desc: 'Personal info, emergency contacts & avatar', path: `/employee/${hashId}/emp-profile`, icon: 'fa-user', category: 'Account', keywords: 'profile personal info avatar emergency contacts address details account' },
+    { title: 'Account Settings', desc: 'Theme colors, security preferences & notifications', path: `/employee/${hashId}/emp-settings`, icon: 'fa-gear', category: 'Account', keywords: 'settings password change security preferences theme dark mode navbar' },
+    { title: 'Alerts Center', desc: 'Direct messages, status changes & system alerts', path: `/employee/${hashId}/emp-notifications`, icon: 'fa-bell', category: 'Alerts', keywords: 'alerts notifications messages inbox updates reminders system' }
   ];
 
-  const filteredSuggestions = searchQuery.trim() === '' ? [] : searchIndex.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 7);
+  const cleanQuery = searchQuery.trim().toLowerCase();
+  const searchTokens = cleanQuery.split(/[\s,+/&|]+/).filter(t => t.length > 0 && t !== 'and' && t !== 'or' && t !== '&');
+
+  const filteredSuggestions = searchTokens.length === 0 ? searchIndex.slice(0, 6) : searchIndex.filter(item => {
+    const fullText = `${item.title} ${item.desc} ${item.category} ${item.keywords || ''}`.toLowerCase();
+    if (fullText.includes(cleanQuery)) return true;
+    return searchTokens.some(tok => fullText.includes(tok));
+  }).sort((a, b) => {
+    const aFull = `${a.title} ${a.desc} ${a.keywords || ''}`.toLowerCase();
+    const bFull = `${b.title} ${b.desc} ${b.keywords || ''}`.toLowerCase();
+    const aExact = aFull.includes(cleanQuery) ? 3 : 0;
+    const bExact = bFull.includes(cleanQuery) ? 3 : 0;
+    const aTokenMatches = searchTokens.filter(t => aFull.includes(t)).length;
+    const bTokenMatches = searchTokens.filter(t => bFull.includes(t)).length;
+    return (bExact + bTokenMatches) - (aExact + aTokenMatches);
+  }).slice(0, 7);
 
   const handleSelectSuggestion = (path) => {
     navigate(path);
@@ -85,8 +128,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   };
 
   const handleSearchKeyDown = (e) => {
-    if (e.key === 'Enter' && filteredSuggestions.length > 0) {
-      handleSelectSuggestion(filteredSuggestions[0].path);
+    if (e.key === 'Enter') {
+      if (filteredSuggestions.length > 0) {
+        handleSelectSuggestion(filteredSuggestions[0].path);
+      }
     } else if (e.key === 'Escape') {
       setShowSearchDropdown(false);
     }
@@ -165,18 +210,46 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
 
         <div style={{ display: 'flex', gap: '6px', marginRight: '8px', marginLeft: '4px', flexShrink: 0 }}>
           <button 
+            type="button"
             onClick={() => scrollOptions(-1)} 
-            className="btn btn-secondary"
+            disabled={!canScrollLeft}
+            className="btn btn-secondary nav-scroll-btn nav-scroll-left"
             title="Scroll Navigation Left"
-            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ 
+              padding: '6px 10px', 
+              height: '32px', 
+              minWidth: '32px', 
+              borderRadius: '6px', 
+              border: '1px solid hsl(var(--border))', 
+              background: 'hsl(var(--bg-card))', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              opacity: canScrollLeft ? 1 : 0.4
+            }}
           >
             <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
           </button>
           <button 
+            type="button"
             onClick={() => scrollOptions(1)} 
-            className="btn btn-secondary"
+            disabled={!canScrollRight}
+            className="btn btn-secondary nav-scroll-btn nav-scroll-right"
             title="Scroll Navigation Right"
-            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ 
+              padding: '6px 10px', 
+              height: '32px', 
+              minWidth: '32px', 
+              borderRadius: '6px', 
+              border: '1px solid hsl(var(--border))', 
+              background: 'hsl(var(--bg-card))', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: canScrollRight ? 'pointer' : 'not-allowed',
+              opacity: canScrollRight ? 1 : 0.4
+            }}
           >
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
           </button>
@@ -184,7 +257,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       </div>
 
       {/* 2. Scrollable Navigation Options ONLY */}
-      <div className="emp-options-scroll-section" ref={optionsScrollRef}>
+      <div className="emp-options-scroll-section" ref={optionsScrollRef} onScroll={checkScroll}>
         <nav className="emp-nav-menu">
           
           {/* Dashboard Link */}
@@ -208,7 +281,12 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               Governance
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'governance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`emp-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} style={{ minWidth: '300px' }}>
+            <div 
+              className={`emp-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} 
+              style={{ minWidth: '300px' }}
+              onMouseEnter={() => handleMouseEnter('governance')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`emp-dropdown-item ${isTabActive('org-structure') ? 'active' : ''}`}
                 onClick={() => handleNavClick('org-structure')}
@@ -242,7 +320,12 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               Operations
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'operations' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`emp-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`emp-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} 
+              style={{ minWidth: '320px' }}
+              onMouseEnter={() => handleMouseEnter('operations')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-attendance') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-attendance')}
@@ -286,7 +369,12 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               Growth & Talent
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'growth' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`emp-dropdown-panel ${activeDropdown === 'growth' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`emp-dropdown-panel ${activeDropdown === 'growth' ? 'open' : ''}`} 
+              style={{ minWidth: '320px' }}
+              onMouseEnter={() => handleMouseEnter('growth')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-pip') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-pip')}
@@ -340,7 +428,12 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               Finance & Exit
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'finance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`emp-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`emp-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} 
+              style={{ minWidth: '320px' }}
+              onMouseEnter={() => handleMouseEnter('finance')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`emp-dropdown-item ${isTabActive('hr-budgeting') ? 'active' : ''}`}
                 onClick={() => handleNavClick('hr-budgeting')}
@@ -375,18 +468,31 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Workplace & Hub Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('workplace')} onMouseLeave={handleMouseLeave}>
+          <div 
+            className="emp-menu-item" 
+            id="nav-item-workplace"
+            onMouseEnter={() => handleMouseEnter('workplace')} 
+            onMouseLeave={handleMouseLeave}
+          >
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-tasks', 'emp-meetings', 'emp-reports', 'emp-helpdesk']) ? 'active' : ''}`}
+              id="nav-workplace-trigger"
               onClick={() => toggleDropdown('workplace')}
             >
               <i className="fa-solid fa-desktop"></i>
               Workplace
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'workplace' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`emp-dropdown-panel ${activeDropdown === 'workplace' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`emp-dropdown-panel ${activeDropdown === 'workplace' ? 'open' : ''}`} 
+              id="nav-workplace-dropdown-panel"
+              style={{ minWidth: '320px', left: 0 }}
+              onMouseEnter={() => handleMouseEnter('workplace')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-tasks') ? 'active' : ''}`}
+                id="nav-dropdown-emp-tasks"
                 onClick={() => handleNavClick('emp-tasks')}
               >
                 <i className="fa-solid fa-list-check"></i>
@@ -397,6 +503,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               </a>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-meetings') ? 'active' : ''}`}
+                id="nav-dropdown-emp-meetings"
                 onClick={() => handleNavClick('emp-meetings')}
               >
                 <i className="fa-solid fa-video"></i>
@@ -407,6 +514,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               </a>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-reports') ? 'active' : ''}`}
+                id="nav-dropdown-emp-reports"
                 onClick={() => handleNavClick('emp-reports')}
               >
                 <i className="fa-solid fa-clipboard-list"></i>
@@ -417,6 +525,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               </a>
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-helpdesk') ? 'active' : ''}`}
+                id="nav-dropdown-emp-helpdesk"
                 onClick={() => handleNavClick('emp-helpdesk')}
               >
                 <i className="fa-solid fa-headset"></i>
@@ -447,7 +556,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             }}
             onKeyDown={handleSearchKeyDown}
           />
-          {showSearchDropdown && filteredSuggestions.length > 0 && (
+          {showSearchDropdown && (filteredSuggestions.length > 0 || searchQuery.trim() !== '') && (
             <div
               className="search-suggestions-dropdown"
               style={{
@@ -464,41 +573,56 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
                 padding: '4px'
               }}
             >
-              <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Quick Navigation ({filteredSuggestions.length})
-              </div>
-              {filteredSuggestions.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleSelectSuggestion(item.path)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+              {filteredSuggestions.length > 0 ? (
+                <>
+                  <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {searchQuery.trim() ? `Search Results (${filteredSuggestions.length})` : `Quick Navigation (${filteredSuggestions.length})`}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.title}
+                  {filteredSuggestions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleSelectSuggestion(item.path)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.title}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.desc}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
+                        {item.category}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.desc}
-                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="search-no-results" style={{ padding: '20px 16px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>
+                  <i className="fa-solid fa-circle-question" style={{ fontSize: '1.4rem', marginBottom: '8px', opacity: 0.6, display: 'block', color: 'hsl(var(--text-secondary))' }}></i>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>No results found</div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>
+                    No features or tools matching &ldquo;{searchQuery}&rdquo;
                   </div>
-                  <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
-                    {item.category}
-                  </span>
+                  <div style={{ fontSize: '0.72rem', marginTop: '8px', opacity: 0.85 }}>
+                    Try searching for <strong>payroll</strong>, <strong>leave</strong>, or <strong>attendance</strong>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

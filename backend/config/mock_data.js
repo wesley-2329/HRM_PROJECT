@@ -1,5 +1,27 @@
 let mockEmployees = [
   {
+    _id: "60c72b2f9b1d8b2a3c9d7891",
+    id: "EMP-0002",
+    name: "Aditya Kumar",
+    role: "employee",
+    dept: "Engineering",
+    joined: "2021-06-15",
+    email: "employee@company.com",
+    status: "Approved",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    aadhaar: "1234-5678-9012",
+    phone: "+91 98765 00002",
+    blood: "O+",
+    dob: "1995-08-20",
+    gender: "Male",
+    designation: "Senior Software Engineer",
+    branch: "HQ Bangalore",
+    businessUnit: "Cloud Solutions",
+    costCenter: "Engineering CC",
+    teamLeadId: "EMP-0001",
+    isTeamLead: true
+  },
+  {
     _id: "60c72b2f9b1d8b2a3c9d8001",
     id: "EMP-1001",
     name: "Gara Nandini",
@@ -211,6 +233,17 @@ let mockLeaves = [
     endDate: "2026-07-22",
     reason: "Family gathering",
     status: "Pending"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7903",
+    employeeId: "EMP-0002",
+    empId: "EMP-0002",
+    employeeName: "Aditya Kumar",
+    leaveType: "Earned Leave",
+    startDate: "2026-06-25",
+    endDate: "2026-06-27",
+    reason: "Medical procedure and recovery",
+    status: "Approved"
   }
 ];
 
@@ -234,6 +267,17 @@ let mockTasks = [
     dueDate: "2026-07-18",
     priority: "Medium",
     status: "In Progress"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7913",
+    title: "Complete compliance questionnaire",
+    description: "Security compliance review and annual verification sign-off.",
+    assignedTo: "EMP-0002",
+    empId: "EMP-0002",
+    assignedToName: "Aditya Kumar",
+    dueDate: "2026-07-20",
+    priority: "High",
+    status: "In Progress"
   }
 ];
 
@@ -250,6 +294,19 @@ let mockTickets = [
     empId: "EMP-2001",
     employeeName: "Priyanka",
     createdAt: "2026-07-14T10:00:00.000Z"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7922",
+    ticketId: "TCK-201",
+    title: "VPN Connection Issues",
+    description: "Unable to connect to internal development proxy.",
+    category: "IT Support",
+    priority: "High",
+    status: "Open",
+    employeeId: "EMP-0002",
+    empId: "EMP-0002",
+    employeeName: "Aditya Kumar",
+    createdAt: "2026-07-14T11:00:00.000Z"
   }
 ];
 
@@ -260,9 +317,21 @@ let mockMeetings = [
     date: "2026-07-15",
     time: "10:00 AM",
     duration: 30,
-    participants: ["EMP-1004", "EMP-2001", "EMP-2002"],
+    status: "Scheduled",
+    participants: ["EMP-0001", "EMP-0002", "EMP-1004", "EMP-2001", "EMP-2002"],
     description: "Discuss checklist deliverables and tasks.",
     link: "https://meet.hro.company/join/tck-standup"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7932",
+    title: "Sprint Review & Architecture Sync",
+    date: "2026-07-16",
+    time: "02:30 PM",
+    duration: 45,
+    status: "Scheduled",
+    participants: ["EMP-0001", "EMP-0002"],
+    description: "Review sprint deliverables and upcoming technical milestones.",
+    link: "https://meet.hro.company/join/tech-sync"
   }
 ];
 
@@ -283,9 +352,99 @@ let mockTimesheets = [
     _id: "60c72b2f9b1d8b2a3c9d7951",
     empId: "EMP-2001",
     date: "2026-07-14",
-    clockIn: "09:05 AM",
-    clockOut: "06:15 PM",
+    clockIn: "2026-07-14T09:05:00.000Z",
+    clockOut: "2026-07-14T18:15:00.000Z",
     hours: 9,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7952",
+    empId: "EMP-0002",
+    date: "2026-07-01",
+    clockIn: "2026-07-01T09:00:00.000Z",
+    clockOut: "2026-07-01T18:00:00.000Z",
+    hours: 9,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7953",
+    empId: "EMP-0002",
+    date: "2026-07-02",
+    clockIn: "2026-07-02T09:05:00.000Z",
+    clockOut: "2026-07-02T18:00:00.000Z",
+    hours: 8.9,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7954",
+    empId: "EMP-0002",
+    date: "2026-07-03",
+    clockIn: "2026-07-03T09:00:00.000Z",
+    clockOut: "2026-07-03T18:05:00.000Z",
+    hours: 9.1,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7955",
+    empId: "EMP-0002",
+    date: "2026-07-04",
+    clockIn: "2026-07-04T09:00:00.000Z",
+    clockOut: "2026-07-04T18:00:00.000Z",
+    hours: 9.0,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7956",
+    empId: "EMP-0002",
+    date: "2026-07-07",
+    clockIn: "2026-07-07T09:02:00.000Z",
+    clockOut: "2026-07-07T18:00:00.000Z",
+    hours: 8.95,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7957",
+    empId: "EMP-0002",
+    date: "2026-07-08",
+    clockIn: "2026-07-08T09:00:00.000Z",
+    clockOut: "2026-07-08T18:00:00.000Z",
+    hours: 9.0,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7958",
+    empId: "EMP-0002",
+    date: "2026-07-09",
+    clockIn: "2026-07-09T09:00:00.000Z",
+    clockOut: "2026-07-09T18:00:00.000Z",
+    hours: 9.0,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7959",
+    empId: "EMP-0002",
+    date: "2026-07-10",
+    clockIn: "2026-07-10T09:10:00.000Z",
+    clockOut: "2026-07-10T18:00:00.000Z",
+    hours: 8.8,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7960",
+    empId: "EMP-0002",
+    date: "2026-07-11",
+    clockIn: "2026-07-11T09:00:00.000Z",
+    clockOut: "2026-07-11T18:00:00.000Z",
+    hours: 9.0,
+    status: "Punctual"
+  },
+  {
+    _id: "60c72b2f9b1d8b2a3c9d7962",
+    empId: "EMP-0002",
+    date: "2026-07-14",
+    clockIn: "2026-07-14T09:00:00.000Z",
+    clockOut: "2026-07-14T18:00:00.000Z",
+    hours: 9.0,
     status: "Punctual"
   }
 ];
@@ -1285,6 +1444,13 @@ function getMockDataForModel(modelName, op, conditions) {
         let itemKey = key;
         if (key === 'empId' && item.employeeId && !item.empId) {
           itemKey = 'employeeId';
+        }
+        if (key === 'employeeId' && item.empId && !item.employeeId) {
+          itemKey = 'empId';
+        }
+        if (key === 'participants' && Array.isArray(item.participants)) {
+          if (!item.participants.includes(val)) return false;
+          continue;
         }
         
         let itemVal = item[itemKey];

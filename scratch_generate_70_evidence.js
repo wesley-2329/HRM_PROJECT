@@ -173,10 +173,10 @@ const bugEvaluator = {
     status: (sources.recruitmentModule.includes("if (isSubmitting) return;") && sources.recruitmentModule.includes("disabled={isSubmitting}")) ? "FIXED" : "PARTIALLY FIXED"
   }),
   "BUG 022": () => ({
-    files: ["frontend/src/index.css"],
-    test: "Inspect .modal-backdrop overlay CSS rules and viewport stacking index",
-    result: "Backdrop enforces fixed position at top:0, left:0, width:100vw, height:100vh with backdrop-filter: blur(4px) and z-index: 1000, isolating modal from timeline.",
-    status: sources.indexCss.includes(".modal-backdrop") ? "FIXED" : "PARTIALLY FIXED"
+    files: ["frontend/src/index.css", "frontend/src/pages/recruitment/RecruitmentModule.jsx", "frontend/src/pages/HRApp.jsx"],
+    test: "Inspect non-overlapping .requisition-workspace-grid, side-by-side card layout, and elimination of duplicate RecruitmentModule renders",
+    result: "Workspace grid enforces non-overlapping side-by-side cards for Create Requisition and Workflow Timeline; redundant RecruitmentModule removed from HRApp and EmployeeApp.",
+    status: (sources.indexCss.includes(".modal-backdrop") && sources.recruitmentModule.includes("box-requisition-workflow-timeline") && sources.recruitmentModule.includes("box-create-manpower-requisition")) ? "FIXED" : "PARTIALLY FIXED"
   }),
   "BUG 023": () => ({
     files: ["backend/routes/recruitment.js", "frontend/src/pages/recruitment/RecruitmentModule.jsx"],

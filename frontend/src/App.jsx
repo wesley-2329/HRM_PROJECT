@@ -95,8 +95,9 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
     if (role === 'hr' && !isHRUser) {
       navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
     } else if (role === 'employee' && overrideModule !== 'org-structure') {
-      if (!isHRUser && user.id !== id) {
-        navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
+      const matchUserId = user?.id || user?._id || user?.employeeId;
+      if (!isHRUser && matchUserId && id && id !== user?.id && id !== user?._id && id !== user?.employeeId) {
+        navigate(`/employee/${encodeId(user.id || user._id)}/emp-dashboard`, { replace: true });
       }
     }
   }, [user, role, id, navigate, overrideModule, isHRUser]);
@@ -140,6 +141,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
             ) : (
               <EmployeeApp
                 currentModule={overrideModule || module}
+                setCurrentModule={(mod) => navigate(`/employee/${hashId || encodeId(user?.id || user?._id)}/${mod}`)}
               />
             )}
           </ErrorBoundary>
@@ -154,28 +156,34 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOfflineFallback, setIsOfflineFallback] = useState(false);
+  const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date().toLocaleTimeString());
 
   useEffect(() => {
     let retryTimer = null;
     const handleOffline = () => {
       setIsOfflineFallback(true);
-      // Auto-probe after 1.5s in case of temporary cold-start connection delay
+      setLastUpdatedTime(new Date().toLocaleTimeString());
+      // Auto-probe after 2s via dedicated /health endpoint to check for connection recovery
       clearTimeout(retryTimer);
       retryTimer = setTimeout(async () => {
         try {
-          const res = await api.get('/org/policies');
-          if (res.headers['x-data-source'] === 'live') {
+          const res = await api.get('/health');
+          setLastUpdatedTime(new Date().toLocaleTimeString());
+          if (res.data?.dataSource === 'live' || res.headers['x-data-source'] === 'live') {
             setIsOfflineFallback(false);
+            window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+            window.dispatchEvent(new CustomEvent('refresh-app-data'));
           }
         } catch (e) {
           // keep offline if still disconnected
         }
-      }, 1500);
+      }, 2000);
     };
 
     const handleLive = () => {
       clearTimeout(retryTimer);
       setIsOfflineFallback(false);
+      setLastUpdatedTime(new Date().toLocaleTimeString());
     };
 
     window.addEventListener('offline-fallback-detected', handleOffline);
@@ -232,19 +240,23 @@ const AppContent = () => {
           top: 0,
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <i className="fa-solid fa-triangle-exclamation"></i>
             <span>Database Disconnected — Showing cached offline data</span>
+            <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 500 }}>(Last checked: {lastUpdatedTime})</span>
           </div>
           <button
             onClick={async () => {
               try {
-                const res = await api.get('/org/policies');
-                if (res.headers['x-data-source'] === 'live') {
+                const res = await api.get('/health');
+                setLastUpdatedTime(new Date().toLocaleTimeString());
+                if (res.data?.dataSource === 'live' || res.headers['x-data-source'] === 'live') {
                   setIsOfflineFallback(false);
+                  window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
+                  window.dispatchEvent(new CustomEvent('refresh-app-data'));
                 }
               } catch (e) {
-                // still offline
+                setLastUpdatedTime(new Date().toLocaleTimeString());
               }
             }}
             style={{

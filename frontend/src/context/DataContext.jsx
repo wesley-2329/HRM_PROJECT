@@ -542,6 +542,20 @@ export const DataProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Refresh all application data when live connection is recovered or explicitly signaled
+  useEffect(() => {
+    if (!user) return;
+    const handleRefresh = () => {
+      fetchAllData();
+    };
+    window.addEventListener('refresh-app-data', handleRefresh);
+    window.addEventListener('offline-fallback-cleared', handleRefresh);
+    return () => {
+      window.removeEventListener('refresh-app-data', handleRefresh);
+      window.removeEventListener('offline-fallback-cleared', handleRefresh);
+    };
+  }, [user]);
+
   return (
     <DataContext.Provider
       value={{

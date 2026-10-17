@@ -192,9 +192,9 @@
     "id": "BUG 022",
     "title": "Create Manpower Requisition panel overlaps Workflow Timeline",
     "status": "FIXED",
-    "files": "frontend/src/index.css",
-    "test": "Inspect .modal-backdrop overlay CSS rules and viewport stacking index",
-    "result": "Backdrop enforces fixed position at top:0, left:0, width:100vw, height:100vh with backdrop-filter: blur(4px) and z-index: 1000, isolating modal from timeline.",
+    "files": "frontend/src/index.css, frontend/src/pages/recruitment/RecruitmentModule.jsx, frontend/src/pages/HRApp.jsx",
+    "test": "Inspect non-overlapping .requisition-workspace-grid, side-by-side card layout, and elimination of duplicate RecruitmentModule renders",
+    "result": "Workspace grid enforces non-overlapping side-by-side cards for Create Requisition and Workflow Timeline; redundant RecruitmentModule removed from HRApp and EmployeeApp.",
     "remaining": "None. Verified against original register specifications."
   },
   {

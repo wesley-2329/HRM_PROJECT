@@ -115,6 +115,10 @@ const DocumentVault = ({ mode }) => {
   const handleUploadDocument = async (e) => {
     e.preventDefault();
     if (isUploading) return;
+    if (isHr && !uploadOnBehalfEmpId) {
+      showToast('Please select a target employee for this document upload.', 'warning');
+      return;
+    }
     if (!uploadDocName) return showToast('Document name is required', 'error');
     if (!uploadFile && !selectedDoc) return showToast('Please select a file to upload', 'error');
 
@@ -137,8 +141,9 @@ const DocumentVault = ({ mode }) => {
     try {
       setIsUploading(true);
       showToast('Uploading file securely to vault...', 'info');
+      // Do not hardcode Content-Type header so browser / Axios computes multipart/form-data boundary automatically
       const res = await api.post('/vault/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': undefined },
         timeout: 30000
       });
       showToast(res.data?.message || 'Secure document uploaded successfully.', 'success');

@@ -17,46 +17,86 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (optionsScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = optionsScrollRef.current;
+      setCanScrollLeft(scrollLeft > 2);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = optionsScrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll);
+      const t1 = setTimeout(checkScroll, 100);
+      const t2 = setTimeout(checkScroll, 500);
+      return () => {
+        el.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, []);
+
   const scrollOptions = (direction) => {
     if (optionsScrollRef.current) {
       optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
+      setTimeout(checkScroll, 350);
     }
   };
 
   const searchIndex = [
-    { title: 'Overview Dashboard', desc: 'HR executive KPIs, live analytics & attendance', path: '/hr/dashboard', icon: 'fa-chart-line', category: 'Overview' },
-    { title: 'Employee Master', desc: 'Manage employees, documents & status', path: '/hr/employee-management', icon: 'fa-users', category: 'Workforce' },
-    { title: 'Org Structure', desc: 'Organization hierarchy & reporting lines', path: '/organization', icon: 'fa-sitemap', category: 'Workforce' },
-    { title: 'Attendance Log', desc: 'Real-time punches, biometric logs & regularization', path: '/hr/attendance', icon: 'fa-clipboard-user', category: 'Operations' },
-    { title: 'Leave Management', desc: 'Leave requests, quota balances & approvals', path: '/hr/leave-management', icon: 'fa-calendar-check', category: 'Operations' },
-    { title: 'Timesheet Records', desc: 'Daily work logs, project hours & activity', path: '/hr/timesheet-records', icon: 'fa-clock', category: 'Operations' },
-    { title: 'Shift Roster', desc: 'Shift scheduling, rotation plans & assignments', path: '/hr/shift-roster', icon: 'fa-calendar-week', category: 'Operations' },
-    { title: 'Payroll Processing', desc: 'Salary computation, pay slips & tax deductions', path: '/hr/payroll-processing', icon: 'fa-file-invoice-dollar', category: 'Operations' },
-    { title: 'Recruitment & ATS', desc: 'Job postings, applicant pipeline & stages', path: '/hr/recruitment-ats', icon: 'fa-briefcase', category: 'Talent & Growth' },
-    { title: 'Onboarding Workflow', desc: 'New hire checklists, asset handover & IT tasks', path: '/hr/onboarding-workflow', icon: 'fa-user-plus', category: 'Talent & Growth' },
-    { title: 'Performance & Goals', desc: 'OKRs, KPIs, appraisals, 360 reviews & PIP', path: '/hr/performance-goals', icon: 'fa-bullseye', category: 'Talent & Growth' },
-    { title: 'Training Programs', desc: 'L&D courses, certifications & attendance', path: '/hr/training-programs', icon: 'fa-graduation-cap', category: 'Talent & Growth' },
-    { title: 'Employee Engagement', desc: 'Surveys, polls, rewards & town hall discussions', path: '/hr/employee-engagement', icon: 'fa-heart', category: 'Talent & Growth' },
-    { title: 'HR Budgeting & Cost', desc: 'Workforce cost planning, allocations & analytics', path: '/hr/hr-budgeting', icon: 'fa-coins', category: 'Finance & Exit' },
-    { title: 'Statutory Compliance', desc: 'PF, ESI, PT, LWF, challans & statutory returns', path: '/hr/statutory-compliance', icon: 'fa-scale-balanced', category: 'Finance & Exit' },
-    { title: 'Exit Workflow & F&F', desc: 'Resignations, clearances & full-final settlement', path: '/hr/exit-management', icon: 'fa-door-open', category: 'Finance & Exit' },
-    { title: 'Policy Repository', desc: 'Company policies & employee acknowledgements', path: '/hr/policy-repository', icon: 'fa-book-bookmark', category: 'Governance' },
-    { title: 'Statutory & HR Audit', desc: 'Compliance audit trails & regulatory registry', path: '/hr/hr-audit', icon: 'fa-clipboard-check', category: 'Governance' },
-    { title: 'Compliance Calendar', desc: 'Filing schedules & statutory deadlines', path: '/hr/compliance-calendar', icon: 'fa-calendar-days', category: 'Governance' },
-    { title: 'Approval Matrix', desc: 'Multi-level workflow authorizations', path: '/hr/approval-matrix', icon: 'fa-sitemap', category: 'Governance' },
-    { title: 'Observation Tracker', desc: 'Audit observations, corrective actions & closures', path: '/hr/observation-tracker', icon: 'fa-magnifying-glass', category: 'Governance' },
-    { title: 'HR Analytics', desc: 'Headcount metrics, turnover & compensation', path: '/hr/hr-analytics', icon: 'fa-chart-pie', category: 'Analytics' },
-    { title: 'Reports & Audits', desc: 'Department cost indices & compliance summaries', path: '/hr/reports-audits', icon: 'fa-chart-pie', category: 'Analytics' },
-    { title: 'Alert Center', desc: 'System notifications, broadcast alerts & logs', path: '/hr/notification-system', icon: 'fa-bell', category: 'Analytics' },
-    { title: 'My Profile', desc: 'Account details, contact info & security', path: '/hr/hr-profile', icon: 'fa-user', category: 'Account' },
-    { title: 'System Settings', desc: 'Platform configuration & access preferences', path: '/hr/settings-profile', icon: 'fa-gear', category: 'Account' }
+    { title: 'Overview Dashboard', desc: 'HR executive KPIs, live analytics & attendance', path: '/hr/dashboard', icon: 'fa-chart-line', category: 'Overview', keywords: 'dashboard home kpis overview hr executive analytics stats punch clock' },
+    { title: 'Employee Master', desc: 'Manage employees, documents & status', path: '/hr/employee-management', icon: 'fa-users', category: 'Workforce', keywords: 'employees staff workforce directory profiles add employee master user list' },
+    { title: 'Org Structure', desc: 'Organization hierarchy & reporting lines', path: '/organization', icon: 'fa-sitemap', category: 'Workforce', keywords: 'org structure hierarchy chart departments reporting lines leadership team directory' },
+    { title: 'Attendance Log', desc: 'Real-time punches, biometric logs & regularization', path: '/hr/attendance', icon: 'fa-clipboard-user', category: 'Operations', keywords: 'attendance punch clock clock-in clock-out shift timer logs regularization biometric daily present absent hours' },
+    { title: 'Leave Management', desc: 'Leave requests, quota balances & approvals', path: '/hr/leave-management', icon: 'fa-calendar-check', category: 'Operations', keywords: 'leave leaves time off holiday vacation sick casual requests quota balances approvals' },
+    { title: 'Timesheet Records', desc: 'Daily work logs, project hours & activity', path: '/hr/timesheet-records', icon: 'fa-clock', category: 'Operations', keywords: 'timesheet timesheets work logs hours project activity shifts daily records' },
+    { title: 'Shift Roster', desc: 'Shift scheduling, rotation plans & assignments', path: '/hr/shift-roster', icon: 'fa-calendar-week', category: 'Operations', keywords: 'shifts roster shift scheduling rotation timing assignment schedule' },
+    { title: 'Payroll Processing', desc: 'Salary computation, pay slips & tax deductions', path: '/hr/payroll-processing', icon: 'fa-file-invoice-dollar', category: 'Operations', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips payroll processing' },
+    { title: 'Recruitment & ATS', desc: 'Job postings, applicant pipeline & stages', path: '/hr/recruitment-ats', icon: 'fa-briefcase', category: 'Talent & Growth', keywords: 'recruitment ats jobs openings applicants candidates hiring pipeline interviews vacancy manpower requisition expense cost' },
+    { title: 'Onboarding Workflow', desc: 'New hire checklists, asset handover & IT tasks', path: '/hr/onboarding-workflow', icon: 'fa-user-plus', category: 'Talent & Growth', keywords: 'onboarding new hire checklists asset handover induction joining tasks welcome' },
+    { title: 'Performance & Goals', desc: 'OKRs, KPIs, appraisals, 360 reviews & PIP', path: '/hr/performance-goals', icon: 'fa-bullseye', category: 'Talent & Growth', keywords: 'performance goals okrs kpis appraisals reviews pip ratings evaluation 360' },
+    { title: 'Training Programs', desc: 'L&D courses, certifications & attendance', path: '/hr/training-programs', icon: 'fa-graduation-cap', category: 'Talent & Growth', keywords: 'training learning development l&d courses certifications skills modules' },
+    { title: 'Employee Engagement', desc: 'Surveys, polls, rewards & town hall discussions', path: '/hr/employee-engagement', icon: 'fa-heart', category: 'Talent & Growth', keywords: 'engagement welfare rewards recognition surveys polls shout-outs town hall' },
+    { title: 'HR Budgeting & Cost', desc: 'Workforce cost planning, allocations & analytics', path: '/hr/hr-budgeting', icon: 'fa-coins', category: 'Finance & Exit', keywords: 'budgeting cost workforce finance expense planning allocations compensation' },
+    { title: 'Statutory Compliance', desc: 'PF, ESI, PT, LWF, challans & statutory returns', path: '/hr/statutory-compliance', icon: 'fa-scale-balanced', category: 'Finance & Exit', keywords: 'statutory compliance pf esi pt lwf challans returns labor laws regulations' },
+    { title: 'Exit Workflow & F&F', desc: 'Resignations, clearances & full-final settlement', path: '/hr/exit-management', icon: 'fa-door-open', category: 'Finance & Exit', keywords: 'exit resignation clearance full final settlement f&f ndc no due certificate handover' },
+    { title: 'Policy Repository', desc: 'Company policies & employee acknowledgements', path: '/hr/policy-repository', icon: 'fa-book-bookmark', category: 'Governance', keywords: 'policies policy handbook compliance code of conduct rules governance guidelines' },
+    { title: 'Statutory & HR Audit', desc: 'Compliance audit trails & regulatory registry', path: '/hr/hr-audit', icon: 'fa-clipboard-check', category: 'Governance', keywords: 'audit statutory hr compliance audit trails verification regulatory' },
+    { title: 'Compliance Calendar', desc: 'Filing schedules & statutory deadlines', path: '/hr/compliance-calendar', icon: 'fa-calendar-days', category: 'Governance', keywords: 'compliance calendar deadlines filings dates schedule statutory' },
+    { title: 'Approval Matrix', desc: 'Multi-level workflow authorizations', path: '/hr/approval-matrix', icon: 'fa-sitemap', category: 'Governance', keywords: 'approval matrix workflow authorizations sign off hierarchy delegation' },
+    { title: 'Observation Tracker', desc: 'Audit observations, corrective actions & closures', path: '/hr/observation-tracker', icon: 'fa-magnifying-glass', category: 'Governance', keywords: 'observation tracker audit issues corrective actions closures capa' },
+    { title: 'HR Analytics', desc: 'Headcount metrics, turnover & compensation', path: '/hr/hr-analytics', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'analytics metrics turnover attrition headcount compensation graphs charts' },
+    { title: 'Reports & Audits', desc: 'Department cost indices & compliance summaries', path: '/hr/reports-audits', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'reports audits downloads exports summaries indices department' },
+    { title: 'Alert Center', desc: 'System notifications, broadcast alerts & logs', path: '/hr/notification-system', icon: 'fa-bell', category: 'Analytics', keywords: 'alerts notifications broadcast messages logs system updates' },
+    { title: 'My Profile', desc: 'Account details, contact info & security', path: '/hr/hr-profile', icon: 'fa-user', category: 'Account', keywords: 'profile account personal contact email password details' },
+    { title: 'System Settings', desc: 'Platform configuration & access preferences', path: '/hr/settings-profile', icon: 'fa-gear', category: 'Account', keywords: 'settings system configuration access theme preferences dark mode' }
   ];
 
-  const filteredSuggestions = searchQuery.trim() === '' ? [] : searchIndex.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 7);
+  const cleanQuery = searchQuery.trim().toLowerCase();
+  const searchTokens = cleanQuery.split(/[\s,+/&|]+/).filter(t => t.length > 0 && t !== 'and' && t !== 'or' && t !== '&');
+
+  const filteredSuggestions = searchTokens.length === 0 ? searchIndex.slice(0, 6) : searchIndex.filter(item => {
+    const fullText = `${item.title} ${item.desc} ${item.category} ${item.keywords || ''}`.toLowerCase();
+    if (fullText.includes(cleanQuery)) return true;
+    return searchTokens.some(tok => fullText.includes(tok));
+  }).sort((a, b) => {
+    const aFull = `${a.title} ${a.desc} ${a.keywords || ''}`.toLowerCase();
+    const bFull = `${b.title} ${b.desc} ${b.keywords || ''}`.toLowerCase();
+    const aExact = aFull.includes(cleanQuery) ? 3 : 0;
+    const bExact = bFull.includes(cleanQuery) ? 3 : 0;
+    const aTokenMatches = searchTokens.filter(t => aFull.includes(t)).length;
+    const bTokenMatches = searchTokens.filter(t => bFull.includes(t)).length;
+    return (bExact + bTokenMatches) - (aExact + aTokenMatches);
+  }).slice(0, 7);
 
   const handleMouseEnter = (name) => {
     if (dropdownTimeoutRef.current) {
@@ -162,18 +202,46 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
         <div style={{ display: 'flex', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
           <button 
+            type="button"
             onClick={() => scrollOptions(-1)} 
-            className="btn btn-secondary"
+            disabled={!canScrollLeft}
+            className="btn btn-secondary nav-scroll-btn nav-scroll-left"
             title="Scroll Navigation Left"
-            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ 
+              padding: '6px 10px', 
+              height: '32px', 
+              minWidth: '32px', 
+              borderRadius: '6px', 
+              border: '1px solid hsl(var(--border))', 
+              background: 'hsl(var(--bg-card))', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              opacity: canScrollLeft ? 1 : 0.4
+            }}
           >
             <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }}></i>
           </button>
           <button 
+            type="button"
             onClick={() => scrollOptions(1)} 
-            className="btn btn-secondary"
+            disabled={!canScrollRight}
+            className="btn btn-secondary nav-scroll-btn nav-scroll-right"
             title="Scroll Navigation Right"
-            style={{ padding: '6px 10px', height: '32px', minWidth: '32px', borderRadius: '6px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--bg-card))', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ 
+              padding: '6px 10px', 
+              height: '32px', 
+              minWidth: '32px', 
+              borderRadius: '6px', 
+              border: '1px solid hsl(var(--border))', 
+              background: 'hsl(var(--bg-card))', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: canScrollRight ? 'pointer' : 'not-allowed',
+              opacity: canScrollRight ? 1 : 0.4
+            }}
           >
             <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }}></i>
           </button>
@@ -181,7 +249,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       </div>
 
       {/* 2. Scrollable Navigation Options ONLY */}
-      <div className="hr-options-scroll-section" ref={optionsScrollRef}>
+      <div className="hr-options-scroll-section" ref={optionsScrollRef} onScroll={checkScroll}>
         <nav className="hr-nav-menu">
           
           {/* 1. Overview */}
@@ -522,7 +590,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           <i className="fa-solid fa-search"></i>
           <input
             type="text"
-            placeholder="Search staff, cards or codes..."
+            placeholder="Search features, tools or docs..."
             value={searchQuery}
             onFocus={() => setShowSearchDropdown(true)}
             onChange={(e) => {
@@ -533,7 +601,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             }}
             onKeyDown={handleSearchKeyDown}
           />
-          {showSearchDropdown && filteredSuggestions.length > 0 && (
+          {showSearchDropdown && (filteredSuggestions.length > 0 || searchQuery.trim() !== '') && (
             <div
               className="search-suggestions-dropdown"
               style={{
@@ -550,41 +618,56 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
                 padding: '4px'
               }}
             >
-              <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Quick Navigation ({filteredSuggestions.length})
-              </div>
-              {filteredSuggestions.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleSelectSuggestion(item.path)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+              {filteredSuggestions.length > 0 ? (
+                <>
+                  <div style={{ padding: '6px 10px', fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {searchQuery.trim() ? `Search Results (${filteredSuggestions.length})` : `Quick Navigation (${filteredSuggestions.length})`}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.title}
+                  {filteredSuggestions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleSelectSuggestion(item.path)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--accent-hover, var(--border)))'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`fa-solid ${item.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.title}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.desc}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
+                        {item.category}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.desc}
-                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="search-no-results" style={{ padding: '20px 16px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>
+                  <i className="fa-solid fa-circle-question" style={{ fontSize: '1.4rem', marginBottom: '8px', opacity: 0.6, display: 'block', color: 'hsl(var(--text-secondary))' }}></i>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>No results found</div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>
+                    No features or tools matching &ldquo;{searchQuery}&rdquo;
                   </div>
-                  <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'hsl(var(--border))', color: 'hsl(var(--text-secondary))' }}>
-                    {item.category}
-                  </span>
+                  <div style={{ fontSize: '0.72rem', marginTop: '8px', opacity: 0.85 }}>
+                    Try searching for <strong>payroll</strong>, <strong>leave</strong>, or <strong>attendance</strong>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

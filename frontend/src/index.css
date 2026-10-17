@@ -675,6 +675,22 @@ body.dark-mode .glass-card {
 }
 
 /* Bug 022: Prevent collision and overlapping between Requisition Form and Workflow Timeline */
+.requisition-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .requisition-workspace-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
 .dual-modal-wrapper {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -701,7 +717,20 @@ body.dark-mode .glass-card {
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
+}
+
+.modal-content.requisition-panel-box {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 760px);
+  overflow: hidden;
+  margin: auto;
+}
+
+.modal-content.requisition-panel-box .modal-body {
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Bug 046: Isolated layout and visual separation for PIP Initiate Form & Review Log */
@@ -1654,9 +1683,11 @@ body.dark-mode .emp-header {
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-behavior: smooth;
 }
 
 .hr-options-scroll-section::-webkit-scrollbar,
@@ -2099,40 +2130,6 @@ body.dark-mode .emp-header {
   background: rgba(var(--emp-primary-rgb), 0.08);
 }
 
-/* Hover Dropdown / Mega Menu Panels */
-.emp-dropdown-panel {
-  position: absolute;
-  top: calc(100% - 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(12px) scale(0.95);
-  opacity: 0;
-  visibility: hidden;
-  min-width: 280px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 20px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
-  z-index: 1000;
-}
-
-body.dark-mode .emp-dropdown-panel {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.emp-menu-item:hover .emp-dropdown-panel {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0) scale(1);
-}
 
 .emp-dropdown-item {
   display: flex;

@@ -7,8 +7,8 @@
     <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js CDN (with Tracking Prevention resilient fallback) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="console.warn('Tracking Prevention blocked access to Chart.js CDN; falling back to resilient standalone charts.'); window.Chart = window.Chart || undefined;"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -96,10 +96,14 @@
 
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Global Chart.js default animation configurations
-      if (window.Chart) {
-        window.Chart.defaults.animation.duration = 900;
-        window.Chart.defaults.animation.easing = 'easeOutQuart';
+      // Global Chart.js default animation configurations safely guarded
+      try {
+        if (typeof window !== 'undefined' && window.Chart && window.Chart.defaults) {
+          window.Chart.defaults.animation.duration = 900;
+          window.Chart.defaults.animation.easing = 'easeOutQuart';
+        }
+      } catch (e) {
+        console.warn('Chart.js defaults initialization skipped:', e);
       }
 
       // Button Click Ripple Effect via Event Delegation

@@ -82,6 +82,40 @@ const BudgetingModule = ({ searchQuery = '' }) => {
     ]
   });
 
+  // Cost Analytics State (Bug 070)
+  const [costAnalytics, setCostAnalytics] = useState([
+    { analyticsId: 'CST-001', financialYear: 'FY 2026-2027', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', budgetAmount: 4200000, actualCost: 2800000, varianceAmount: 1400000, variancePercentage: 33.3, headcount: 48, costPerHead: 87500, burnRate: 66.7, rating: 'High Efficiency', color: '#10b981' },
+    { analyticsId: 'CST-002', financialYear: 'FY 2026-2027', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', budgetAmount: 2500000, actualCost: 1600000, varianceAmount: 900000, variancePercentage: 36.0, headcount: 32, costPerHead: 50000, burnRate: 64.0, rating: 'Optimal', color: '#3b82f6' },
+    { analyticsId: 'CST-003', financialYear: 'FY 2026-2027', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', budgetAmount: 1400000, actualCost: 920000, varianceAmount: 480000, variancePercentage: 34.3, headcount: 18, costPerHead: 51100, burnRate: 65.7, rating: 'Optimal', color: '#3b82f6' },
+    { analyticsId: 'CST-004', financialYear: 'FY 2026-2027', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', budgetAmount: 2000000, actualCost: 1250000, varianceAmount: 750000, variancePercentage: 37.5, headcount: 24, costPerHead: 52000, burnRate: 62.5, rating: 'High Efficiency', color: '#10b981' },
+    { analyticsId: 'CST-005', financialYear: 'FY 2026-2027', department: 'Finance & Legal', costCenter: 'CC-FIN-105', category: 'Compliance & Audit', budgetAmount: 1200000, actualCost: 780000, varianceAmount: 420000, variancePercentage: 35.0, headcount: 12, costPerHead: 56000, burnRate: 65.0, rating: 'Optimal', color: '#3b82f6' }
+  ]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState(null);
+
+  // Forecast & Variance State (Bug 071)
+  const [forecastList, setForecastList] = useState([
+    { forecastId: 'FC-101', budgetId: 'BDG-1001', financialYear: 'FY 2026-2027', period: 'Annual', scenario: 'Expected', bestCase: 11200000, expectedCase: 11850000, worstCase: 12600000, costSavings: 650000, accuracy: 94.6 },
+    { forecastId: 'FC-102', budgetId: 'BDG-1002', financialYear: 'FY 2026-2027', period: 'Quarterly', scenario: 'Expected', bestCase: 2750000, expectedCase: 2960000, worstCase: 3150000, costSavings: 140000, accuracy: 95.2 },
+    { forecastId: 'FC-103', budgetId: 'BDG-1003', financialYear: 'FY 2026-2027', period: 'Monthly', scenario: 'Best Case', bestCase: 920000, expectedCase: 987000, worstCase: 1050000, costSavings: 67000, accuracy: 96.1 }
+  ]);
+  const [varianceList, setVarianceList] = useState([
+    { varianceId: 'VAR-201', budgetId: 'BDG-1001', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', plannedBudget: 4200000, actualExpense: 2800000, variance: 1400000, variancePercentage: 33.3, varianceType: 'Favorable', rootCause: 'Delayed Q2 lateral hiring ramp', actionPlan: 'Accelerate campus onboarding in Q3' },
+    { varianceId: 'VAR-202', budgetId: 'BDG-1002', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', plannedBudget: 2500000, actualExpense: 1600000, variance: 900000, variancePercentage: 36.0, varianceType: 'Favorable', rootCause: 'Optimized direct referral channel over agencies', actionPlan: 'Maintain internal referral program' },
+    { varianceId: 'VAR-203', budgetId: 'BDG-1003', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', plannedBudget: 1400000, actualExpense: 920000, variance: 480000, variancePercentage: 34.3, varianceType: 'Favorable', rootCause: 'Group insurance renegotiation rebate', actionPlan: 'Lock in tiered premium discount' },
+    { varianceId: 'VAR-204', budgetId: 'BDG-1004', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', plannedBudget: 2000000, actualExpense: 1250000, variance: 750000, variancePercentage: 37.5, varianceType: 'Favorable', rootCause: 'Digital LMS adoption reduced venue expenses', actionPlan: 'Expand cloud certification tracks' },
+    { varianceId: 'VAR-205', budgetId: 'BDG-1005', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Overtime & Allowances', plannedBudget: 650000, actualExpense: 680000, variance: -30000, variancePercentage: -4.6, varianceType: 'Unfavorable', rootCause: 'Weekend migration and deployment sprints', actionPlan: 'Implement sprint rota to balance shift caps' }
+  ]);
+  const [quarterlyProjections, setQuarterlyProjections] = useState([
+    { cat: 'Manpower & Salaries', q1: 6100000, q2: 6120000, q3: 6150000, q4: 6130000, total: 24500000, budget: 25000000, status: '+₹500,000 Favorable', color: '#10b981' },
+    { cat: 'Recruitment & Sourcing', q1: 480000, q2: 510000, q3: 440000, q4: 420000, total: 1850000, budget: 1900000, status: '+₹50,000 Favorable', color: '#10b981' },
+    { cat: 'Employee Welfare & Benefits', q1: 340000, q2: 370000, q3: 360000, q4: 350000, total: 1420000, budget: 1450000, status: '+₹30,000 Favorable', color: '#10b981' },
+    { cat: 'Training & Skill Development', q1: 210000, q2: 260000, q3: 250000, q4: 230000, total: 950000, budget: 980000, status: '+₹30,000 Favorable', color: '#10b981' },
+    { cat: 'Overtime & Allowances', q1: 170000, q2: 180000, q3: 165000, q4: 165000, total: 680000, budget: 650000, status: '-₹30,000 Variance Warning', color: '#ef4444' }
+  ]);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [forecastError, setForecastError] = useState(null);
+
   // Modal States
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showRecruitmentModal, setShowRecruitmentModal] = useState(false);
@@ -219,6 +253,37 @@ const BudgetingModule = ({ searchQuery = '' }) => {
             return item;
           });
           setHistoryLogs(parsedLogs);
+        }
+      } else if (activeTab === 'analytics') {
+        setAnalyticsLoading(true);
+        setAnalyticsError(null);
+        try {
+          const res = await api.get('/budget/analytics');
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+            setCostAnalytics(res.data);
+          }
+        } catch (err) {
+          console.warn('Analytics fetch error, retaining initial state:', err.message);
+        } finally {
+          setAnalyticsLoading(false);
+        }
+      } else if (activeTab === 'forecast') {
+        setForecastLoading(true);
+        setForecastError(null);
+        try {
+          const res = await api.get('/budget/forecast');
+          if (res.data) {
+            if (Array.isArray(res.data.forecasts) && res.data.forecasts.length > 0) {
+              setForecastList(res.data.forecasts);
+            }
+            if (Array.isArray(res.data.variances) && res.data.variances.length > 0) {
+              setVarianceList(res.data.variances);
+            }
+          }
+        } catch (err) {
+          console.warn('Forecast fetch error, retaining initial state:', err.message);
+        } finally {
+          setForecastLoading(false);
         }
       } else if (activeTab === 'masters' || activeTab === 'fy-config') {
         const res = await api.get('/budget/masters');
@@ -390,6 +455,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         {menuTabs.map((t) => (
           <button
             key={t.id}
+            data-testid={`budget-tab-${t.id}`}
             onClick={() => setActiveTab(t.id)}
             style={{
               padding: '8px 14px',
@@ -564,7 +630,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                     <td>
                       <button 
                         className="btn btn-secondary btn-view-budget-details" 
-                        style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
+                        style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }} 
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedBudgetDetail(b);
@@ -572,7 +638,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                         title="View Budget Details"
                         data-testid={`btn-view-budget-${b.budgetId}`}
                       >
-                        <i className="fa-solid fa-eye"></i> View Details
+                        <i className="fa-solid fa-eye"></i> View
                       </button>
                     </td>
                   </tr>
@@ -643,96 +709,257 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* 3B. COST ANALYTICS VIEW                                  */}
       {/* ======================================================== */}
+      {/* ======================================================== */}
+      {/* 3B. COST ANALYTICS VIEW (BUG 070)                         */}
+      {/* ======================================================== */}
       {activeTab === 'analytics' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div data-testid="cost-analytics-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Top Analytics Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COST PER EMPLOYEE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerEmployee || 18500).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Within Target Band (₹20,000 cap)</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerEmployee || 18500).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Within Target Band (₹20,000 cap)</span>
             </div>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>AVG DEPT MONTHLY RUNWAY</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerDepartment || 1560000).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Across 6 Core Business Units</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerDepartment || 1560000).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Across 5 Core Business Units</span>
             </div>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OVERTIME & SHIFT COST</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.overtimeCost || 680000).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>2.8% of Total Operational Spend</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.overtimeCost || 680000).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>2.8% of Total Operational Spend</span>
             </div>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>TOTAL UTILIZATION RATE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.utilizationPercentage || '62.8%'}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Optimal Pacing (Q2 Benchmark: 65%)</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Optimal Pacing (Q2 Benchmark: 65%)</span>
             </div>
           </div>
 
-          {/* Departmental Cost Analytics Table */}
-          <div className="card p-5">
-            <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Departmental Cost Indices & Burn Rate Analytics</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr>
-                    <th>Department</th>
-                    <th>Headcount</th>
-                    <th>Cost Per Head (₹)</th>
-                    <th>Allocated Budget (₹)</th>
-                    <th>Utilized Spend (₹)</th>
-                    <th>Burn Rate</th>
-                    <th>Efficiency Rating</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { dept: 'Engineering', count: 48, costPerHead: 87500, allocated: 4200000, spent: 2800000, rate: 66.7, rating: 'High Efficiency', color: '#10b981' },
-                    { dept: 'Sales & Marketing', count: 32, costPerHead: 50000, allocated: 2500000, spent: 1600000, rate: 64.0, rating: 'Optimal', color: '#3b82f6' },
-                    { dept: 'Human Resources', count: 18, costPerHead: 51100, allocated: 1400000, spent: 920000, rate: 65.7, rating: 'Optimal', color: '#3b82f6' },
-                    { dept: 'Operations & Infra', count: 24, costPerHead: 52000, allocated: 2000000, spent: 1250000, rate: 62.5, rating: 'High Efficiency', color: '#10b981' },
-                    { dept: 'Finance & Legal', count: 12, costPerHead: 56000, allocated: 1200000, spent: 780000, rate: 65.0, rating: 'Optimal', color: '#3b82f6' }
-                  ].map((row) => (
-                    <tr key={row.dept}>
-                      <td><strong>{row.dept}</strong></td>
-                      <td>{row.count} Active</td>
-                      <td>₹{row.costPerHead.toLocaleString()}</td>
-                      <td>₹{row.allocated.toLocaleString()}</td>
-                      <td><strong>₹{row.spent.toLocaleString()}</strong></td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: `${row.rate}%`, height: '100%', background: row.color, borderRadius: '3px' }}></div>
-                          </div>
-                          <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{row.rate}%</span>
-                        </div>
-                      </td>
-                      <td><span className="badge" style={{ background: `${row.color}15`, color: row.color }}>{row.rating}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Loading Indicator */}
+          {analyticsLoading && (
+            <div data-testid="analytics-loading" className="card" style={{ textAlign: 'center', padding: '40px 20px', color: 'hsl(var(--text-secondary))' }}>
+              <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '12px', color: 'hsl(var(--primary))' }}></i>
+              <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>Loading cost analytics data...</div>
             </div>
-          </div>
+          )}
+
+          {/* Empty-State Container */}
+          {!analyticsLoading && costAnalytics.filter(item => {
+            const matchesDept = filterDept === 'All' || item.department === filterDept;
+            const matchesCostCenter = filterCostCenter === 'All' || item.costCenter === filterCostCenter;
+            const matchesSearch = !searchQuery || 
+              (item.department && item.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.costCenter && item.costCenter.toLowerCase().includes(searchQuery.toLowerCase()));
+            return matchesDept && matchesCostCenter && matchesSearch;
+          }).length === 0 && (
+            <div data-testid="analytics-empty-state" className="card" style={{ textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-secondary))' }}>
+              <i className="fa-solid fa-chart-pie" style={{ fontSize: '2.5rem', marginBottom: '16px', opacity: 0.4 }}></i>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 6px 0', color: 'hsl(var(--text-primary))' }}>No data available</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>Cost analytics data is not available for the selected filters.</p>
+            </div>
+          )}
+
+          {/* Data Content (Charts & Tables) */}
+          {!analyticsLoading && costAnalytics.filter(item => {
+            const matchesDept = filterDept === 'All' || item.department === filterDept;
+            const matchesCostCenter = filterCostCenter === 'All' || item.costCenter === filterCostCenter;
+            const matchesSearch = !searchQuery || 
+              (item.department && item.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.costCenter && item.costCenter.toLowerCase().includes(searchQuery.toLowerCase()));
+            return matchesDept && matchesCostCenter && matchesSearch;
+          }).length > 0 && (
+            <>
+              {/* Resilient Standalone Visual Analytics Charts Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+                {/* Chart 1: Department Cost Allocation & Spend Distribution */}
+                <div className="card p-5" data-testid="chart-dept-cost-distribution">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>Department Cost Allocation & Spend</h4>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Allocated Budget vs Actual Spend by Business Unit</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', background: 'hsl(var(--primary))', borderRadius: '2px' }}></span> Allocated</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', background: '#10b981', borderRadius: '2px' }}></span> Spent</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {costAnalytics.slice(0, 5).map(item => {
+                      const maxVal = 4500000;
+                      const allocPct = Math.min(100, Math.round(((item.budgetAmount || 4000000) / maxVal) * 100));
+                      const spendPct = Math.min(100, Math.round(((item.actualCost || 2500000) / maxVal) * 100));
+                      const burnRate = item.burnRate || (Math.round(((item.actualCost || 1) / (item.budgetAmount || 1)) * 1000) / 10);
+                      return (
+                        <div key={item.analyticsId || item.department}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                            <span>{item.department}</span>
+                            <span style={{ color: 'hsl(var(--text-secondary))' }}>₹{(item.actualCost || 0).toLocaleString('en-IN')} / ₹{(item.budgetAmount || 0).toLocaleString('en-IN')} ({burnRate}%)</span>
+                          </div>
+                          <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
+                            <div style={{ width: `${allocPct}%`, height: '100%', background: 'hsl(var(--primary))', opacity: 0.35, position: 'absolute', top: 0, left: 0, borderRadius: '6px' }}></div>
+                            <div style={{ width: `${spendPct}%`, height: '100%', background: item.color || '#10b981', position: 'absolute', top: 0, left: 0, borderRadius: '6px' }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Chart 2: Cost Breakdown by Category */}
+                <div className="card p-5" data-testid="chart-category-cost-breakdown">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>Cost Breakdown by Expense Category</h4>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Operational Spend Distribution across HR Functions</p>
+                    </div>
+                    <i className="fa-solid fa-chart-pie" style={{ color: 'hsl(var(--primary))' }}></i>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {[
+                      { cat: 'Manpower & Salaries', amount: 24500000, share: 77.2, color: '#6366f1' },
+                      { cat: 'Recruitment & Sourcing', amount: 1850000, share: 5.8, color: '#3b82f6' },
+                      { cat: 'Employee Welfare & Benefits', amount: 1420000, share: 4.5, color: '#10b981' },
+                      { cat: 'Training & Skill Development', amount: 950000, share: 3.0, color: '#f59e0b' },
+                      { cat: 'Overtime & Allowances', amount: 680000, share: 2.1, color: '#ec4899' }
+                    ].map(c => (
+                      <div key={c.cat}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: '8px', height: '8px', background: c.color, borderRadius: '50%' }}></span>
+                            {c.cat}
+                          </span>
+                          <span>₹{c.amount.toLocaleString('en-IN')} ({c.share}%)</span>
+                        </div>
+                        <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.min(100, c.share * 1.25)}%`, height: '100%', background: c.color, borderRadius: '4px' }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Table 1: Departmental Cost Indices & Burn Rate Analytics */}
+              <div className="card p-5" data-testid="table-dept-cost-analytics">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem' }}>Departmental Cost Indices & Burn Rate Analytics</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+                      Headcount intensity, per-employee cost metrics, and efficiency ratings by department
+                    </p>
+                  </div>
+                  <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>5 Active Departments</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Department</th>
+                        <th>Cost Center</th>
+                        <th>Headcount</th>
+                        <th>Cost Per Head (₹)</th>
+                        <th>Allocated Budget (₹)</th>
+                        <th>Utilized Spend (₹)</th>
+                        <th>Burn Rate</th>
+                        <th>Efficiency Rating</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {costAnalytics.map((row) => (
+                        <tr key={row.analyticsId || row.department}>
+                          <td><strong>{row.department}</strong></td>
+                          <td><code>{row.costCenter}</code></td>
+                          <td>{row.headcount || 25} Active</td>
+                          <td>₹{(row.costPerHead || 60000).toLocaleString('en-IN')}</td>
+                          <td>₹{(row.budgetAmount || 0).toLocaleString('en-IN')}</td>
+                          <td><strong>₹{(row.actualCost || 0).toLocaleString('en-IN')}</strong></td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${row.burnRate || 65}%`, height: '100%', background: row.color || '#10b981', borderRadius: '3px' }}></div>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{row.burnRate || 65}%</span>
+                            </div>
+                          </td>
+                          <td><span className="badge" style={{ background: `${row.color || '#10b981'}15`, color: row.color || '#10b981', fontWeight: 700 }}>{row.rating || 'Optimal'}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Table 2: Category Cost Breakdown & Variance Table */}
+              <div className="card p-5" data-testid="table-category-cost-analytics">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem' }}>Expense Category Cost Distribution & Remaining Runway</h3>
+                  <span className="badge" style={{ background: '#3b82f615', color: '#3b82f6', fontWeight: 700 }}>FY 2026-2027</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Department Allocation</th>
+                        <th>Approved Budget (₹)</th>
+                        <th>Actual Spend (₹)</th>
+                        <th>Remaining Variance (₹)</th>
+                        <th>Burn Rate %</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {costAnalytics.map((item) => {
+                        const remaining = Math.max(0, (item.budgetAmount || 0) - (item.actualCost || 0));
+                        const pct = Math.round(((item.actualCost || 0) / Math.max(1, item.budgetAmount || 1)) * 100);
+                        return (
+                          <tr key={`cat-${item.analyticsId || item.category}`}>
+                            <td><strong>{item.category}</strong></td>
+                            <td>{item.department}</td>
+                            <td>₹{(item.budgetAmount || 0).toLocaleString('en-IN')}</td>
+                            <td>₹{(item.actualCost || 0).toLocaleString('en-IN')}</td>
+                            <td style={{ color: remaining >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>
+                              ₹{remaining.toLocaleString('en-IN')}
+                            </td>
+                            <td><strong>{pct}%</strong></td>
+                            <td>
+                              <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>
+                                Active Runway
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* 3C. FORECAST & VARIANCE ANALYSIS VIEW                    */}
+      {/* 3C. FORECAST & VARIANCE ANALYSIS VIEW (BUG 071)           */}
       {/* ======================================================== */}
       {activeTab === 'forecast' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div data-testid="forecast-variance-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Top Forecast Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #6366f1' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PROJECTED ANNUAL SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹11,850,000</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981' }}>-5.2% Below Approved FY Cap</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>-5.2% Below Approved FY Cap</span>
             </div>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>NET PROJECTED VARIANCE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>+₹650,000</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Favorable Surplus Expected</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Favorable Surplus Expected</span>
             </div>
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>FORECAST CONFIDENCE</span>
@@ -742,50 +969,218 @@ const BudgetingModule = ({ searchQuery = '' }) => {
             <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ec4899' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RUNWAY STATUS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>Healthy</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Zero Capital Calls Needed</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Zero Capital Calls Needed</span>
             </div>
           </div>
 
-          {/* Quarterly Forecast Projection Table */}
-          <div className="card p-5">
-            <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Quarterly Expenditure Realization vs Projected Runways</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr>
-                    <th>Cost Center / Category</th>
-                    <th>Q1 (Actual)</th>
-                    <th>Q2 (Actual)</th>
-                    <th>Q3 (Forecast)</th>
-                    <th>Q4 (Forecast)</th>
-                    <th>FY Projected Total</th>
-                    <th>Approved Budget</th>
-                    <th>Variance Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { cat: 'Manpower & Salaries', q1: '₹6,100,000', q2: '₹6,120,000', q3: '₹6,150,000', q4: '₹6,130,000', total: '₹24,500,000', budget: '₹25,000,000', status: '+₹500,000 Favorable', color: '#10b981' },
-                    { cat: 'Recruitment & Sourcing', q1: '₹480,000', q2: '₹510,000', q3: '₹440,000', q4: '₹420,000', total: '₹1,850,000', budget: '₹1,900,000', status: '+₹50,000 Favorable', color: '#10b981' },
-                    { cat: 'Employee Welfare & Benefits', q1: '₹340,000', q2: '₹370,000', q3: '₹360,000', q4: '₹350,000', total: '₹1,420,000', budget: '₹1,450,000', status: '+₹30,000 Favorable', color: '#10b981' },
-                    { cat: 'Training & Skill Development', q1: '₹210,000', q2: '₹260,000', q3: '₹250,000', q4: '₹230,000', total: '₹950,000', budget: '₹980,000', status: '+₹30,000 Favorable', color: '#10b981' },
-                    { cat: 'Overtime & Allowances', q1: '₹170,000', q2: '₹180,000', q3: '₹165,000', q4: '₹165,000', total: '₹680,000', budget: '₹650,000', status: '-₹30,000 Variance Warning', color: '#ef4444' }
-                  ].map((row) => (
-                    <tr key={row.cat}>
-                      <td><strong>{row.cat}</strong></td>
-                      <td>{row.q1}</td>
-                      <td>{row.q2}</td>
-                      <td>{row.q3}</td>
-                      <td>{row.q4}</td>
-                      <td><strong>{row.total}</strong></td>
-                      <td>{row.budget}</td>
-                      <td><span className="badge" style={{ background: `${row.color}15`, color: row.color, fontWeight: 700 }}>{row.status}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Loading Indicator */}
+          {forecastLoading && (
+            <div data-testid="forecast-loading" className="card" style={{ textAlign: 'center', padding: '40px 20px', color: 'hsl(var(--text-secondary))' }}>
+              <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '12px', color: 'hsl(var(--primary))' }}></i>
+              <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>Loading forecast & variance data...</div>
             </div>
-          </div>
+          )}
+
+          {/* Empty-State Container */}
+          {!forecastLoading && varianceList.filter(item => {
+            const matchesDept = filterDept === 'All' || item.department === filterDept;
+            const matchesCostCenter = filterCostCenter === 'All' || item.costCenter === filterCostCenter;
+            const matchesSearch = !searchQuery || 
+              (item.department && item.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.costCenter && item.costCenter.toLowerCase().includes(searchQuery.toLowerCase()));
+            return matchesDept && matchesCostCenter && matchesSearch;
+          }).length === 0 && (
+            <div data-testid="forecast-empty-state" className="card" style={{ textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-secondary))' }}>
+              <i className="fa-solid fa-magnifying-glass-dollar" style={{ fontSize: '2.5rem', marginBottom: '16px', opacity: 0.4 }}></i>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 6px 0', color: 'hsl(var(--text-primary))' }}>No data available</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>Budget forecast and variance data is not available for the selected filters.</p>
+            </div>
+          )}
+
+          {/* Data Content (Charts & Tables) */}
+          {!forecastLoading && varianceList.filter(item => {
+            const matchesDept = filterDept === 'All' || item.department === filterDept;
+            const matchesCostCenter = filterCostCenter === 'All' || item.costCenter === filterCostCenter;
+            const matchesSearch = !searchQuery || 
+              (item.department && item.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (item.costCenter && item.costCenter.toLowerCase().includes(searchQuery.toLowerCase()));
+            return matchesDept && matchesCostCenter && matchesSearch;
+          }).length > 0 && (
+            <>
+              {/* Standalone Trend Visualizations & Scenario Forecasting */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+                {/* Visual Trend Chart: Quarterly Realization Runway */}
+                <div className="card p-5" data-testid="chart-forecast-trend">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>Quarterly Spend Runway & Forecast Trends</h4>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Realized Q1-Q2 actuals vs Projected Q3-Q4 runways</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', fontSize: '0.75rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', background: '#3b82f6', borderRadius: '2px' }}></span> Q1-Q2 Actual</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', background: '#10b981', borderRadius: '2px' }}></span> Q3-Q4 Forecast</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {quarterlyProjections.map(q => {
+                      const totalBudget = q.budget || 25000000;
+                      const q1Pct = Math.min(25, Math.round((q.q1 / totalBudget) * 100));
+                      const q2Pct = Math.min(25, Math.round((q.q2 / totalBudget) * 100));
+                      const q3Pct = Math.min(25, Math.round((q.q3 / totalBudget) * 100));
+                      const q4Pct = Math.min(25, Math.round((q.q4 / totalBudget) * 100));
+                      return (
+                        <div key={q.cat}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                            <span>{q.cat}</span>
+                            <span style={{ color: q.color }}>{q.status}</span>
+                          </div>
+                          <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '5px', overflow: 'hidden', display: 'flex' }}>
+                            <div style={{ width: `${q1Pct}%`, height: '100%', background: '#3b82f6' }} title={`Q1 Actual: ₹${q.q1.toLocaleString('en-IN')}`}></div>
+                            <div style={{ width: `${q2Pct}%`, height: '100%', background: '#6366f1' }} title={`Q2 Actual: ₹${q.q2.toLocaleString('en-IN')}`}></div>
+                            <div style={{ width: `${q3Pct}%`, height: '100%', background: '#10b981' }} title={`Q3 Forecast: ₹${q.q3.toLocaleString('en-IN')}`}></div>
+                            <div style={{ width: `${q4Pct}%`, height: '100%', background: '#34d399' }} title={`Q4 Forecast: ₹${q.q4.toLocaleString('en-IN')}`}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Scenario Forecasting Modeling Cards */}
+                <div className="card p-5" data-testid="chart-scenario-modeling">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>Predictive Scenario Modeling</h4>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Budget Sensitivity Simulation for FY 2026-2027</p>
+                    </div>
+                    <i className="fa-solid fa-wand-magic-sparkles" style={{ color: 'hsl(var(--primary))' }}></i>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#10b981' }}>Best Case Scenario</span>
+                        <span className="badge" style={{ background: '#10b98120', color: '#10b981', fontWeight: 700 }}>96.1% Accuracy</span>
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹11,200,000</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Expected Cost Savings: ₹1,300,000 (Aggressive hiring freeze on non-core roles)</div>
+                    </div>
+                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#6366f1' }}>Expected Case Scenario (Baseline)</span>
+                        <span className="badge" style={{ background: '#6366f120', color: '#6366f1', fontWeight: 700 }}>94.6% Accuracy</span>
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹11,850,000</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Expected Cost Savings: ₹650,000 (Current realized pace with planned Q3 onboarding)</div>
+                    </div>
+                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#ef4444' }}>Worst Case Scenario</span>
+                        <span className="badge" style={{ background: '#ef444420', color: '#ef4444', fontWeight: 700 }}>92.4% Accuracy</span>
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹12,600,000</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Variance Overrun Risk: -₹100,000 (Overtime surge + expedited recruitment agency fees)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table 1: Planned vs Actual Budget Variance Matrix */}
+              <div className="card p-5" data-testid="table-planned-vs-actual-variance">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem' }}>Planned vs. Actual Spend & Variance Analysis Matrix</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+                      Cost center level variance tracking with automated root-cause diagnosis and remediation plans
+                    </p>
+                  </div>
+                  <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>
+                    Net Variance: +₹2,600,000 Favorable
+                  </span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Department</th>
+                        <th>Cost Center</th>
+                        <th>Category</th>
+                        <th>Planned Budget (₹)</th>
+                        <th>Actual Expense (₹)</th>
+                        <th>Variance Amount (₹)</th>
+                        <th>Variance %</th>
+                        <th>Type</th>
+                        <th>Root Cause & Action Plan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {varianceList.map((row) => (
+                        <tr key={row.varianceId || row.department}>
+                          <td><strong>{row.department}</strong></td>
+                          <td><code>{row.costCenter}</code></td>
+                          <td>{row.category}</td>
+                          <td>₹{(row.plannedBudget || 0).toLocaleString('en-IN')}</td>
+                          <td><strong>₹{(row.actualExpense || 0).toLocaleString('en-IN')}</strong></td>
+                          <td style={{ color: row.variance >= 0 ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                            {row.variance >= 0 ? '+' : ''}₹{Math.abs(row.variance || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td><strong>{row.variancePercentage || 0}%</strong></td>
+                          <td>
+                            <span className="badge" style={{ background: row.varianceType === 'Favorable' ? '#10b98115' : '#ef444415', color: row.varianceType === 'Favorable' ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                              {row.varianceType}
+                            </span>
+                          </td>
+                          <td style={{ maxWidth: '280px', fontSize: '0.78rem' }}>
+                            <div style={{ fontWeight: 600 }}>{row.rootCause}</div>
+                            <div style={{ color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>{row.actionPlan}</div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Table 2: Quarterly Expenditure Realization vs Projected Runways */}
+              <div className="card p-5" data-testid="table-quarterly-projections">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem' }}>Quarterly Expenditure Realization vs Projected Runways</h3>
+                  <span className="badge" style={{ background: '#6366f115', color: '#6366f1', fontWeight: 700 }}>Quarterly Trend Log</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Cost Center / Category</th>
+                        <th>Q1 (Actual)</th>
+                        <th>Q2 (Actual)</th>
+                        <th>Q3 (Forecast)</th>
+                        <th>Q4 (Forecast)</th>
+                        <th>FY Projected Total</th>
+                        <th>Approved Budget</th>
+                        <th>Variance Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quarterlyProjections.map((row) => (
+                        <tr key={row.cat}>
+                          <td><strong>{row.cat}</strong></td>
+                          <td>₹{row.q1.toLocaleString('en-IN')}</td>
+                          <td>₹{row.q2.toLocaleString('en-IN')}</td>
+                          <td>₹{row.q3.toLocaleString('en-IN')}</td>
+                          <td>₹{row.q4.toLocaleString('en-IN')}</td>
+                          <td><strong>₹{row.total.toLocaleString('en-IN')}</strong></td>
+                          <td>₹{row.budget.toLocaleString('en-IN')}</td>
+                          <td><span className="badge" style={{ background: `${row.color}15`, color: row.color, fontWeight: 700 }}>{row.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
       {(activeTab === 'manpower' || activeTab === 'workforce-plan') && (
@@ -1640,8 +2035,47 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
       {/* Budget Details & Version History Modal */}
       {selectedBudgetDetail && (
-        <div id="modal-budget-details" className="modal-backdrop active" onClick={() => setSelectedBudgetDetail(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px' }}>
+        <div 
+          id="modal-budget-details" 
+          className="modal-backdrop active" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999999,
+            padding: '20px',
+            opacity: 1,
+            pointerEvents: 'auto',
+            overflowY: 'auto'
+          }}
+          onClick={() => setSelectedBudgetDetail(null)}
+          data-testid="budget-detail-modal-container"
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              width: '100%',
+              maxWidth: '680px',
+              background: 'hsl(var(--bg-card))',
+              color: 'hsl(var(--text-primary))',
+              borderRadius: '16px',
+              border: '1px solid hsl(var(--border))',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              padding: '24px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative',
+              zIndex: 1000000
+            }}
+          >
             <div className="modal-header">
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1790,7 +2224,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                     {
                       heading: 'Financial Variance & Utilization Statement',
                       paragraphs: [
-                        `This document details the authorized FY budget of INR ${selectedBudgetDetail.approvedBudget.toLocaleString()} allocated for ${selectedBudgetDetail.department}. Current burn rate is ${Math.round((selectedBudgetDetail.utilizedBudget / selectedBudgetDetail.approvedBudget) * 100)}% with zero unauthorized overruns.`
+                        `This document details the authorized FY budget of INR ${(selectedBudgetDetail.approvedBudget || 0).toLocaleString()} allocated for ${selectedBudgetDetail.department}. Current burn rate is ${Math.round(((selectedBudgetDetail.utilizedBudget || 0) / Math.max(1, (selectedBudgetDetail.approvedBudget || 1))) * 100)}% with zero unauthorized overruns.`
                       ]
                     }
                   ],

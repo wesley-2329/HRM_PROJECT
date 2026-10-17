@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const multer = require('multer');
 const VaultDocument = require('../models/VaultDocument');
 const Employee = require('../models/Employee');
@@ -9,7 +10,7 @@ const Notification = require('../models/Notification');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Multer Storage Configuration for Document Vault
-const uploadDir = process.env.NODE_ENV === 'production' 
+const uploadDir = (process.env.VERCEL || process.env.NODE_ENV === 'production')
   ? '/tmp/uploads' 
   : path.join(__dirname, '../uploads');
 
@@ -23,12 +24,20 @@ try {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    } catch (err) {
+      console.warn('Fallback to /tmp for vault upload:', err.message);
+      cb(null, '/tmp');
+    }
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const cleanDocName = (req.body.documentName || 'document').replace(/[^a-zA-Z0-9]/g, '_');
-    const targetUserId = req.body.employeeId || (req.user && (req.user.id || req.user._id)) || 'user';
+    const ext = path.extname((file && file.originalname) || 'document.pdf');
+    const cleanDocName = ((req.body && req.body.documentName) || 'document').replace(/[^a-zA-Z0-9]/g, '_');
+    const targetUserId = (req.body && req.body.employeeId) || (req.user && (req.user.id || req.user._id)) || 'user';
     cb(null, `vault-${targetUserId}-${cleanDocName}-${Date.now()}${ext}`);
   }
 });
@@ -39,7 +48,7 @@ const upload = multer({
 });
 
 const uploadMiddleware = (req, res, next) => {
-  upload.single('file')(req, res, (err) => {
+  upload.any()(req, res, (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
@@ -48,6 +57,9 @@ const uploadMiddleware = (req, res, next) => {
         return res.status(400).json({ message: `Upload error: ${err.message}` });
       }
       return res.status(400).json({ message: err.message || 'Error processing uploaded file' });
+    }
+    if (req.files && req.files.length > 0) {
+      req.file = req.files.find(f => f.fieldname === 'file') || req.files.find(f => f.fieldname === 'document') || req.files[0];
     }
     next();
   });
@@ -244,8 +256,10 @@ router.post('/documents/upload', protect, uploadMiddleware, async (req, res, nex
       }
     }
 
-    res.json({ message: `Document '${documentName}' uploaded successfully`, document: doc });
-  } catch (error) { next(error); }
+    res.status(201).json({ message: `Document '${documentName}' uploaded successfully`, document: doc });
+  } catch (error) {
+    res.status(400).json({ message: error.message || 'Error uploading document to vault', error: error.message });
+  }
 });
 
 // @route   PUT /api/vault/documents/:id/approve

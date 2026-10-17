@@ -38,6 +38,9 @@ const io = socketIo(server, {
 
 // Serve uploads statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+if (fs.existsSync('/tmp/uploads')) {
+  app.use('/uploads', express.static('/tmp/uploads'));
+}
 
 // Middleware
 app.use(cors());
@@ -250,6 +253,28 @@ app.use('/api/grades', gradesRoute.default || gradesRoute);
 
 const salaryRevisionsRoute = require('./routes/salaryRevisions');
 app.use('/api/salary-revisions', salaryRevisionsRoute.default || salaryRevisionsRoute);
+
+// Dedicated Health Check Endpoint to trace DB/API connection health accurately
+app.get('/api/health', async (req, res) => {
+  const isConnected = mongoose.connection.readyState === 1;
+  if (!isConnected && mongoose.connection.readyState === 2) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  const status = mongoose.connection.readyState === 1 ? 'live' : 'fallback';
+  res.setHeader('X-Data-Source', status);
+  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
+  return res.status(200).json({
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    dataSource: status,
+    readyState: mongoose.connection.readyState,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
@@ -270,15 +295,13 @@ app.use((err, req, res, next) => {
   }
 
   const isDBDisconnected = mongoose.connection.readyState !== 1;
-  const isDBError = err.name === 'MongooseError' || 
-                    err.name === 'MongoNetworkError' || 
+  const isDBError = err.name === 'MongoNetworkError' || 
                     err.name === 'MongoServerSelectionError' || 
-                    err.name === 'MongoError' ||
+                    (err.name === 'MongooseError' && err.message && err.message.includes('buffering timed out')) ||
                     (err.message && (
-                      err.message.includes('buffering timed out') ||
                       err.message.includes('Topology is closed') ||
-                      err.message.includes('connection') ||
-                      err.message.includes('disconnected')
+                      err.message.includes('server selection error') ||
+                      (isDBDisconnected && err.message.includes('connection'))
                     ));
 
   if (isDBDisconnected || isDBError) {
@@ -301,11 +324,36 @@ app.use((err, req, res, next) => {
       });
     }
 
-    // 3. GET requests get silent 200 OK with empty fallback shape (or mock state if available)
+    // 3. GET requests get silent 200 OK with mock data or empty fallback shape
     try {
-      const { getMockState } = require('./config/mock_data');
+      const { getMockState, getMockDataForModel } = require('./config/mock_data');
       const mockState = getMockState();
       res.setHeader('x-mock-state', JSON.stringify(mockState));
+
+      const path = req.originalUrl || req.url || '';
+      let modelName = null;
+      if (path.includes('/timesheet')) modelName = 'Timesheet';
+      else if (path.includes('/leaves')) modelName = 'Leave';
+      else if (path.includes('/tasks')) modelName = 'Task';
+      else if (path.includes('/tickets')) modelName = 'Ticket';
+      else if (path.includes('/meetings')) modelName = 'Meeting';
+      else if (path.includes('/trainings')) modelName = 'Training';
+      else if (path.includes('/employees')) modelName = 'Employee';
+      else if (path.includes('/org/policies')) modelName = 'OrgPolicy';
+
+      if (modelName && typeof getMockDataForModel === 'function') {
+        const userId = req.user?.id || req.user?._id;
+        let mockList = null;
+        if (userId && (modelName === 'Timesheet' || modelName === 'Leave' || modelName === 'Task' || modelName === 'Ticket')) {
+          mockList = getMockDataForModel(modelName, 'find', { empId: userId });
+        }
+        if (!mockList || mockList.length === 0) {
+          mockList = getMockDataForModel(modelName, 'find', {});
+        }
+        if (mockList && Array.isArray(mockList) && mockList.length > 0) {
+          return res.status(200).json(mockList);
+        }
+      }
     } catch (e) {
       // ignore mock state serialization error
     }

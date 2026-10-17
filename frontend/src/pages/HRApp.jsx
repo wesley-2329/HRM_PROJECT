@@ -23,6 +23,9 @@ import TrainingModule from './learning/TrainingModule';
 import BudgetingModule from './budgeting/BudgetingModule';
 import StatutoryComplianceModule from './compliance/StatutoryComplianceModule';
 import ExitModule from './exit/ExitModule';
+import secureVaultIllustration from '../assets/secure_vault_illustration.jpg';
+
+const SECURITY_ILLUSTRATION_FALLBACK = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjUwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2VjR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ZjQ2ZTUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDZiNmQ0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgcng9IjE2IiBmaWxsPSIjZjhmYWZjIi8+CiAgPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iMzYwIiBoZWlnaHQ9IjIxMCIgcng9IjEyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjEwMCIgcj0iNDgiIGZpbGw9InVybCgjc2VjR3JhZCkiIG9wYWNpdHk9IjAuMTIiLz4KICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxMDAiIHI9IjM2IiBmaWxsPSJ1cmwoI3NlY0dyYWQpIiBvcGFjaXR5PSIwLjIiLz4KICA8cGF0aCBkPSJNMjAwIDcwIEwyMjQgODIgVjEwNiBDMjI0IDEyMiAyMTQgMTM2IDIwMCAxNDIgQzE4NiAxMzYgMTc2IDEyMiAxNzYgMTA2IFY4MiBaIiBmaWxsPSJ1cmwoI3NlY0dyYWQpIi8+CiAgPHBhdGggZD0iTTE5NCAxMDAgTDE5OCAxMDQgTDIwOCA5NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUyOTNiIiBmb250LXNpemU9IjE1IiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIj5TZWN1cml0eSAmYW1wOyBDb21wbGlhbmNlIFZhdWx0PC90ZXh0PgogIDx0ZXh0IHg9IjIwMCIgeT0iMTk0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjQ3NDhiIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIj5FbnRlcnByaXNlIElkZW50aXR5ICZhbXA7IENyZWRlbnRpYWwgUHJvdGVjdGlvbjwvdGV4dD4KPC9zdmc+";
 
 
 
@@ -460,7 +463,82 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     }
   }, [currentModule, employees]);
 
-  // Clock in/out Shift Stopwatch
+  // Clock in/out Shift Stopwatch and Persistent Shift Tracking
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const utcTodayStr = now.toISOString().split('T')[0];
+
+  const empMatch = (t) => {
+    if (!t) return false;
+    const uid = user?.id || user?._id || user?.employeeId;
+    if (!uid) return true;
+    return t.empId === uid || t.employeeId === uid || t.empId === user?.id || t.empId === user?._id;
+  };
+
+  const userTimesheets = timesheets.filter(empMatch);
+
+  const getClockInDateTime = (shift) => {
+    if (!shift) return null;
+    if (shift.clockIn) {
+      if (typeof shift.clockIn === 'string' && /^\d{1,2}:\d{2}/.test(shift.clockIn.trim())) {
+        const parts = shift.clockIn.trim().split(':');
+        const d = shift.date ? new Date(shift.date) : new Date();
+        d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parts[2] ? parseInt(parts[2], 10) : 0, 0);
+        if (!isNaN(d.getTime())) return d;
+      }
+      const parsed = new Date(shift.clockIn);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+    if (shift.createdAt) {
+      const created = new Date(shift.createdAt);
+      if (!isNaN(created.getTime())) return created;
+    }
+    if (shift.date) {
+      const d = new Date(shift.date);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  };
+
+  const candidateActiveShift = userTimesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift' && (t.date === localTodayStr || t.date === utcTodayStr))
+    || userTimesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift');
+
+  const candidateClockIn = candidateActiveShift ? getClockInDateTime(candidateActiveShift) : null;
+  const isShiftExpired = candidateClockIn && ((new Date().getTime() - candidateClockIn.getTime()) > 16 * 3600 * 1000);
+  const activeShift = isShiftExpired ? null : candidateActiveShift;
+
+  useEffect(() => {
+    if (!activeShift) {
+      setClockRunning(false);
+      setStopwatchVal('00:00:00');
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    setClockRunning(true);
+    setClockInTime(formatTimeString(activeShift.clockIn || getClockInDateTime(activeShift), activeShift.legacyTimezoneUncertain));
+
+    const updateTimer = () => {
+      const clockInDate = getClockInDateTime(activeShift);
+      if (!clockInDate) {
+        setStopwatchVal('00:00:00');
+        return;
+      }
+      let diffMs = new Date() - clockInDate;
+      if (diffMs < 0) diffMs = 0;
+      if (diffMs > 16 * 3600 * 1000) diffMs = 16 * 3600 * 1000;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const hrs = String(Math.floor(diffSecs / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, '0');
+      const secs = String(diffSecs % 60).padStart(2, '0');
+      setStopwatchVal(`${hrs}:${mins}:${secs}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [activeShift]);
+
   const [isPunching, setIsPunching] = useState(false);
   const handleClockToggle = async () => {
     if (isPunching) return;
@@ -468,22 +546,15 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     try {
       if (!clockRunning) {
         try {
-          const res = await api.post('/timesheet/clock-in');
+          const now = new Date();
+          const res = await api.post('/timesheet/clock-in', {
+            date: now.toISOString().split('T')[0],
+            clockIn: now.toISOString()
+          });
           setClockInTime(formatTimeString(res.data.clockIn, res.data.legacyTimezoneUncertain));
           setClockRunning(true);
-          setTimeSeconds(0);
           showToast('Clocked In successfully.', 'success');
-
-          timerRef.current = setInterval(() => {
-            setTimeSeconds(prev => {
-              const nextSecs = prev + 1;
-              const hrs = String(Math.floor(nextSecs / 3600)).padStart(2, '0');
-              const mins = String(Math.floor((nextSecs % 3600) / 60)).padStart(2, '0');
-              const secs = String(nextSecs % 60).padStart(2, '0');
-              setStopwatchVal(`${hrs}:${mins}:${secs}`);
-              return nextSecs;
-            });
-          }, 1000);
+          fetchTimesheets();
         } catch (err) {
           const activeShiftData = err.response?.data?.activeShift;
           if (activeShiftData) {
@@ -491,17 +562,21 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             showToast(`Already clocked in since ${timeStr}`, 'info');
             setClockInTime(timeStr);
             setClockRunning(true);
+            fetchTimesheets();
           } else {
             showToast(err.response?.data?.message || 'Error clocking in', 'error');
           }
         }
       } else {
         try {
-          const res = await api.post('/timesheet/clock-out');
+          const now = new Date();
+          const res = await api.post('/timesheet/clock-out', {
+            clockOut: now.toISOString()
+          });
           setClockOutTime(formatTimeString(res.data.clockOut, res.data.legacyTimezoneUncertain));
           setClockRunning(false);
-          if (timerRef.current) clearInterval(timerRef.current);
           setStopwatchVal('00:00:00');
+          if (timerRef.current) clearInterval(timerRef.current);
           showToast('Clocked Out successfully.', 'info');
           fetchTimesheets();
         } catch (err) {
@@ -1885,14 +1960,6 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         </section>
       )}
 
-      {/* Recruitment ATS Module */}
-      {['recruitment-ats', 'recruitment', 'recruitment-module'].includes(currentModule) && (
-        <section id="hr-mod-recruitment-ats" className="hr-module">
-          <RecruitmentModule />
-        </section>
-      )}
-
-
       {/* Reports & Audits Module */}
       {currentModule === 'reports-analytics' && (
         <section id="hr-mod-reports-analytics" className="hr-module">
@@ -2556,7 +2623,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Recruitment & Onboarding Module */}
-      {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding') && (
+      {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding' || currentModule === 'recruitment-module') && (
         <section id="hr-mod-recruitment-ats" className="hr-module">
           <RecruitmentModule searchQuery={searchQuery} />
         </section>
@@ -2652,12 +2719,12 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                 Configure global settings, define automated payslip cycles, select header highlighting color themes, and update administrative credentials.
               </p>
               <img 
-                src="/secure_vault_illustration.jpg" 
+                src={secureVaultIllustration || "/secure_vault_illustration.jpg"} 
                 alt="Security Illustration" 
                 className="illustration-card-img" 
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250' fill='%236366f1'><rect width='400' height='250' rx='12' fill='%23f1f5f9'/><circle cx='200' cy='110' r='40' fill='%236366f1' opacity='0.2'/><path d='M200 90 v40 M180 110 h40' stroke='%236366f1' stroke-width='4' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' fill='%23475569' font-size='14' font-family='sans-serif' font-weight='600'>HR O Security Vault</text></svg>";
+                  e.currentTarget.src = SECURITY_ILLUSTRATION_FALLBACK;
                 }}
               />
             </div>

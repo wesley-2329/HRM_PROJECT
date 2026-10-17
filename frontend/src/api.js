@@ -27,15 +27,31 @@ let consecutiveFallbackCount = 0;
 let debounceFallbackTimer = null;
 let isCurrentlyOffline = false;
 
+const verifyHealthAndNotify = async () => {
+  try {
+    const healthRes = await axios.get((import.meta.env.VITE_API_BASE_URL || '/api') + '/health', { timeout: 3000 });
+    if (healthRes.data?.dataSource === 'live' || healthRes.headers['x-data-source'] === 'live') {
+      notifyOfflineState(false);
+      return;
+    }
+  } catch (err) {
+    // Confirmed offline or health check unreachable
+  }
+  isCurrentlyOffline = true;
+  window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+};
+
 const notifyOfflineState = (isFallback) => {
   if (isFallback) {
     consecutiveFallbackCount++;
     // Only trigger offline if at least 2 consecutive requests return fallback,
     // and debounce by 1500ms to eliminate cold-start glitching
     if (consecutiveFallbackCount >= 2 && !isCurrentlyOffline && !debounceFallbackTimer) {
-      debounceFallbackTimer = setTimeout(() => {
-        isCurrentlyOffline = true;
-        window.dispatchEvent(new CustomEvent('offline-fallback-detected'));
+      debounceFallbackTimer = setTimeout(async () => {
+        debounceFallbackTimer = null;
+        if (consecutiveFallbackCount >= 2) {
+          await verifyHealthAndNotify();
+        }
       }, 1500);
     }
   } else {
@@ -68,6 +84,12 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Distinguish individual request timeout/cancellation from DB outage
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || axios.isCancel(error)) {
+      // Individual timeout: do NOT falsely treat as database offline
+      return Promise.reject(error);
+    }
+
     const dataSource = error.response?.headers?.['x-data-source'];
     if (dataSource === 'fallback') {
       notifyOfflineState(true);

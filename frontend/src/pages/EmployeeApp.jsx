@@ -21,6 +21,9 @@ import TrainingModule from './learning/TrainingModule';
 import BudgetingModule from './budgeting/BudgetingModule';
 import StatutoryComplianceModule from './compliance/StatutoryComplianceModule';
 import ExitModule from './exit/ExitModule';
+import secureVaultIllustration from '../assets/secure_vault_illustration.jpg';
+
+const SECURITY_ILLUSTRATION_FALLBACK = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjUwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2VjR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ZjQ2ZTUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDZiNmQ0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgcng9IjE2IiBmaWxsPSIjZjhmYWZjIi8+CiAgPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iMzYwIiBoZWlnaHQ9IjIxMCIgcng9IjEyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjEwMCIgcj0iNDgiIGZpbGw9InVybCgjc2VjR3JhZCkiIG9wYWNpdHk9IjAuMTIiLz4KICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxMDAiIHI9IjM2IiBmaWxsPSJ1cmwoI3NlY0dyYWQpIiBvcGFjaXR5PSIwLjIiLz4KICA8cGF0aCBkPSJNMjAwIDcwIEwyMjQgODIgVjEwNiBDMjI0IDEyMiAyMTQgMTM2IDIwMCAxNDIgQzE4NiAxMzYgMTc2IDEyMiAxNzYgMTA2IFY4MiBaIiBmaWxsPSJ1cmwoI3NlY0dyYWQpIi8+CiAgPHBhdGggZD0iTTE5NCAxMDAgTDE5OCAxMDQgTDIwOCA5NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUyOTNiIiBmb250LXNpemU9IjE1IiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIj5TZWN1cml0eSAmYW1wOyBDb21wbGlhbmNlIFZhdWx0PC90ZXh0PgogIDx0ZXh0IHg9IjIwMCIgeT0iMTk0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjQ3NDhiIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIj5FbnRlcnByaXNlIElkZW50aXR5ICZhbXA7IENyZWRlbnRpYWwgUHJvdGVjdGlvbjwvdGV4dD4KPC9zdmc+";
 
 
 import {
@@ -123,6 +126,25 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const user = (authUser?.role === 'hr' && id) ? (employees.find(e => e.id === id) || authUser) : authUser;
 
   const { showToast } = useToast();
+
+  const getEmpRouteHash = () => {
+    if (id) return id;
+    const rawId = user?.id || user?._id || user?.employeeId || authUser?.id || authUser?._id;
+    return rawId ? encodeId(rawId) : '';
+  };
+
+  const handleViewCourse = () => {
+    if (typeof setCurrentModule === 'function') {
+      setCurrentModule('emp-learning');
+    }
+    const empHash = getEmpRouteHash();
+    if (empHash) {
+      navigate(`/employee/${empHash}/emp-learning`);
+    } else {
+      navigate('/employee/me/emp-learning');
+    }
+  };
+
   const [selectedEmpForPayslip, setSelectedEmpForPayslip] = useState(user);
   const [localTheme, setLocalTheme] = useState(localStorage.getItem('hrorbit-navbar-theme') || 'indigo');
 
@@ -201,6 +223,17 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profilePhone, setProfilePhone] = useState(user?.phone || '');
   const [profileParentStatus, setProfileParentStatus] = useState(user?.parentStatus || 'No');
+  const [localAvatar, setLocalAvatar] = useState(null);
+
+  useEffect(() => {
+    const handleAvatarEvt = (e) => {
+      if (e.detail) {
+        setLocalAvatar(e.detail);
+      }
+    };
+    window.addEventListener('avatarUpdated', handleAvatarEvt);
+    return () => window.removeEventListener('avatarUpdated', handleAvatarEvt);
+  }, []);
 
   // Discussion Input State
   const [discussionInput, setDiscussionInput] = useState('');
@@ -382,11 +415,18 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [activePolicies, setActivePolicies] = useState({});
 
   // Live Punch Clock Timer
-  const todayDateStr = new Date().toISOString().split('T')[0];
-  const activeShift = timesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift' && (t.date === todayDateStr || (t.date && t.date.startsWith(todayDateStr))))
-    || timesheets.find(t => (!t.clockOut || t.clockOut === '') && (t.date === todayDateStr || (t.date && t.date.startsWith(todayDateStr))));
-  const [elapsedTimeStr, setElapsedTimeStr] = useState('00:00:00');
-  const [isPunching, setIsPunching] = useState(false);
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const utcTodayStr = now.toISOString().split('T')[0];
+
+  const empMatch = (t) => {
+    if (!t) return false;
+    const uid = user?.id || user?._id || user?.employeeId;
+    if (!uid) return true;
+    return t.empId === uid || t.employeeId === uid || t.empId === user?.id || t.empId === user?._id;
+  };
+
+  const userTimesheets = timesheets.filter(empMatch);
 
   const getClockInDateTime = (shift) => {
     if (!shift) return null;
@@ -404,8 +444,22 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       const created = new Date(shift.createdAt);
       if (!isNaN(created.getTime())) return created;
     }
+    if (shift.date) {
+      const d = new Date(shift.date);
+      if (!isNaN(d.getTime())) return d;
+    }
     return null;
   };
+
+  // Find active shift for today or active shift running <= 16 hours
+  const candidateActiveShift = userTimesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift' && (t.date === localTodayStr || t.date === utcTodayStr))
+    || userTimesheets.find(t => (!t.clockOut || t.clockOut === '') && t.status === 'Active Shift');
+
+  const candidateClockIn = candidateActiveShift ? getClockInDateTime(candidateActiveShift) : null;
+  const isShiftExpired = candidateClockIn && ((new Date().getTime() - candidateClockIn.getTime()) > 16 * 3600 * 1000);
+  const activeShift = isShiftExpired ? null : candidateActiveShift;
+  const [elapsedTimeStr, setElapsedTimeStr] = useState('00:00:00');
+  const [isPunching, setIsPunching] = useState(false);
 
   useEffect(() => {
     if (!activeShift) {
@@ -415,7 +469,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
     const updateTimer = () => {
       const clockInDate = getClockInDateTime(activeShift);
-      if (!clockInDate) return;
+      if (!clockInDate) {
+        setElapsedTimeStr('00:00:00');
+        return;
+      }
       let diffMs = new Date() - clockInDate;
       if (diffMs < 0) diffMs = 0;
       if (diffMs > 16 * 3600 * 1000) diffMs = 16 * 3600 * 1000;
@@ -436,7 +493,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (isPunching) return;
     setIsPunching(true);
     try {
-      const res = await api.post('/timesheet/clock-in');
+      const now = new Date();
+      const res = await api.post('/timesheet/clock-in', {
+        date: now.toISOString().split('T')[0],
+        clockIn: now.toISOString()
+      });
       showToast('Successfully clocked in for today.', 'success');
       if (res.data) {
         setTimesheets(prev => [res.data, ...prev.filter(t => t._id !== res.data._id)]);
@@ -446,7 +507,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       console.error(err);
       const activeShiftData = err.response?.data?.activeShift;
       if (activeShiftData) {
-        const timeStr = formatTimeString(activeShiftData.clockIn, activeShiftData.legacyTimezoneUncertain);
+        const timeStr = formatTimeString(activeShiftData.clockIn || activeShiftData.createdAt || now, activeShiftData.legacyTimezoneUncertain);
         showToast(`Already clocked in since ${timeStr}`, 'info');
         setTimesheets(prev => [activeShiftData, ...prev.filter(t => t._id !== activeShiftData._id)]);
       } else {
@@ -461,7 +522,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (isPunching) return;
     setIsPunching(true);
     try {
-      const res = await api.post('/timesheet/clock-out');
+      const now = new Date();
+      const res = await api.post('/timesheet/clock-out', {
+        clockOut: now.toISOString()
+      });
       showToast('Successfully clocked out.', 'success');
       if (res.data) {
         setTimesheets(prev => prev.map(t => t._id === res.data._id ? res.data : t));
@@ -506,7 +570,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
       {activeShift && (
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '-5px' }}>
-          <i className="fa-solid fa-arrow-right-to-bracket" style={{ marginRight: '6px' }}></i> Clocked in at {formatTimeString(activeShift.clockIn, activeShift.legacyTimezoneUncertain)}
+          <i className="fa-solid fa-arrow-right-to-bracket" style={{ marginRight: '6px' }}></i> Clocked in at {formatTimeString(activeShift.clockIn || getClockInDateTime(activeShift), activeShift.legacyTimezoneUncertain)}
         </div>
       )}
 
@@ -1502,6 +1566,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      setLocalAvatar(previewUrl);
+    } catch (err) {}
+
     const formData = new FormData();
     formData.append('avatar', file);
     if (authUser?.role === 'hr' && id) {
@@ -1513,17 +1582,22 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       const res = await api.post('/employees/upload-avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 25000
       });
       showToast('Profile picture uploaded successfully.', 'success');
-      if (res.data?.avatar && setUser) {
-        setUser(prev => prev ? ({ ...prev, avatar: res.data.avatar }) : prev);
+      const newAvatar = res.data?.avatar || res.data?.profilePicture;
+      if (newAvatar) {
+        setLocalAvatar(newAvatar);
+        if (setUser) {
+          setUser(prev => prev ? ({ ...prev, avatar: newAvatar, profilePicture: newAvatar, profileImage: newAvatar }) : prev);
+        }
       }
       if (loadUser) {
         await loadUser(); // refresh navbar and context user
       }
       window.dispatchEvent(new Event('userProfileUpdated'));
-      window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: res.data?.avatar }));
+      window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: newAvatar }));
       if (fetchAllData) {
         fetchAllData(); // refresh employee records
       }
@@ -1715,7 +1789,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     </p>
                   </div>
                 </div>
-                <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: 'var(--amber-500)', color: '#fff', border: 'none' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-policies`)}>
+                <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: 'var(--amber-500)', color: '#fff', border: 'none' }} onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-policies`)}>
                   Review Policies ({complianceData.pendingCount})
                 </button>
               </div>
@@ -1733,9 +1807,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   Access directory tools, review attendance schedules, download payroll slips, view performance objectives, and join meetings directly from your dashboard.
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} className="quick-links">
-                  <button className="btn btn-secondary" onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-profile`)}>My Profile</button>
+                  <button className="btn btn-secondary" onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-profile`)}>My Profile</button>
                   <button className="btn btn-secondary" onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
-                  <button className="btn btn-secondary" onClick={() => { navigate(`/employee/${encodeId(user.id)}/emp-attendance`); setAttSubTab('apply'); }}>Apply Leave</button>
+                  <button className="btn btn-secondary" onClick={() => { navigate(`/employee/${getEmpRouteHash()}/emp-attendance`); setAttSubTab('apply'); }}>Apply Leave</button>
                   <button className="btn btn-secondary" onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>
                 </div>
               </div>
@@ -1813,7 +1887,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <button
                       className="btn btn-secondary"
                       style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-tasks`)}
+                      onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-tasks`)}
                       title="Open full Tasks Kanban board"
                     >
                       <span>Full Tasks Board</span>
@@ -1876,7 +1950,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <i className="fa-solid fa-comments" style={{ color: 'hsl(var(--primary))' }}></i>
                       <span>Group Discussion Board</span>
                     </div>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-engagement`)}>Open Full Hub</button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-engagement`)}>Open Full Hub</button>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {displayDiscussions.slice(-8).map((msg) => (
@@ -1917,7 +1991,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <button
                       className="btn btn-secondary"
                       style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-meetings`)}
+                      onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-meetings`)}
                     >
                       View Calendar
                     </button>
@@ -1986,7 +2060,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                         <div style={{ width: `${trainings[0].progress}%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-learning`)}>View Course</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={handleViewCourse}>View Course</button>
                     </div>
                   ) : (
                     <div style={{ background: 'hsl(var(--bg-main))', padding: '16px', borderRadius: 'var(--radius-md)' }}>
@@ -1995,7 +2069,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <div style={{ height: '6px', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                         <div style={{ width: `75%`, height: '100%', backgroundColor: 'hsl(var(--primary))' }}></div>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-learning`)}>View Course</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={handleViewCourse}>View Course</button>
                     </div>
                   )}
                 </div>
@@ -2010,7 +2084,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <button
                       className="btn btn-secondary"
                       style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      onClick={() => navigate(`/employee/${encodeId(user.id)}/emp-notifications`)}
+                      onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-notifications`)}
                     >
                       <span>View All</span>
                       <i className="fa-solid fa-arrow-right"></i>
@@ -2102,7 +2176,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid hsl(var(--border))' }}>
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <img 
-                        src={getAvatarUrl(user)} 
+                        src={localAvatar ? (localAvatar.startsWith('blob:') || localAvatar.startsWith('http') || localAvatar.startsWith('data:') ? localAvatar : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/?$/, '')}${localAvatar.startsWith('/') ? '' : '/'}${localAvatar}`) : getAvatarUrl(user)} 
                         onError={(e) => {
                           e.target.onerror = null;
                           const gender = (user?.gender || 'Male').toLowerCase();
@@ -3274,12 +3348,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
                 </p>
                 <img 
-                  src="/secure_vault_illustration.jpg" 
+                  src={secureVaultIllustration || "/secure_vault_illustration.jpg"} 
                   alt="Security Illustration" 
                   className="illustration-card-img" 
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250' fill='%236366f1'><rect width='400' height='250' rx='12' fill='%23f1f5f9'/><circle cx='200' cy='110' r='40' fill='%236366f1' opacity='0.2'/><path d='M200 90 v40 M180 110 h40' stroke='%236366f1' stroke-width='4' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' fill='%23475569' font-size='14' font-family='sans-serif' font-weight='600'>HR O Security Vault</text></svg>";
+                    e.currentTarget.src = SECURITY_ILLUSTRATION_FALLBACK;
                   }}
                 />
               </div>
@@ -3806,7 +3880,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         )}
 
         {/* Training & Competency Evaluation Module (M8) */}
-        {(currentModule === 'emp-learning' || currentModule === 'training-competency' || currentModule === 'training') && (
+        {(currentModule === 'emp-learning' || currentModule === 'training-competency' || currentModule === 'training' || currentModule === 'emp-training') && (
           <section id="emp-mod-training" className="emp-module">
             <TrainingModule />
           </section>
@@ -3832,15 +3906,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             <ExitModule />
           </section>
         )}
-
-        {/* Recruitment & Onboarding Module (M5) */}
-        {(currentModule === 'recruitment' || currentModule === 'recruitment-ats' || currentModule === 'career-portal') && (
-          <section id="emp-mod-recruitment" className="emp-module">
-            <RecruitmentModule />
-          </section>
-        )}
-
-
 
       </div>
 
@@ -3923,7 +3988,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <strong>TalentSphere Notification:</strong> A new or updated policy requires your acknowledgement. Please sign to remain compliant.
             </p>
             <button
-              onClick={() => { navigate(`/employee/${encodeId(user.id)}/emp-policies`); setShowMobilePush(false); }}
+              onClick={() => { navigate(`/employee/${getEmpRouteHash()}/emp-policies`); setShowMobilePush(false); }}
               className="btn btn-primary"
               style={{ padding: '6px 12px', fontSize: '0.75rem', marginTop: '10px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
