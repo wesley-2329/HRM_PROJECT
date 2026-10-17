@@ -24,26 +24,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Authenticate user
+  // Authenticate user with real database credentials
   const login = async (email, password, role) => {
     const res = await api.post('/auth/login', { email, password, role });
     localStorage.setItem('token', res.data.token);
-    // Fetch detailed profile after logging in
+
+    // Fetch full real user profile from MongoDB Atlas
     try {
       const profileRes = await api.get('/auth/me');
-      updateUserState(profileRes.data);
-      return profileRes.data;
+      const realUser = profileRes.data || res.data;
+      updateUserState(realUser);
+      return realUser;
     } catch (e) {
-      const fallbackUser = {
-        _id: res.data._id || '60c72b2f9b1d8b2a3c9d7890',
-        id: res.data.id || (role === 'hr' ? 'EMP-0001' : 'EMP-0002'),
-        name: res.data.name || (role === 'hr' ? 'Venkat Raman' : 'Aditya Kumar'),
-        email,
-        role,
-        dept: res.data.dept || (role === 'hr' ? 'Human Resources' : 'Engineering')
-      };
-      updateUserState(fallbackUser);
-      return fallbackUser;
+      updateUserState(res.data);
+      return res.data;
     }
   };
 

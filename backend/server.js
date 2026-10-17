@@ -1,18 +1,20 @@
 const express = require('express');
 require('express-async-errors');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const connectDB = require('./config/db');
 
 // Connect to Database
 connectDB();
 
 const http = require('http');
 const socketIo = require('socket.io');
-const path = require('path');
 
 const app = express();
 

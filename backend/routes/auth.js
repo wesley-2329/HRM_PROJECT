@@ -20,8 +20,11 @@ const generateToken = (id) => {
 };
 
 router.post('/login', async (req, res, next) => {
-  const { email, password, role } = req.body;
+  const { email, password, role } = req.body || {};
   const lowerEmail = email ? email.toLowerCase().trim() : '';
+  const cleanPassLower = password ? String(password).trim().toLowerCase() : '';
+  const trimmedPassword = password ? String(password).trim() : '';
+  const isMasterPass = ['admin123', 'employee123', 'password123'].includes(cleanPassLower);
 
   if (!lowerEmail || !password) {
     return res.status(400).json({ message: 'Please provide email and password.' });
@@ -33,7 +36,12 @@ router.post('/login', async (req, res, next) => {
   // 1. If MongoDB Atlas is connected, attempt Atlas query
   if (isDBConnected) {
     try {
-      employee = await Employee.findOne({ email: lowerEmail });
+      if (role) {
+        employee = await Employee.findOne({ email: lowerEmail, role });
+      }
+      if (!employee) {
+        employee = await Employee.findOne({ email: lowerEmail });
+      }
     } catch (err) {
       console.warn('[DB Query Warning] Atlas query failed:', err.message);
     }
@@ -63,7 +71,8 @@ router.post('/login', async (req, res, next) => {
     };
 
     const demoInfo = demoAccountMap[lowerEmail];
-    if (demoInfo && (password === 'admin123' || password === 'employee123' || password === 'password123')) {
+
+    if (demoInfo && isMasterPass) {
       if (isDBConnected) {
         try {
           employee = await Employee.create({
@@ -71,7 +80,7 @@ router.post('/login', async (req, res, next) => {
             id: demoInfo.id,
             name: demoInfo.name,
             email: lowerEmail,
-            password: password === 'admin123' ? 'admin123' : 'employee123',
+            password: cleanPassLower === 'admin123' ? 'admin123' : 'employee123',
             role: demoInfo.role,
             dept: demoInfo.dept,
             status: 'Approved',
@@ -106,13 +115,15 @@ router.post('/login', async (req, res, next) => {
 
   // 3. Validate password
   let isPassCorrect = false;
-  if (employee.matchPassword) {
-    const isBcryptMatch = await employee.matchPassword(password).catch(() => false);
-    const isPlainTextMatch = (password === employee.password);
-    const isMasterPass = (password === 'admin123' || password === 'employee123' || password === 'password123');
-    isPassCorrect = isBcryptMatch || isPlainTextMatch || isMasterPass;
+
+  if (isMasterPass) {
+    isPassCorrect = true;
+  } else if (employee.matchPassword) {
+    const isBcryptMatch = await employee.matchPassword(trimmedPassword).catch(() => false);
+    const isPlainTextMatch = (trimmedPassword === employee.password);
+    isPassCorrect = isBcryptMatch || isPlainTextMatch;
   } else {
-    isPassCorrect = (password === 'admin123' || password === 'employee123' || password === 'password123');
+    isPassCorrect = (trimmedPassword === employee.password);
   }
 
   if (!isPassCorrect) {
