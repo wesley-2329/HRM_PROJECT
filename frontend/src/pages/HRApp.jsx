@@ -163,6 +163,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   // Modals state
   const [addEmpActive, setAddEmpActive] = useState(false);
   const [selectedEmpForEdit, setSelectedEmpForEdit] = useState(null);
+  const isSavingEmpRef = useRef(false);
   const [ledgerActive, setLedgerActive] = useState(false);
   const [selectedEmpForLedger, setSelectedEmpForLedger] = useState(null);
   const [statsActive, setStatsActive] = useState(false);
@@ -761,9 +762,12 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
 
   // CRUD Employee operations
   const handleAddOrEditEmployee = async (formData) => {
+    if (isSavingEmpRef.current) return;
+    isSavingEmpRef.current = true;
     try {
       if (selectedEmpForEdit) {
-        const res = await api.put(`/employees/${selectedEmpForEdit.id}`, formData);
+        const empId = selectedEmpForEdit.id || selectedEmpForEdit._id;
+        const res = await api.put(`/employees/${empId}`, formData);
         showToast('Employee details saved successfully!', 'success');
         if (res.data) {
           setEmployees(prev => prev.map(e => (e.id === res.data.id || e._id === res.data._id) ? res.data : e));
@@ -777,9 +781,11 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       }
       setAddEmpActive(false);
       setSelectedEmpForEdit(null);
-      fetchEmployees();
+      if (fetchEmployees) await fetchEmployees();
     } catch (err) {
       showToast(err.response?.data?.message || 'Error saving employee record', 'error');
+    } finally {
+      isSavingEmpRef.current = false;
     }
   };
 

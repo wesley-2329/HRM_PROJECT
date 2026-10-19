@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { getAvatarUrl } from '../App';
 import { formatTimeString } from '../utils/dateUtils';
 import { downloadPdfDocument } from '../utils/pdfGenerator';
@@ -71,8 +71,14 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
   const [emgRelation, setEmgRelation] = useState(employee?.emergency?.relation || '');
   const [emgPhone, setEmgPhone] = useState(employee?.emergency?.phone || '');
 
+  // Submission lock state to prevent rapid double-clicks / concurrent requests
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+
   React.useEffect(() => {
     if (active) {
+      setSubmitting(false);
+      submittingRef.current = false;
       setName(employee?.name || '');
       setEmail(employee?.email || '');
       setDept(employee?.dept || 'Engineering');
@@ -92,6 +98,9 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
       setEmgName(employee?.emergency?.name || '');
       setEmgRelation(employee?.emergency?.relation || '');
       setEmgPhone(employee?.emergency?.phone || '');
+    } else {
+      setSubmitting(false);
+      submittingRef.current = false;
     }
   }, [employee, active]);
 
@@ -112,21 +121,31 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
     setEmgPhone(numeric);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({
-      name,
-      email,
-      dept,
-      role,
-      aadhaar,
-      phone,
-      gender,
-      joined,
-      parentStatus,
-      address: { door, street, city, state: stateName, pin },
-      emergency: { name: emgName, relation: emgRelation, phone: emgPhone }
-    });
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        name,
+        email,
+        dept,
+        role,
+        aadhaar,
+        phone,
+        gender,
+        joined,
+        parentStatus,
+        address: { door, street, city, state: stateName, pin },
+        emergency: { name: emgName, relation: emgRelation, phone: emgPhone }
+      });
+    } catch (err) {
+      console.error('Error submitting employee:', err);
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -237,7 +256,20 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '16px' }}>Save Employee Record</button>
+        <button 
+          type="submit" 
+          className="btn btn-primary" 
+          style={{ width: '100%', marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          disabled={submitting}
+        >
+          {submitting ? (
+            <>
+              <i className="fa-solid fa-spinner fa-spin"></i> {employee ? 'Updating Employee...' : 'Saving Employee...'}
+            </>
+          ) : (
+            employee ? 'Update Employee Record' : 'Save Employee Record'
+          )}
+        </button>
       </form>
     </ModalWrapper>
   );

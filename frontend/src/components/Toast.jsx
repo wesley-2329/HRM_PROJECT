@@ -56,8 +56,30 @@ export const ToastProvider = ({ children }) => {
         return prev;
       }
 
+      // Mutual exclusion between contradictory notification types (e.g. success vs error/danger)
+      let cleaned = prev;
+      if (type === 'success') {
+        const removed = prev.filter((t) => t.type === 'error' || t.type === 'danger');
+        removed.forEach((t) => {
+          if (timeoutsRef.current[t.id]) {
+            clearTimeout(timeoutsRef.current[t.id]);
+            delete timeoutsRef.current[t.id];
+          }
+        });
+        cleaned = prev.filter((t) => t.type !== 'error' && t.type !== 'danger');
+      } else if (type === 'error' || type === 'danger') {
+        const removed = prev.filter((t) => t.type === 'success');
+        removed.forEach((t) => {
+          if (timeoutsRef.current[t.id]) {
+            clearTimeout(timeoutsRef.current[t.id]);
+            delete timeoutsRef.current[t.id];
+          }
+        });
+        cleaned = prev.filter((t) => t.type !== 'success');
+      }
+
       // Limit concurrent visible toasts to 3 to prevent clutter
-      const list = prev.length >= 3 ? prev.slice(prev.length - 2) : prev;
+      const list = cleaned.length >= 3 ? cleaned.slice(cleaned.length - 2) : cleaned;
       return [...list, { id: toastId, message, type, active: false }];
     });
 
