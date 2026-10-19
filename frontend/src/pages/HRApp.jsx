@@ -31,6 +31,7 @@ const SECURITY_ILLUSTRATION_FALLBACK = "data:image/svg+xml;base64,PHN2ZyB4bWxucz
 
 import {
   AddEmployeeModal,
+  EmployeeDetailsModal,
   LedgerModal,
   StatsModal,
   PayslipModal,
@@ -164,6 +165,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const [addEmpActive, setAddEmpActive] = useState(false);
   const [selectedEmpForEdit, setSelectedEmpForEdit] = useState(null);
   const isSavingEmpRef = useRef(false);
+  const [detailsActive, setDetailsActive] = useState(false);
+  const [selectedEmpForDetails, setSelectedEmpForDetails] = useState(null);
   const [ledgerActive, setLedgerActive] = useState(false);
   const [selectedEmpForLedger, setSelectedEmpForLedger] = useState(null);
   const [statsActive, setStatsActive] = useState(false);
@@ -1390,12 +1393,14 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                 <button 
                   className="btn btn-secondary" 
                   style={{ width: '100%', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} 
-                  onClick={() => setExpandedEmpIds(prev => ({ ...prev, [emp.id]: !prev[emp.id] }))}
+                  onClick={() => {
+                    setSelectedEmpForDetails(emp);
+                    setDetailsActive(true);
+                  }}
                 >
-                  <i className={`fa-solid ${expandedEmpIds[emp.id] ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
-                  {expandedEmpIds[emp.id] ? 'Hide Details' : 'View Details & Docs'}
+                  <i className="fa-solid fa-address-card"></i>
+                  View Details & Docs
                 </button>
-                {expandedEmpIds[emp.id] && renderEmpProfileDetailsDropdown(emp)}
 
                 <button className="btn btn-secondary" style={{ width: '100%', marginTop: '8px' }} onClick={() => { setSelectedEmpForLedger(emp); setLedgerActive(true); }}>View Ledger</button>
                 <div className="emp-card-actions">
@@ -1561,22 +1566,18 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                                         <button 
                                           className="btn btn-secondary" 
                                           style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }} 
-                                          onClick={() => setExpandedEmpIds(prev => ({ ...prev, [emp.id]: !prev[emp.id] }))}
+                                          onClick={() => {
+                                            setSelectedEmpForDetails(emp);
+                                            setDetailsActive(true);
+                                          }}
                                           title="View details & documents"
                                         >
-                                          <i className={`fa-solid ${expandedEmpIds[emp.id] ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                          <i className="fa-solid fa-address-card"></i>
                                           Details
                                         </button>
                                       </div>
                                     </td>
                                   </tr>
-                                  {expandedEmpIds[emp.id] && (
-                                    <tr>
-                                      <td colSpan="8" style={{ padding: '15px', background: 'hsla(var(--primary), 0.01)', borderTop: 'none' }}>
-                                        {renderEmpProfileDetailsDropdown(emp)}
-                                      </td>
-                                    </tr>
-                                  )}
                                 </React.Fragment>
                               ))
                             )}
@@ -1688,22 +1689,18 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                                     <button 
                                       className="btn btn-secondary" 
                                       style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }} 
-                                      onClick={() => setExpandedEmpIds(prev => ({ ...prev, [emp.id]: !prev[emp.id] }))}
+                                      onClick={() => {
+                                        setSelectedEmpForDetails(emp);
+                                        setDetailsActive(true);
+                                      }}
                                       title="View details & documents"
                                     >
-                                      <i className={`fa-solid ${expandedEmpIds[emp.id] ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                                      <i className="fa-solid fa-address-card"></i>
                                       Details
                                     </button>
                                   </div>
                                 </td>
                               </tr>
-                              {expandedEmpIds[emp.id] && (
-                                <tr>
-                                  <td colSpan="8" style={{ padding: '15px', background: 'hsla(var(--primary), 0.01)', borderTop: 'none' }}>
-                                    {renderEmpProfileDetailsDropdown(emp)}
-                                  </td>
-                                </tr>
-                              )}
                             </React.Fragment>
                           ))}
                         </tbody>
@@ -2828,6 +2825,16 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       onClose={() => setAddEmpActive(false)}
       onSubmit={handleAddOrEditEmployee}
       employee={selectedEmpForEdit}
+    />
+
+    <EmployeeDetailsModal
+      active={detailsActive}
+      onClose={() => setDetailsActive(false)}
+      employee={selectedEmpForDetails}
+      onEdit={(emp) => {
+        setSelectedEmpForEdit(emp);
+        setAddEmpActive(true);
+      }}
     />
 
     <LedgerModal

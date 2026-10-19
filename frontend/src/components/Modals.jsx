@@ -32,14 +32,24 @@ const getSalaryDetails = (role) => {
 // Wrapper for all modals to apply styling
 export const ModalWrapper = ({ id, active, onClose, children }) => {
   return (
-    <div className={`modal-overlay ${active ? 'active' : ''}`} id={id}>
+    <div 
+      className={`modal-overlay ${active ? 'active' : ''}`} 
+      id={id}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) onClose();
+      }}
+    >
       <div 
         className="modal-content" 
-        style={
-          id === 'payslip-modal' 
-            ? { maxWidth: '750px', width: '95%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' } 
-            : (id === 'ledger-modal' ? { maxWidth: '700px' } : {})
-        }
+        style={{
+          maxWidth: id === 'payslip-modal' ? '750px' : (id === 'ledger-modal' || id === 'employee-details-modal' ? '720px' : (id === 'add-employee-modal' ? '680px' : '650px')),
+          width: '95%',
+          maxHeight: '88vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
@@ -150,11 +160,11 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
 
   return (
     <ModalWrapper id="add-employee-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">{employee ? 'Edit Employee Details' : 'Add New Employee'}</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <form onSubmit={handleSubmit} style={{ maxHeight: '75vh', overflowY: 'auto', paddingRight: '4px' }}>
+      <form onSubmit={handleSubmit} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div className="form-group">
           <label>Full Name</label>
           <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -275,7 +285,202 @@ export const AddEmployeeModal = ({ active, onClose, onSubmit, employee }) => {
   );
 };
 
-// 2. Employee Ledger Modal
+// 2. Employee Details & Documents Floating Modal
+export const EmployeeDetailsModal = ({ active, onClose, employee, onEdit }) => {
+  if (!employee) return null;
+
+  return (
+    <ModalWrapper id="employee-details-modal" active={active} onClose={onClose}>
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
+        <h3 className="modal-title">Employee Profile & Documents</h3>
+        <button className="close-modal" onClick={onClose} aria-label="Close modal">
+          <i className="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
+        {/* Header Profile Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid hsl(var(--border))' }}>
+          <img 
+            src={getAvatarUrl(employee)} 
+            style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid hsl(var(--primary))' }} 
+            alt={employee.name} 
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{employee.name}</h3>
+            <p style={{ margin: '3px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              {employee.role} • <span style={{ fontWeight: 600 }}>{employee.dept}</span>
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '6px' }}>
+              <span className="badge" style={{ background: 'hsla(var(--primary), 0.08)', color: 'hsl(var(--primary))', fontSize: '0.75rem', fontWeight: 600 }}>
+                ID: {employee.id}
+              </span>
+              <span className={`badge ${employee.status === 'Approved' ? 'badge-success' : employee.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`} style={{ fontSize: '0.75rem' }}>
+                {employee.status || 'Active'}
+              </span>
+              {employee.isTeamLead && (
+                <span className="badge badge-success" style={{ fontSize: '0.75rem' }}>
+                  <i className="fa-solid fa-crown" style={{ marginRight: '4px' }}></i> Team Lead
+                </span>
+              )}
+              {employee.joined && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Joined: {employee.joined}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 1: Personal & Identification Details */}
+        <h4 style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '10px', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="fa-solid fa-circle-info"></i> Personal & Identification Details
+        </h4>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '12px', 
+          marginBottom: '20px', 
+          padding: '14px', 
+          background: 'hsl(var(--bg-main))', 
+          borderRadius: '10px', 
+          border: '1px solid hsl(var(--border))' 
+        }}>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Gender</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.gender || 'Not specified'}</span>
+          </div>
+          <div style={{ wordBreak: 'break-all', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Phone</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.phone || '--'}</span>
+          </div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Blood Group</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.blood || '--'}</span>
+          </div>
+          <div style={{ wordBreak: 'break-all', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Aadhaar Number</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.aadhaar || '--'}</span>
+          </div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Parent Status</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.parentStatus || 'No'}</span>
+          </div>
+          <div style={{ wordBreak: 'break-word', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Official Email</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{employee.email || '--'}</span>
+          </div>
+          <div style={{ gridColumn: '1 / -1', wordBreak: 'break-word', minWidth: 0, borderTop: '1px dashed hsl(var(--border))', paddingTop: '10px', marginTop: '2px' }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Residential Address</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+              {employee.address && (employee.address.door || employee.address.street || employee.address.city || employee.address.state || employee.address.pin)
+                ? [employee.address.door, employee.address.street, employee.address.city, employee.address.state ? `${employee.address.state}${employee.address.pin ? ' - ' + employee.address.pin : ''}` : employee.address.pin].filter(Boolean).join(', ')
+                : 'No residential address recorded'}
+            </span>
+          </div>
+          <div style={{ gridColumn: '1 / -1', wordBreak: 'break-word', minWidth: 0 }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Emergency Contact</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+              {employee.emergency && (employee.emergency.name || employee.emergency.phone)
+                ? `${employee.emergency.name || ''} ${employee.emergency.relation ? `(${employee.emergency.relation})` : ''} — ${employee.emergency.phone || ''}`
+                : 'No emergency contact specified'}
+            </span>
+          </div>
+        </div>
+
+        {/* Section 2: Employee Documents Vault */}
+        <h4 style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '10px', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="fa-solid fa-folder-open"></i> Employee Document Vault
+        </h4>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', 
+          gap: '10px', 
+          marginBottom: '20px' 
+        }}>
+          {[
+            'Offer Letter',
+            'Appointment Letter',
+            'Experience Letters',
+            'Salary Slips',
+            'Tax Documents',
+            'ID Proof — Aadhaar Card',
+            'PAN Card',
+            'Driving License',
+            'Previous Company Relieving Letter',
+            'Certifications Log'
+          ].map(docName => {
+            const filePath = employee.documents ? (
+              employee.documents instanceof Map ? employee.documents.get(docName) : employee.documents[docName]
+            ) : null;
+            return (
+              <div 
+                key={docName} 
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  padding: '8px 12px', 
+                  background: 'hsl(var(--bg-main))', 
+                  border: '1px solid hsl(var(--border))', 
+                  borderRadius: '8px' 
+                }}
+              >
+                <span 
+                  style={{ fontSize: '0.8rem', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '140px', fontWeight: 500 }} 
+                  title={docName}
+                >
+                  {docName}
+                </span>
+                {filePath ? (
+                  <a 
+                    href={`/${filePath}`} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="btn btn-primary" 
+                    style={{ padding: '2px 8px', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
+                  >
+                    <i className="fa-solid fa-file-arrow-down"></i> View
+                  </a>
+                ) : (
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', fontStyle: 'italic' }}>
+                    Not uploaded
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Modal Footer Actions */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid hsl(var(--border))', paddingTop: '14px', marginTop: '10px', flexShrink: 0 }}>
+        {onEdit && (
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => {
+              onClose();
+              onEdit(employee);
+            }}
+          >
+            <i className="fa-solid fa-pen-to-square"></i> Edit Employee Record
+          </button>
+        )}
+        <button 
+          type="button" 
+          className="btn btn-secondary" 
+          style={{ minWidth: '80px' }} 
+          onClick={onClose}
+        >
+          Close
+        </button>
+      </div>
+    </ModalWrapper>
+  );
+};
+
+// 3. Employee Ledger Modal
 export const LedgerModal = ({ active, onClose, employee, timesheets = [], leaves = [] }) => {
   if (!employee) return null;
 
@@ -286,11 +491,11 @@ export const LedgerModal = ({ active, onClose, employee, timesheets = [], leaves
 
   return (
     <ModalWrapper id="ledger-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">Employee Ledger View</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
           <img src={getAvatarUrl(employee)} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
           <div>
@@ -363,11 +568,11 @@ export const StatsModal = ({ active, onClose, employee, timesheets = [], leaves 
 
   return (
     <ModalWrapper id="stats-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">Employee Statistics Overview</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
           <img src={getAvatarUrl(employee)} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} alt="profile" />
           <div>
@@ -678,11 +883,11 @@ export const AddWalkinModal = ({ active, onClose, onSubmit }) => {
 
   return (
     <ModalWrapper id="add-walkin-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">Add Recruitment Candidate</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div className="form-group">
             <label>Full Name</label>
@@ -769,11 +974,11 @@ export const RaiseTicketModal = ({ active, onClose, onSubmit }) => {
 
   return (
     <ModalWrapper id="raise-ticket-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">Raise Support Ticket</h3>
         <button className="close-modal" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div className="form-group">
           <label>Ticket Subject</label>
           <input type="text" className="form-control" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -893,11 +1098,11 @@ export const AddTaskModal = ({ active, onClose, onSubmit, teammates = [] }) => {
 
   return (
     <ModalWrapper id="add-task-modal" active={active} onClose={onClose}>
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0, marginBottom: '14px' }}>
         <h3 className="modal-title">Create New Task</h3>
         <button className="close-modal" type="button" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '6px' }}>
         <div className="form-group">
           <label>Task Title</label>
           <input type="text" className="form-control" value={title} onChange={(e) => setTitle(e.target.value)} required />
