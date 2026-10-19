@@ -176,7 +176,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
             }}>
               <i className="fa-solid fa-graduation-cap"></i>
             </span>
-            Module 8: Training & Competency Evaluation
+            Training & Competency Evaluation
           </h1>
           <p style={{ margin: '6px 0 0 0', color: 'hsl(var(--text-secondary))', fontSize: '0.95rem', fontWeight: 500 }}>
             Enterprise L&D Suite — TNA, Annual Plans, Skill & Competency Matrices, Training Calendars & Certificates.

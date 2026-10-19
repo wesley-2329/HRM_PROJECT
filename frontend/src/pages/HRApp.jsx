@@ -2643,28 +2643,28 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         </section>
       )}
 
-      {/* Training & Competency Evaluation Module (M8) */}
+      {/* Training & Competency Evaluation */}
       {(currentModule === 'training-competency' || currentModule === 'emp-learning' || currentModule === 'training' || currentModule === 'training-programs') && (
         <section id="hr-mod-training-competency" className="hr-module">
           <TrainingModule searchQuery={searchQuery} />
         </section>
       )}
 
-      {/* HR Budgeting & Cost Analytics Module (Module 9) */}
+      {/* HR Budgeting & Cost Analytics */}
       {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
         <section id="hr-mod-budgeting" className="hr-module">
           <BudgetingModule searchQuery={searchQuery} />
         </section>
       )}
 
-      {/* Statutory Compliance Monitor (Module 10) */}
+      {/* Statutory Compliance Monitor */}
       {(currentModule === 'statutory-compliance' || currentModule === 'compliance' || currentModule === 'statutory') && (
         <section id="hr-mod-compliance" className="hr-module">
           <StatutoryComplianceModule searchQuery={searchQuery} />
         </section>
       )}
 
-      {/* Exit Workflow & Full & Final (F&F) (Module 11) */}
+      {/* Exit Workflow & Full & Final (F&F) */}
       {(currentModule === 'exit-management' || currentModule === 'exit-workflow' || currentModule === 'exit-ff' || currentModule === 'exit') && (
         <section id="hr-mod-exit" className="hr-module">
           <ExitModule searchQuery={searchQuery} />

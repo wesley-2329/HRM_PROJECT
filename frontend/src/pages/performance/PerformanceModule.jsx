@@ -83,8 +83,8 @@ const PerformanceModule = ({ searchQuery = '' }) => {
     employeeName: 'Akhil Sirivella',
     department: 'Human Resources',
     designation: 'HR Manager',
-    kraName: 'HRMS Performance & Appraisal Module Deployment',
-    target: 'Deploy Module 6 with 100% test coverage',
+    kraName: 'HRMS Performance & Appraisal Framework Deployment',
+    target: 'Deploy performance & appraisal system with 100% test coverage',
     weightage: 25,
     priority: 'Critical',
     startDate: new Date().toISOString().split('T')[0],
@@ -731,7 +731,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <i className="fa-solid fa-award"></i> Module 6: Appraisal, Increments & PIP Lifecycle
+            <i className="fa-solid fa-award"></i> Appraisal, Increments & PIP Lifecycle
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
             Framework Config, KRA/KPI Goal Setting, Mid-Year & Annual Reviews, Calculated Rating Engine, Calibration, Promotion & Increment Workflows, PIP & Analytics.
@@ -1100,8 +1100,8 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                       employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
                       department: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
                       designation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
-                      kraName: 'HRMS Performance & Appraisal Module Deployment',
-                      target: 'Deploy Module 6 with 100% test coverage',
+                      kraName: 'HRMS Performance & Appraisal Framework Deployment',
+                      target: 'Deploy performance & appraisal system with 100% test coverage',
                       weightage: 25,
                       priority: 'Critical',
                       startDate: new Date().toISOString().split('T')[0],

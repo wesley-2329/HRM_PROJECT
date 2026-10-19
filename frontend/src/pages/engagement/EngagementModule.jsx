@@ -379,7 +379,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
             }}>
               <i className="fa-solid fa-heart-pulse"></i>
             </span>
-            Module 7: Employee Experience & Engagement
+            Employee Experience & Engagement
           </h1>
           <p style={{ margin: '6px 0 0 0', color: 'hsl(var(--muted-foreground))', fontSize: '0.95rem' }}>
             Enterprise workplace culture suite — Suggestions, Grievances, IT/HR Helpdesk, Welfare, Kudos Wall & Broadcasts.
@@ -963,7 +963,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'framework' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>⚙️ Employee Experience Framework Settings</h3>
-          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Configure SLAs, categories, escalation metrics, and notification rules for Module 7.</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Configure SLAs, categories, escalation metrics, and notification rules for Employee Experience.</p>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginTop: '20px', width: '100%' }}>
             <div style={{ padding: '18px', borderRadius: '10px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>

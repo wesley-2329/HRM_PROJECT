@@ -828,7 +828,7 @@ const RecruitmentModule = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <i className="fa-solid fa-users-gear"></i> Module 5: Enterprise Recruitment & Onboarding
+            <i className="fa-solid fa-users-gear"></i> Enterprise Recruitment & Onboarding
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
             End-to-end recruitment lifecycle: Requisitions, Position Approvals, Budgeting, Resume NLP Parsing, 360° Candidate DB, Talent Pool & Cost Tracking.

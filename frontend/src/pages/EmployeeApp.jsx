@@ -3887,28 +3887,28 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           </section>
         )}
 
-        {/* Training & Competency Evaluation Module (M8) */}
+        {/* Training & Competency Evaluation */}
         {(currentModule === 'emp-learning' || currentModule === 'training-competency' || currentModule === 'training' || currentModule === 'emp-training') && (
           <section id="emp-mod-training" className="emp-module">
             <TrainingModule />
           </section>
         )}
 
-        {/* HR Budgeting & Cost Analytics Module (Module 9) */}
+        {/* HR Budgeting & Cost Analytics */}
         {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
           <section id="emp-mod-budgeting" className="emp-module">
             <BudgetingModule />
           </section>
         )}
 
-        {/* Statutory Compliance Monitor (Module 10) */}
+        {/* Statutory Compliance Monitor */}
         {(currentModule === 'statutory-compliance' || currentModule === 'compliance' || currentModule === 'statutory') && (
           <section id="emp-mod-compliance" className="emp-module">
             <StatutoryComplianceModule />
           </section>
         )}
 
-        {/* Exit Workflow & Full & Final (F&F) (Module 11) */}
+        {/* Exit Workflow & Full & Final (F&F) */}
         {(currentModule === 'exit-management' || currentModule === 'exit-workflow' || currentModule === 'exit-ff' || currentModule === 'exit') && (
           <section id="emp-mod-exit" className="emp-module">
             <ExitModule />
