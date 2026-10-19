@@ -1712,7 +1712,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Attendance & Shift Module */}
-      {currentModule === 'attendance-leave' && (
+      {(currentModule === 'attendance-leave' || ['attendance', 'leave-management', 'timesheet-records', 'shift-roster'].includes(currentModule)) && (
         <section id="hr-mod-attendance-leave" className="hr-module">
           <div className="dashboard-layout">
             <div>
@@ -1876,7 +1876,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Payroll Hub Module */}
-      {currentModule === 'payroll-management' && (
+      {(currentModule === 'payroll-management' || currentModule === 'payroll-processing') && (
         <section id="hr-mod-payroll-management" className="hr-module">
           <div className="dashboard-layout">
             <div>
@@ -2630,7 +2630,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Performance & Appraisal Module */}
-      {(currentModule === 'performance-appraisal' || currentModule === 'performance' || currentModule === 'pip-management') && (
+      {(currentModule === 'performance-appraisal' || currentModule === 'performance' || currentModule === 'pip-management' || currentModule === 'performance-goals') && (
         <section id="hr-mod-performance-appraisal" className="hr-module">
           <PerformanceModule searchQuery={searchQuery} />
         </section>
@@ -2644,7 +2644,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Training & Competency Evaluation Module (M8) */}
-      {(currentModule === 'training-competency' || currentModule === 'emp-learning' || currentModule === 'training') && (
+      {(currentModule === 'training-competency' || currentModule === 'emp-learning' || currentModule === 'training' || currentModule === 'training-programs') && (
         <section id="hr-mod-training-competency" className="hr-module">
           <TrainingModule searchQuery={searchQuery} />
         </section>

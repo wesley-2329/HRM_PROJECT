@@ -17,6 +17,42 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
+  const itemRefs = {
+    workforce: useRef(null),
+    operations: useRef(null),
+    talent: useRef(null),
+    finance: useRef(null),
+    governance: useRef(null),
+    support: useRef(null),
+  };
+  const [dropdownPos, setDropdownPos] = useState({ left: 160, top: 70 });
+  const lastHoverTimeRef = useRef(0);
+
+  const updateDropdownPosition = (name) => {
+    if (name && itemRefs[name]?.current) {
+      const rect = itemRefs[name].current.getBoundingClientRect();
+      const panelWidth = 320;
+      const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 16, rect.left));
+      setDropdownPos({ left, top: 70 });
+    }
+  };
+
+  useEffect(() => {
+    if (activeDropdown) {
+      updateDropdownPosition(activeDropdown);
+    }
+  }, [activeDropdown]);
+
+  useEffect(() => {
+    const handleWinResize = () => {
+      if (activeDropdown) {
+        updateDropdownPosition(activeDropdown);
+      }
+    };
+    window.addEventListener('resize', handleWinResize);
+    return () => window.removeEventListener('resize', handleWinResize);
+  }, [activeDropdown]);
+
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
@@ -46,6 +82,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   }, []);
 
   const scrollOptions = (direction) => {
+    setActiveDropdown(null);
     if (optionsScrollRef.current) {
       optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
       setTimeout(checkScroll, 350);
@@ -56,16 +93,16 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     { title: 'Overview Dashboard', desc: 'HR executive KPIs, live analytics & attendance', path: '/hr/dashboard', icon: 'fa-chart-line', category: 'Overview', keywords: 'dashboard home kpis overview hr executive analytics stats punch clock' },
     { title: 'Employee Master', desc: 'Manage employees, documents & status', path: '/hr/employee-management', icon: 'fa-users', category: 'Workforce', keywords: 'employees staff workforce directory profiles add employee master user list' },
     { title: 'Org Structure', desc: 'Organization hierarchy & reporting lines', path: '/organization', icon: 'fa-sitemap', category: 'Workforce', keywords: 'org structure hierarchy chart departments reporting lines leadership team directory' },
-    { title: 'Attendance Log', desc: 'Real-time punches, biometric logs & regularization', path: '/hr/attendance', icon: 'fa-clipboard-user', category: 'Operations', keywords: 'attendance punch clock clock-in clock-out shift timer logs regularization biometric daily present absent hours' },
-    { title: 'Leave Management', desc: 'Leave requests, quota balances & approvals', path: '/hr/leave-management', icon: 'fa-calendar-check', category: 'Operations', keywords: 'leave leaves time off holiday vacation sick casual requests quota balances approvals' },
-    { title: 'Timesheet Records', desc: 'Daily work logs, project hours & activity', path: '/hr/timesheet-records', icon: 'fa-clock', category: 'Operations', keywords: 'timesheet timesheets work logs hours project activity shifts daily records' },
-    { title: 'Shift Roster', desc: 'Shift scheduling, rotation plans & assignments', path: '/hr/shift-roster', icon: 'fa-calendar-week', category: 'Operations', keywords: 'shifts roster shift scheduling rotation timing assignment schedule' },
-    { title: 'Payroll Processing', desc: 'Salary computation, pay slips & tax deductions', path: '/hr/payroll-processing', icon: 'fa-file-invoice-dollar', category: 'Operations', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips payroll processing' },
+    { title: 'Attendance Log', desc: 'Real-time punches, biometric logs & regularization', path: '/hr/attendance-leave', icon: 'fa-clipboard-user', category: 'Operations', keywords: 'attendance punch clock clock-in clock-out shift timer logs regularization biometric daily present absent hours' },
+    { title: 'Leave Management', desc: 'Leave requests, quota balances & approvals', path: '/hr/attendance-leave', icon: 'fa-calendar-check', category: 'Operations', keywords: 'leave leaves time off holiday vacation sick casual requests quota balances approvals' },
+    { title: 'Timesheet Records', desc: 'Daily work logs, project hours & activity', path: '/hr/attendance-leave', icon: 'fa-clock', category: 'Operations', keywords: 'timesheet timesheets work logs hours project activity shifts daily records' },
+    { title: 'Shift Roster', desc: 'Shift scheduling, rotation plans & assignments', path: '/hr/attendance-leave', icon: 'fa-calendar-week', category: 'Operations', keywords: 'shifts roster shift scheduling rotation timing assignment schedule' },
+    { title: 'Payroll Processing', desc: 'Salary computation, pay slips & tax deductions', path: '/hr/payroll-management', icon: 'fa-file-invoice-dollar', category: 'Operations', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips payroll processing' },
     { title: 'Recruitment & ATS', desc: 'Job postings, applicant pipeline & stages', path: '/hr/recruitment-ats', icon: 'fa-briefcase', category: 'Talent & Growth', keywords: 'recruitment ats jobs openings applicants candidates hiring pipeline interviews vacancy manpower requisition expense cost' },
     { title: 'Onboarding Workflow', desc: 'New hire checklists, asset handover & IT tasks', path: '/hr/onboarding-workflow', icon: 'fa-user-plus', category: 'Talent & Growth', keywords: 'onboarding new hire checklists asset handover induction joining tasks welcome' },
-    { title: 'Performance & Goals', desc: 'OKRs, KPIs, appraisals, 360 reviews & PIP', path: '/hr/performance-goals', icon: 'fa-bullseye', category: 'Talent & Growth', keywords: 'performance goals okrs kpis appraisals reviews pip ratings evaluation 360' },
-    { title: 'Training Programs', desc: 'L&D courses, certifications & attendance', path: '/hr/training-programs', icon: 'fa-graduation-cap', category: 'Talent & Growth', keywords: 'training learning development l&d courses certifications skills modules' },
-    { title: 'Employee Engagement', desc: 'Surveys, polls, rewards & town hall discussions', path: '/hr/employee-engagement', icon: 'fa-heart', category: 'Talent & Growth', keywords: 'engagement welfare rewards recognition surveys polls shout-outs town hall' },
+    { title: 'Performance & Goals', desc: 'OKRs, KPIs, appraisals, 360 reviews & PIP', path: '/hr/performance-appraisal', icon: 'fa-bullseye', category: 'Talent & Growth', keywords: 'performance goals okrs kpis appraisals reviews pip ratings evaluation 360' },
+    { title: 'Training Programs', desc: 'L&D courses, certifications & attendance', path: '/hr/training-competency', icon: 'fa-graduation-cap', category: 'Talent & Growth', keywords: 'training learning development l&d courses certifications skills modules' },
+    { title: 'Employee Engagement', desc: 'Surveys, polls, rewards & town hall discussions', path: '/hr/employee-experience', icon: 'fa-heart', category: 'Talent & Growth', keywords: 'engagement welfare rewards recognition surveys polls shout-outs town hall' },
     { title: 'HR Budgeting & Cost', desc: 'Workforce cost planning, allocations & analytics', path: '/hr/hr-budgeting', icon: 'fa-coins', category: 'Finance & Exit', keywords: 'budgeting cost workforce finance expense planning allocations compensation' },
     { title: 'Statutory Compliance', desc: 'PF, ESI, PT, LWF, challans & statutory returns', path: '/hr/statutory-compliance', icon: 'fa-scale-balanced', category: 'Finance & Exit', keywords: 'statutory compliance pf esi pt lwf challans returns labor laws regulations' },
     { title: 'Exit Workflow & F&F', desc: 'Resignations, clearances & full-final settlement', path: '/hr/exit-management', icon: 'fa-door-open', category: 'Finance & Exit', keywords: 'exit resignation clearance full final settlement f&f ndc no due certificate handover' },
@@ -74,8 +111,8 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     { title: 'Compliance Calendar', desc: 'Filing schedules & statutory deadlines', path: '/hr/compliance-calendar', icon: 'fa-calendar-days', category: 'Governance', keywords: 'compliance calendar deadlines filings dates schedule statutory' },
     { title: 'Approval Matrix', desc: 'Multi-level workflow authorizations', path: '/hr/approval-matrix', icon: 'fa-sitemap', category: 'Governance', keywords: 'approval matrix workflow authorizations sign off hierarchy delegation' },
     { title: 'Observation Tracker', desc: 'Audit observations, corrective actions & closures', path: '/hr/observation-tracker', icon: 'fa-magnifying-glass', category: 'Governance', keywords: 'observation tracker audit issues corrective actions closures capa' },
-    { title: 'HR Analytics', desc: 'Headcount metrics, turnover & compensation', path: '/hr/hr-analytics', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'analytics metrics turnover attrition headcount compensation graphs charts' },
-    { title: 'Reports & Audits', desc: 'Department cost indices & compliance summaries', path: '/hr/reports-audits', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'reports audits downloads exports summaries indices department' },
+    { title: 'HR Analytics', desc: 'Headcount metrics, turnover & compensation', path: '/hr/reports-analytics', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'analytics metrics turnover attrition headcount compensation graphs charts' },
+    { title: 'Reports & Audits', desc: 'Department cost indices & compliance summaries', path: '/hr/reports-analytics', icon: 'fa-chart-pie', category: 'Analytics', keywords: 'reports audits downloads exports summaries indices department' },
     { title: 'Alert Center', desc: 'System notifications, broadcast alerts & logs', path: '/hr/notification-system', icon: 'fa-bell', category: 'Analytics', keywords: 'alerts notifications broadcast messages logs system updates' },
     { title: 'My Profile', desc: 'Account details, contact info & security', path: '/hr/hr-profile', icon: 'fa-user', category: 'Account', keywords: 'profile account personal contact email password details' },
     { title: 'System Settings', desc: 'Platform configuration & access preferences', path: '/hr/settings-profile', icon: 'fa-gear', category: 'Account', keywords: 'settings system configuration access theme preferences dark mode' }
@@ -107,6 +144,8 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       clearTimeout(dropdownTimeout);
       setDropdownTimeout(null);
     }
+    lastHoverTimeRef.current = Date.now();
+    updateDropdownPosition(name);
     setActiveDropdown(name);
   };
 
@@ -143,7 +182,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       if (!e.target.closest('.user-dropdown-btn') && !e.target.closest('.dropdown-menu')) {
         setProfileDropdownActive(false);
       }
-      if (!e.target.closest('.hr-menu-item')) {
+      if (!e.target.closest('.hr-menu-item') && !e.target.closest('.hr-dropdown-panel')) {
         setActiveDropdown(null);
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
@@ -179,7 +218,8 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     return modules.some(mod => isTabActive(mod));
   };
 
-  const toggleDropdown = (name) => {
+  const toggleDropdown = (name, e) => {
+    e?.stopPropagation?.();
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
@@ -187,6 +227,11 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     if (dropdownTimeout) {
       clearTimeout(dropdownTimeout);
       setDropdownTimeout(null);
+    }
+    updateDropdownPosition(name);
+    const timeSinceHover = Date.now() - (lastHoverTimeRef.current || 0);
+    if (activeDropdown === name && timeSinceHover < 400) {
+      return;
     }
     setActiveDropdown(prev => prev === name ? null : name);
   };
@@ -264,16 +309,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 2. Workforce Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('workforce')} onMouseLeave={handleMouseLeave}>
+          <div className="hr-menu-item" ref={itemRefs.workforce} onMouseEnter={() => handleMouseEnter('workforce')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['employee-management', 'org-structure']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('workforce')}
+              onClick={(e) => toggleDropdown('workforce', e)}
             >
               <i className="fa-solid fa-user-gear"></i>
               Workforce
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'workforce' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'workforce' ? 'open' : ''}`} style={{ minWidth: '300px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'workforce' ? 'open' : ''}`} 
+              style={{ minWidth: '300px', left: `${dropdownPos.left}px` }}
+              onMouseEnter={() => handleMouseEnter('workforce')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('employee-management') ? 'active' : ''}`}
                 onClick={() => handleNavClick('employee-management')}
@@ -298,16 +348,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 3. Operations Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
+          <div className="hr-menu-item" ref={itemRefs.operations} onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['attendance-leave', 'payroll-management', 'document-vault']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('operations')}
+              onClick={(e) => toggleDropdown('operations', e)}
             >
               <i className="fa-solid fa-gears"></i>
               Operations
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'operations' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} 
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
+              onMouseEnter={() => handleMouseEnter('operations')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('attendance-leave') ? 'active' : ''}`}
                 onClick={() => handleNavClick('attendance-leave')}
@@ -342,16 +397,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 4. Talent & Growth Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('talent')} onMouseLeave={handleMouseLeave}>
+          <div className="hr-menu-item" ref={itemRefs.talent} onMouseEnter={() => handleMouseEnter('talent')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['recruitment-ats', 'performance-appraisal', 'training-competency', 'employee-experience']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('talent')}
+              onClick={(e) => toggleDropdown('talent', e)}
             >
               <i className="fa-solid fa-award"></i>
               Talent & Growth
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'talent' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'talent' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'talent' ? 'open' : ''}`} 
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
+              onMouseEnter={() => handleMouseEnter('talent')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('recruitment-ats') ? 'active' : ''}`}
                 onClick={() => handleNavClick('recruitment-ats')}
@@ -396,16 +456,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 5. Finance & Separation Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
+          <div className="hr-menu-item" ref={itemRefs.finance} onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('finance')}
+              onClick={(e) => toggleDropdown('finance', e)}
             >
               <i className="fa-solid fa-calculator"></i>
               Finance & Exit
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'finance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} 
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
+              onMouseEnter={() => handleMouseEnter('finance')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('hr-budgeting') ? 'active' : ''}`}
                 onClick={() => handleNavClick('hr-budgeting')}
@@ -440,16 +505,21 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           </div>
 
           {/* 6. HR Governance & Audit Dropdown */}
-          <div className="hr-menu-item" onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
+          <div className="hr-menu-item" ref={itemRefs.governance} onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-audit', 'compliance-calendar', 'approval-matrix', 'policy-repository', 'observation-tracker', 'action-closure', 'internal-audit']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('governance')}
+              onClick={(e) => toggleDropdown('governance', e)}
             >
               <i className="fa-solid fa-shield-halved"></i>
               Governance
               <i className="fa-solid fa-chevron-down" style={{ transform: activeDropdown === 'governance' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
             </a>
-            <div className={`hr-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} style={{ minWidth: '320px' }}>
+            <div 
+              className={`hr-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} 
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
+              onMouseEnter={() => handleMouseEnter('governance')}
+              onMouseLeave={handleMouseLeave}
+            >
               <a
                 className={`hr-dropdown-item ${isTabActive('policy-repository') ? 'active' : ''}`}
                 onClick={() => handleNavClick('policy-repository')}
@@ -527,13 +597,14 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           <div 
             className="hr-menu-item" 
             id="nav-item-support"
+            ref={itemRefs.support}
             onMouseEnter={() => handleMouseEnter('support')} 
             onMouseLeave={handleMouseLeave}
           >
             <a 
               className={`hr-menu-link ${isGroupActive(['hr-tickets', 'reports-analytics', 'notification-system']) ? 'active' : ''}`}
               id="nav-support-trigger"
-              onClick={() => toggleDropdown('support')}
+              onClick={(e) => toggleDropdown('support', e)}
             >
               <i className="fa-solid fa-circle-info"></i>
               Support & Reports
@@ -542,7 +613,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
             <div 
               className={`hr-dropdown-panel ${activeDropdown === 'support' ? 'open' : ''}`} 
               id="nav-support-dropdown-panel"
-              style={{ minWidth: '280px' }}
+              style={{ minWidth: '280px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('support')}
               onMouseLeave={handleMouseLeave}
             >

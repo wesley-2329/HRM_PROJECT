@@ -316,6 +316,14 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [attSubTab, setAttSubTab] = useState('overview'); // 'overview', 'apply', 'history', 'timesheet', 'analysis'
   const [notifCategoryFilter, setNotifCategoryFilter] = useState('All');
 
+  useEffect(() => {
+    if (currentModule === 'emp-leaves') {
+      setAttSubTab('apply');
+    } else if (currentModule === 'emp-timesheet') {
+      setAttSubTab('timesheet');
+    }
+  }, [currentModule]);
+
   // Input states
   const [leaveType, setLeaveType] = useState('Casual');
   const [leaveFrom, setLeaveFrom] = useState('');
@@ -892,7 +900,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       }
     }
 
-    if (currentModule === 'emp-attendance' && attSubTab === 'analysis') {
+    if ((currentModule === 'emp-attendance' || currentModule === 'emp-leaves' || currentModule === 'emp-timesheet') && attSubTab === 'analysis') {
       const ctxBar = empAnalysisBarRef.current?.getContext('2d');
       if (ctxBar) {
         chartsInstanceRef.current.attendanceAnalysis = new window.Chart(ctxBar, {
@@ -910,7 +918,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       }
     }
 
-    if (currentModule === 'emp-payroll') {
+    if (currentModule === 'emp-payroll' || currentModule === 'emp-payslips' || currentModule === 'emp-expenses') {
       const ctxPie = empDeductionPieRef.current?.getContext('2d');
       if (ctxPie) {
         chartsInstanceRef.current.payrollPie = new window.Chart(ctxPie, {
@@ -2451,7 +2459,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         )}
 
         {/* 4. Attendance View */}
-        {currentModule === 'emp-attendance' && (
+        {(currentModule === 'emp-attendance' || currentModule === 'emp-leaves' || currentModule === 'emp-timesheet') && (
           <section id="emp-mod-emp-attendance" className="emp-module">
             <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
               <button className={`btn ${attSubTab === 'overview' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setAttSubTab('overview')}>Overview</button>
@@ -2611,7 +2619,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         )}
 
         {/* 5. Payroll View */}
-        {currentModule === 'emp-payroll' && (
+        {(currentModule === 'emp-payroll' || currentModule === 'emp-payslips' || currentModule === 'emp-expenses') && (
           <section id="emp-mod-emp-payroll" className="emp-module">
             <div className="metric-grid">
               <div className="metric-card primary">

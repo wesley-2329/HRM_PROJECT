@@ -17,6 +17,41 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
+  const itemRefs = {
+    governance: useRef(null),
+    operations: useRef(null),
+    growth: useRef(null),
+    finance: useRef(null),
+    workplace: useRef(null),
+  };
+  const [dropdownPos, setDropdownPos] = useState({ left: 160, top: 70 });
+  const lastHoverTimeRef = useRef(0);
+
+  const updateDropdownPosition = (name) => {
+    if (name && itemRefs[name]?.current) {
+      const rect = itemRefs[name].current.getBoundingClientRect();
+      const panelWidth = 320;
+      const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 16, rect.left));
+      setDropdownPos({ left, top: 70 });
+    }
+  };
+
+  useEffect(() => {
+    if (activeDropdown) {
+      updateDropdownPosition(activeDropdown);
+    }
+  }, [activeDropdown]);
+
+  useEffect(() => {
+    const handleWinResize = () => {
+      if (activeDropdown) {
+        updateDropdownPosition(activeDropdown);
+      }
+    };
+    window.addEventListener('resize', handleWinResize);
+    return () => window.removeEventListener('resize', handleWinResize);
+  }, [activeDropdown]);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +64,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       clearTimeout(dropdownTimeout);
       setDropdownTimeout(null);
     }
+    lastHoverTimeRef.current = Date.now();
+    updateDropdownPosition(name);
     setActiveDropdown(name);
   };
 
@@ -72,20 +109,22 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
   }, []);
 
   const scrollOptions = (direction) => {
+    setActiveDropdown(null);
     if (optionsScrollRef.current) {
       optionsScrollRef.current.scrollBy({ left: direction * 240, behavior: 'smooth' });
       setTimeout(checkScroll, 350);
     }
   };
 
-  const hashId = user?.id ? encodeId(user.id) : '';
+  const userIdentifier = user?.id || user?._id || user?.employeeId || '';
+  const hashId = userIdentifier ? encodeId(userIdentifier) : '';
 
   const searchIndex = [
     { title: 'My Dashboard', desc: 'Punch clock, tasks, announcements & upcoming events', path: `/employee/${hashId}/emp-dashboard`, icon: 'fa-house', category: 'Overview', keywords: 'dashboard home overview punch clock events announcements metrics' },
-    { title: 'Payroll & Salary Slips', desc: 'Download PDF salary slips & tax breakdown', path: `/employee/${hashId}/emp-payslips`, icon: 'fa-file-invoice-dollar', category: 'Finance', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips' },
+    { title: 'Payroll & Salary Slips', desc: 'Download PDF salary slips & tax breakdown', path: `/employee/${hashId}/emp-payroll`, icon: 'fa-file-invoice-dollar', category: 'Finance', keywords: 'payroll salary payslips wages allowances deductions net pay earnings ctc compensation form 16 pay slips' },
     { title: 'Attendance Tracker', desc: 'Clock-in timestamps, monthly hours & logs', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-fingerprint', category: 'Operations', keywords: 'attendance punch clock clock-in clock-out shift timer hours calendar punctual biometric logs overview' },
-    { title: 'Leave Management', desc: 'Apply for leaves, view balances & manager decisions', path: `/employee/${hashId}/emp-leaves`, icon: 'fa-calendar-day', category: 'Operations', keywords: 'leave leaves apply casual sick earned time off holiday absence balance vacation quota' },
-    { title: 'Daily Timesheets', desc: 'Log work hours, project tasks & review shifts', path: `/employee/${hashId}/emp-timesheet`, icon: 'fa-clock-rotate-left', category: 'Operations', keywords: 'timesheet timesheets daily hours project activity work log shifts logs' },
+    { title: 'Leave Management', desc: 'Apply for leaves, view balances & manager decisions', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-calendar-day', category: 'Operations', keywords: 'leave leaves apply casual sick earned time off holiday absence balance vacation quota' },
+    { title: 'Daily Timesheets', desc: 'Log work hours, project tasks & review shifts', path: `/employee/${hashId}/emp-attendance`, icon: 'fa-clock-rotate-left', category: 'Operations', keywords: 'timesheet timesheets daily hours project activity work log shifts logs' },
     { title: 'Tasks & Checklists', desc: 'Organize, schedule, and mark daily checklist cards', path: `/employee/${hashId}/emp-tasks`, icon: 'fa-list-check', category: 'Workplace', keywords: 'tasks task checklist todo assigned deadlines priority workplace' },
     { title: 'Meetings & Calendar', desc: 'View calendar appointments and join online rooms', path: `/employee/${hashId}/emp-meetings`, icon: 'fa-video', category: 'Workplace', keywords: 'meetings meeting video call schedule calendar appointments sync room' },
     { title: 'Daily Reports', desc: 'Submit daily accomplishments & blockers', path: `/employee/${hashId}/emp-reports`, icon: 'fa-clipboard-list', category: 'Workplace', keywords: 'daily reports report blockers updates accomplishments timesheet summary work' },
@@ -96,7 +135,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     { title: 'Learning & Dev', desc: 'Access training courses and build career skills', path: `/employee/${hashId}/emp-learning`, icon: 'fa-book-open', category: 'Growth', keywords: 'learning training courses certifications l&d development skills workshops modules' },
     { title: 'Career Portal', desc: 'Internal job postings and referral tracking', path: `/employee/${hashId}/recruitment`, icon: 'fa-user-plus', category: 'Growth', keywords: 'career recruitment jobs internal postings openings referrals vacancy applicant' },
     { title: 'Engagement & Welfare', desc: 'Recognitions, employee benefits & surveys', path: `/employee/${hashId}/emp-engagement`, icon: 'fa-heart-pulse', category: 'Growth', keywords: 'engagement welfare rewards recognition surveys shout-outs benefits town hall polls' },
-    { title: 'Claims & Advances', desc: 'Submit reimbursement claims & advance requests', path: `/employee/${hashId}/emp-expenses`, icon: 'fa-receipt', category: 'Finance', keywords: 'expenses claims reimbursement advances receipts money travel bills finance' },
+    { title: 'Claims & Advances', desc: 'Submit reimbursement claims & advance requests', path: `/employee/${hashId}/emp-payroll`, icon: 'fa-receipt', category: 'Finance', keywords: 'expenses claims reimbursement advances receipts money travel bills finance' },
     { title: 'Statutory Compliance', desc: 'PF, ESI, PT, and compliance details', path: `/employee/${hashId}/statutory-compliance`, icon: 'fa-scale-balanced', category: 'Finance', keywords: 'statutory compliance pf esi pt provident fund tax labor laws challans' },
     { title: 'Exit & F&F Portal', desc: 'Resignations, clearances, & No Due Certificate', path: `/employee/${hashId}/exit-management`, icon: 'fa-door-open', category: 'Finance', keywords: 'exit resignation clearance full final settlement ndc no due certificate handover' },
     { title: 'My Profile', desc: 'Personal info, emergency contacts & avatar', path: `/employee/${hashId}/emp-profile`, icon: 'fa-user', category: 'Account', keywords: 'profile personal info avatar emergency contacts address details account' },
@@ -142,7 +181,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
       if (!e.target.closest('.user-dropdown-btn') && !e.target.closest('.dropdown-menu')) {
         setProfileDropdownActive(false);
       }
-      if (!e.target.closest('.emp-menu-item')) {
+      if (!e.target.closest('.emp-menu-item') && !e.target.closest('.emp-dropdown-panel')) {
         setActiveDropdown(null);
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
@@ -178,7 +217,8 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     return modules.some(mod => isTabActive(mod));
   };
 
-  const toggleDropdown = (name) => {
+  const toggleDropdown = (name, e) => {
+    e?.stopPropagation?.();
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
@@ -186,6 +226,11 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     if (dropdownTimeout) {
       clearTimeout(dropdownTimeout);
       setDropdownTimeout(null);
+    }
+    updateDropdownPosition(name);
+    const timeSinceHover = Date.now() - (lastHoverTimeRef.current || 0);
+    if (activeDropdown === name && timeSinceHover < 400) {
+      return;
     }
     setActiveDropdown(prev => prev === name ? null : name);
   };
@@ -272,10 +317,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Directory & Governance Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
+          <div className="emp-menu-item" ref={itemRefs.governance} onMouseEnter={() => handleMouseEnter('governance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['org-structure', 'emp-policies']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('governance')}
+              onClick={(e) => toggleDropdown('governance', e)}
             >
               <i className="fa-solid fa-shield-halved"></i>
               Governance
@@ -283,7 +328,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
             <div 
               className={`emp-dropdown-panel ${activeDropdown === 'governance' ? 'open' : ''}`} 
-              style={{ minWidth: '300px' }}
+              style={{ minWidth: '300px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('governance')}
               onMouseLeave={handleMouseLeave}
             >
@@ -311,10 +356,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* My Operations Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
+          <div className="emp-menu-item" ref={itemRefs.operations} onMouseEnter={() => handleMouseEnter('operations')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-attendance', 'emp-payroll', 'emp-documents']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('operations')}
+              onClick={(e) => toggleDropdown('operations', e)}
             >
               <i className="fa-solid fa-briefcase"></i>
               Operations
@@ -322,7 +367,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
             <div 
               className={`emp-dropdown-panel ${activeDropdown === 'operations' ? 'open' : ''}`} 
-              style={{ minWidth: '320px' }}
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('operations')}
               onMouseLeave={handleMouseLeave}
             >
@@ -360,10 +405,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Growth & Performance Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('growth')} onMouseLeave={handleMouseLeave}>
+          <div className="emp-menu-item" ref={itemRefs.growth} onMouseEnter={() => handleMouseEnter('growth')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-pip', 'emp-learning', 'recruitment', 'emp-engagement']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('growth')}
+              onClick={(e) => toggleDropdown('growth', e)}
             >
               <i className="fa-solid fa-graduation-cap"></i>
               Growth & Talent
@@ -371,7 +416,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
             <div 
               className={`emp-dropdown-panel ${activeDropdown === 'growth' ? 'open' : ''}`} 
-              style={{ minWidth: '320px' }}
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('growth')}
               onMouseLeave={handleMouseLeave}
             >
@@ -419,10 +464,10 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           </div>
 
           {/* Finance & Exit Dropdown */}
-          <div className="emp-menu-item" onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
+          <div className="emp-menu-item" ref={itemRefs.finance} onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
             <a 
               className={`emp-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
-              onClick={() => toggleDropdown('finance')}
+              onClick={(e) => toggleDropdown('finance', e)}
             >
               <i className="fa-solid fa-calculator"></i>
               Finance & Exit
@@ -430,7 +475,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             </a>
             <div 
               className={`emp-dropdown-panel ${activeDropdown === 'finance' ? 'open' : ''}`} 
-              style={{ minWidth: '320px' }}
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('finance')}
               onMouseLeave={handleMouseLeave}
             >
@@ -471,13 +516,14 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           <div 
             className="emp-menu-item" 
             id="nav-item-workplace"
+            ref={itemRefs.workplace}
             onMouseEnter={() => handleMouseEnter('workplace')} 
             onMouseLeave={handleMouseLeave}
           >
             <a 
               className={`emp-menu-link ${isGroupActive(['emp-tasks', 'emp-meetings', 'emp-reports', 'emp-helpdesk']) ? 'active' : ''}`}
               id="nav-workplace-trigger"
-              onClick={() => toggleDropdown('workplace')}
+              onClick={(e) => toggleDropdown('workplace', e)}
             >
               <i className="fa-solid fa-desktop"></i>
               Workplace
@@ -486,7 +532,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
             <div 
               className={`emp-dropdown-panel ${activeDropdown === 'workplace' ? 'open' : ''}`} 
               id="nav-workplace-dropdown-panel"
-              style={{ minWidth: '320px', left: 0 }}
+              style={{ minWidth: '320px', left: `${dropdownPos.left}px` }}
               onMouseEnter={() => handleMouseEnter('workplace')}
               onMouseLeave={handleMouseLeave}
             >
