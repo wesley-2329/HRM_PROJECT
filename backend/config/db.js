@@ -77,6 +77,7 @@ const connectDB = async () => {
     if (connUri !== DEFAULT_MONGODB_URI && (error.message.includes('auth') || error.message.includes('Authentication') || error.message.includes('password'))) {
       console.warn('[DB Warning] Provided MONGODB_URI failed authentication. Retrying with verified working Atlas URI.');
       try {
+        await mongoose.disconnect().catch(() => {});
         cachedPromise = attemptConnect(DEFAULT_MONGODB_URI);
         cachedConn = await cachedPromise;
         console.log(`[MongoDB Connected via Fallback URI] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
