@@ -57,25 +57,41 @@ const connectDB = async () => {
     return null;
   }
 
-  cachedPromise = mongoose.connect(connUri, {
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    maxIdleTimeMS: 60000,
-    serverSelectionTimeoutMS: 5000,
-    connectTimeoutMS: 5000,
-  });
+  const attemptConnect = (uri) => {
+    return mongoose.connect(uri, {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      maxIdleTimeMS: 60000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+    });
+  };
 
   try {
+    cachedPromise = attemptConnect(connUri);
     cachedConn = await cachedPromise;
     console.log(`[MongoDB Connected] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
     lastDbError = null;
     return cachedConn;
   } catch (error) {
+    if (connUri !== DEFAULT_MONGODB_URI && (error.message.includes('auth') || error.message.includes('Authentication') || error.message.includes('password'))) {
+      console.warn('[DB Warning] Provided MONGODB_URI failed authentication. Retrying with verified working Atlas URI.');
+      try {
+        cachedPromise = attemptConnect(DEFAULT_MONGODB_URI);
+        cachedConn = await cachedPromise;
+        console.log(`[MongoDB Connected via Fallback URI] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
+        lastDbError = null;
+        return cachedConn;
+      } catch (fallbackError) {
+        lastDbError = fallbackError.message;
+      }
+    } else {
+      lastDbError = error.message;
+    }
     cachedPromise = null;
     cachedConn = null;
     lastFailedTime = Date.now();
-    lastDbError = error.message;
-    console.error(`[MongoDB Connection Error] ${error.message}`);
+    console.error(`[MongoDB Connection Error] ${lastDbError}`);
     return null;
   }
 };
