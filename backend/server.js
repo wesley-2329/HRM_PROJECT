@@ -271,6 +271,7 @@ app.get('/api/health', async (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     dataSource: status,
     readyState: mongoose.connection.readyState,
+    error: connectDB.getLastError ? connectDB.getLastError() : undefined,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });

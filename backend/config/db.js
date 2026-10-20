@@ -6,6 +6,7 @@ mongoose.set('bufferCommands', false);
 let cachedConn = null;
 let cachedPromise = null;
 let lastFailedTime = 0;
+let lastDbError = null;
 const FAIL_COOLDOWN_MS = 1000; // 1-second cooldown if connection failed to retry quickly
 
 const cleanUri = (rawUri) => {
@@ -67,11 +68,13 @@ const connectDB = async () => {
   try {
     cachedConn = await cachedPromise;
     console.log(`[MongoDB Connected] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
+    lastDbError = null;
     return cachedConn;
   } catch (error) {
     cachedPromise = null;
     cachedConn = null;
     lastFailedTime = Date.now();
+    lastDbError = error.message;
     console.error(`[MongoDB Connection Error] ${error.message}`);
     return null;
   }
@@ -85,5 +88,7 @@ mongoose.connection.on('disconnected', () => {
 mongoose.connection.on('reconnected', () => {
   cachedConn = mongoose.connection;
 });
+
+connectDB.getLastError = () => lastDbError;
 
 module.exports = connectDB;
