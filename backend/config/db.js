@@ -47,7 +47,8 @@ const connectDB = async () => {
     }
   }
 
-  const rawUri = process.env.MONGODB_URI;
+  const DEFAULT_MONGODB_URI = 'mongodb+srv://johnwesley290305_db_user:bnani.290305@cluster0.nlkbuna.mongodb.net/hrorbit?retryWrites=true&w=majority';
+  const rawUri = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
   const connUri = cleanUri(rawUri);
 
   if (!connUri) {

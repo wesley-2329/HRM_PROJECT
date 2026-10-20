@@ -50,7 +50,7 @@ app.use(express.json());
 
 // Stateful Offline Mock Database Sync Middleware (used when offline)
 app.use(async (req, res, next) => {
-  if (mongoose.connection.readyState === 2) {
+  if (mongoose.connection.readyState !== 1) {
     try {
       await connectDB();
     } catch (e) {}
@@ -258,8 +258,7 @@ app.use('/api/salary-revisions', salaryRevisionsRoute.default || salaryRevisions
 
 // Dedicated Health Check Endpoint to trace DB/API connection health accurately
 app.get('/api/health', async (req, res) => {
-  const isConnected = mongoose.connection.readyState === 1;
-  if (!isConnected && mongoose.connection.readyState === 2) {
+  if (mongoose.connection.readyState !== 1) {
     try {
       await connectDB();
     } catch (e) {}

@@ -156,11 +156,23 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOfflineFallback, setIsOfflineFallback] = useState(false);
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem('offline_banner_dismissed') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [lastUpdatedTime, setLastUpdatedTime] = useState(new Date().toLocaleTimeString());
 
   useEffect(() => {
     let retryTimer = null;
     const handleOffline = () => {
+      try {
+        if (sessionStorage.getItem('offline_banner_dismissed') === 'true') {
+          return;
+        }
+      } catch (e) {}
       setIsOfflineFallback(true);
       setLastUpdatedTime(new Date().toLocaleTimeString());
       // Auto-probe after 2s via dedicated /health endpoint to check for connection recovery
@@ -171,6 +183,8 @@ const AppContent = () => {
           setLastUpdatedTime(new Date().toLocaleTimeString());
           if (res.data?.dataSource === 'live' || res.headers['x-data-source'] === 'live') {
             setIsOfflineFallback(false);
+            setIsBannerDismissed(false);
+            try { sessionStorage.removeItem('offline_banner_dismissed'); } catch (err) {}
             window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
             window.dispatchEvent(new CustomEvent('refresh-app-data'));
           }
@@ -183,6 +197,8 @@ const AppContent = () => {
     const handleLive = () => {
       clearTimeout(retryTimer);
       setIsOfflineFallback(false);
+      setIsBannerDismissed(false);
+      try { sessionStorage.removeItem('offline_banner_dismissed'); } catch (err) {}
       setLastUpdatedTime(new Date().toLocaleTimeString());
     };
 
@@ -223,7 +239,7 @@ const AppContent = () => {
 
   return (
     <>
-      {isOfflineFallback && (
+      {isOfflineFallback && !isBannerDismissed && (
         <div style={{
           background: '#f59e0b',
           color: '#1a1a1a',
@@ -252,6 +268,8 @@ const AppContent = () => {
                 setLastUpdatedTime(new Date().toLocaleTimeString());
                 if (res.data?.dataSource === 'live' || res.headers['x-data-source'] === 'live') {
                   setIsOfflineFallback(false);
+                  setIsBannerDismissed(false);
+                  try { sessionStorage.removeItem('offline_banner_dismissed'); } catch (err) {}
                   window.dispatchEvent(new CustomEvent('offline-fallback-cleared'));
                   window.dispatchEvent(new CustomEvent('refresh-app-data'));
                 }
@@ -273,7 +291,13 @@ const AppContent = () => {
             Reconnect
           </button>
           <button
-            onClick={() => setIsOfflineFallback(false)}
+            onClick={() => {
+              setIsOfflineFallback(false);
+              setIsBannerDismissed(true);
+              try {
+                sessionStorage.setItem('offline_banner_dismissed', 'true');
+              } catch (e) {}
+            }}
             style={{
               background: 'transparent',
               border: 'none',

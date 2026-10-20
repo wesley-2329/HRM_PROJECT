@@ -29,7 +29,7 @@ let isCurrentlyOffline = false;
 
 const verifyHealthAndNotify = async () => {
   try {
-    const healthRes = await axios.get((import.meta.env.VITE_API_BASE_URL || '/api') + '/health', { timeout: 3000 });
+    const healthRes = await axios.get((import.meta.env.VITE_API_BASE_URL || '/api') + '/health', { timeout: 5000 });
     if (healthRes.data?.dataSource === 'live' || healthRes.headers['x-data-source'] === 'live') {
       notifyOfflineState(false);
       return;
