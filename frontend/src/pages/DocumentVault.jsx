@@ -888,12 +888,32 @@ const DocumentVault = ({ mode }) => {
               </div>
 
               <div className="form-group">
-                <label>Select File* (PDF, Word, Images)</label>
+                <label>Select File* (PDF, Word, Images — max 4 MB)</label>
                 <input 
                   type="file" 
                   ref={fileInputRef} 
                   className="form-control" 
-                  onChange={e => setUploadFile(e.target.files[0])} 
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) { setUploadFile(null); return; }
+                    const MAX_SIZE = 4 * 1024 * 1024;
+                    const ALLOWED_EXTS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+                    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                    if (!ALLOWED_EXTS.includes(ext)) {
+                      showToast('Invalid file type. Only PDF, DOC, DOCX, JPG, and PNG files are allowed.', 'error');
+                      e.target.value = '';
+                      setUploadFile(null);
+                      return;
+                    }
+                    if (file.size > MAX_SIZE) {
+                      showToast(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum size is 4 MB.`, 'error');
+                      e.target.value = '';
+                      setUploadFile(null);
+                      return;
+                    }
+                    setUploadFile(file);
+                  }}
                   required 
                 />
                 {uploadFile && (

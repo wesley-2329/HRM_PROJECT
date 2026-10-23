@@ -10,41 +10,30 @@ const Notification = require('../models/Notification');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Multer Storage Configuration for Document Vault
-const uploadDir = (process.env.VERCEL || process.env.NODE_ENV === 'production')
-  ? '/tmp/uploads' 
-  : path.join(__dirname, '../uploads');
+// Uses memoryStorage so files are held in buffer, then persisted to MongoDB GridFS.
+// This avoids Vercel's ephemeral /tmp filesystem which loses files between invocations.
+const VAULT_ALLOWED_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png'
+];
 
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-} catch (err) {
-  console.warn('Warning: Could not create upload directory:', err.message);
-}
+const VAULT_MAX_SIZE = 4 * 1024 * 1024; // 4 MB — must stay below Vercel's 4.5 MB body limit
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    try {
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    } catch (err) {
-      console.warn('Fallback to /tmp for vault upload:', err.message);
-      cb(null, '/tmp');
-    }
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname((file && file.originalname) || 'document.pdf');
-    const cleanDocName = ((req.body && req.body.documentName) || 'document').replace(/[^a-zA-Z0-9]/g, '_');
-    const targetUserId = (req.body && req.body.employeeId) || (req.user && (req.user.id || req.user._id)) || 'user';
-    cb(null, `vault-${targetUserId}-${cleanDocName}-${Date.now()}${ext}`);
-  }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 }
+  limits: { fileSize: VAULT_MAX_SIZE },
+  fileFilter: (req, file, cb) => {
+    if (VAULT_ALLOWED_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, JPG, and PNG files are allowed.'));
+    }
+  }
 });
 
 const uploadMiddleware = (req, res, next) => {
@@ -52,7 +41,7 @@ const uploadMiddleware = (req, res, next) => {
     if (err) {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ message: 'File is too large. Maximum size is 25MB.' });
+          return res.status(400).json({ message: 'File is too large. Maximum size is 4MB.' });
         }
         return res.status(400).json({ message: `Upload error: ${err.message}` });
       }
@@ -155,7 +144,20 @@ router.post('/documents/upload', protect, uploadMiddleware, async (req, res, nex
 
     const targetEmpId = emp.id || employeeId || req.user.id;
     const targetEmpName = emp.name || req.user.name || 'Employee';
-    const fileRelativePath = `uploads/${req.file.filename}`;
+
+    // Persist file buffer to MongoDB GridFS (survives Vercel's ephemeral /tmp)
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'vaultFiles' });
+    const gridfsFileId = new mongoose.Types.ObjectId();
+    const uploadStream = bucket.openUploadStreamWithId(gridfsFileId, req.file.originalname, {
+      contentType: req.file.mimetype,
+      metadata: { employeeId: targetEmpId, documentName, uploadedBy: req.user.id }
+    });
+    uploadStream.end(req.file.buffer);
+    await new Promise((resolve, reject) => {
+      uploadStream.on('finish', resolve);
+      uploadStream.on('error', reject);
+    });
+    const fileRelativePath = `gridfs:${gridfsFileId}`;
     
     // Check if employee already has a document with this name
     let doc = await VaultDocument.findOne({ employeeId: targetEmpId, documentName });
@@ -165,7 +167,7 @@ router.post('/documents/upload', protect, uploadMiddleware, async (req, res, nex
       const versionObj = {
         versionNumber: 1,
         filePath: fileRelativePath,
-        fileName: req.file.filename,
+        fileName: req.file.originalname,
         uploadedBy: req.user.id || targetEmpId,
         changeSummary: changeSummary || 'Initial upload'
       };
@@ -205,7 +207,7 @@ router.post('/documents/upload', protect, uploadMiddleware, async (req, res, nex
       const versionObj = {
         versionNumber: nextVersionNum,
         filePath: fileRelativePath,
-        fileName: req.file.filename,
+        fileName: req.file.originalname,
         uploadedBy: req.user.id || targetEmpId,
         changeSummary: changeSummary || `Version ${nextVersionNum} update`
       };
@@ -450,7 +452,31 @@ router.get(['/documents/:id/download', '/documents/:id/download/:versionNumber']
       await doc.save().catch(() => {});
     }
 
-    // Send physical file if it exists on disk
+    // Stream from MongoDB GridFS if filePath is a gridfs reference
+    if (ver.filePath && ver.filePath.startsWith('gridfs:')) {
+      const gridfsId = ver.filePath.replace('gridfs:', '');
+      try {
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'vaultFiles' });
+        const objectId = new mongoose.Types.ObjectId(gridfsId);
+
+        // Verify file exists in GridFS
+        const files = await bucket.find({ _id: objectId }).toArray();
+        if (files.length === 0) {
+          return res.status(404).json({ message: 'File not found in storage. It may have been deleted.' });
+        }
+
+        const gridfsFile = files[0];
+        res.setHeader('Content-Type', gridfsFile.contentType || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFileName}"`);
+        const downloadStream = bucket.openDownloadStream(objectId);
+        return downloadStream.pipe(res);
+      } catch (gridfsErr) {
+        console.warn('[Vault GridFS Download] Error:', gridfsErr.message);
+        // Fall through to disk check / PDF fallback below
+      }
+    }
+
+    // Send physical file if it exists on disk (legacy uploads)
     const absolutePath = ver.filePath ? path.join(__dirname, '..', ver.filePath) : '';
     if (absolutePath && fs.existsSync(absolutePath)) {
       return res.download(absolutePath, downloadFileName);
