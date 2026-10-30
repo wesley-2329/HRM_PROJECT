@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { DataContext } from '../../context/DataContext';
 import { useToast } from '../../components/Toast';
@@ -1938,7 +1939,8 @@ const RecruitmentModule = () => {
       )}
 
       {/* BUG 022 FIX: DUAL NON-OVERLAPPING MODAL CONTAINER OR SINGLE MODAL */}
-      {showReqModal && showApprovalModal && (selectedReqForApproval || filteredRequisitions.length > 0) ? (() => {
+      {/* Portalled to <body>: the transformed .portal-container ancestor otherwise traps position:fixed, offsetting/clipping these modals */}
+      {createPortal(showReqModal && showApprovalModal && (selectedReqForApproval || filteredRequisitions.length > 0) ? (() => {
         const activeModalReq = selectedReqForApproval || filteredRequisitions[0];
         return (
         <div 
@@ -2494,7 +2496,7 @@ const RecruitmentModule = () => {
             </div>
           )}
         </>
-      )}
+      ), document.body)}
 
       {/* MODAL: ASSIGN RECRUITER */}
       {showAssignModal && selectedReqForAssign && (
