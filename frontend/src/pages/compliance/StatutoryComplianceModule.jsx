@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import api from '../../api';
@@ -1184,9 +1185,10 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* STATUTORY COMPLIANCE DOCUMENT VIEWER MODAL               */}
       {/* ======================================================== */}
-      {showDocViewerModal && viewingDoc && (
+      {/* Bug 039: 'active' un-hides the backdrop (global .modal-backdrop is opacity:0/pointer-events:none); portalled so the transformed .portal-container ancestor can't offset it */}
+      {showDocViewerModal && viewingDoc && createPortal(
         <div
-          className="modal-backdrop"
+          className="modal-backdrop active"
           id="modal-compliance-doc-viewer"
           style={{
             position: 'fixed',
@@ -1198,7 +1200,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1200,
+            zIndex: 99999,
             padding: '16px'
           }}
           onClick={(e) => {
@@ -1401,7 +1403,8 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* AUDIT LOG DETAILS MODAL */}
