@@ -17,9 +17,12 @@ const protect = async (req, res, next) => {
       }
 
       // Look up user in MongoDB Atlas
+      // lookupCompleted: true only when the lookup actually ran and succeeded (found or not)
+      let lookupCompleted = false;
       if (mongoose.connection.readyState === 1) {
         try {
           req.user = await Employee.findById(decoded.id).select('-password');
+          lookupCompleted = true;
           if (req.user) {
             return next();
           }
@@ -100,6 +103,12 @@ const protect = async (req, res, next) => {
           dept
         };
         return next();
+      }
+
+      // DB unreachable or lookup failed: the token may be perfectly valid, so don't answer 401
+      // (the frontend logs the user out on 401). Still deny the request.
+      if (!lookupCompleted) {
+        return res.status(503).json({ message: 'Authentication service temporarily unavailable. Please retry.' });
       }
 
       return res.status(401).json({ message: 'User not found.' });
