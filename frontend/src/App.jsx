@@ -323,7 +323,7 @@ const AppContent = () => {
         <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
         <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
         <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
-        <Route path="/design-preview" element={<React.Suspense fallback={null}><DesignPreview /></React.Suspense>} />
+        <Route path="/design-preview/*" element={<React.Suspense fallback={null}><DesignPreview /></React.Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
