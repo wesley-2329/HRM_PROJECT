@@ -290,6 +290,16 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         if (res.data) setMasters(res.data);
       }
     } catch (err) {
+      // Bug 055: on an auth failure, say so and don't present the built-in sample rows as live data
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Session expired or not authorized. Please log in again.', 'error');
+        if (activeTab === 'welfare-expense' || activeTab === 'welfare-budget') setWelfareExpenses([]);
+        else if (activeTab === 'planning') setBudgets([]);
+        else if (activeTab === 'allocation') setAllocations([]);
+        else if (activeTab === 'manpower') setManpowerBudgets([]);
+        else if (activeTab === 'recruitment-expense' || activeTab === 'recruitment-budget') setRecruitmentExpenses([]);
+        return;
+      }
       console.warn('Using stateful fallback for budget module:', err.message);
     }
   };
@@ -302,6 +312,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setBudgets([res.data, ...budgets]);
       setShowPlanningModal(false);
     } catch (err) {
+      // Bug 055: an auth failure must not be masked as an offline save
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Session expired or not authorized. Please log in again.', 'error');
+        return;
+      }
       const mockNew = {
         budgetId: 'BDG-' + Date.now(),
         financialYear: filterFY,
@@ -330,6 +345,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setRecruitmentExpenses([res.data, ...recruitmentExpenses]);
       setShowRecruitmentModal(false);
     } catch (err) {
+      // Bug 055: an auth failure must not be masked as an offline save
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Session expired or not authorized. Please log in again.', 'error');
+        return;
+      }
       const mockItem = {
         expenseId: 'RCX-' + Date.now(),
         expenseCategory: newRecExpense.expenseCategory,
@@ -356,6 +376,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setWelfareExpenses([res.data, ...welfareExpenses]);
       setShowWelfareModal(false);
     } catch (err) {
+      // Bug 055: an auth failure must not be masked as an offline save
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Session expired or not authorized. Please log in again.', 'error');
+        return;
+      }
       const mockItem = {
         expenseId: 'WFX-' + Date.now(),
         welfareActivity: newWelExpense.welfareActivity || 'Employee Program',
@@ -383,6 +408,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setManpowerBudgets([res.data, ...manpowerBudgets]);
       setShowManpowerModal(false);
     } catch (err) {
+      // Bug 055: an auth failure must not be masked as an offline save
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        showToast('Session expired or not authorized. Please log in again.', 'error');
+        return;
+      }
       const mockItem = {
         budgetId: 'MPB-' + Date.now(),
         financialYear: filterFY,
@@ -1888,7 +1918,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* Create Budget Modal */}
       {showPlanningModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Propose New Department Budget</h3>
             <form onSubmit={handleCreateBudget}>
@@ -1931,7 +1961,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
       {/* Recruitment Expense Modal */}
       {showRecruitmentModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Record Recruitment Expense</h3>
             <form onSubmit={handleCreateRecExpense}>
@@ -1965,7 +1995,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
       {/* Welfare Expense Modal */}
       {showWelfareModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Employee Welfare Expense</h3>
             <form onSubmit={handleCreateWelfareExpense}>
@@ -1998,7 +2028,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
       {/* Manpower Modal */}
       {showManpowerModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Submit Headcount & Manpower Budget</h3>
             <form onSubmit={handleCreateManpower}>
@@ -2323,7 +2353,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {selectedAuditLog && (
         <div
           id="modal-audit-log-details"
-          className="modal-backdrop"
+          className="modal-backdrop active"
           style={{
             position: 'fixed',
             top: 0,
@@ -2334,7 +2364,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1200,
+            zIndex: 99999,
             backdropFilter: 'blur(4px)'
           }}
           onClick={(e) => {

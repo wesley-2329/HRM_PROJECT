@@ -253,34 +253,7 @@ router.post('/settlement/calculate', protect, async (req, res, next) => {
 
     const netSettlementAmount = totalEarnings - totalDeductions;
 
-    let ffs = await FullFinalSettlement.findOne({ exitId });
-    if (ffs) {
-      // Clean up any extraneous duplicate entries for the same exitId if present
-      await FullFinalSettlement.deleteMany({ exitId, _id: { $ne: ffs._id } });
-      ffs.pendingSalary = pendingSalary;
-      ffs.leaveEncashmentAmount = leaveEncashment;
-      ffs.leaveEncashmentDays = Number(body.leaveEncashmentDays) || 15;
-      ffs.gratuityAmount = gratuity;
-      ffs.totalEarnings = totalEarnings;
-      ffs.noticePayRecovery = noticeRecovery;
-      ffs.loanRecovery = loanRecovery;
-      ffs.assetDamageRecovery = assetRecovery;
-      ffs.totalDeductions = totalDeductions;
-      ffs.netSettlementAmount = netSettlementAmount;
-      ffs.clearanceVerified = true;
-      ffs.status = 'HR Approved';
-      await ffs.save();
-      await logAudit(req, 'UPDATE_FF_SETTLEMENT', 'FullFinalSettlement', ffs.settlementId, ffs);
-      return res.json(ffs);
-    }
-
-    const settlementId = 'FFS-' + Date.now();
-    const newFFS = await FullFinalSettlement.create({
-      settlementId,
-      exitId,
-      employeeId: body.employeeId || 'EMP-1004',
-      employeeName: body.employeeName || 'Anil Kumar',
-      lastWorkingDay: body.lastWorkingDay || new Date(),
+    const calculated = {
       pendingSalary,
       leaveEncashmentAmount: leaveEncashment,
       leaveEncashmentDays: Number(body.leaveEncashmentDays) || 15,
@@ -293,10 +266,42 @@ router.post('/settlement/calculate', protect, async (req, res, next) => {
       netSettlementAmount,
       clearanceVerified: true,
       status: 'HR Approved'
-    });
+    };
 
-    await logAudit(req, 'CALCULATE_FF_SETTLEMENT', 'FullFinalSettlement', settlementId, newFFS);
-    res.status(201).json(newFFS);
+    const existed = await FullFinalSettlement.findOne({ exitId });
+
+    // Bug 041: single atomic upsert instead of find-then-create, so one exit case maps to one settlement
+    let ffs = await FullFinalSettlement.findOneAndUpdate(
+      { exitId },
+      {
+        $set: calculated,
+        $setOnInsert: {
+          settlementId: 'FFS-' + Date.now(),
+          employeeId: body.employeeId || 'EMP-1004',
+          employeeName: body.employeeName || 'Anil Kumar',
+          lastWorkingDay: body.lastWorkingDay || new Date()
+        }
+      },
+      { upsert: true, new: true, sort: { createdAt: 1 } }
+    );
+
+    // exitId has no unique index, so near-simultaneous upserts can still both insert.
+    // Collapse any duplicates onto the OLDEST record so concurrent requests all keep the same one.
+    const sameExit = await FullFinalSettlement.find({ exitId }).sort({ createdAt: 1, _id: 1 }).select('_id');
+    if (sameExit.length > 1) {
+      if (!sameExit[0]._id.equals(ffs._id)) {
+        ffs = await FullFinalSettlement.findByIdAndUpdate(sameExit[0]._id, { $set: calculated }, { new: true });
+      }
+      await FullFinalSettlement.deleteMany({ exitId, _id: { $ne: ffs._id } });
+    }
+
+    if (existed) {
+      await logAudit(req, 'UPDATE_FF_SETTLEMENT', 'FullFinalSettlement', ffs.settlementId, ffs);
+      return res.json(ffs);
+    }
+
+    await logAudit(req, 'CALCULATE_FF_SETTLEMENT', 'FullFinalSettlement', ffs.settlementId, ffs);
+    res.status(201).json(ffs);
   } catch (err) {
     if (err.code === 11000 && req.body.exitId) {
       try {

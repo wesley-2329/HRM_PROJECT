@@ -266,7 +266,7 @@ const upload = multer({ storage });
 // @route   POST /api/employees/upload-doc
 // @desc    Upload employee document
 // @access  Private
-router.post('/upload-doc', protect, upload.single('file'), async (req, res) => {
+router.post('/upload-doc', protect, upload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });

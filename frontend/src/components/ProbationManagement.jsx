@@ -715,7 +715,7 @@ const ProbationManagement = () => {
                       </thead>
                       <tbody>
                         {reportsData.overdueList?.map(r => {
-                          const delayMs = now - new Date(r.probationEndDate);
+                          const delayMs = Date.now() - new Date(r.probationEndDate);
                           const delayDays = Math.round(delayMs / (1000 * 60 * 60 * 24));
                           return (
                             <tr key={r._id}>

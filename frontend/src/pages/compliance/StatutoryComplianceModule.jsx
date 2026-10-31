@@ -1058,7 +1058,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* Challan Modal */}
       {showChallanModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Generate Statutory Challan</h3>
             <form onSubmit={handleCreateChallan}>
@@ -1094,7 +1094,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
       {/* Notice Modal */}
       {showNoticeModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Government Notice</h3>
             <form onSubmit={handleCreateNotice}>
@@ -1127,7 +1127,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
       {/* Inspection Modal */}
       {showInspectionModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Labour Inspection Record</h3>
             <form onSubmit={handleCreateInspection}>
@@ -1154,7 +1154,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
       {/* Document Modal */}
       {showDocModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Upload Compliance Certificate / Document</h3>
             <form onSubmit={handleCreateDoc}>
@@ -1411,7 +1411,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {selectedAuditLog && (
         <div
           id="modal-statutory-audit-details"
-          className="modal-backdrop"
+          className="modal-backdrop active"
           style={{
             position: 'fixed',
             top: 0,
@@ -1422,7 +1422,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1200,
+            zIndex: 99999,
             backdropFilter: 'blur(4px)'
           }}
           onClick={(e) => {

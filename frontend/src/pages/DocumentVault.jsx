@@ -755,7 +755,7 @@ const DocumentVault = ({ mode }) => {
 
       {/* ================= MODAL: Version History & Audits ================= */}
       {showHistoryModal && selectedDoc && (
-        <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
+        <div className="modal-overlay active" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
           <div className="modal-content emp-card" style={{ width: '100%', maxWidth: '650px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '10px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Version History: {selectedDoc.documentName}</h3>
@@ -806,7 +806,7 @@ const DocumentVault = ({ mode }) => {
 
       {/* ================= MODAL: Secure Document Upload ================= */}
       {showUploadModal && (
-        <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
+        <div className="modal-overlay active" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
           <div className="modal-content emp-card" style={{ width: '100%', maxWidth: '500px', padding: '24px' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px' }}>Secure Document Vault Uploader</h3>
             <form onSubmit={handleUploadDocument} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -962,7 +962,7 @@ const DocumentVault = ({ mode }) => {
 
       {/* ================= MODAL: Verify & Review (HR only) ================= */}
       {showReviewModal && selectedDoc && (
-        <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
+        <div className="modal-overlay active" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)' }}>
           <div className="modal-content emp-card" style={{ width: '100%', maxWidth: '500px', padding: '24px' }}>
             <h3 style={{ fontSize: '1.20rem', fontWeight: 700, marginBottom: '16px' }}>Verify Secure Document</h3>
             

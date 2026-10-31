@@ -3,7 +3,8 @@
 @variant dark (&:where(.dark-mode, .dark-mode *));
 
 @theme {
-  --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* 'backwards', not 'forwards': a retained end-frame transform makes every animated container the containing block for position:fixed modals, offsetting/clipping them */
+  --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   --animate-mesh-shift: mesh-shift 20s ease infinite;
 
   @keyframes fade-in-up {

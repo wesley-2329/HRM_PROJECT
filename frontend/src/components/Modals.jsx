@@ -613,10 +613,10 @@ export const StatsModal = ({ active, onClose, employee, timesheets = [], leaves 
 
 // 4. Payslip Modal
 export const PayslipModal = ({ active, onClose, employee, month, onPrint, showToast }) => {
-  if (!employee) return null;
-
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  if (!employee) return null;
+
   const salary = getSalaryDetails(employee.role);
   const cycleMonth = month || 'May 2026';
   const docRef = `PAY-${employee.id}-${cycleMonth.replace(/\s+/g, '')}`;

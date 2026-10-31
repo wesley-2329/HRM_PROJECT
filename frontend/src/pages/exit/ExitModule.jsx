@@ -76,6 +76,15 @@ const ExitModule = ({ searchQuery = '' }) => {
   const [newFfs, setNewFfs] = useState({ exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', pendingSalary: 45000, leaveEncashmentAmount: 32000, gratuityAmount: 125000, noticePayRecovery: 0, loanRecovery: 0 });
   const [selectedExitCaseId, setSelectedExitCaseId] = useState('EXT-1001');
 
+  // Keep the F&F form's exit case in sync with the dropdown: when the loaded exit cases don't include the
+  // current one, the <select> shows the first option, so the submitted case must match it (Bug 041)
+  useEffect(() => {
+    if (resignations.length > 0 && !resignations.some((r) => r.exitId === newFfs.exitId)) {
+      const first = resignations[0];
+      setNewFfs((prev) => ({ ...prev, exitId: first.exitId, employeeId: first.employeeId, employeeName: first.employeeName }));
+    }
+  }, [resignations]);
+
   const selectedExitCase = resignations.find((r) => r.exitId === selectedExitCaseId) || resignations[0] || {
     exitId: 'EXT-1001',
     employeeId: 'EMP-1004',
@@ -202,7 +211,7 @@ const ExitModule = ({ searchQuery = '' }) => {
     submittingFfsRef.current = true;
     setIsSubmitting(true);
     try {
-      const res = await api.post('/exit/settlement/calculate', newFfs);
+      const res = await api.post('/exit/settlement/calculate', newFfs, { timeout: 30000 });
       showToast('Full & Final Settlement calculated and approved.', 'success');
       setSettlements((prev) => {
         const exitKey = res.data.exitId || newFfs.exitId;
@@ -214,6 +223,29 @@ const ExitModule = ({ searchQuery = '' }) => {
       });
       setShowFfsModal(false);
     } catch (err) {
+      // Bug 041: the server answered with an error, so nothing was saved; don't fake a row
+      if (err.response) {
+        showToast(err.response.data?.message || 'Failed to calculate F&F settlement.', 'error');
+        return;
+      }
+      // Timeout / network error: the server may still have saved it, so reload the register instead of inserting a fake row
+      try {
+        const listRes = await api.get('/exit/settlement');
+        if (Array.isArray(listRes.data)) {
+          const seen = new Set();
+          setSettlements(listRes.data.filter((s) => {
+            const key = s.exitId || s.settlementId;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }));
+          showToast('F&F request timed out; register refreshed from server.', 'info');
+          setShowFfsModal(false);
+          return;
+        }
+      } catch (refetchErr) {
+        // Server unreachable: fall through to the offline row below
+      }
       const earnings = Number(newFfs.pendingSalary) + Number(newFfs.leaveEncashmentAmount) + Number(newFfs.gratuityAmount);
       const deductions = Number(newFfs.noticePayRecovery) + Number(newFfs.loanRecovery);
       const mockItem = {
@@ -1015,7 +1047,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* Resignation Modal */}
       {showResignModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Submit Formal Resignation</h3>
             <form onSubmit={handleCreateResignation}>
@@ -1049,7 +1081,7 @@ const ExitModule = ({ searchQuery = '' }) => {
 
       {/* Exit Interview Modal */}
       {showInterviewModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Record Exit Interview Feedback</h3>
             <form onSubmit={handleCreateInterview}>
@@ -1076,7 +1108,7 @@ const ExitModule = ({ searchQuery = '' }) => {
 
       {/* F&F Settlement Modal */}
       {showFfsModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+        <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
           <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Calculate Full & Final (F&F) Settlement</h3>
             <form onSubmit={handleCreateFfs}>
