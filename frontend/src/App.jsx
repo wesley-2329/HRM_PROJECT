@@ -13,6 +13,9 @@ import EmployeeApp from './pages/EmployeeApp';
 import LandingPage from './pages/LandingPage';
 import api from './api';
 
+// Redesign Stage 3 preview only — remove with src/pages/_design-preview before merging to main
+const DesignPreview = React.lazy(() => import('./pages/_design-preview/DesignPreview'));
+
 export const encodeId = (id) => {
   if (!id) return '';
   try {
@@ -320,6 +323,7 @@ const AppContent = () => {
         <Route path="/hr/:module" element={<MainLayoutWrapper role="hr" />} />
         <Route path="/employee/:id/:module" element={<MainLayoutWrapper role="employee" />} />
         <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
+        <Route path="/design-preview" element={<React.Suspense fallback={null}><DesignPreview /></React.Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
