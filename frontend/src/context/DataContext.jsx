@@ -466,20 +466,17 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
     const customSocketUrl = import.meta.env.VITE_SOCKET_URL;
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const socketUrl = customSocketUrl || (isLocalhost ? 'http://localhost:5001' : null);
 
-    // On Vercel serverless deployments without a dedicated socket server, skip wss:// to prevent browser console errors
-    if (isVercel && !customSocketUrl) {
+    // No socket server (Vercel serverless or any other domain): poll notifications every 30s instead
+    if (!socketUrl) {
       const pollInterval = setInterval(() => {
         fetchNotifications();
       }, 30000);
       return () => clearInterval(pollInterval);
     }
-
-    const socketUrl = customSocketUrl || (isLocalhost ? 'http://localhost:5001' : null);
-    if (!socketUrl) return;
 
     let socket;
     try {
