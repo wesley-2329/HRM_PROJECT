@@ -22,109 +22,31 @@ const generateToken = (id) => {
 router.post('/login', async (req, res, next) => {
   const { email, password, role } = req.body || {};
   const lowerEmail = email ? email.toLowerCase().trim() : '';
-  const cleanPassLower = password ? String(password).trim().toLowerCase() : '';
   const trimmedPassword = password ? String(password).trim() : '';
-  const isMasterPass = ['admin123', 'employee123', 'password123'].includes(cleanPassLower);
 
   if (!lowerEmail || !password) {
     return res.status(400).json({ message: 'Please provide email and password.' });
   }
 
-  const isDBConnected = (mongoose.connection.readyState === 1);
-  let employee = null;
-
-  // 1. If MongoDB Atlas is connected, attempt Atlas query
-  if (isDBConnected) {
-    try {
-      if (role) {
-        employee = await Employee.findOne({ email: lowerEmail, role });
-      }
-      if (!employee) {
-        employee = await Employee.findOne({ email: lowerEmail });
-      }
-    } catch (err) {
-      console.warn('[DB Query Warning] Atlas query failed:', err.message);
-    }
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ message: 'Authentication service temporarily unavailable, please retry' });
   }
 
-  // 2. If DB is offline or user not found in Atlas, check known demo accounts
+  let employee = null;
+  if (role) {
+    employee = await Employee.findOne({ email: lowerEmail, role });
+  }
   if (!employee) {
-    const demoAccountMap = {
-      'garanandini067@gmail.com': { id: 'EMP-1001', _id: '60c72b2f9b1d8b2a3c9d8001', name: 'Gara Nandini', role: 'hr', dept: 'Human Resources' },
-      'akhilsirivella510@gmail.com': { id: 'EMP-1002', _id: '60c72b2f9b1d8b2a3c9d8002', name: 'Akhil Sirivella', role: 'hr', dept: 'Human Resources' },
-      'karthikpotur@gmail.com': { id: 'EMP-1003', _id: '60c72b2f9b1d8b2a3c9d8003', name: 'Karthik Potur', role: 'hr', dept: 'Human Resources' },
-      'sujatha.subramani98@gmail.com': { id: 'EMP-1005', _id: '60c72b2f9b1d8b2a3c9d8009', name: 'Sujatha Subramani', role: 'hr', dept: 'Human Resources' },
-      'hr@company.com': { id: 'EMP-0001', _id: '60c72b2f9b1d8b2a3c9d7890', name: 'Venkat Raman', role: 'hr', dept: 'Human Resources' },
-      'admin@hrorbit.com': { id: 'EMP-0001', _id: '60c72b2f9b1d8b2a3c9d7890', name: 'HR Admin', role: 'hr', dept: 'Human Resources' },
-      'priyanka@qbkartitsolutions.com': { id: 'EMP-2001', _id: '60c72b2f9b1d8b2a3c9d8005', name: 'Priyanka', role: 'employee', dept: 'Engineering' },
-      'pranitha@qbkartitsolutions.com': { id: 'EMP-2002', _id: '60c72b2f9b1d8b2a3c9d8006', name: 'Pranitha', role: 'employee', dept: 'Engineering' },
-      'dhanushgoud58@gmail.com': { id: 'EMP-2003', _id: '60c72b2f9b1d8b2a3c9d8007', name: 'Dhanush Goud', role: 'employee', dept: 'Engineering' },
-      'employee@company.com': { id: 'EMP-0002', _id: '60c72b2f9b1d8b2a3c9d7891', name: 'Aditya Kumar', role: 'employee', dept: 'Engineering' },
-      'employee@hrorbit.com': { id: 'EMP-0002', _id: '60c72b2f9b1d8b2a3c9d7891', name: 'Ravindranadh', role: 'employee', dept: 'Engineering' },
-      'johnwesley.290305@gmail.com': {
-        id: role === 'hr' ? 'EMP-1004' : 'EMP-2004',
-        _id: role === 'hr' ? '60c72b2f9b1d8b2a3c9d8004' : '60c72b2f9b1d8b2a3c9d8008',
-        name: 'John Wesley',
-        role: role === 'hr' ? 'hr' : 'employee',
-        dept: role === 'hr' ? 'Human Resources' : 'Engineering'
-      }
-    };
-
-    const demoInfo = demoAccountMap[lowerEmail];
-
-    if (demoInfo && isMasterPass) {
-      if (isDBConnected) {
-        try {
-          employee = await Employee.create({
-            _id: demoInfo._id,
-            id: demoInfo.id,
-            name: demoInfo.name,
-            email: lowerEmail,
-            password: cleanPassLower === 'admin123' ? 'admin123' : 'employee123',
-            role: demoInfo.role,
-            dept: demoInfo.dept,
-            status: 'Approved',
-            joined: '2024-01-15',
-            aadhaar: '1234-5678-9012',
-            phone: '+91 98765 00000',
-            address: { door: '101', street: 'Tech Park Rd', city: 'Hyderabad', state: 'Telangana', pin: '500081' },
-            emergency: { name: 'Guardian', relation: 'Parent', phone: '+91 98765 43210' }
-          });
-        } catch (e) {
-          console.warn('[Demo Auto-Creation Warning] Could not save to Atlas:', e.message);
-        }
-      }
-
-      if (!employee) {
-        employee = {
-          _id: demoInfo._id,
-          id: demoInfo.id,
-          name: demoInfo.name,
-          email: lowerEmail,
-          role: demoInfo.role,
-          dept: demoInfo.dept,
-          status: 'Approved'
-        };
-      }
-    }
+    employee = await Employee.findOne({ email: lowerEmail });
   }
 
   if (!employee) {
     return res.status(401).json({ message: 'Account not found. Please Sign Up first.' });
   }
 
-  // 3. Validate password
-  let isPassCorrect = false;
-
-  if (isMasterPass) {
-    isPassCorrect = true;
-  } else if (employee.matchPassword) {
-    const isBcryptMatch = await employee.matchPassword(trimmedPassword).catch(() => false);
-    const isPlainTextMatch = (trimmedPassword === employee.password);
-    isPassCorrect = isBcryptMatch || isPlainTextMatch;
-  } else {
-    isPassCorrect = (trimmedPassword === employee.password);
-  }
+  // Validate password (plain-text match kept for legacy records seeded without hashing)
+  const isBcryptMatch = await employee.matchPassword(trimmedPassword).catch(() => false);
+  const isPassCorrect = isBcryptMatch || (trimmedPassword === employee.password);
 
   if (!isPassCorrect) {
     return res.status(401).json({ message: 'Invalid password. Please check your credentials.' });
