@@ -98,7 +98,8 @@ router.post('/register', async (req, res, next) => {
       email,
       password,
       dept,
-      role,
+      role: 'employee', // never trust a self-chosen role; the form's "Role" field is a job title
+      designation: role,
       aadhaar,
       phone,
       joined: joined || new Date().toISOString().split('T')[0],
