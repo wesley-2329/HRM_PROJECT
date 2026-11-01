@@ -457,7 +457,7 @@ const OrgChartPage = ({ mode }) => {
                 const activeCount = employees.filter(e => e.dept === d.name).length;
                 const head = getEmpById(d.managerId);
                 return (
-                  <div key={d._id} className="emp-card" style={{ padding: '20px', borderLeft: '4px solid hsl(var(--primary))' }}>
+                  <div key={d._id} className="emp-card" style={{ padding: '20px' }}>
                     <h4 style={{ fontWeight: 700 }}>{d.name}</h4>
                     <p style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>Code: {d.code}</p>
                     <div style={{ margin: '14px 0', fontSize: '0.85rem' }}>

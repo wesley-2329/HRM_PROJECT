@@ -910,7 +910,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
               <div className="md:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
                 {/* Audit Context Details */}
-                <div className="card" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
+                <div className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{selectedAudit.name}</h3>
                     <span className="badge badge-primary">{selectedAudit.auditNumber}</span>
@@ -3533,7 +3533,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
                   <div className="card-title">Critical Open Action Items</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflowY: 'auto' }}>
                     {actionList.filter(a => a.priority === 'Critical' && a.status !== 'Closed').map(a => (
-                      <div key={a._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', borderLeft: '4px solid var(--rose-500)', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '4px' }}>
+                      <div key={a._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '4px' }}>
                         <div>
                           <strong style={{ fontSize: '0.8rem' }}>{a.observationId} - {a.observationType}</strong>
                           <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Dept: {a.department} | Owner: {a.assignedToName}</span>
@@ -3797,7 +3797,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ padding: '12px', backgroundColor: 'rgba(99,102,241,0.06)', borderRadius: '8px', borderLeft: '3px solid hsl(var(--primary))' }}>
+              <div style={{ padding: '12px', backgroundColor: 'rgba(99,102,241,0.06)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Current Version Status: v{selectedPolicy.version}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                   Effective Commencement Date: {new Date(selectedPolicy.effectiveDate).toLocaleDateString()} | Active Status: {selectedPolicy.status}

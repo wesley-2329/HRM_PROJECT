@@ -1080,7 +1080,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
       // Score
       ctx.fillStyle = '#C7D2FE';
-      ctx.font = '14px Plus Jakarta Sans, sans-serif';
+      ctx.font = '14px Inter, sans-serif';
       ctx.fillText(`Score: ${score}`, 560, 30);
       ctx.fillText('SPACE / tap to jump', 20, 30);
 
@@ -1162,14 +1162,14 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       ctx.fillStyle = 'rgba(15,23,42,0.85)';
       ctx.fillRect(0, 0, 680, 200);
       ctx.fillStyle = '#EF4444';
-      ctx.font = 'bold 28px Plus Jakarta Sans, sans-serif';
+      ctx.font = 'bold 28px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('OVERLOADED! 😵', 340, 80);
       ctx.fillStyle = '#C7D2FE';
-      ctx.font = '18px Plus Jakarta Sans, sans-serif';
+      ctx.font = '18px Inter, sans-serif';
       ctx.fillText(`Final Score: ${score}`, 340, 115);
       ctx.fillStyle = '#818CF8';
-      ctx.font = '14px Plus Jakarta Sans, sans-serif';
+      ctx.font = '14px Inter, sans-serif';
       ctx.fillText('Click canvas to restart', 340, 145);
       ctx.textAlign = 'left';
     };
@@ -1197,11 +1197,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     ctx.fillStyle = 'rgba(15,23,42,0.9)';
     ctx.fillRect(0, 0, 680, 200);
     ctx.fillStyle = '#818CF8';
-    ctx.font = 'bold 22px Plus Jakarta Sans, sans-serif';
+    ctx.font = 'bold 22px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Dino Runner: Avoid Work Overload!', 340, 75);
     ctx.fillStyle = '#C7D2FE';
-    ctx.font = '14px Plus Jakarta Sans, sans-serif';
+    ctx.font = '14px Inter, sans-serif';
     ctx.fillText('Press SPACE, UP Arrow, or Tap to jump', 340, 115);
     ctx.fillStyle = '#10B981';
     ctx.fillText('Click canvas or the button to START', 340, 150);
@@ -1867,9 +1867,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'stretch' }}>
               {/* Left Column: Operations, Attendance & Tasks */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {renderPunchClockCard()}
 
                 <div className="card" style={{ marginBottom: 0 }}>
@@ -1932,7 +1932,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </div>
 
                 {/* Performance Standing Summary */}
-                <div className="card" style={{ marginBottom: 0 }}>
+                <div className="card" style={{ marginBottom: 0, flex: '1 1 auto' }}>
                   <div className="card-title">Performance Standing Summary</div>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
@@ -1951,7 +1951,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
 
               {/* Right Column: Communication, Collaboration & Schedules */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {/* Group Discussion Board */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '420px', marginBottom: 0 }}>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2008,18 +2008,15 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
                     {displayMeetings.map(m => {
                       let cardStyle = {
-                        background: 'hsla(var(--warning), 0.15)',
-                        borderLeft: '4px solid hsl(var(--warning))'
+                        background: 'hsla(var(--warning), 0.15)'
                       };
                       if (m.status === 'Attended') {
                         cardStyle = {
-                          background: 'hsla(var(--success), 0.15)',
-                          borderLeft: '4px solid hsl(var(--success))'
+                          background: 'hsla(var(--success), 0.15)'
                         };
                       } else if (m.status === 'Missed') {
                         cardStyle = {
-                          background: 'hsla(var(--danger), 0.15)',
-                          borderLeft: '4px solid hsl(var(--danger))'
+                          background: 'hsla(var(--danger), 0.15)'
                         };
                       }
 
@@ -2084,7 +2081,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </div>
 
                 {/* Latest Notifications with live real-time timestamps and scroll */}
-                <div className="card" style={{ marginBottom: 0 }}>
+                <div className="card" style={{ marginBottom: 0, flex: '1 1 auto' }}>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-bell" style={{ color: 'hsl(var(--primary))' }}></i>
@@ -2387,7 +2384,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               </div>
             </div>
 
-            <div className="card" style={{ marginTop: '20px' }}>
+            <div className="card">
               <div className="card-title">Warning Letters / Compliance Logs</div>
               <div className="table-responsive">
                 <table className="custom-table">
@@ -3820,7 +3817,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
                 {selectedReportForReview && (
                   <div style={{ flex: 1 }}>
-                    <div className="card" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
+                    <div className="card">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <div className="card-title" style={{ marginBottom: 0 }}>Reviewing Report</div>
                         <button className="close-modal" type="button" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={() => setSelectedReportForReview(null)}>
@@ -3957,7 +3954,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             right: '24px',
             width: '340px',
             backgroundColor: 'hsl(var(--bg-card))',
-            borderLeft: '4px solid hsl(var(--warning))',
             borderRadius: '12px',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
             padding: '16px',

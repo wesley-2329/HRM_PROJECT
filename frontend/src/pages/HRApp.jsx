@@ -1108,7 +1108,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
 
           {/* New Analytical Charts Row */}
-          <div className="dashboard-layout" style={{ marginTop: '20px' }}>
+          <div className="dashboard-layout">
             <div>
               <div className="card">
                 <div className="card-title">Total Operations Completed (Last 6 Months)</div>
@@ -1128,7 +1128,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
 
           {/* Competitor Analysis Report Overview */}
-          <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <i className="fa-solid fa-square-poll-horizontal" style={{ color: 'hsl(var(--primary))' }}></i>
               HR Intelligence: Competitive Benchmarking Overview
@@ -1429,7 +1429,6 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                   
                   return (
                     <div key={lead.id} className="card" style={{ 
-                      borderLeft: '4px solid hsl(var(--primary))', 
                       marginBottom: '24px', 
                       padding: '20px',
                       background: 'hsl(var(--bg-card))',
@@ -1591,7 +1590,6 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
 
                 {unassignedEmployees.length > 0 && (
                   <div className="card" style={{ 
-                    borderLeft: '4px solid hsl(var(--border))', 
                     marginBottom: '24px', 
                     padding: '20px',
                     background: 'hsl(var(--bg-card))',
@@ -2240,7 +2238,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
 
           {/* Certifications Tracker */}
-          <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card">
             <div className="card-title">Employee Certifications Roster</div>
             <div className="table-responsive">
               <table className="custom-table">
@@ -2270,7 +2268,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
 
           {/* Issued Warning Letters History */}
-          <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card">
             <div className="card-title">Warning Letter Issue Logs</div>
             <div className="table-responsive">
               <table className="custom-table">
@@ -2551,7 +2549,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             </div>
           )}
 
-          <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card">
             <div className="card-title">My Tickets</div>
             <div className="table-responsive">
               <table className="custom-table">
@@ -2584,7 +2582,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             </div>
           </div>
 
-          <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card">
             <div className="card-title">Warning Letters / Compliance Logs</div>
             <div className="table-responsive">
               <table className="custom-table">

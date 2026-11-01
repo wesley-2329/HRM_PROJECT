@@ -444,31 +444,31 @@ const EngagementModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #6366f1' }}>
+            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>EMPLOYEE ENGAGEMENT</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6366f1' }}>{dashboardMetrics.employeeEngagementScore}</div>
               <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>↑ 2.4% vs last quarter</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #a855f7' }}>
+            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>ACTIVE BULLETINS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#a855f7' }}>{dashboardMetrics.activeCommunications}</div>
               <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>Broadcast announcements</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #ef4444' }}>
+            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>OPEN GRIEVANCES</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#ef4444' }}>{dashboardMetrics.openGrievances}</div>
               <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>Under investigation</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>OPEN HELPDESK TICKETS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#3b82f6' }}>{dashboardMetrics.openHelpdeskTickets}</div>
               <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>SLA Compliance: {dashboardMetrics.slaPerformanceScore}</div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #f59e0b' }}>
+            <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>RECOGNITION KUDOS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#f59e0b' }}>{dashboardMetrics.recognitionPosts}</div>
               <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>Spot awards & Badges</div>
@@ -869,7 +869,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
                   </div>
                 </div>
 
-                <p style={{ fontSize: '0.9rem', fontStyle: 'italic', background: 'hsl(var(--bg-main))', padding: '12px', borderRadius: '8px', borderLeft: '3px solid #f59e0b', color: 'hsl(var(--foreground))' }}>
+                <p style={{ fontSize: '0.9rem', fontStyle: 'italic', background: 'hsl(var(--bg-main))', padding: '12px', borderRadius: '8px', color: 'hsl(var(--foreground))' }}>
                   "{r.appreciationMessage}"
                 </p>
 

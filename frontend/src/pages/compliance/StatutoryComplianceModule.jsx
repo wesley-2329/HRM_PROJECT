@@ -471,37 +471,37 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COMPLIANCE %</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0', color: '#10b981' }}>{kpis.compliancePercentage}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{kpis.overallComplianceStatus}</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #6366f1' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RISK SCORE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.complianceRiskScore}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Zero Penalty Exposure</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>MONTHLY LIABILITY</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.monthlyStatutoryLiability || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>PF, ESI, PT & LWF</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>UPCOMING DUE DATES</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.upcomingDueDates}</h2>
               <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>Next 15 Days</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ec4899' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OPEN GOVT NOTICES</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.openGovernmentNotices}</h2>
               <span style={{ fontSize: '0.75rem', color: '#ec4899', fontWeight: 600 }}>Under Reply Review</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PF MEMBERS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.pfEligibleEmployees}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>UAN Mapped</span>
@@ -847,7 +847,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {notices.map((n) => (
-                <div key={n.noticeId} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '4px solid #ec4899' }}>
+                <div key={n.noticeId} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <strong style={{ fontSize: '0.9rem' }}>{n.noticeNumber} ({n.department})</strong>
                     <span className="badge badge-warning">{n.status}</span>
@@ -868,7 +868,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {inspections.map((i) => (
-                <div key={i.inspectionId} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '4px solid #10b981' }}>
+                <div key={i.inspectionId} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <strong style={{ fontSize: '0.9rem' }}>{i.authority} ({i.location})</strong>
                     <span className="badge badge-success">{i.closureStatus}</span>

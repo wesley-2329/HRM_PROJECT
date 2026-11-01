@@ -358,37 +358,37 @@ const ExitModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #6366f1' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>ACTIVE EXITS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.activeExitRequests}</h2>
               <span style={{ fontSize: '0.75rem', color: '#6366f1', fontWeight: 600 }}>In Separation Lifecycle</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>NEW RESIGNATIONS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.newResignations}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Pending Approval</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>IN NOTICE PERIOD</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.employeesInNoticePeriod}</h2>
               <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>Serving Notice</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ec4899' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PENDING CLEARANCES</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.pendingClearances}</h2>
               <span style={{ fontSize: '0.75rem', color: '#ec4899', fontWeight: 600 }}>IT / Admin / Finance</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PENDING F&F</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.pendingFF}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Ready for Settlement</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COMPLETED EXITS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.completedExits}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Separated FY 26-27</span>

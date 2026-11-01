@@ -517,37 +517,37 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #6366f1' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>TOTAL HR BUDGET</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalBudget || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>FY 2026-2027 Approved</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET UTILIZED</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalUtilized || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{kpis.utilizationPercentage} Utilized</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET REMAINING</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalRemaining || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Available Funds</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET VARIANCE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.budgetVariance}</h2>
               <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>Favorable Variance</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ec4899' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RECRUITMENT SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.recruitmentBudget || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Agency & Portal Costs</span>
             </div>
 
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>WELFARE SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.welfareBudget || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Canteen, Transport, Insurance</span>
@@ -746,22 +746,22 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         <div data-testid="cost-analytics-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Top Analytics Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COST PER EMPLOYEE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerEmployee || 18500).toLocaleString('en-IN')}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Within Target Band (₹20,000 cap)</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>AVG DEPT MONTHLY RUNWAY</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerDepartment || 1560000).toLocaleString('en-IN')}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Across 5 Core Business Units</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OVERTIME & SHIFT COST</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.overtimeCost || 680000).toLocaleString('en-IN')}</h2>
               <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>2.8% of Total Operational Spend</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>TOTAL UTILIZATION RATE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.utilizationPercentage || '62.8%'}</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Optimal Pacing (Q2 Benchmark: 65%)</span>
@@ -981,22 +981,22 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         <div data-testid="forecast-variance-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Top Forecast Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #6366f1' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PROJECTED ANNUAL SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹11,850,000</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>-5.2% Below Approved FY Cap</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #10b981' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>NET PROJECTED VARIANCE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>+₹650,000</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Favorable Surplus Expected</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>FORECAST CONFIDENCE</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>94.6%</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Based on 6-Month Realized Trend</span>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ec4899' }}>
+            <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RUNWAY STATUS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>Healthy</h2>
               <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Zero Capital Calls Needed</span>

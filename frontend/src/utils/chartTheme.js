@@ -20,7 +20,7 @@ export const themeColors = (names, alpha = 1) => (ctx) => toRgba(readVar(names[c
 const applyDefaults = () => {
   const Chart = window.Chart;
   if (!Chart?.defaults) return;
-  Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+  Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.color = readVar('--chart-text') || '#64748b';
   Chart.defaults.borderColor = readVar('--chart-grid') || '#e2e8f0';
 };

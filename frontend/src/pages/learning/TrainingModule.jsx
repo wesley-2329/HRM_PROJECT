@@ -241,25 +241,25 @@ const TrainingModule = ({ searchQuery = '' }) => {
         <div>
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #047857', backgroundColor: 'hsl(var(--bg-card))' }}>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SCHEDULED PROGRAMS</div>
               <div className="stat-value-emerald" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#047857' }}>{metrics.totalTrainingPrograms}</div>
               <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
             </div>
 
-            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #1d4ed8', backgroundColor: 'hsl(var(--bg-card))' }}>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>TNA REQUESTS</div>
               <div className="stat-value-blue" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#1d4ed8' }}>{metrics.tnaRequestsTotal}</div>
               <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.approvedTnaRequests} HR Approved</div>
             </div>
 
-            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #6d28d9', backgroundColor: 'hsl(var(--bg-card))' }}>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>ISSUED CERTIFICATES</div>
               <div className="stat-value-purple" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6d28d9' }}>{metrics.issuedCertificates}</div>
               <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
             </div>
 
-            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #b45309', backgroundColor: 'hsl(var(--bg-card))' }}>
+            <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SKILL GAP CLOSURE</div>
               <div className="stat-value-amber" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#b45309' }}>{metrics.skillGapClosurePercentage}</div>
               <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>

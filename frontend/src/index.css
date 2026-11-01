@@ -66,7 +66,7 @@ html[data-palette="navy"] {
   --primary: 224 64% 33%;
   --primary-hover: 225 68% 29%;
   --primary-soft: 219 74% 95%;
-  --accent-hsl: 38 92% 50%;
+  --accent-hsl: 43 89% 38%;
   --success: 142 72% 29%;
   --warning: 26 90% 37%;
   --danger: 0 74% 42%;
@@ -75,39 +75,39 @@ html[data-palette="navy"] {
   --bg-card: 0 0% 100%;
   --card: 0 0% 100%;
   --text-primary: 222 47% 11%;
-  --text-secondary: 222 20% 36%;
+  --text-secondary: 215 16% 47%;
   --foreground: 222 47% 11%;
-  --muted-foreground: 222 20% 36%;
-  --border: 219 33% 92%;
+  --muted-foreground: 215 16% 47%;
+  --border: 214 32% 91%;
   --c-primary: #1E3A8A;
   --c-primary-hover: #17307b;
   --c-primary-soft: #ebf1fc;
   --c-primary-rgb: 30, 58, 138;
-  --c-accent: #F59E0B;
-  --c-accent-text: #98610a;
-  --c-accent-rgb: 245, 158, 11;
+  --c-accent: #B8860B;
+  --c-accent-text: #8a6508;
+  --c-accent-rgb: 184, 134, 11;
   --c-bg: #F8FAFC;
   --c-card: #FFFFFF;
   --c-text: #0F172A;
-  --c-muted: #49546d;
-  --c-border: #e3e8f1;
+  --c-muted: #64748B;
+  --c-border: #E2E8F0;
   --c-navbar: rgba(255, 255, 255, 0.92);
   --c-dropdown: #FFFFFF;
-  --border-color: #e3e8f1;
+  --border-color: #E2E8F0;
   --bg-secondary: #f9fafc;
   --rose-500: #B91C1C;
   --emerald-500: #15803D;
   --amber-500: #B45309;
   --blue-500: #0369A1;
   --chart-1: #4061b4;
-  --chart-2: #f59e0b;
+  --chart-2: #B8860B;
   --chart-3: #6250d6;
   --chart-4: #eda100;
   --chart-5: #2a78d6;
   --chart-success: #10B981;
   --chart-danger: #EF4444;
-  --chart-grid: #e3e8f1;
-  --chart-text: #49546d;
+  --chart-grid: #E2E8F0;
+  --chart-text: #64748B;
   --color-indigo-50: #ebf1fc;
   --color-indigo-100: #dce7ff;
   --color-indigo-200: #c0d4fd;
@@ -763,7 +763,7 @@ html[data-palette="teal"] body.dark-mode {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 
@@ -1129,23 +1129,23 @@ body.dark-mode .glass-card {
 }
 
 .metric-card.primary {
-  @apply border-l-indigo-500 dark:border-l-indigo-600;
+  border-left-color: hsl(var(--border)); /* neutral: status colour stays on the icon only */
 }
 
 .metric-card.success {
-  @apply border-l-emerald-500 dark:border-l-emerald-600;
+  border-left-color: hsl(var(--border)); /* neutral: status colour stays on the icon only */
 }
 
 .metric-card.warning {
-  @apply border-l-amber-500 dark:border-l-amber-600;
+  border-left-color: hsl(var(--border)); /* neutral: status colour stays on the icon only */
 }
 
 .metric-card.danger {
-  @apply border-l-rose-500 dark:border-l-rose-600;
+  border-left-color: hsl(var(--border)); /* neutral: status colour stays on the icon only */
 }
 
 .metric-card.info {
-  @apply border-l-sky-500 dark:border-l-sky-600;
+  border-left-color: hsl(var(--border)); /* neutral: status colour stays on the icon only */
 }
 
 .metric-val {
@@ -3198,23 +3198,33 @@ body.dark-mode .stat-card-training .stat-value-amber {
    the palette tokens defined near the top of this file.
    ===================================================================== */
 :root {
+  /* Design system scales: spacing 4/8/12/16/24/32/48, radius 8 (controls) / 12 (cards) / 16 (modals),
+     type 12/14/16/20/24/32, two shadow levels (resting, hover) */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px;
+  --fs-xs: 12px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 24px; --fs-2xl: 32px;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
   --rd-radius-sm: 8px;
   --rd-radius: 12px;
   --rd-radius-lg: 16px;
   --rd-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --rd-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --rd-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 6px 16px -8px rgba(15, 23, 42, 0.10);
-  --rd-shadow-lg: 0 2px 6px rgba(15, 23, 42, 0.06), 0 18px 36px -14px rgba(15, 23, 42, 0.22);
+  --rd-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --rd-shadow-lg: 0 4px 12px -2px rgba(15, 23, 42, 0.10), 0 12px 24px -8px rgba(15, 23, 42, 0.12);
+  --rd-shadow-sm: var(--rd-shadow);
   --rd-focus: 0 0 0 3px rgba(var(--c-primary-rgb, 79, 70, 229), 0.28);
 }
 body.dark-mode {
-  --rd-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --rd-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 8px 18px -10px rgba(0, 0, 0, 0.6);
-  --rd-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 22px 40px -16px rgba(0, 0, 0, 0.75);
+  --rd-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --rd-shadow-lg: 0 6px 20px -6px rgba(0, 0, 0, 0.7);
+  --rd-shadow-sm: var(--rd-shadow);
 }
 
-/* Typography: Plus Jakarta Sans for all UI (already loaded); tabular figures for numbers */
-body { font-feature-settings: 'cv11' 1; text-rendering: optimizeLegibility; }
+/* Typography: Inter for all UI; Fraunces only for landing hero and page titles; tabular figures for numbers */
+body { font-family: var(--font-ui); font-feature-settings: 'cv11' 1; text-rendering: optimizeLegibility; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; }
+.card-title { font-size: var(--fs-md); font-weight: 600; }
+.metric-label { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.04em; }
+.metric-val { font-size: var(--fs-2xl); font-weight: 700; line-height: 1.15; }
 .metric-val, .count-up, .custom-table td, .stat-value-emerald, .stat-value-blue, .stat-value-purple, .stat-value-amber { font-variant-numeric: tabular-nums; }
 .metric-val { letter-spacing: -0.02em; }
 
@@ -3230,38 +3240,44 @@ body { font-feature-settings: 'cv11' 1; text-rendering: optimizeLegibility; }
 /* Cards: consistent radius, layered soft shadow, palette border. Hover deepens the shadow only
    (no transform: a transformed ancestor would offset position:fixed modals rendered inside cards). */
 .card, .glass-card, .emp-card, .table-responsive {
-  border-radius: var(--rd-radius-lg);
+  border-radius: var(--rd-radius);
+  border-width: 1px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-color: hsl(var(--border));
   box-shadow: var(--rd-shadow);
   transition: box-shadow 0.25s var(--rd-ease), border-color 0.25s var(--rd-ease), background-color 0.3s ease;
 }
-.card { background-color: hsl(var(--bg-card) / 0.92); }
+.card { background-color: hsl(var(--bg-card)); }
 .card:hover, .glass-card:hover, .emp-card:hover { box-shadow: var(--rd-shadow-lg); }
 .card-title { color: hsl(var(--text-primary)); letter-spacing: -0.01em; }
 
 /* KPI cards: keep the existing small lift, add layered shadow and palette accents */
 .metric-card {
-  border-radius: var(--rd-radius-lg);
-  background-color: hsl(var(--bg-card) / 0.92);
+  border-radius: var(--rd-radius);
+  border: 1px solid hsl(var(--border)); /* one neutral border on all sides (no coloured left stripe) */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: hsl(var(--bg-card));
   box-shadow: var(--rd-shadow);
   transition: transform 0.25s var(--rd-ease), box-shadow 0.25s var(--rd-ease);
 }
 .metric-card:hover { box-shadow: var(--rd-shadow-lg); }
-.metric-card.primary { border-left-color: var(--c-primary, #6366f1); }
 .metric-icon-box { border-radius: var(--rd-radius); box-shadow: none; }
 .metric-label { color: hsl(var(--text-secondary)); }
 .metric-val { color: hsl(var(--text-primary)); }
 
 /* Buttons: consistent height feel, palette shadow, press feedback (existing scale kept) */
-.btn { border-radius: var(--rd-radius); transition: background-color 0.2s ease, box-shadow 0.2s var(--rd-ease), transform 0.15s var(--rd-ease), color 0.2s ease; }
-.btn-primary { box-shadow: 0 1px 2px rgba(var(--c-primary-rgb, 79, 70, 229), 0.3), 0 6px 14px -6px rgba(var(--c-primary-rgb, 79, 70, 229), 0.45); }
+.btn { border-radius: var(--rd-radius-sm); transition: background-color 0.2s ease, box-shadow 0.2s var(--rd-ease), transform 0.15s var(--rd-ease), color 0.2s ease; }
+.btn-primary { box-shadow: none; }
+.btn-primary:hover:not(:disabled), .btn-secondary:hover:not(:disabled) { box-shadow: var(--rd-shadow); }
 .btn-primary:hover:not(:disabled) { background-color: var(--color-indigo-700); }
-.btn-secondary { border-color: hsl(var(--border)); box-shadow: var(--rd-shadow-sm); }
-.btn-danger { box-shadow: 0 6px 14px -6px rgba(185, 28, 28, 0.45); }
+.btn-secondary { border-color: hsl(var(--border)); box-shadow: none; }
+.btn-danger { box-shadow: none; }
 
 /* Inputs and selects */
 .form-control {
-  border-radius: var(--rd-radius);
+  border-radius: var(--rd-radius-sm);
   border-color: hsl(var(--border));
   background-color: hsl(var(--bg-card));
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -3276,7 +3292,6 @@ body.dark-mode .form-control:hover { border-color: var(--color-slate-600); }
 body.dark-mode .custom-table thead { background-color: hsl(var(--bg-main) / 0.6); }
 .custom-table th { color: hsl(var(--text-secondary)); border-bottom-color: hsl(var(--border)); }
 .custom-table td { border-bottom-color: hsl(var(--border) / 0.7); }
-.custom-table tbody tr:nth-child(even) { background-color: hsl(var(--primary-soft) / 0.35); }
 .custom-table tbody tr { transition: background-color 0.15s ease; }
 .custom-table tbody tr:hover { background-color: rgba(var(--c-primary-rgb, 79, 70, 229), 0.07); }
 
@@ -3284,7 +3299,7 @@ body.dark-mode .custom-table thead { background-color: hsl(var(--bg-main) / 0.6)
 .badge { border-radius: 999px; letter-spacing: 0.04em; }
 
 /* Modals: softer radius and deeper shadow (open/close transition already exists) */
-.modal-content { border-radius: 20px; border-color: hsl(var(--border)); box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.45); }
+.modal-content { border-radius: var(--rd-radius-lg); border-color: hsl(var(--border)); box-shadow: var(--rd-shadow-lg); }
 .modal-content { transition: transform 0.3s var(--rd-ease), opacity 0.3s ease; }
 
 /* Login portal accents follow the palette */
@@ -3414,3 +3429,20 @@ body.dark-mode .welcome-card-banner {
   .hr-search, .emp-search { width: 150px; }
   .hr-search:focus-within, .emp-search:focus-within { width: 180px; }
 }
+
+/* ===== Layout rhythm: one grid gap everywhere (24px desktop, 16px phones) ===== */
+.metric-grid, .dashboard-layout { gap: var(--space-5); margin-bottom: var(--space-5); align-items: stretch; }
+/* Cards inside grids are spaced by the grid gap, not by their own bottom margin */
+.metric-grid > *, .dashboard-layout > .card, .dashboard-layout > div > .card { margin-bottom: 0; }
+/* Column wrappers stack their cards with the same gap; the last card stretches so neighbouring columns end on one line */
+.dashboard-layout > div:not(.card) { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.dashboard-layout > div:not(.card) > .card:last-child { flex: 1 1 auto; }
+/* A row with exactly two plain columns (no col-span) splits 50/50 instead of leaving an empty third column */
+@media (min-width: 1024px) {
+  .dashboard-layout:has(> :nth-child(2):last-child):not(:has(> [class*="col-span"])) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .metric-grid, .dashboard-layout, .dashboard-layout > div:not(.card) { gap: var(--space-4); margin-bottom: var(--space-4); }
+}
+/* Card titles made of just an icon + text sit together on the left (justify-between pushed them apart) */
+.card-title:has(> i:first-child):not(:has(> :nth-child(2))) { justify-content: flex-start; gap: var(--space-2); }
