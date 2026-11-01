@@ -1129,7 +1129,7 @@ export const AddTaskModal = ({ active, onClose, onSubmit, teammates = [] }) => {
             </datalist>
             {isInvalidEmail && (
               <p style={{ color: 'hsl(var(--danger))', fontSize: '0.75rem', marginTop: '4px' }}>
-                ⚠️ Must belong to a direct teammate.
+                <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Must belong to a direct teammate.
               </p>
             )}
           </div>

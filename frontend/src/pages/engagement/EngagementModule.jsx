@@ -497,7 +497,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
 
           {/* Recent Communications Feed */}
           <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '14px', width: '100%' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📌 Company Announcements & Bulletins</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-thumbtack" aria-hidden="true"></i> Company Announcements & Bulletins</h3>
             {communications.length === 0 ? (
               <p style={{ color: 'hsl(var(--muted-foreground))' }}>No announcements published yet.</p>
             ) : (
@@ -541,7 +541,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'suggestions' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>💡 Innovation & Suggestion Scheme</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-lightbulb" aria-hidden="true"></i> Innovation & Suggestion Scheme</h3>
             <button className="btn btn-primary" onClick={() => setShowSuggestionModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Submit Suggestion
             </button>
@@ -602,7 +602,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'grievances' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🛡️ Confidential Grievance Management Desk</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-shield-halved" aria-hidden="true"></i> Confidential Grievance Management Desk</h3>
             <button className="btn btn-primary" onClick={() => setShowGrievanceModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Raise Grievance
             </button>
@@ -637,7 +637,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
                       </span>
                     </td>
                     <td style={{ padding: '12px' }}>
-                      {g.isConfidential ? <span style={{ color: '#ef4444', fontWeight: 700 }}>🔒 Confidential</span> : 'Standard'}
+                      {g.isConfidential ? <span style={{ color: '#ef4444', fontWeight: 700 }}><i className="fa-solid fa-lock" aria-hidden="true"></i> Confidential</span> : 'Standard'}
                     </td>
                     <td style={{ padding: '12px', fontSize: '0.85rem' }}>{g.assignedOfficer?.name || 'Unassigned'}</td>
                     <td style={{ padding: '12px' }}>
@@ -760,7 +760,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'welfare' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🤝 Employee Welfare & Benefit Grants</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-handshake" aria-hidden="true"></i> Employee Welfare & Benefit Grants</h3>
             <button id="btn-request-welfare-benefit" className="btn btn-primary" onClick={() => setShowWelfareModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Request Welfare Benefit
             </button>
@@ -845,7 +845,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'recognition' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🏆 Organization Wall of Honor & Kudos</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-trophy" aria-hidden="true"></i> Organization Wall of Honor & Kudos</h3>
             <button className="btn btn-primary" onClick={() => setShowRecognitionModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-award"></i> Give Kudos
             </button>
@@ -878,7 +878,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
                   <button onClick={() => handleInteractRecognition(r._id, 'like')} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <i className="fa-solid fa-thumbs-up"></i> {r.likes?.length || 0} Likes
                   </button>
-                  <span style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>💬 {r.comments?.length || 0} Comments</span>
+                  <span style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}><i className="fa-solid fa-comment" aria-hidden="true"></i> {r.comments?.length || 0} Comments</span>
                 </div>
               </div>
             ))}
@@ -890,7 +890,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {activeTab === 'communications' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📢 Enterprise Communication & Circulars</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-bullhorn" aria-hidden="true"></i> Enterprise Communication & Circulars</h3>
             {user?.role === 'hr' && (
               <button className="btn btn-primary" onClick={() => setShowCommunicationModal(true)} style={{ borderRadius: '8px' }}>
                 <i className="fa-solid fa-bullhorn"></i> Publish Bulletin
@@ -929,7 +929,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {/* TAB 8: REPORTS & AUDITS */}
       {activeTab === 'reports' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>📊 Audit Trail & Governance Logs</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-chart-column" aria-hidden="true"></i> Audit Trail & Governance Logs</h3>
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -982,7 +982,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {showSuggestionModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>💡 Submit Innovation Suggestion</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-lightbulb" aria-hidden="true"></i> Submit Innovation Suggestion</h3>
             <form onSubmit={handleCreateSuggestion}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Title</label>
@@ -1009,7 +1009,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {showGrievanceModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>🛡️ Confidential Grievance Form</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-shield-halved" aria-hidden="true"></i> Confidential Grievance Form</h3>
             <form onSubmit={handleCreateGrievance}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Subject</label>
@@ -1141,7 +1141,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', maxWidth: '95vw', padding: '24px', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}>🤝 Request Welfare Support</h3>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-handshake" aria-hidden="true"></i> Request Welfare Support</h3>
               <button type="button" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => setShowWelfareModal(false)}>
                 <i className="fa-solid fa-xmark"></i>
               </button>
@@ -1218,7 +1218,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {showRecognitionModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>🏆 Give Recognition & Kudos</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-trophy" aria-hidden="true"></i> Give Recognition & Kudos</h3>
             <form onSubmit={handleCreateRecognition}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Recipient Name</label>
@@ -1245,7 +1245,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
       {showCommunicationModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>📢 Broadcast Announcement Bulletin</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-bullhorn" aria-hidden="true"></i> Broadcast Announcement Bulletin</h3>
             <form onSubmit={handleCreateComm}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Bulletin Title</label>

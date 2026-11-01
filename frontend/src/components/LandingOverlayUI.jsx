@@ -342,9 +342,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
               fontWeight: 800,
               lineHeight: 1.05,
               letterSpacing: '-2px',
-              background: 'linear-gradient(135deg, #0f172a 30%, #4f46e5 70%, #db2777 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'var(--c-primary, #1E3A8A)',
               margin: '0 0 24px 0',
               display: 'flex',
               gap: '4px',
@@ -971,10 +969,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
             margin: 0,
             letterSpacing: '-6px',
             lineHeight: 0.85,
-            opacity: 0.96,
-            background: 'linear-gradient(180deg, #0f172a 40%, rgba(15, 23, 42, 0.82) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            opacity: 0.96
           }}>
             HR O
           </h1>

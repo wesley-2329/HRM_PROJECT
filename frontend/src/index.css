@@ -2081,12 +2081,8 @@ body.dark-mode .glass-card {
 .falling-letter {
   display: inline-block;
   color: #fff;
-  background: linear-gradient(135deg, #fff 30%, #818cf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   animation: fall-down 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   opacity: 0;
-  text-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
 }
 
 @keyframes fade-up {
@@ -2398,7 +2394,7 @@ body.dark-mode .emp-header {
 
 .hr-logo:hover i {
   transform: scale(1.1);
-  filter: drop-shadow(0 0 10px rgba(var(--hr-primary-rgb), 0.6));
+  filter: none; /* no neon glow */
 }
 
 @keyframes logo-glow {
@@ -2409,7 +2405,7 @@ body.dark-mode .emp-header {
 
   100% {
     transform: scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(var(--hr-primary-rgb), 0.6));
+    filter: none; /* no neon glow */
   }
 }
 
@@ -2747,7 +2743,7 @@ body.dark-mode .emp-header {
 
 .emp-logo:hover i {
   transform: scale(1.1);
-  filter: drop-shadow(0 0 10px rgba(var(--emp-primary-rgb), 0.6));
+  filter: none; /* no neon glow */
 }
 
 @keyframes emp-logo-glow {
@@ -2758,7 +2754,7 @@ body.dark-mode .emp-header {
 
   100% {
     transform: scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(var(--emp-primary-rgb), 0.6));
+    filter: none; /* no neon glow */
   }
 }
 
@@ -3446,3 +3442,20 @@ body.dark-mode .welcome-card-banner {
 }
 /* Card titles made of just an icon + text sit together on the left (justify-between pushed them apart) */
 .card-title:has(> i:first-child):not(:has(> :nth-child(2))) { justify-content: flex-start; gap: var(--space-2); }
+/* All card variants share one solid surface (no frosted-glass look) */
+.glass-card, .emp-card { background-color: hsl(var(--bg-card)); }
+/* Serif display face is for page titles only: headings inside cards/KPIs/modals use the UI font */
+.card :is(h1, h2), .glass-card :is(h1, h2), .emp-card :is(h1, h2), .metric-card :is(h1, h2), .modal-content :is(h1, h2) {
+  font-family: var(--font-ui);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+/* KPI rows never leave a half-empty last row: column count follows the number of cards (desktop) */
+@media (min-width: 1024px) {
+  .metric-grid:has(> :nth-child(3):last-child),
+  .metric-grid:has(> :nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metric-grid:has(> :nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+/* Cards inside any inline grid / gapped flex layout are spaced by that gap only (no double spacing) */
+[style*="display: grid"] > :is(.card, .glass-card, .emp-card, .metric-card),
+[style*="display: flex"][style*="gap"] > :is(.card, .glass-card, .emp-card, .metric-card) { margin-bottom: 0; }

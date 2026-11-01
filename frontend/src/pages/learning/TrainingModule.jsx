@@ -282,7 +282,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
           {/* Upcoming Programs List */}
           <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📅 Featured Upcoming Training Workshops</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-calendar-days" aria-hidden="true"></i> Featured Upcoming Training Workshops</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', width: '100%' }}>
               {programs.map(p => {
                 const progIdentifier = p.programId || p._id;
@@ -302,7 +302,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
                       </div>
                       <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{p.title}</h4>
                       <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
-                        👨‍🏫 Trainer: {p.trainer?.name} | 📍 Venue: {p.venue?.name}
+                        <i className="fa-solid fa-chalkboard-user" aria-hidden="true"></i> Trainer: {p.trainer?.name} | <i className="fa-solid fa-location-dot" aria-hidden="true"></i> Venue: {p.venue?.name}
                       </p>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
@@ -344,7 +344,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'tna' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>🔍 Training Needs Analysis (TNA)</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Training Needs Analysis (TNA)</h3>
             <button className="btn btn-primary" onClick={() => setShowTnaModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Submit TNA Request
             </button>
@@ -387,7 +387,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 3: ANNUAL TRAINING PLAN */}
       {activeTab === 'annual-plan' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📋 FY2026 Annual Corporate Training Plan</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-clipboard-list" aria-hidden="true"></i> FY2026 Annual Corporate Training Plan</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {annualPlans.map(plan => (
               <div key={plan._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
@@ -419,7 +419,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'calendar' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📅 Training Calendar & Scheduling</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-calendar-days" aria-hidden="true"></i> Training Calendar & Scheduling</h3>
             <button className="btn btn-primary" onClick={() => setShowProgramModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Schedule Program
             </button>
@@ -462,17 +462,17 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 5: TRAINERS & VENUES */}
       {activeTab === 'trainers-venues' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>👨‍🏫 Trainer & Venue Repository</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-chalkboard-user" aria-hidden="true"></i> Trainer & Venue Repository</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', width: '100%' }}>
             {trainersVenues.map(tv => (
               <div key={tv._id} style={{ padding: '18px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span className="badge badge-info">{tv.type}</span>
-                  <span style={{ color: '#b45309', fontWeight: 700 }}>⭐ {tv.rating} / 5</span>
+                  <span style={{ color: '#b45309', fontWeight: 700 }}><i className="fa-solid fa-star" aria-hidden="true"></i> {tv.rating} / 5</span>
                 </div>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{tv.name}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>{tv.specialization || tv.category}</p>
-                <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>📍 {tv.location} | Capacity: {tv.capacity}</div>
+                <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}><i className="fa-solid fa-location-dot" aria-hidden="true"></i> {tv.location} | Capacity: {tv.capacity}</div>
               </div>
             ))}
           </div>
@@ -483,7 +483,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {activeTab === 'skill-matrix' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📊 Organizational Skill & Competency Matrix</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-chart-column" aria-hidden="true"></i> Organizational Skill & Competency Matrix</h3>
             <button className="btn btn-primary" onClick={() => setShowSkillModal(true)} style={{ borderRadius: '8px' }}>
               <i className="fa-solid fa-plus"></i> Record Skill Entry
             </button>
@@ -528,7 +528,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 7: ASSESSMENTS & CERTIFICATIONS */}
       {activeTab === 'assessments' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>🎓 Online Assessments & Digital Certifications</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-graduation-cap" aria-hidden="true"></i> Online Assessments & Digital Certifications</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', width: '100%' }}>
             {assessments.map(a => (
               <div key={a._id} style={{ padding: '20px', borderRadius: '12px', background: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -538,7 +538,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
                   <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>Passing Score: {a.passingMarks}% | Questions: {a.totalQuestions}</p>
                 </div>
                 <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid hsl(var(--border))', paddingTop: '12px' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 600 }}>📜 {a.certificateName}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 600 }}><i className="fa-solid fa-scroll" aria-hidden="true"></i> {a.certificateName}</span>
                   <button className="btn btn-sm btn-primary" onClick={() => handleIssueCertificate(a._id)} style={{ borderRadius: '6px' }}>Take Exam & Issue Cert</button>
                 </div>
               </div>
@@ -550,7 +550,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 8: LEARNING PORTAL & HISTORY */}
       {activeTab === 'portal' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📚 My Learning Portal & Completion Records</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-book" aria-hidden="true"></i> My Learning Portal & Completion Records</h3>
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -585,7 +585,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {/* TAB 9: ANALYTICS & AUDITS */}
       {activeTab === 'analytics' && (
         <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', width: '100%' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>📊 Training Audit Trail & KPI Analytics</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}><i className="fa-solid fa-chart-column" aria-hidden="true"></i> Training Audit Trail & KPI Analytics</h3>
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -619,7 +619,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {showTnaModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>🔍 Training Needs Analysis (TNA) Form</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Training Needs Analysis (TNA) Form</h3>
             <form onSubmit={handleCreateTna}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Requested Skill / Topic</label>
@@ -642,7 +642,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {showProgramModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>📅 Schedule Training Program</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-calendar-days" aria-hidden="true"></i> Schedule Training Program</h3>
             <form onSubmit={handleCreateProgram}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Program Title</label>
@@ -665,7 +665,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
       {showSkillModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '500px', padding: '24px', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0 }}>📊 Record Skill Entry</h3>
+            <h3 style={{ marginTop: 0 }}><i className="fa-solid fa-chart-column" aria-hidden="true"></i> Record Skill Entry</h3>
             <form onSubmit={handleCreateSkill}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>Skill Name</label>

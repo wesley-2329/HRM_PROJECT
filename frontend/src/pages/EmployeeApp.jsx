@@ -2742,9 +2742,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 <div className="card" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)', color: '#fff', border: 'none' }}>
                   <div className="card-title" style={{ color: '#fff' }}>AI Skill Suggestions</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem', color: '#e2e8f0' }}>
-                    <div>🚀 Improve TypeScript proficiency via targeted exercises.</div>
-                    <div>🎯 Attend peer leadership coding workshops.</div>
-                    <div>💻 Enhance code review response latency metrics.</div>
+                    <div><i className="fa-solid fa-rocket" aria-hidden="true"></i> Improve TypeScript proficiency via targeted exercises.</div>
+                    <div><i className="fa-solid fa-bullseye" aria-hidden="true"></i> Attend peer leadership coding workshops.</div>
+                    <div><i className="fa-solid fa-laptop-code" aria-hidden="true"></i> Enhance code review response latency metrics.</div>
                   </div>
                 </div>
               </div>
@@ -3629,9 +3629,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       </div>
                       <div style={{ background: 'hsl(var(--bg-main))', padding: '15px 25px', borderRadius: '10px', fontSize: '0.85rem' }}>
                         {triviaScore === triviaQuestions.length ? (
-                          <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>🏆 Perfect Score! You are an HR O Expert!</span>
+                          <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}><i className="fa-solid fa-trophy" aria-hidden="true"></i> Perfect Score! You are an HR O Expert!</span>
                         ) : triviaScore >= 3 ? (
-                          <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>🌟 Great job! Excellent knowledge.</span>
+                          <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}><i className="fa-solid fa-star" aria-hidden="true"></i> Great job! Excellent knowledge.</span>
                         ) : (
                           <span>Keep learning and try again to beat your score!</span>
                         )}
@@ -3793,7 +3793,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                                 <td>
                                   {r.blockers ? (
                                     <span style={{ color: 'hsl(var(--danger))', fontWeight: 600 }}>
-                                      ⚠️ {r.blockers}
+                                      <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {r.blockers}
                                     </span>
                                   ) : (
                                     <span style={{ color: 'var(--text-secondary)' }}>None</span>
