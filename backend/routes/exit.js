@@ -240,15 +240,27 @@ router.get('/settlement', protect, async (req, res, next) => {
 router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
-    const exitId = body.exitId || 'EXT-1001';
-    const pendingSalary = Number(body.pendingSalary) || 45000;
-    const leaveEncashment = Number(body.leaveEncashmentAmount) || 30000;
-    const gratuity = Number(body.gratuityAmount) || 125000;
+    // Money fields: 0 is a real value; missing or non-numeric is an error, never a made-up default
+    const amount = (key, required) => {
+      const raw = body[key];
+      if (raw === undefined || raw === null || raw === '') return required ? NaN : 0;
+      const n = Number(raw);
+      return n >= 0 ? n : NaN;
+    };
+    const exitId = body.exitId;
+    const pendingSalary = amount('pendingSalary', true);
+    const leaveEncashment = amount('leaveEncashmentAmount', true);
+    const gratuity = amount('gratuityAmount', true);
+    const noticeRecovery = amount('noticePayRecovery', false);
+    const loanRecovery = amount('loanRecovery', false);
+    const assetRecovery = amount('assetDamageRecovery', false);
+    const bad = [['pendingSalary', pendingSalary], ['leaveEncashmentAmount', leaveEncashment], ['gratuityAmount', gratuity],
+      ['noticePayRecovery', noticeRecovery], ['loanRecovery', loanRecovery], ['assetDamageRecovery', assetRecovery]]
+      .filter(([, v]) => Number.isNaN(v)).map(([k]) => k);
+    if (!exitId || bad.length) {
+      return res.status(400).json({ message: `Please enter valid amounts (0 or more) for: ${[...(exitId ? [] : ['exitId']), ...bad].join(', ')}` });
+    }
     const totalEarnings = pendingSalary + leaveEncashment + gratuity;
-
-    const noticeRecovery = Number(body.noticePayRecovery) || 0;
-    const loanRecovery = Number(body.loanRecovery) || 0;
-    const assetRecovery = Number(body.assetDamageRecovery) || 0;
     const totalDeductions = noticeRecovery + loanRecovery + assetRecovery;
 
     const netSettlementAmount = totalEarnings - totalDeductions;
@@ -256,7 +268,7 @@ router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) 
     const calculated = {
       pendingSalary,
       leaveEncashmentAmount: leaveEncashment,
-      leaveEncashmentDays: Number(body.leaveEncashmentDays) || 15,
+      leaveEncashmentDays: Number(body.leaveEncashmentDays) || 0,
       gratuityAmount: gratuity,
       totalEarnings,
       noticePayRecovery: noticeRecovery,
