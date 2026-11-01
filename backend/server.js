@@ -49,7 +49,8 @@ app.get('/uploads/*', require('./utils/gridStore').serveUpload);
 app.use(cors());
 app.use(express.json());
 
-// Stateful Offline Mock Database Sync Middleware (used when offline)
+// Offline handling: while the DB is down, API calls answer 503 with X-Data-Source: fallback,
+// which drives the frontend offline banner. No client-supplied state is ever applied.
 app.use(async (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
     try {
@@ -57,65 +58,16 @@ app.use(async (req, res, next) => {
     } catch (e) {}
   }
 
+  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source');
   if (mongoose.connection.readyState === 1) {
     res.setHeader('X-Data-Source', 'live');
-    res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
     return next();
   }
 
   res.setHeader('X-Data-Source', 'fallback');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
-
-  const clientMockState = req.headers['x-mock-state'];
-  if (clientMockState) {
-    try {
-      const parsedState = JSON.parse(clientMockState);
-      
-      const sanitizeObj = (obj) => {
-        if (!obj || typeof obj !== 'object') return;
-        for (let key in obj) {
-          if (key === '_id' && typeof obj[key] === 'string' && obj[key].startsWith('mock_')) {
-            let hash = 0;
-            for (let i = 0; i < obj[key].length; i++) {
-              hash = obj[key].charCodeAt(i) + ((hash << 5) - hash);
-            }
-            let hex = '';
-            for (let i = 0; i < 24; i++) {
-              hex += '0123456789abcdef'[Math.abs((hash + i) % 16)];
-            }
-            obj[key] = hex;
-          } else if (typeof obj[key] === 'object') {
-            sanitizeObj(obj[key]);
-          }
-        }
-      };
-      sanitizeObj(parsedState);
-
-      const { setMockState } = require('./config/mock_data');
-      setMockState(parsedState);
-    } catch (e) {
-      console.error('Failed to parse client mock state:', e);
-    }
+  if (req.path.startsWith('/api/') && req.path !== '/api/health') {
+    return res.status(503).json({ message: 'Service temporarily unavailable, please retry', _degraded: true });
   }
-  
-  const originalJson = res.json;
-  res.json = function(body) {
-    try {
-      if (body && typeof body === 'object') {
-        if (Array.isArray(body)) {
-          // Attaching property to array for object responses if needed
-        } else {
-          body._degraded = true;
-        }
-      }
-      const { getMockState } = require('./config/mock_data');
-      const currentState = getMockState();
-      res.setHeader('x-mock-state', JSON.stringify(currentState));
-    } catch (e) {
-      console.error('Failed to set response mock state:', e);
-    }
-    return originalJson.call(this, body);
-  };
   next();
 });
 
@@ -266,7 +218,7 @@ app.get('/api/health', async (req, res) => {
   }
   const status = mongoose.connection.readyState === 1 ? 'live' : 'fallback';
   res.setHeader('X-Data-Source', status);
-  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source');
   return res.status(200).json({
     status: 'ok',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
@@ -309,59 +261,14 @@ app.use((err, req, res, next) => {
 
   if (isDBDisconnected || isDBError) {
     res.setHeader('X-Data-Source', 'fallback');
-    res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source, x-mock-state');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Data-Source');
 
-    // 1. Auth routes (/api/auth/*) must NEVER silently succeed or return 200 with empty result
-    if (req.originalUrl && req.originalUrl.startsWith('/api/auth')) {
-      return res.status(503).json({
-        message: 'Authentication service temporarily unavailable, please retry',
-        _degraded: true
-      });
-    }
-
-    // 2. Non-GET requests (POST / PUT / DELETE) must return 503 Service Unavailable so writes never look like false successes
-    if (req.method !== 'GET') {
-      return res.status(503).json({
-        message: 'Unable to save — service temporarily unavailable, please retry',
-        _degraded: true
-      });
-    }
-
-    // 3. GET requests get silent 200 OK with mock data or empty fallback shape
-    try {
-      const { getMockState, getMockDataForModel } = require('./config/mock_data');
-      const mockState = getMockState();
-      res.setHeader('x-mock-state', JSON.stringify(mockState));
-
-      const path = req.originalUrl || req.url || '';
-      let modelName = null;
-      if (path.includes('/timesheet')) modelName = 'Timesheet';
-      else if (path.includes('/leaves')) modelName = 'Leave';
-      else if (path.includes('/tasks')) modelName = 'Task';
-      else if (path.includes('/tickets')) modelName = 'Ticket';
-      else if (path.includes('/meetings')) modelName = 'Meeting';
-      else if (path.includes('/trainings')) modelName = 'Training';
-      else if (path.includes('/employees')) modelName = 'Employee';
-      else if (path.includes('/org/policies')) modelName = 'OrgPolicy';
-
-      if (modelName && typeof getMockDataForModel === 'function') {
-        const userId = req.user?.id || req.user?._id;
-        let mockList = null;
-        if (userId && (modelName === 'Timesheet' || modelName === 'Leave' || modelName === 'Task' || modelName === 'Ticket')) {
-          mockList = getMockDataForModel(modelName, 'find', { empId: userId });
-        }
-        if (!mockList || mockList.length === 0) {
-          mockList = getMockDataForModel(modelName, 'find', {});
-        }
-        if (mockList && Array.isArray(mockList) && mockList.length > 0) {
-          return res.status(200).json(mockList);
-        }
-      }
-    } catch (e) {
-      // ignore mock state serialization error
-    }
-
-    return res.status(200).json([]);
+    return res.status(503).json({
+      message: req.originalUrl && req.originalUrl.startsWith('/api/auth')
+        ? 'Authentication service temporarily unavailable, please retry'
+        : 'Service temporarily unavailable, please retry',
+      _degraded: true
+    });
   }
 
   console.error('[Unhandled Server Error]:', err.stack || err);

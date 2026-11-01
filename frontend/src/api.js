@@ -5,16 +5,12 @@ const api = axios.create({
   timeout: 8000,
 });
 
-// Attach Authorization Bearer token and browser mock database state
+// Attach Authorization Bearer token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    const mockState = localStorage.getItem('mock_database_state');
-    if (mockState) {
-      config.headers['x-mock-state'] = mockState;
     }
     return config;
   },
@@ -77,10 +73,6 @@ api.interceptors.response.use(
       notifyOfflineState(false);
     }
 
-    const mockState = response.headers['x-mock-state'];
-    if (mockState) {
-      localStorage.setItem('mock_database_state', mockState);
-    }
     return response;
   },
   (error) => {
@@ -97,10 +89,6 @@ api.interceptors.response.use(
       notifyOfflineState(false);
     }
 
-    const mockState = error.response?.headers?.['x-mock-state'];
-    if (mockState) {
-      localStorage.setItem('mock_database_state', mockState);
-    }
     return Promise.reject(error);
   }
 );
