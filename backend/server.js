@@ -43,6 +43,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 if (fs.existsSync('/tmp/uploads')) {
   app.use('/uploads', express.static('/tmp/uploads'));
 }
+app.get('/uploads/*', require('./utils/gridStore').serveUpload);
 
 // Middleware
 app.use(cors());

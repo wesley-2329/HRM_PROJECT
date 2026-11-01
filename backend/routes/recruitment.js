@@ -16,6 +16,7 @@ const RecruitmentAuditLog = require('../models/RecruitmentAuditLog');
 const PositionMaster = require('../models/PositionMaster');
 const Department = require('../models/Department');
 const { protect } = require('../middleware/auth');
+const { saveUpload } = require('../utils/gridStore');
 
 // Multer storage for Resumes
 const uploadsDir = process.env.VERCEL || process.env.NODE_ENV === 'production'
@@ -588,9 +589,8 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
     }
 
     const { targetRole, candidateName, email, phone, targetJdSkills } = req.body || {};
-    const filePath = req.file.path 
-      ? req.file.path.replace(/\\/g, '/') 
-      : (req.file.destination ? (req.file.destination + '/' + req.file.filename) : (req.file.filename || '/tmp/resume.pdf'));
+    await saveUpload(req.file, `resumes/${req.file.filename}`);
+    const filePath = `uploads/resumes/${req.file.filename}`;
 
     // Simulate intelligent NLP parsing & JD matching
     const sampleSkillsPool = ['React.js', 'Node.js', 'Express', 'MongoDB', 'Python', 'Docker', 'AWS', 'PostgreSQL', 'System Architecture', 'TypeScript'];

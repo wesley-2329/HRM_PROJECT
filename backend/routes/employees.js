@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
 const { protect, adminOnly } = require('../middleware/auth');
 const { uploadToCloudinary } = require('../utils/cloudinary');
+const { saveUpload } = require('../utils/gridStore');
 
 const ensureEmployeesSeeded = async () => {
   try {
@@ -286,6 +287,7 @@ router.post('/upload-doc', protect, upload.single('file'), async (req, res, next
       employee.documents = new Map();
     }
 
+    await saveUpload(req.file, req.file.filename);
     const fileRelativePath = `uploads/${req.file.filename}`;
     employee.documents.set(docName, fileRelativePath);
     employee.markModified('documents');
