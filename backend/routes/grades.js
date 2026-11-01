@@ -6,7 +6,7 @@ const BandMaster = require('../models/BandMaster');
 const GradeMovementRequest = require('../models/GradeMovementRequest');
 const DesignationHistory = require('../models/DesignationHistory');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // @route   GET /api/grades/dashboard
 // @desc    Get counts and distributions
@@ -45,7 +45,7 @@ router.get('/', protect, async (req, res, next) => {
 
 // @route   POST /api/grades
 // @desc    Create new grade
-router.post('/', protect, async (req, res, next) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { gradeCode, gradeName, gradeDescription, gradeLevel, status } = req.body;
 
   if (!gradeCode || !gradeName || !gradeLevel) {
@@ -75,7 +75,7 @@ router.post('/', protect, async (req, res, next) => {
 
 // @route   PUT /api/grades/:id
 // @desc    Update grade details
-router.put('/:id', protect, async (req, res, next) => {
+router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const grade = await GradeMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!grade) return res.status(404).json({ message: 'Grade not found.' });
@@ -94,7 +94,7 @@ router.get('/bands', protect, async (req, res, next) => {
 
 // @route   POST /api/grades/bands
 // @desc    Create new band
-router.post('/bands', protect, async (req, res, next) => {
+router.post('/bands', protect, adminOnly, async (req, res, next) => {
   const { bandCode, bandName, bandDescription, parentGrade, careerLevel, status } = req.body;
 
   if (!bandCode || !bandName || !parentGrade || !careerLevel) {
@@ -129,7 +129,7 @@ router.post('/bands', protect, async (req, res, next) => {
 
 // @route   PUT /api/grades/bands/:id
 // @desc    Update band details
-router.put('/bands/:id', protect, async (req, res, next) => {
+router.put('/bands/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const band = await BandMaster.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!band) return res.status(404).json({ message: 'Band not found.' });
@@ -139,7 +139,7 @@ router.put('/bands/:id', protect, async (req, res, next) => {
 
 // @route   POST /api/grades/assign
 // @desc    Assign Grade/Band directly to employee (HR only)
-router.post('/assign', protect, async (req, res, next) => {
+router.post('/assign', protect, adminOnly, async (req, res, next) => {
   const { employeeId, gradeCode, bandCode, effectiveDate } = req.body;
 
   if (!employeeId || !gradeCode || !bandCode) {
@@ -233,7 +233,7 @@ router.post('/movements', protect, async (req, res, next) => {
 
 // @route   PUT /api/grades/movements/:id/action
 // @desc    Approve/Reject/Hold Grade movement request
-router.put('/movements/:id/action', protect, async (req, res, next) => {
+router.put('/movements/:id/action', protect, adminOnly, async (req, res, next) => {
   const { decision, comments } = req.body; // 'Approved' | 'Rejected' | 'Hold'
 
   try {

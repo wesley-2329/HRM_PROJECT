@@ -43,7 +43,7 @@ const ComplianceAlert = require('../models/ComplianceAlert');
 const StatutoryNotificationLog = require('../models/StatutoryNotificationLog');
 const StatutoryAuditLog = require('../models/StatutoryAuditLog');
 
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Audit logger helper
 const logAudit = async (req, action, entityType, entityId, changes) => {
@@ -150,7 +150,7 @@ router.get('/pf', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/pf/ecr', protect, async (req, res, next) => {
+router.post('/pf/ecr', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const contribId = 'PFC-' + Date.now();
@@ -220,7 +220,7 @@ router.get('/challans', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/challans', protect, async (req, res, next) => {
+router.post('/challans', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const challanId = 'CHL-' + Date.now();
@@ -241,7 +241,7 @@ router.post('/challans', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/challans/:id/pay', protect, async (req, res, next) => {
+router.post('/challans/:id/pay', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
@@ -265,7 +265,7 @@ router.get('/returns', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/returns', protect, async (req, res, next) => {
+router.post('/returns', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const returnId = 'RET-' + Date.now();
@@ -305,7 +305,7 @@ router.get('/notices', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/notices', protect, async (req, res, next) => {
+router.post('/notices', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const noticeId = 'NTC-' + Date.now();
@@ -331,7 +331,7 @@ router.get('/inspections', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/inspections', protect, async (req, res, next) => {
+router.post('/inspections', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const inspectionId = 'INS-' + Date.now();
@@ -592,7 +592,7 @@ router.get(['/documents/:id/preview', '/documents/:id/download', '/documents/:id
   } catch (err) { next(err); }
 });
 
-router.post('/documents', protect, async (req, res, next) => {
+router.post('/documents', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const docId = 'DOC-COMP-' + Date.now();

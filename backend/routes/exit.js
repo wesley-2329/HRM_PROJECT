@@ -29,7 +29,7 @@ const SeparationRecord = require('../models/SeparationRecord');
 const ExitNotificationLog = require('../models/ExitNotificationLog');
 const ExitAuditLog = require('../models/ExitAuditLog');
 
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Audit logger helper
 const logAudit = async (req, action, entityType, entityId, changes) => {
@@ -135,7 +135,7 @@ router.post('/resignations', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.put('/resignations/:id', protect, async (req, res, next) => {
+router.put('/resignations/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const update = req.body;
@@ -165,7 +165,7 @@ router.get('/clearance', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.put('/clearance/:id', protect, async (req, res, next) => {
+router.put('/clearance/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
@@ -237,7 +237,7 @@ router.get('/settlement', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/settlement/calculate', protect, async (req, res, next) => {
+router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const exitId = body.exitId || 'EXT-1001';

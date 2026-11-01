@@ -37,7 +37,7 @@ const WelfareBeneficiary = require('../models/WelfareBeneficiary');
 const BudgetNotificationLog = require('../models/BudgetNotificationLog');
 const BudgetAuditLog = require('../models/BudgetAuditLog');
 
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Audit logger helper
 const logAudit = async (req, action, entityType, entityId, changes) => {
@@ -125,7 +125,7 @@ router.get('/planning', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/planning', protect, async (req, res, next) => {
+router.post('/planning', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const budgetId = 'BDG-' + Date.now();
@@ -154,7 +154,7 @@ router.post('/planning', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.put('/planning/:id', protect, async (req, res, next) => {
+router.put('/planning/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const update = req.body;
@@ -174,7 +174,7 @@ router.get('/allocation', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/allocation', protect, async (req, res, next) => {
+router.post('/allocation', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const allocationId = 'ALLOC-' + Date.now();
@@ -278,7 +278,7 @@ router.get('/manpower', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/manpower', protect, async (req, res, next) => {
+router.post('/manpower', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const budgetId = 'MPB-' + Date.now();
@@ -319,7 +319,7 @@ router.get('/recruitment', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/recruitment-expense', protect, async (req, res, next) => {
+router.post('/recruitment-expense', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const expenseId = 'RCX-' + Date.now();
@@ -353,7 +353,7 @@ router.get('/welfare', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/welfare-expense', protect, async (req, res, next) => {
+router.post('/welfare-expense', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const expenseId = 'WFX-' + Date.now();
