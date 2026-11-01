@@ -8,9 +8,10 @@ import Sidebar from './components/Sidebar';
 import TopNavbar from './components/TopNavbar';
 import HRTopNavbar from './components/HRTopNavbar';
 import EmpTopNavbar from './components/EmpTopNavbar';
-import HRApp from './pages/HRApp';
-import EmployeeApp from './pages/EmployeeApp';
-import LandingPage from './pages/LandingPage';
+// Heavy pages load on demand: HR users never download the employee portal and vice versa
+const HRApp = React.lazy(() => import('./pages/HRApp'));
+const EmployeeApp = React.lazy(() => import('./pages/EmployeeApp'));
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 import api from './api';
 
 export const encodeId = (id) => {
@@ -133,6 +134,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
 
         <div className="module-viewport">
           <ErrorBoundary resetKey={overrideModule || module}>
+            <React.Suspense fallback={null}>
             {isHR ? (
               <HRApp
                 currentModule={overrideModule || module}
@@ -144,6 +146,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
                 setCurrentModule={(mod) => navigate(`/employee/${hashId || encodeId(user?.id || user?._id)}/${mod}`)}
               />
             )}
+            </React.Suspense>
           </ErrorBoundary>
         </div>
       </main>
@@ -314,6 +317,7 @@ const AppContent = () => {
           </button>
         </div>
       )}
+      <React.Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />
@@ -322,6 +326,7 @@ const AppContent = () => {
         <Route path="/organization/*" element={<MainLayoutWrapper role={isHRUser ? 'hr' : 'employee'} overrideModule="org-structure" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </React.Suspense>
     </>
   );
 };
