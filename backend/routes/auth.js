@@ -177,32 +177,12 @@ router.post('/change-password', protect, async (req, res, next) => {
       employee = await Employee.findOne({ email: req.user.email.toLowerCase().trim() });
     }
 
-    if (!employee && req.user) {
-      try {
-        if (mongoose.connection.readyState === 1) {
-          employee = await Employee.create({
-            id: req.user.id || 'EMP-0002',
-            name: req.user.name || 'Aditya Kumar',
-            email: req.user.email || 'employee@company.com',
-            password: newPassword,
-            role: req.user.role || 'employee',
-            dept: req.user.dept || 'Engineering',
-            status: 'Approved'
-          });
-          return res.json({ message: 'Password updated successfully' });
-        }
-      } catch (createErr) {
-        // Fallback for offline mode
-      }
-      return res.json({ message: 'Password updated successfully' });
-    }
-
     if (!employee) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const isMatch = await employee.matchPassword(currentPassword);
-    if (!isMatch && currentPassword !== 'defaultPass123' && currentPassword !== 'password123') {
+    if (!isMatch) {
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
 
