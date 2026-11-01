@@ -2,6 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Apply the saved colour palette before first paint (no colour flash). Default: Corporate Navy.
+      (function () {
+        var p = 'navy';
+        try { p = localStorage.getItem('hrorbit-palette') || p; } catch (e) {}
+        if (['navy', 'indigo', 'emerald', 'maroon', 'teal'].indexOf(p) < 0) p = 'navy';
+        document.documentElement.setAttribute('data-palette', p);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HR O — Next-Generation Enterprise HRMS</title>
     <!-- Google Fonts & FontAwesome -->

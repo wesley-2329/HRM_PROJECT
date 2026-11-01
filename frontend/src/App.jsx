@@ -57,7 +57,6 @@ export const getAvatarUrl = (emp) => {
 };
 
 import ErrorBoundary from './components/ErrorBoundary';
-import PalettePicker from './components/PalettePicker'; // TEMPORARY: remove once a palette is chosen
 
 const MainLayoutWrapper = ({ role, overrideModule }) => {
   const { user } = useContext(AuthContext);
@@ -334,7 +333,6 @@ function App() {
         <ToastProvider>
           <DataProvider>
             <AppContent />
-            <PalettePicker />
           </DataProvider>
         </ToastProvider>
       </AuthProvider>

@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
 import { getAvatarUrl, encodeId } from '../App';
 import hrorbitLogo from '../assets/hrorbit_logo.png';
+import PalettePicker from './PalettePicker';
 
 const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'indigo', onSearch }) => {
   const { user, logout } = useContext(AuthContext);
@@ -683,6 +684,11 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           <i className="fa-solid fa-bell"></i>
           {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
         </button>
+
+        {/* Colour palette picker */}
+
+        <PalettePicker />
+
 
         {/* Dark Mode Toggle */}
         <button

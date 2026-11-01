@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
 import { getAvatarUrl } from '../App';
 import hrorbitLogo from '../assets/hrorbit_logo.png';
+import PalettePicker from './PalettePicker';
 
 const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
@@ -753,6 +754,11 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
           <i className="fa-solid fa-bell"></i>
           {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
         </button>
+
+        {/* Colour palette picker */}
+
+        <PalettePicker />
+
 
         {/* Dark Mode Toggle */}
         <button
