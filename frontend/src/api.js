@@ -82,6 +82,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Expired/invalid session: clear it and go to login (wrong-password 401s on /auth/* are left to the form)
+    if (error.response?.status === 401 && error.config?.headers?.Authorization && !error.config.url?.startsWith('/auth/login')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('cached_user');
+      if (window.location.pathname !== '/login') window.location.assign('/login');
+      return Promise.reject(error);
+    }
+
     const dataSource = error.response?.headers?.['x-data-source'];
     if (dataSource === 'fallback') {
       notifyOfflineState(true);
