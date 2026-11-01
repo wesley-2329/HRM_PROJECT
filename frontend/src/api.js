@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 8000,
+  timeout: 15000, // Vercel cold start (~4s) + slow queries can exceed 8s
 });
 
 // Attach Authorization Bearer token
