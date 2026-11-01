@@ -356,7 +356,7 @@ const LoginGateway = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: The Login Form Panel & Animated Mickey Mouse standing on the right */}
+        {/* RIGHT COLUMN: The Login Form Panel & animated owl mascot on the right */}
         <div style={{
           gridColumn: 'span 7',
           padding: '40px 48px',
@@ -598,7 +598,7 @@ const LoginGateway = () => {
               )}
             </div>
 
-            {/* Right Box: standing Mickey Mouse avatar (in the empty space) */}
+            {/* Right Box: original owl mascot (in the empty space) */}
             <div style={{ 
               flex: '0 0 160px', 
               display: 'flex', 
@@ -609,104 +609,57 @@ const LoginGateway = () => {
               paddingLeft: '20px',
               minHeight: '260px'
             }}>
-              <svg width="120" height="150" viewBox="0 0 120 150" style={{ filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.06))' }}>
-                {/* Mickey Ground Shadow */}
-                <ellipse cx="60" cy="120" rx="24" ry="3" fill="rgba(0,0,0,0.08)" />
+              <svg width="120" height="150" viewBox="0 0 120 150" role="img" aria-label="Owl mascot" style={{ filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.06))' }}>
+                {/* Original "Ollie the HR owl" mascot (palette colours). Eyes close and wings cover them while the password is typed. */}
+                <ellipse cx="60" cy="124" rx="26" ry="3" fill="rgba(0,0,0,0.08)" />
 
-                {/* Mickey Ears */}
-                <circle cx="38" cy="24" r="13" fill="#0f172a" />
-                <circle cx="82" cy="24" r="13" fill="#0f172a" />
-                
-                {/* Mickey Head Background */}
-                <circle cx="60" cy="45" r="22" fill="#0f172a" />
-                
-                {/* Mickey Face Plate */}
-                <ellipse cx="60" cy="48" rx="17" ry="13" fill="#ffedd5" />
-                <ellipse cx="51" cy="46" rx="9" ry="9" fill="#ffedd5" />
-                <ellipse cx="69" cy="46" rx="9" ry="9" fill="#ffedd5" />
-                
-                {/* Mickey Eyes */}
+                {/* Ear tufts */}
+                <path d="M 38 42 L 33 22 L 50 35 Z" fill="var(--c-primary, #1E3A8A)" />
+                <path d="M 82 42 L 87 22 L 70 35 Z" fill="var(--c-primary, #1E3A8A)" />
+
+                {/* Body */}
+                <path d="M 60 30 C 88 30 94 58 92 82 C 90 106 77 119 60 119 C 43 119 30 106 28 82 C 26 58 32 30 60 30 Z" fill="var(--c-primary, #1E3A8A)" />
+                {/* Belly with feather marks */}
+                <ellipse cx="60" cy="92" rx="20" ry="22" fill="var(--c-primary-soft, #ebf1fc)" />
+                <path d="M 52 86 L 55 89 L 58 86 M 62 86 L 65 89 L 68 86 M 55 96 L 58 99 L 61 96 M 59 96 L 62 99 L 65 96" stroke="var(--c-primary, #1E3A8A)" strokeOpacity="0.35" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+
+                {/* Face discs */}
+                <circle cx="48" cy="56" r="14" fill="#ffffff" />
+                <circle cx="72" cy="56" r="14" fill="#ffffff" />
+
+                {/* Eyes */}
                 {isPasswordFocused ? (
                   <>
-                    {/* Closed Eyelids curves */}
-                    <path d="M 48 41 Q 53 47 58 41" stroke="#0f172a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                    <path d="M 62 41 Q 67 47 72 41" stroke="#0f172a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                    <path d="M 41 57 Q 48 62 55 57" stroke="#0f172a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                    <path d="M 65 57 Q 72 62 79 57" stroke="#0f172a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
                   </>
                 ) : (
                   <>
-                    {/* Open Eyes */}
-                    <ellipse cx="53" cy="38" rx="4" ry="8" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" />
-                    <ellipse cx="67" cy="38" rx="4" ry="8" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" />
-                    {/* Pupils */}
-                    <ellipse cx="53" cy="40" rx="1.8" ry="4.5" fill="#0f172a" />
-                    <ellipse cx="67" cy="40" rx="1.8" ry="4.5" fill="#0f172a" />
+                    <circle cx="48" cy="57" r="6.5" fill="#0f172a" />
+                    <circle cx="72" cy="57" r="6.5" fill="#0f172a" />
+                    <circle cx="50" cy="55" r="2" fill="#ffffff" />
+                    <circle cx="74" cy="55" r="2" fill="#ffffff" />
                   </>
                 )}
-                
-                {/* Nose */}
-                <ellipse cx="60" cy="49" rx="4" ry="2.5" fill="#0f172a" />
-                
-                {/* Smile Mouth */}
-                <path d="M 50 53 Q 60 61 70 53" stroke="#0f172a" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-                
-                {/* Cheek folds */}
-                <path d="M 48 52 Q 49 54 51 53" stroke="#0f172a" strokeWidth="1" fill="none" />
-                <path d="M 72 52 Q 71 54 69 53" stroke="#0f172a" strokeWidth="1" fill="none" />
 
-                {/* Mickey Body Torso (black) */}
-                <rect x="53" y="65" width="14" height="25" rx="7" fill="#0f172a" />
+                {/* Beak */}
+                <path d="M 56 66 L 64 66 L 60 74 Z" fill="var(--c-accent, #B8860B)" />
 
-                {/* Red Shorts */}
-                <path d="M 49 82 L 71 82 Q 73 97 60 97 Q 47 97 49 82" fill="#ef4444" />
-                {/* Buttons on Shorts */}
-                <ellipse cx="55" cy="89" rx="2" ry="3.2" fill="#ffffff" />
-                <ellipse cx="65" cy="89" rx="2" ry="3.2" fill="#ffffff" />
+                {/* Feet */}
+                <path d="M 50 118 L 48 124 M 53 118 L 53 125 M 56 118 L 58 124 M 64 118 L 62 124 M 67 118 L 67 125 M 70 118 L 72 124" stroke="var(--c-accent, #B8860B)" strokeWidth="2.2" strokeLinecap="round" />
 
-                {/* Legs */}
-                <rect x="53" y="96" width="3.5" height="15" fill="#0f172a" />
-                <rect x="63.5" y="96" width="3.5" height="15" fill="#0f172a" />
-
-                {/* Yellow Shoes */}
-                <ellipse cx="50" cy="112" rx="7.5" ry="4.5" fill="#eab308" stroke="#0f172a" strokeWidth="1" />
-                <ellipse cx="70" cy="112" rx="7.5" ry="4.5" fill="#eab308" stroke="#0f172a" strokeWidth="1" />
-
-                {/* Mickey Left Arm and Glove Hand */}
-                <motion.path 
-                  animate={isPasswordFocused ? { d: "M 53 73 Q 34 52 48 42" } : { d: "M 53 73 Q 32 78 30 84" }}
+                {/* Left wing: rests at the side, lifts to cover the eyes */}
+                <motion.path
+                  animate={isPasswordFocused ? { d: "M 30 72 Q 28 48 50 46 Q 60 56 44 68 Z" } : { d: "M 30 72 Q 16 92 32 106 Q 37 88 34 74 Z" }}
                   transition={{ duration: 0.45, ease: "easeInOut" }}
-                  stroke="#0f172a"
-                  strokeWidth="4"
-                  fill="none"
-                  strokeLinecap="round"
+                  fill="var(--c-primary-hover, #17307b)"
                 />
-                <motion.g 
-                  animate={isPasswordFocused ? { x: 18, y: -42, rotate: 18 } : { x: 0, y: 0, rotate: -8 }}
+                {/* Right wing */}
+                <motion.path
+                  animate={isPasswordFocused ? { d: "M 90 72 Q 92 48 70 46 Q 60 56 76 68 Z" } : { d: "M 90 72 Q 104 92 88 106 Q 83 88 86 74 Z" }}
                   transition={{ duration: 0.45, ease: "easeInOut" }}
-                >
-                  <circle cx="30" cy="84" r="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" />
-                  <path d="M 28 84 L 26 87" stroke="#0f172a" strokeWidth="0.8" />
-                  <path d="M 30 84 L 30 88" stroke="#0f172a" strokeWidth="0.8" />
-                  <path d="M 32 84 L 34 87" stroke="#0f172a" strokeWidth="0.8" />
-                </motion.g>
-
-                {/* Mickey Right Arm and Glove Hand */}
-                <motion.path 
-                  animate={isPasswordFocused ? { d: "M 67 73 Q 86 52 72 42" } : { d: "M 67 73 Q 88 78 90 84" }}
-                  transition={{ duration: 0.45, ease: "easeInOut" }}
-                  stroke="#0f172a"
-                  strokeWidth="4"
-                  fill="none"
-                  strokeLinecap="round"
+                  fill="var(--c-primary-hover, #17307b)"
                 />
-                <motion.g 
-                  animate={isPasswordFocused ? { x: -18, y: -42, rotate: -18 } : { x: 0, y: 0, rotate: 8 }}
-                  transition={{ duration: 0.45, ease: "easeInOut" }}
-                >
-                  <circle cx="90" cy="84" r="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" />
-                  <path d="M 88 84 L 86 87" stroke="#0f172a" strokeWidth="0.8" />
-                  <path d="M 90 84 L 90 88" stroke="#0f172a" strokeWidth="0.8" />
-                  <path d="M 92 84 L 94 87" stroke="#0f172a" strokeWidth="0.8" />
-                </motion.g>
               </svg>
               
               <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '12px', fontWeight: 600, textAlign: 'center' }}>
