@@ -84,8 +84,9 @@ router.get('/', protect, async (req, res, next) => {
 // @access  Private
 router.post('/clock-in', protect, async (req, res, next) => {
   const now = new Date();
-  const todayDate = req.body.date || now.toISOString().split('T')[0];
-  const clockInTime = parseTimeString(req.body.clockIn, todayDate);
+  // Attendance uses server time only; client-sent date/clockIn are ignored so punches cannot be backdated
+  const todayDate = now.toISOString().split('T')[0];
+  const clockInTime = now;
   const userConditions = { $or: [{ empId: req.user.id }, { empId: req.user._id }] };
 
   try {
@@ -166,7 +167,7 @@ router.post('/clock-out', protect, async (req, res, next) => {
     }
 
     const now = new Date();
-    const clockOutTime = req.body.clockOut ? parseTimeString(req.body.clockOut, activeShift.date) : now;
+    const clockOutTime = now; // server time only, same reason as clock-in
     activeShift.clockIn = parseTimeString(activeShift.clockIn, activeShift.date, activeShift.createdAt);
     const clockInDate = new Date(activeShift.clockIn);
 
