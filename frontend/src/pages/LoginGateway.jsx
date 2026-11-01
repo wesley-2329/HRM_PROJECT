@@ -176,7 +176,7 @@ const LoginGateway = () => {
                 transition={{ duration: 0.5 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
               >
-                <span style={{ fontSize: '0.7rem', color: '#4f46e5', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--c-primary, #4f46e5)', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                   Workforce Orchestration
                 </span>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.2, color: '#0f172a' }}>
@@ -261,7 +261,7 @@ const LoginGateway = () => {
                 transition={{ duration: 0.5 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
               >
-                <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--c-primary, #059669)', fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                   Employee Self-Service
                 </span>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.2, color: '#0f172a' }}>
@@ -382,9 +382,9 @@ const LoginGateway = () => {
           {role === 'employee' && (
             <div style={{ fontSize: '0.85rem', marginBottom: '16px' }}>
               {!isSignUp ? (
-                <span>New here? <a href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(true); }} style={{ color: '#4f46e5', fontWeight: 600 }}>Create an account</a></span>
+                <span>New here? <a href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(true); }} style={{ color: 'var(--c-primary, #4f46e5)', fontWeight: 600 }}>Create an account</a></span>
               ) : (
-                <span>Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(false); }} style={{ color: '#4f46e5', fontWeight: 600 }}>Sign in</a></span>
+                <span>Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(false); }} style={{ color: 'var(--c-primary, #4f46e5)', fontWeight: 600 }}>Sign in</a></span>
               )}
             </div>
           )}
@@ -462,7 +462,7 @@ const LoginGateway = () => {
                         e.preventDefault();
                         showToast('Password reset link sent.', 'info');
                       }}
-                      style={{ color: '#4f46e5', fontSize: '0.8rem' }}
+                      style={{ color: 'var(--c-primary, #4f46e5)', fontSize: '0.8rem' }}
                     >
                       Forgot Password?
                     </a>
@@ -470,7 +470,7 @@ const LoginGateway = () => {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    style={{ width: '100%', padding: '12px', background: role === 'hr' ? 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '10px', fontWeight: 700, transition: 'background 0.5s ease' }}
+                    style={{ width: '100%', padding: '12px', background: role === 'hr' ? 'linear-gradient(135deg, var(--color-indigo-600, #4f46e5) 0%, var(--color-indigo-800, #7c3aed) 100%)' : 'linear-gradient(135deg, var(--color-indigo-700, #10b981) 0%, var(--color-indigo-900, #059669) 100%)', border: 'none', borderRadius: '10px', fontWeight: 700, transition: 'background 0.5s ease' }}
                     disabled={authenticating}
                   >
                     {authenticating ? 'Authenticating...' : 'Authenticate & Enter'}
@@ -589,7 +589,7 @@ const LoginGateway = () => {
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '6px', padding: '12px', background: role === 'hr' ? 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '10px', fontWeight: 700, transition: 'background 0.5s ease' }}
+                    style={{ width: '100%', marginTop: '6px', padding: '12px', background: role === 'hr' ? 'linear-gradient(135deg, var(--color-indigo-600, #4f46e5) 0%, var(--color-indigo-800, #7c3aed) 100%)' : 'linear-gradient(135deg, var(--color-indigo-700, #10b981) 0%, var(--color-indigo-900, #059669) 100%)', border: 'none', borderRadius: '10px', fontWeight: 700, transition: 'background 0.5s ease' }}
                     disabled={authenticating}
                   >
                     {authenticating ? 'Registering...' : 'Register Account'}

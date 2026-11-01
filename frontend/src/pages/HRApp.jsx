@@ -7,6 +7,7 @@ import { formatTimeString, formatDateString } from '../utils/dateUtils';
 import Modal from '../components/Modal';
 import { getAvatarUrl } from '../App';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { themeColor, themeColors } from '../utils/chartTheme';
 import OrgStructure from './OrgStructure';
 import DocumentVault from './DocumentVault';
 import HRCompliancePage from './governance/HRCompliancePage';
@@ -368,8 +369,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             datasets: [{
               label: 'Attendance Rate %',
               data: [92, 94, 91, 95, 96, 94, 95, 93, 94, 75],
-              borderColor: 'hsl(230, 80%, 55%)',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              borderColor: themeColor('--chart-1'),
+              backgroundColor: themeColor('--chart-1', 0.1),
               fill: true,
               tension: 0.3
             }]
@@ -385,8 +386,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [
-              { label: 'Present', data: [22, 21, 23, 22, 20, 15, 6], backgroundColor: 'rgba(16, 185, 129, 0.85)' },
-              { label: 'Absent', data: [2, 3, 1, 2, 4, 9, 19], backgroundColor: 'rgba(244, 63, 94, 0.85)' }
+              { label: 'Present', data: [22, 21, 23, 22, 20, 15, 6], backgroundColor: themeColor('--chart-success', 0.85) },
+              { label: 'Absent', data: [2, 3, 1, 2, 4, 9, 19], backgroundColor: themeColor('--chart-danger', 0.85) }
             ]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -402,8 +403,8 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             datasets: [{
               label: 'Total Operations Completed',
               data: [120, 145, 130, 165, 180, 210],
-              borderColor: 'hsl(142, 72%, 29%)',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: themeColor('--chart-1'),
+              backgroundColor: themeColor('--chart-1', 0.1),
               fill: true,
               tension: 0.3
             }]
@@ -421,7 +422,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             datasets: [{
               label: 'Late Entry Count',
               data: [4, 1, 2, 5, 8],
-              backgroundColor: 'rgba(239, 68, 68, 0.85)'
+              backgroundColor: themeColor('--chart-danger', 0.85)
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -442,7 +443,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             labels: depts,
             datasets: [{
               data: counts.some(c => c > 0) ? counts : [2, 1, 1, 1, 1], // fallback
-              backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4']
+              backgroundColor: themeColors(['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'])
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -458,7 +459,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             datasets: [{
               label: 'Payroll Spent (₹)',
               data: [420000, 450000, 450000, 480000, 490000, 510000],
-              backgroundColor: 'rgba(99, 102, 241, 0.8)'
+              backgroundColor: themeColor('--chart-1', 0.8)
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -1023,7 +1024,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </div>
             </div>
             <div className="lg:col-span-1">
-              <div className="card" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)', color: '#fff', border: 'none' }}>
+              <div className="card" style={{ background: 'linear-gradient(135deg, var(--color-indigo-950, #0f172a) 0%, var(--color-indigo-800, #1e3a5f) 100%)', color: '#fff', border: 'none' }}>
                 <div className="card-title" style={{ color: '#fff' }}>HR O AI™ Insights</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.875rem' }}>
                   <div style={{ display: 'flex', gap: '12px' }}>

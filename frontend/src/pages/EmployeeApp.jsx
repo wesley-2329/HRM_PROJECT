@@ -34,6 +34,7 @@ import {
 } from '../components/Modals';
 import { getAvatarUrl, encodeId } from '../App';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { themeColor, themeColors } from '../utils/chartTheme';
 
 const SubjectSparkline = ({ progress }) => {
   const canvasRef = useRef(null);
@@ -57,7 +58,7 @@ const SubjectSparkline = ({ progress }) => {
         labels: ['', '', '', '', '', ''],
         datasets: [{
           data: mockData,
-          borderColor: 'hsl(var(--primary))',
+          borderColor: themeColor('--chart-1'),
           borderWidth: 1.5,
           pointRadius: 0,
           fill: false,
@@ -859,8 +860,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             datasets: [{
               label: 'Attendance Rate (%)',
               data: [92, 94, 96, 93, 97, curMonthRate],
-              backgroundColor: 'rgba(16, 185, 129, 0.85)',
-              borderColor: '#10b981',
+              backgroundColor: themeColor('--chart-1', 0.85),
+              borderColor: themeColor('--chart-1'),
               borderWidth: 1
             }]
           },
@@ -889,10 +890,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             datasets: [{
               label: 'Working Hours',
               data: timesheets.length > 0 ? timesheets.slice(-7).map(t => t.hours) : [9.0, 8.8, 9.1, 8.9, 8.8, 0, 0],
-              borderColor: 'hsl(230, 80%, 55%)',
+              borderColor: themeColor('--chart-1'),
               tension: 0.2,
               fill: true,
-              backgroundColor: 'rgba(99, 102, 241, 0.05)'
+              backgroundColor: themeColor('--chart-1', 0.05)
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -910,7 +911,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             datasets: [{
               label: 'Attendance rate %',
               data: [95, 96, 94, 98, 92, 95],
-              backgroundColor: 'rgba(99, 102, 241, 0.8)'
+              backgroundColor: themeColor('--chart-1', 0.8)
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -927,7 +928,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             labels: ['Provident Fund', 'Professional Tax', 'Income Tax (TDS)'],
             datasets: [{
               data: [salary.pf, salary.profTax, salary.tds],
-              backgroundColor: ['#6366f1', '#f59e0b', '#f4637e']
+              backgroundColor: themeColors(['--chart-1', '--chart-2', '--chart-3'])
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -943,7 +944,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             datasets: [{
               label: 'Monthly Breakup',
               data: [salary.basic, salary.hra, salary.other],
-              backgroundColor: 'rgba(16, 185, 129, 0.8)'
+              backgroundColor: themeColor('--chart-1', 0.8)
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -961,7 +962,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
             datasets: [{
               label: 'Course Completion Progress (%)',
               data: [10, 25, 40, 55, 68, 75, 88, 95],
-              borderColor: 'hsl(158, 64%, 42%)',
+              borderColor: themeColor('--chart-1'),
               tension: 0.2,
               fill: false
             }]
