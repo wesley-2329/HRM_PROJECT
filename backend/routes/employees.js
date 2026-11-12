@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
 const { protect, adminOnly } = require('../middleware/auth');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const { saveUpload } = require('../utils/gridStore');
+const { saveUpload, uploadFileFilter, UPLOAD_MAX_BYTES } = require('../utils/gridStore');
 
 const ensureEmployeesSeeded = async () => {
   try {
@@ -188,7 +188,7 @@ router.put('/:id', protect, async (req, res, next) => {
       employee._id,
       { $set: setPayload },
       { new: true, runValidators: false }
-    );
+    ).select('-password');
 
     res.json(updatedEmployee);
   } catch (error) {
@@ -262,7 +262,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage, fileFilter: uploadFileFilter, limits: { fileSize: UPLOAD_MAX_BYTES } });
 
 // @route   POST /api/employees/upload-doc
 // @desc    Upload employee document

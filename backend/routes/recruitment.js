@@ -16,7 +16,7 @@ const RecruitmentAuditLog = require('../models/RecruitmentAuditLog');
 const PositionMaster = require('../models/PositionMaster');
 const Department = require('../models/Department');
 const { protect } = require('../middleware/auth');
-const { saveUpload } = require('../utils/gridStore');
+const { saveUpload, uploadFileFilter, UPLOAD_MAX_BYTES } = require('../utils/gridStore');
 
 // Multer storage for Resumes
 const uploadsDir = process.env.VERCEL || process.env.NODE_ENV === 'production'
@@ -49,7 +49,7 @@ const storage = multer.diskStorage({
     cb(null, 'resume-' + uniqueSuffix + ext);
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, fileFilter: uploadFileFilter, limits: { fileSize: UPLOAD_MAX_BYTES } });
 
 const uploadResumeMiddleware = (req, res, next) => {
   upload.any()(req, res, (err) => {
@@ -66,7 +66,9 @@ const uploadResumeMiddleware = (req, res, next) => {
   });
 };
 const getRequestedRole = (req) => {
-  return (req.query.role || req.headers['x-role'] || req.user?.role || 'hr_admin').toLowerCase();
+  // Only HR may preview another role's view; everyone else gets their real role.
+  const role = req.user?.role === 'hr' ? (req.query.role || req.headers['x-role'] || 'hr') : (req.user?.role || 'employee');
+  return String(role).toLowerCase();
 };
 
 // Helper to log audit events

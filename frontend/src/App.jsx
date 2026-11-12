@@ -88,7 +88,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
     }
   }, [darkMode]);
 
-  const isHRUser = user && (user.role === 'hr' || user.role === 'hr_admin' || user.role === 'super_admin' || user.role === 'recruiter' || user.role === 'hr_executive');
+  const isHRUser = user?.role === 'hr'; // must match adminOnly in backend/middleware/auth.js
 
   // Authorization checks
   useEffect(() => {
@@ -237,7 +237,7 @@ const AppContent = () => {
     );
   }
 
-  const isHRUser = user && (user.role === 'hr' || user.role === 'hr_admin' || user.role === 'super_admin' || user.role === 'recruiter' || user.role === 'hr_executive');
+  const isHRUser = user?.role === 'hr'; // must match adminOnly in backend/middleware/auth.js
   const defaultDashboard = isHRUser ? '/hr/dashboard' : `/employee/${encodeId(user?.id)}/emp-dashboard`;
 
   return (

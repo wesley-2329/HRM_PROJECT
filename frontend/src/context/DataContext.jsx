@@ -481,6 +481,7 @@ export const DataProvider = ({ children }) => {
     let socket;
     try {
       socket = io(socketUrl, {
+        auth: { token: localStorage.getItem('token') },
         transports: ['websocket', 'polling'],
         reconnectionAttempts: 2,
         timeout: 4000

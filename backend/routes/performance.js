@@ -15,7 +15,7 @@ const PromotionRequest = require('../models/PromotionRequest');
 const SalaryRevisionRequest = require('../models/SalaryRevisionRequest');
 const Employee = require('../models/Employee');
 const Counter = require('../models/Counter');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Audit Logger Helper
 const logPerfAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -113,7 +113,7 @@ router.get('/cycles', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/cycles', protect, async (req, res, next) => {
+router.post('/cycles', protect, adminOnly, async (req, res, next) => {
   try {
     const newCycle = new AppraisalCycleMaster({
       ...req.body,
@@ -127,7 +127,7 @@ router.post('/cycles', protect, async (req, res, next) => {
   }
 });
 
-router.put('/cycles/:id/status', protect, async (req, res, next) => {
+router.put('/cycles/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
     const { status } = req.body;
     const cycle = await AppraisalCycleMaster.findById(req.params.id);
@@ -154,7 +154,7 @@ router.get('/rating-scales', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/rating-scales', protect, async (req, res, next) => {
+router.post('/rating-scales', protect, adminOnly, async (req, res, next) => {
   try {
     const item = new RatingScaleMaster(req.body);
     await item.save();
@@ -171,7 +171,7 @@ router.get('/competencies', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/competencies', protect, async (req, res, next) => {
+router.post('/competencies', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await CompetencyMaster.countDocuments();
     const competencyCode = `CMP-${String(count + 1).padStart(3, '0')}`;
@@ -190,7 +190,7 @@ router.get('/templates', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/templates', protect, async (req, res, next) => {
+router.post('/templates', protect, adminOnly, async (req, res, next) => {
   try {
     const item = new PerformanceTemplate(req.body);
     await item.save();
@@ -207,7 +207,7 @@ router.get('/kras', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/kras', protect, async (req, res, next) => {
+router.post('/kras', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await KraMaster.countDocuments();
     const kraId = `KRA-2026-${String(count + 1).padStart(3, '0')}`;
@@ -226,7 +226,7 @@ router.get('/kpis', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/kpis', protect, async (req, res, next) => {
+router.post('/kpis', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await KpiMaster.countDocuments();
     const kpiId = `KPI-2026-${String(count + 1).padStart(3, '0')}`;
@@ -513,7 +513,7 @@ router.put('/annual-reviews/:id/manager-assessment', protect, async (req, res, n
   }
 });
 
-router.put('/annual-reviews/:id/calibrate', protect, async (req, res, next) => {
+router.put('/annual-reviews/:id/calibrate', protect, adminOnly, async (req, res, next) => {
   try {
     const { finalRating, performanceCategory, calibrationRemarks } = req.body;
     const review = await AnnualReview.findById(req.params.id);
@@ -693,11 +693,15 @@ router.post('/promotions', protect, async (req, res, next) => {
   }
 });
 
-router.put('/promotions/:id/approve', protect, async (req, res, next) => {
+router.put('/promotions/:id/approve', protect, adminOnly, async (req, res, next) => {
   try {
     const { status, comments } = req.body; // Approved / Rejected
     const promo = await PromotionRequest.findById(req.params.id);
     if (!promo) return res.status(404).json({ message: 'Promotion request not found' });
+    if (!['Approved', 'Rejected'].includes(status)) return res.status(400).json({ message: 'Invalid status.' });
+    if (['Approved', 'Rejected'].includes(promo.status)) {
+      return res.status(400).json({ message: `This promotion is already ${promo.status.toLowerCase()}.` });
+    }
 
     const prev = promo.toObject();
     promo.status = status;
@@ -715,7 +719,6 @@ router.put('/promotions/:id/approve', protect, async (req, res, next) => {
       const emp = await Employee.findOne({ id: promo.employeeId });
       if (emp) {
         emp.designation = promo.proposedDesignation;
-        emp.role = promo.proposedDesignation;
         emp.grade = promo.proposedGrade;
         if (promo.proposedDepartment) emp.dept = promo.proposedDepartment;
         await emp.save();
@@ -854,11 +857,15 @@ router.post('/increments', protect, async (req, res, next) => {
   }
 });
 
-router.put('/increments/:id/approve', protect, async (req, res, next) => {
+router.put('/increments/:id/approve', protect, adminOnly, async (req, res, next) => {
   try {
     const { status, comments } = req.body;
     const inc = await SalaryRevisionRequest.findById(req.params.id);
     if (!inc) return res.status(404).json({ message: 'Increment request not found' });
+    if (!['Approved', 'Rejected'].includes(status)) return res.status(400).json({ message: 'Invalid status.' });
+    if (['Approved', 'Rejected'].includes(inc.status)) {
+      return res.status(400).json({ message: `This increment is already ${inc.status.toLowerCase()}.` });
+    }
 
     const prev = inc.toObject();
     inc.status = status;
@@ -1033,7 +1040,7 @@ router.put('/pip/:id/review', protect, async (req, res, next) => {
 // ==========================================
 // 10. AUDIT LOGS & REPORTS
 // ==========================================
-router.get('/audit-logs', protect, async (req, res, next) => {
+router.get('/audit-logs', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await PerformanceAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

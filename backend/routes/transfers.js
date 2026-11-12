@@ -1,11 +1,12 @@
 const express = require('express');
+const Counter = require('../models/Counter');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const TransferRequest = require('../models/TransferRequest');
 const DepartmentTransferHistory = require('../models/DepartmentTransferHistory');
 const EmployeeReportingHistory = require('../models/EmployeeReportingHistory');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to generate next transaction number
 const generateTransferNum = async () => {
@@ -13,7 +14,9 @@ const generateTransferNum = async () => {
   const count = await TransferRequest.countDocuments({
     transferNumber: new RegExp(`^TRN-${year}-`)
   });
-  const nextNum = String(count + 1).padStart(4, '0');
+  // Atomic counter so two requests at the same moment never get the same number; count+1 seeds it.
+  const seq = await Counter.getNextSequence(`TRN-${year}`, count + 1);
+  const nextNum = String(seq).padStart(4, '0');
   return `TRN-${year}-${nextNum}`;
 };
 
@@ -21,7 +24,8 @@ const generateTransferNum = async () => {
 // @desc    Get all transfers list and dashboard count summary
 router.get('/', protect, async (req, res, next) => {
   try {
-    const list = await TransferRequest.find({}).sort({ createdAt: -1 });
+    const filter = req.user.role === 'hr' ? {} : { $or: [{ employeeId: req.user.id }, { currentManagerId: req.user.id }] };
+    const list = await TransferRequest.find(filter).sort({ createdAt: -1 });
 
     const total = list.length;
     const pending = list.filter(t => ['Pending Recommendation', 'Pending Approval', 'Under HR Review'].includes(t.status)).length;
@@ -54,6 +58,10 @@ router.post('/', protect, async (req, res, next) => {
   today.setHours(0, 0, 0, 0);
   if (new Date(effectiveDate) < today) {
     return res.status(400).json({ message: 'Effective date cannot be set in the past.' });
+  }
+
+  if (req.user.role !== 'hr' && employeeId !== req.user.id) {
+    return res.status(403).json({ message: 'You can only raise a transfer request for yourself.' });
   }
 
   try {
@@ -123,6 +131,16 @@ router.put('/:id/action', protect, async (req, res, next) => {
   try {
     const trn = await TransferRequest.findById(req.params.id);
     if (!trn) return res.status(404).json({ message: 'Transfer request not found.' });
+    if (!['Recommend', 'Approve', 'Reject', 'Send Back'].includes(decision)) {
+      return res.status(400).json({ message: 'Invalid decision.' });
+    }
+    // HR, or the employee's own reporting manager, may act on a transfer.
+    if (req.user.role !== 'hr' && trn.currentManagerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only HR or the reporting manager can act on this transfer.' });
+    }
+    if (['Approved', 'Rejected'].includes(trn.status)) {
+      return res.status(400).json({ message: `This transfer is already ${trn.status.toLowerCase()}.` });
+    }
 
     let nextStatus = trn.status;
     let detailsLog = '';
@@ -265,7 +283,7 @@ router.post('/:id/process', protect, async (req, res, next) => {
 
 // @route   GET /api/transfers/history
 // @desc    Get complete transfers and department/manager change histories
-router.get('/history', protect, async (req, res, next) => {
+router.get('/history', protect, adminOnly, async (req, res, next) => {
   try {
     const deptHistory = await DepartmentTransferHistory.find({}).sort({ effectiveDate: -1 });
     const managerHistory = await EmployeeReportingHistory.find({}).sort({ effectiveDate: -1 });

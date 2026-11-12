@@ -1,10 +1,11 @@
 const express = require('express');
+const Counter = require('../models/Counter');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const SalaryRevisionRequest = require('../models/SalaryRevisionRequest');
 const SalaryRevisionHistory = require('../models/SalaryRevisionHistory');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to generate next request ID
 const generateRequestId = async () => {
@@ -12,7 +13,9 @@ const generateRequestId = async () => {
   const count = await SalaryRevisionRequest.countDocuments({
     requestId: new RegExp(`^SRV-${year}-`)
   });
-  const nextNum = String(count + 1).padStart(4, '0');
+  // Atomic counter so two requests at the same moment never get the same number; count+1 seeds it.
+  const seq = await Counter.getNextSequence(`SRV-${year}`, count + 1);
+  const nextNum = String(seq).padStart(4, '0');
   return `SRV-${year}-${nextNum}`;
 };
 
@@ -20,7 +23,8 @@ const generateRequestId = async () => {
 // @desc    Get all requests and dashboard summary
 router.get('/', protect, async (req, res, next) => {
   try {
-    const list = await SalaryRevisionRequest.find({}).sort({ createdAt: -1 });
+    const filter = req.user.role === 'hr' ? {} : { employeeId: req.user.id };
+    const list = await SalaryRevisionRequest.find(filter).sort({ createdAt: -1 });
 
     const total = list.length;
     const pending = list.filter(r => ['Pending Verification', 'Pending Approval'].includes(r.status)).length;
@@ -48,7 +52,7 @@ router.get('/', protect, async (req, res, next) => {
 
 // @route   POST /api/salary-revisions
 // @desc    Initiate new salary revision request
-router.post('/', protect, async (req, res, next) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { 
     employeeId, revisionType, effectiveDate, reason, attachmentUrl,
     currentCtc, currentGross, currentBasic, currentAllowances,
@@ -133,12 +137,18 @@ router.post('/', protect, async (req, res, next) => {
 
 // @route   PUT /api/salary-revisions/:id/action
 // @desc    Submit approval step decision (Approve/Reject/Hold/Send Back)
-router.put('/:id/action', protect, async (req, res, next) => {
+router.put('/:id/action', protect, adminOnly, async (req, res, next) => {
   const { decision, comments } = req.body; // 'Approved' | 'Rejected' | 'Hold' | 'Sent Back'
 
   try {
     const reqObj = await SalaryRevisionRequest.findById(req.params.id);
     if (!reqObj) return res.status(404).json({ message: 'Salary revision request not found.' });
+    if (!['Approved', 'Rejected', 'Hold', 'Sent Back'].includes(decision)) {
+      return res.status(400).json({ message: 'Invalid decision.' });
+    }
+    if (['Approved', 'Rejected'].includes(reqObj.status)) {
+      return res.status(400).json({ message: `This request is already ${reqObj.status.toLowerCase()}.` });
+    }
 
     reqObj.status = decision;
     reqObj.remarks = comments || '';
@@ -199,6 +209,7 @@ router.put('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const reqObj = await SalaryRevisionRequest.findById(req.params.id);
     if (!reqObj) return res.status(404).json({ message: 'Salary revision request not found.' });
+    if (reqObj.employeeId !== req.user.id) return res.status(403).json({ message: 'You can only acknowledge your own revision.' });
 
     reqObj.acknowledged = true;
     reqObj.acceptanceDate = new Date();
@@ -223,7 +234,7 @@ router.put('/:id/acknowledge', protect, async (req, res, next) => {
 
 // @route   GET /api/salary-revisions/reports
 // @desc    Get aggregated cost comparison and revisions list
-router.get('/reports', protect, async (req, res, next) => {
+router.get('/reports', protect, adminOnly, async (req, res, next) => {
   try {
     const approvedList = await SalaryRevisionRequest.find({ status: 'Approved' }).sort({ effectiveDate: -1 });
     const historyList = await SalaryRevisionHistory.find({}).sort({ effectiveDate: -1 });

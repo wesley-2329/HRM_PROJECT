@@ -738,9 +738,9 @@ const PerformanceModule = ({ searchQuery = '' }) => {
           </p>
         </div>
 
-        {/* Role Access Test Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(var(--bg-card))', padding: '8px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Current Role RBAC View:</span>
+        {/* Role preview: HR only. Employees always see their own role's view. */}
+        {user?.role === 'hr' && <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(var(--bg-card))', padding: '8px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Preview as:</span>
           <select 
             value={selectedRole} 
             onChange={(e) => setSelectedRole(e.target.value)}
@@ -757,7 +757,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <option value="employee">Employee (Self Service)</option>
             <option value="admin">System Administrator</option>
           </select>
-        </div>
+        </div>}
       </div>
 
       {/* Submodule Navigation Tabs */}

@@ -52,8 +52,10 @@ const SalaryRevisionManagement = () => {
       setRevisions(res.data.data);
       setSummary(res.data.summary);
 
-      const repRes = await api.get('/salary-revisions/reports');
-      setReportsData(repRes.data);
+      if (isHr) {
+        const repRes = await api.get('/salary-revisions/reports');
+        setReportsData(repRes.data);
+      }
     } catch (err) {
       console.error('Error fetching salary revisions:', err);
       showToast('Error loading compensation tracker.', 'error');

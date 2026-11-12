@@ -39,11 +39,13 @@ const io = socketIo(server, {
 });
 
 // Serve uploads statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const { serveUpload, setSafeHeaders } = require('./utils/gridStore');
+const staticUploadOpts = { setHeaders: (res, filePath) => setSafeHeaders(res, filePath) };
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), staticUploadOpts));
 if (fs.existsSync('/tmp/uploads')) {
-  app.use('/uploads', express.static('/tmp/uploads'));
+  app.use('/uploads', express.static('/tmp/uploads', staticUploadOpts));
 }
-app.get('/uploads/*', require('./utils/gridStore').serveUpload);
+app.get('/uploads/*', serveUpload);
 
 // Middleware
 app.use(cors());
@@ -77,21 +79,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Socket connection logic
+// Socket connection logic: rooms come from the verified token, never from what the client says.
+const jwt = require('jsonwebtoken');
+const Employee = require('./models/Employee');
+io.use(async (socket, next) => {
+  try {
+    const { id } = jwt.verify(socket.handshake.auth?.token, process.env.JWT_SECRET);
+    socket.user = await Employee.findById(id).select('id role');
+    return socket.user ? next() : next(new Error('Not authorized'));
+  } catch (e) {
+    next(new Error('Not authorized'));
+  }
+});
+
 io.on('connection', (socket) => {
-  console.log('Socket client connected:', socket.id);
-  
-  socket.on('join', (data) => {
-    if (data.role === 'hr') {
-      socket.join('hr');
-      console.log(`Socket ${socket.id} joined room: hr`);
-    }
-    if (data.userId) {
-      socket.join(data.userId);
-      console.log(`Socket ${socket.id} joined room: ${data.userId}`);
-    }
+  socket.on('join', () => {
+    if (socket.user.role === 'hr') socket.join('hr');
+    socket.join(socket.user.id);
     socket.join('discussion');
-    console.log(`Socket ${socket.id} joined room: discussion`);
   });
 
   socket.on('disconnect', () => {
@@ -241,7 +246,7 @@ if (process.env.NODE_ENV === 'production') {
 // Unified Global Error Handling Middleware for DB Connection Failures & Fallback Behavior
 app.use((err, req, res, next) => {
   // Pass through E11000 duplicate key error and business/status errors (e.g. 400, 401, 404, 409)
-  if (err.code === 11000 || (err.status && err.status < 500) || err.name === 'ValidationError' || err.name === 'CastError') {
+  if (err.code === 11000 || (err.status && err.status < 500) || err.name === 'ValidationError' || err.name === 'CastError' || err.name === 'MulterError') {
     const statusCode = err.status || (err.code === 11000 ? 409 : (err.name === 'ValidationError' || err.name === 'CastError' ? 400 : 400));
     return res.status(statusCode).json({
       message: err.message,
@@ -277,7 +282,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && require.main === module) {
   server.listen(PORT, () => {
     console.log(`Server running in dev mode on port ${PORT}`);
   });

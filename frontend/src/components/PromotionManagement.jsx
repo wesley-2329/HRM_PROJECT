@@ -59,8 +59,10 @@ const PromotionManagement = () => {
       setPromotions(res.data.data);
       setSummary(res.data.summary);
 
-      const repRes = await api.get('/promotions/reports');
-      setReportsData(repRes.data);
+      if (isHr) {
+        const repRes = await api.get('/promotions/reports');
+        setReportsData(repRes.data);
+      }
 
       const deptsRes = await api.get('/org/departments');
       setDepts(deptsRes.data);

@@ -3,7 +3,7 @@ const router = express.Router();
 const Employee = require('../models/Employee');
 const EmployeeProbation = require('../models/EmployeeProbation');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to add days to a date
 const addDays = (date, days) => {
@@ -16,7 +16,8 @@ const addDays = (date, days) => {
 // @desc    Get all probation records and dashboard metrics
 router.get('/', protect, async (req, res, next) => {
   try {
-    const list = await EmployeeProbation.find({}).sort({ createdAt: -1 });
+    const filter = req.user.role === 'hr' ? {} : { $or: [{ employeeId: req.user.id }, { reportingManagerId: req.user.id }] };
+    const list = await EmployeeProbation.find(filter).sort({ createdAt: -1 });
 
     const total = list.length;
     const underProbation = list.filter(p => p.status === 'Under Probation').length;
@@ -45,7 +46,7 @@ router.get('/', protect, async (req, res, next) => {
 
 // @route   POST /api/probation/assign
 // @desc    Assign probation period to an employee
-router.post('/assign', protect, async (req, res, next) => {
+router.post('/assign', protect, adminOnly, async (req, res, next) => {
   const { employeeId, employeeCategory, probationDuration, kpis, reportingManagerId } = req.body;
 
   if (!employeeId || !probationDuration) {
@@ -148,6 +149,10 @@ router.put('/:id/review', protect, async (req, res, next) => {
   try {
     const prob = await EmployeeProbation.findById(req.params.id);
     if (!prob) return res.status(404).json({ message: 'Probation record not found.' });
+    // HR, or the employee's reporting manager, may submit the review.
+    if (req.user.role !== 'hr' && prob.reportingManagerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only HR or the reporting manager can review this probation.' });
+    }
 
     // Update Review sub-document
     prob.review = {
@@ -289,7 +294,7 @@ router.put('/:id/decision', protect, async (req, res, next) => {
 
 // @route   GET /api/probation/reports
 // @desc    Get reports data for probation
-router.get('/reports', protect, async (req, res, next) => {
+router.get('/reports', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await EmployeeProbation.find({});
     const now = new Date();
@@ -337,7 +342,7 @@ router.get('/reports', protect, async (req, res, next) => {
 
 // @route   POST /api/probation/:id/email-letter
 // @desc    Email confirmation/extension letter to employee
-router.post('/:id/email-letter', protect, async (req, res, next) => {
+router.post('/:id/email-letter', protect, adminOnly, async (req, res, next) => {
   try {
     const prob = await EmployeeProbation.findById(req.params.id);
     if (!prob) return res.status(404).json({ message: 'Probation record not found.' });

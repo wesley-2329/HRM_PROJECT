@@ -14,7 +14,7 @@ const { protect } = require('../middleware/auth');
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'hrorbitjwtsecretkey12345', {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
 };
@@ -46,7 +46,9 @@ router.post('/login', async (req, res, next) => {
 
   // Validate password (plain-text match kept for legacy records seeded without hashing)
   const isBcryptMatch = await employee.matchPassword(trimmedPassword).catch(() => false);
-  const isPassCorrect = isBcryptMatch || (trimmedPassword === employee.password);
+  // Plain match only for legacy unhashed records, so the stored hash itself never works as a password.
+  const isLegacyPlain = !/^\$2[aby]\$/.test(employee.password || '');
+  const isPassCorrect = isBcryptMatch || (isLegacyPlain && trimmedPassword === employee.password);
 
   if (!isPassCorrect) {
     return res.status(401).json({ message: 'Invalid password. Please check your credentials.' });
@@ -68,7 +70,13 @@ router.post('/login', async (req, res, next) => {
 // @desc    Register a new employee (Pending status)
 // @access  Public
 router.post('/register', async (req, res, next) => {
-  const { name, email, password, dept, role, aadhaar, phone, joined } = req.body;
+  const { name, dept, role, aadhaar, phone, joined } = req.body;
+  const email = String(req.body.email || '').toLowerCase().trim();
+  const password = String(req.body.password || '').trim(); // login trims too
+
+  if (!email || password.length < 6) {
+    return res.status(400).json({ message: 'A valid email and a password of at least 6 characters are required.' });
+  }
 
   try {
     const userExists = await Employee.findOne({ email });
@@ -159,10 +167,11 @@ router.get('/me', protect, async (req, res, next) => {
 // @desc    Change password
 // @access  Private
 router.post('/change-password', protect, async (req, res, next) => {
-  const { currentPassword, newPassword } = req.body;
+  const currentPassword = String(req.body.currentPassword || '').trim();
+  const newPassword = String(req.body.newPassword || '').trim(); // login trims too
 
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ message: 'Current password and new password are required' });
+  if (!currentPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'Current password and a new password of at least 6 characters are required' });
   }
 
   try {

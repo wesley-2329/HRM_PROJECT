@@ -39,7 +39,7 @@ If you are using a hosted MongoDB cluster (e.g. MongoDB Atlas) or a different lo
 ```env
 PORT=5001
 MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=hrorbitjwtsecretkey12345
+JWT_SECRET=<a long random string>
 ```
 
 ---

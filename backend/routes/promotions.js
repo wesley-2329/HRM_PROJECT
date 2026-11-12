@@ -1,4 +1,5 @@
 const express = require('express');
+const Counter = require('../models/Counter');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const PromotionRequest = require('../models/PromotionRequest');
@@ -7,7 +8,7 @@ const SalaryRevisionHistory = require('../models/SalaryRevisionHistory');
 const DepartmentTransferHistory = require('../models/DepartmentTransferHistory');
 const EmployeeReportingHistory = require('../models/EmployeeReportingHistory');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to generate next request ID
 const generateRequestId = async () => {
@@ -15,7 +16,9 @@ const generateRequestId = async () => {
   const count = await PromotionRequest.countDocuments({
     requestId: new RegExp(`^PRM-${year}-`)
   });
-  const nextNum = String(count + 1).padStart(4, '0');
+  // Atomic counter so two requests at the same moment never get the same number; count+1 seeds it.
+  const seq = await Counter.getNextSequence(`PRM-${year}`, count + 1);
+  const nextNum = String(seq).padStart(4, '0');
   return `PRM-${year}-${nextNum}`;
 };
 
@@ -23,7 +26,8 @@ const generateRequestId = async () => {
 // @desc    Get all promotion requests and dashboard metrics
 router.get('/', protect, async (req, res, next) => {
   try {
-    const list = await PromotionRequest.find({}).sort({ createdAt: -1 });
+    const filter = req.user.role === 'hr' ? {} : { $or: [{ employeeId: req.user.id }, { currentManagerId: req.user.id }] };
+    const list = await PromotionRequest.find(filter).sort({ createdAt: -1 });
 
     const total = list.length;
     const pending = list.filter(p => ['Pending Verification', 'Pending Approval', 'Under Management Review'].includes(p.status)).length;
@@ -65,6 +69,10 @@ router.post('/', protect, async (req, res, next) => {
   try {
     const emp = await Employee.findOne({ id: employeeId });
     if (!emp) return res.status(404).json({ message: 'Employee not found.' });
+    // HR, or the employee's own reporting manager, may recommend a promotion.
+    if (req.user.role !== 'hr' && emp.functionalManagerId !== req.user.id) {
+      return res.status(403).json({ message: 'Only HR or the reporting manager can recommend this promotion.' });
+    }
 
     // Business Rule Check: Employee must be Active
     if (emp.status !== 'Approved') {
@@ -322,6 +330,7 @@ router.put('/:id/acknowledge', protect, async (req, res, next) => {
   try {
     const promotion = await PromotionRequest.findById(req.params.id);
     if (!promotion) return res.status(404).json({ message: 'Promotion request not found.' });
+    if (promotion.employeeId !== req.user.id) return res.status(403).json({ message: 'You can only acknowledge your own promotion.' });
 
     promotion.acknowledged = true;
     promotion.acceptanceDate = new Date();
@@ -346,7 +355,7 @@ router.put('/:id/acknowledge', protect, async (req, res, next) => {
 
 // @route   GET /api/promotions/reports
 // @desc    Get aggregated metrics and cost impacts for management reviews
-router.get('/reports', protect, async (req, res, next) => {
+router.get('/reports', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await PromotionRequest.find({});
 

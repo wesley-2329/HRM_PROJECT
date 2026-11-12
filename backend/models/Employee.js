@@ -26,7 +26,9 @@ const EmployeeSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    lowercase: true, // login looks emails up in lowercase
+    trim: true
   },
   password: {
     type: String,

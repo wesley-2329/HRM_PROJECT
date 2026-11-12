@@ -48,9 +48,7 @@ const connectDB = async () => {
     }
   }
 
-  const DEFAULT_MONGODB_URI = 'mongodb+srv://johnwesley290305_db_user:bnani.290305@cluster0.nlkbuna.mongodb.net/hrorbit?retryWrites=true&w=majority';
-  const rawUri = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
-  const connUri = cleanUri(rawUri);
+  const connUri = cleanUri(process.env.MONGODB_URI);
 
   if (!connUri) {
     console.warn('[DB Warning] MONGODB_URI environment variable is missing.');
@@ -74,21 +72,7 @@ const connectDB = async () => {
     lastDbError = null;
     return cachedConn;
   } catch (error) {
-    if (connUri !== DEFAULT_MONGODB_URI && (error.message.includes('auth') || error.message.includes('Authentication') || error.message.includes('password'))) {
-      console.warn('[DB Warning] Provided MONGODB_URI failed authentication. Retrying with verified working Atlas URI.');
-      try {
-        await mongoose.disconnect().catch(() => {});
-        cachedPromise = attemptConnect(DEFAULT_MONGODB_URI);
-        cachedConn = await cachedPromise;
-        console.log(`[MongoDB Connected via Fallback URI] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
-        lastDbError = null;
-        return cachedConn;
-      } catch (fallbackError) {
-        lastDbError = fallbackError.message;
-      }
-    } else {
-      lastDbError = error.message;
-    }
+    lastDbError = error.message;
     cachedPromise = null;
     cachedConn = null;
     lastFailedTime = Date.now();

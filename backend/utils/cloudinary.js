@@ -3,9 +3,9 @@ const fs = require('fs');
 
 // Configure Cloudinary with environment variables or fallback credentials provided
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'puunyxrp',
-  api_key: process.env.CLOUDINARY_API_KEY || '457413265115121',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'N8qrXc5vQIpWlrwdH5a1khUGaFY',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true
 });
 
