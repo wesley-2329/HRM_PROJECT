@@ -849,10 +849,21 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const handleUpdateLeaveStatus = async (id, status) => {
     try {
       await api.put(`/leaves/${id}`, { status });
-      showToast(`Leave request ${status.toLowerCase()}ed successfully.`, 'success');
+      showToast(`Leave request ${status.toLowerCase()}.`, 'success');
       fetchLeaves();
     } catch (err) {
-      showToast('Error updating leave', 'error');
+      showToast(err.response?.data?.message || 'Error updating leave', 'error');
+    }
+  };
+
+  const handleRevokeLeave = async (id) => {
+    if (!window.confirm('Revoke this approved leave? The employee will be notified.')) return;
+    try {
+      await api.put(`/leaves/${id}/revoke`);
+      showToast('Leave revoked. The employee has been notified.', 'success');
+      fetchLeaves();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error revoking leave', 'error');
     }
   };
 
@@ -1787,13 +1798,15 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                           <td><strong>{l.empName}</strong></td>
                           <td>{l.type}</td>
                           <td>{l.start} to {l.end}</td>
-                          <td><span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></td>
+                          <td><span className={`badge ${l.status === 'Approved' ? 'badge-success' : ['Rejected', 'Revoked'].includes(l.status) ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></td>
                           <td>
                             {l.status === 'Pending' ? (
                               <div style={{ display: 'flex', gap: '4px' }}>
                                 <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleUpdateLeaveStatus(l._id, 'Approved')}>Approve</button>
                                 <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleUpdateLeaveStatus(l._id, 'Rejected')}>Reject</button>
                               </div>
+                            ) : l.status === 'Approved' && l.start > new Date().toISOString().slice(0, 10) ? (
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleRevokeLeave(l._id)}>Revoke</button>
                             ) : '--'}
                           </td>
                         </tr>

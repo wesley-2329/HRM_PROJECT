@@ -3,6 +3,34 @@ const router = express.Router();
 const Leave = require('../models/Leave');
 const { protect, adminOnly } = require('../middleware/auth');
 
+// Yearly allowance per leave type. shortcut: one policy for everyone; move to a policy master when grades differ.
+const LEAVE_QUOTA = { Casual: 12, Sick: 12, Earned: 15 };
+const DAY_MS = 24 * 60 * 60 * 1000;
+const parseDay = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? Date.parse(s + 'T00:00:00Z') : NaN);
+const leaveDays = (start, end) => Math.round((parseDay(end) - parseDay(start)) / DAY_MS) + 1; // inclusive calendar days
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+// Days used (approved) and held (pending) per type, for leaves starting in the given year.
+const getBalance = async (empId, year = new Date().getUTCFullYear()) => {
+  const leaves = await Leave.find({ empId, status: { $in: ['Approved', 'Pending'] }, start: new RegExp(`^${year}-`) });
+  const balance = {};
+  for (const type of Object.keys(LEAVE_QUOTA)) {
+    const ofType = leaves.filter(l => l.type === type);
+    const used = ofType.filter(l => l.status === 'Approved').reduce((n, l) => n + leaveDays(l.start, l.end), 0);
+    const pending = ofType.filter(l => l.status === 'Pending').reduce((n, l) => n + leaveDays(l.start, l.end), 0);
+    balance[type] = { quota: LEAVE_QUOTA[type], used, pending, available: LEAVE_QUOTA[type] - used - pending };
+  }
+  return balance;
+};
+
+// @route   GET /api/leaves/balance  (own; HR may pass ?empId=)
+router.get('/balance', protect, async (req, res, next) => {
+  try {
+    const empId = req.user.role === 'hr' && req.query.empId ? req.query.empId : req.user.id;
+    res.json({ empId, year: new Date().getUTCFullYear(), balance: await getBalance(empId) });
+  } catch (error) { next(error); }
+});
+
 // @route   GET /api/leaves
 // @desc    Get all leaves (HR sees all, Employee sees own)
 // @access  Private
@@ -24,7 +52,23 @@ router.get('/', protect, async (req, res, next) => {
 router.post('/', protect, async (req, res, next) => {
   const { type, start, end, reason } = req.body;
 
+  if (!LEAVE_QUOTA[type]) return res.status(400).json({ message: 'Choose a valid leave type.' });
+  if (isNaN(parseDay(start)) || isNaN(parseDay(end))) return res.status(400).json({ message: 'Start and end dates are required.' });
+  if (end < start) return res.status(400).json({ message: 'End date cannot be before start date.' });
+  if (start.slice(0, 4) !== end.slice(0, 4)) return res.status(400).json({ message: 'A leave cannot span two calendar years. Please split it.' });
+  if (!String(reason || '').trim()) return res.status(400).json({ message: 'Please give a reason.' });
+
   try {
+    const overlap = await Leave.findOne({ empId: req.user.id, status: { $in: ['Approved', 'Pending'] }, start: { $lte: end }, end: { $gte: start } });
+    if (overlap) {
+      return res.status(400).json({ message: `These dates overlap your ${overlap.status.toLowerCase()} leave from ${overlap.start} to ${overlap.end}.` });
+    }
+    const days = leaveDays(start, end);
+    const bal = (await getBalance(req.user.id, Number(start.slice(0, 4))))[type];
+    if (days > bal.available) {
+      return res.status(400).json({ message: `Not enough ${type} leave: ${days} day(s) requested, ${Math.max(0, bal.available)} available.` });
+    }
+
     const leave = await Leave.create({
       empId: req.user.id,
       empName: req.user.name,
@@ -177,6 +221,9 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
     if (!leave) {
       return res.status(404).json({ message: 'Leave request not found' });
     }
+    if (leave.status !== 'Pending') {
+      return res.status(400).json({ message: `This leave is already ${leave.status.toLowerCase()}.` });
+    }
 
     leave.status = status;
     await leave.save();
@@ -191,6 +238,32 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
     });
 
     // Emit socket notification to employee room
+    req.io.to(leave.empId).emit('notification', notif);
+
+    res.json(leave);
+  } catch (error) { next(error); }
+});
+
+// @route   PUT /api/leaves/:id/revoke
+// @desc    HR revokes an approved leave that has not started yet
+// @access  Private/HR only
+router.put('/:id/revoke', protect, adminOnly, async (req, res, next) => {
+  try {
+    const leave = await Leave.findById(req.params.id);
+    if (!leave) return res.status(404).json({ message: 'Leave request not found' });
+    if (leave.status !== 'Approved') return res.status(400).json({ message: 'Only approved leave can be revoked.' });
+    if (leave.start <= todayStr()) return res.status(400).json({ message: 'Leave that has already started cannot be revoked.' });
+
+    leave.status = 'Revoked';
+    await leave.save();
+
+    const Notification = require('../models/Notification');
+    const notif = await Notification.create({
+      type: 'leave',
+      title: 'Leave revoked',
+      desc: `Your approved ${leave.type} leave from ${leave.start} to ${leave.end} was revoked by HR.${req.body?.reason ? ' Reason: ' + req.body.reason : ''}`,
+      empId: leave.empId
+    });
     req.io.to(leave.empId).emit('notification', notif);
 
     res.json(leave);

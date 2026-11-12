@@ -158,3 +158,35 @@ test('uploads: an .html file is rejected', async () => {
   const res = await fetch(base + '/api/employees/upload-doc', { method: 'POST', headers: { Authorization: `Bearer ${emp}` }, body: form });
   assert.strictEqual(res.status, 400);
 });
+
+test('leave rules: dates, overlap, balance, cancel, revoke', async () => {
+  const y = new Date().getUTCFullYear() + 1; // next year: always in the future, own empty balance
+  const d = (m, day) => `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  assert.strictEqual((await call('POST', '/api/leaves', other, { type: 'Casual', start: d(3, 5), end: d(3, 4), reason: 'x' })).status, 400, 'end before start');
+  assert.strictEqual((await call('POST', '/api/leaves', other, { type: 'Casual', start: d(3, 1), end: d(3, 13), reason: 'x' })).status, 400, '13 days > 12 casual');
+
+  const a = await call('POST', '/api/leaves', other, { type: 'Casual', start: d(3, 2), end: d(3, 4), reason: 'Trip' });
+  assert.strictEqual(a.status, 201);
+  assert.strictEqual((await call('POST', '/api/leaves', other, { type: 'Sick', start: d(3, 4), end: d(3, 6), reason: 'x' })).status, 400, 'overlap');
+
+  // balance is per year; check the request year by asking the server directly through the helper route
+  const bal = await call('GET', '/api/leaves/balance', other);
+  assert.strictEqual(bal.status, 200);
+  assert.strictEqual(bal.data.balance.Casual.quota, 12);
+
+  // cancel pending
+  assert.strictEqual((await call('DELETE', `/api/leaves/${a.data._id}`, emp)).status, 403, 'not owner');
+  assert.strictEqual((await call('DELETE', `/api/leaves/${a.data._id}`, other)).status, 200);
+
+  // approve then revoke a future leave
+  const b = await call('POST', '/api/leaves', other, { type: 'Earned', start: d(5, 10), end: d(5, 12), reason: 'Wedding' });
+  assert.strictEqual((await call('PUT', `/api/leaves/${b.data._id}`, hr, { status: 'Approved' })).status, 200);
+  assert.strictEqual((await call('PUT', `/api/leaves/${b.data._id}`, hr, { status: 'Rejected' })).status, 400, 'no re-decision');
+  assert.strictEqual((await call('PUT', `/api/leaves/${b.data._id}/revoke`, emp)).status, 403);
+  const rv = await call('PUT', `/api/leaves/${b.data._id}/revoke`, hr);
+  assert.strictEqual(rv.status, 200);
+  assert.strictEqual(rv.data.status, 'Revoked');
+  const notes = await call('GET', '/api/notifications', other);
+  assert.ok(JSON.stringify(notes.data).includes('revoked'));
+});

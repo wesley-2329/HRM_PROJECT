@@ -212,9 +212,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   };
 
   const presentDaysCount = timesheets.filter(t => t.status === 'Punctual' || t.status === 'Late Entry').length;
-  const leavesTakenDays = leaves
-    .filter(l => l.status === 'Approved')
-    .reduce((total, l) => total + getDuration(l.start, l.end), 0);
+  // Leave balance comes from the server (same rule it enforces); refreshed whenever the leave list changes.
+  const [leaveBalance, setLeaveBalance] = useState(null);
+  useEffect(() => {
+    api.get('/leaves/balance').then(res => setLeaveBalance(res.data.balance)).catch(() => setLeaveBalance(null));
+  }, [leaves]);
+  const totalLeaveAvailable = leaveBalance ? Object.values(leaveBalance).reduce((n, b) => n + Math.max(0, b.available), 0) : null;
 
   const salary = getSalaryDetails(user?.role);
 
@@ -1303,7 +1306,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       fetchLeaves();
       setAttSubTab('history');
     } catch (err) {
-      showToast('Error applying for leave.', 'error');
+      showToast(err.response?.data?.message || 'Error applying for leave.', 'error');
     }
   };
 
@@ -1844,8 +1847,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <div className="metric-card success">
                 <div>
                   <span className="metric-label">Leave Balance</span>
-                  <div className="metric-val"><span className="count-up" data-target={Math.max(0, 15 - leavesTakenDays)}>{Math.max(0, 15 - leavesTakenDays)}</span> Days</div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Earned & Casual</span>
+                  <div className="metric-val">{totalLeaveAvailable ?? '--'} Days</div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {leaveBalance ? `CL ${leaveBalance.Casual.available} · SL ${leaveBalance.Sick.available} · EL ${leaveBalance.Earned.available}` : 'Available this year'}
+                  </span>
                 </div>
                 <div className="metric-icon-box"><i className="fa-solid fa-plane"></i></div>
               </div>
@@ -2508,6 +2513,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <option value="Sick">Sick Leave</option>
                         <option value="Earned">Earned Leave</option>
                       </select>
+                      {leaveBalance?.[leaveType] && (
+                        <small style={{ color: 'var(--text-secondary)' }}>
+                          {Math.max(0, leaveBalance[leaveType].available)} of {leaveBalance[leaveType].quota} days available
+                          {leaveBalance[leaveType].pending > 0 ? ` (${leaveBalance[leaveType].pending} pending approval)` : ''}
+                        </small>
+                      )}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div className="form-group">
@@ -2516,7 +2527,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       </div>
                       <div className="form-group">
                         <label>To Date</label>
-                        <input type="date" className="form-control" value={leaveTo} onChange={(e) => setLeaveTo(e.target.value)} required />
+                        <input type="date" className="form-control" value={leaveTo} min={leaveFrom || undefined} onChange={(e) => setLeaveTo(e.target.value)} required />
                       </div>
                     </div>
                     <div className="form-group">
@@ -2552,7 +2563,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                             <td>{l.type}</td>
                             <td>{getDuration(l.start, l.end)} Days</td>
                             <td>{l.reason}</td>
-                            <td><span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></td>
+                            <td><span className={`badge ${l.status === 'Approved' ? 'badge-success' : ['Rejected', 'Revoked'].includes(l.status) ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></td>
                             <td>
                               {l.status === 'Pending' ? <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleCancelLeave(l._id)}>Cancel</button> : '--'}
                             </td>
