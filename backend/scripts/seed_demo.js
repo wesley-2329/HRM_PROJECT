@@ -7,22 +7,9 @@
 // It DROPS that database first, so every run gives the same clean demo.
 const path = require('path');
 const crypto = require('crypto');
-const envFlag = process.argv.indexOf('--env');
-require('dotenv').config({ path: path.join(__dirname, '..', envFlag > -1 ? process.argv[envFlag + 1] : '.env.demo') });
 const mongoose = require('mongoose');
 
-const uri = process.env.MONGODB_URI || '';
-const dbName = (() => { try { return decodeURIComponent(new URL(uri).pathname.replace(/^\//, '')); } catch { return ''; } })();
-const isLocal = /^mongodb:\/\/(127\.0\.0\.1|localhost)[:/]/.test(uri);
-if (!dbName.endsWith('_demo') && !isLocal) {
-  console.error(`Refusing to seed: database "${dbName || '(none)'}" is not a demo database (name must end in "_demo").`);
-  process.exit(1);
-}
-const { DEMO_HR_PASSWORD, DEMO_EMPLOYEE_PASSWORD } = process.env;
-if (!DEMO_HR_PASSWORD || !DEMO_EMPLOYEE_PASSWORD) {
-  console.error('Set DEMO_HR_PASSWORD and DEMO_EMPLOYEE_PASSWORD (the two public demo logins).');
-  process.exit(1);
-}
+const dbNameOf = (uri) => { try { return decodeURIComponent(new URL(uri).pathname.replace(/^\//, '')); } catch { return ''; } };
 
 const Employee = require('../models/Employee');
 const Department = require('../models/Department');
@@ -65,13 +52,12 @@ const PEOPLE = [
   ['EMP-0011', 'Rohit Verma', 'employee', 'Sales & Marketing', 'Sales Executive', 'L1', 'EMP-0010', '2024-05-20', 'Male'],
   ['EMP-0012', 'Divya Menon', 'employee', 'Human Resources', 'Talent Acquisition Executive', 'L1', 'EMP-0001', '2025-02-03', 'Female']
 ];
-const LOGINS = { 'EMP-0001': ['hr@company.com', DEMO_HR_PASSWORD], 'EMP-0002': ['employee@company.com', DEMO_EMPLOYEE_PASSWORD] };
 const nameOf = Object.fromEntries(PEOPLE.map(p => [p[0], p[1]]));
 
-async function seed() {
-  await mongoose.connect(uri);
-  console.log(`Seeding demo database "${mongoose.connection.name}"...`);
-  await mongoose.connection.db.dropDatabase();
+// Fills the CONNECTED database with demo data. Callers guarantee it is a *_demo (or local) database.
+async function seedDemoData({ hrPassword, employeePassword }) {
+  if (!hrPassword || !employeePassword) throw new Error('Demo passwords are not set (DEMO_HR_PASSWORD, DEMO_EMPLOYEE_PASSWORD).');
+  const LOGINS = { 'EMP-0001': ['hr@company.com', hrPassword], 'EMP-0002': ['employee@company.com', employeePassword] };
 
   // Masters
   await CompanyMaster.create({ name: 'HR O Technologies (Demo)', code: 'HO-001', businessType: 'Information Technology', status: 'Active' });
@@ -198,8 +184,49 @@ async function seed() {
     { senderId: 'EMP-0006', senderName: 'Kavitha Iyer', senderRole: 'employee', message: 'Engineering all-hands moves to Thursday 4 pm this week.', time: '11:40' }
   ]);
 
-  console.log(`Done: ${PEOPLE.length} employees, ${sheets.length} attendance records, ${leaves.length} leaves, ${cands.length} candidates.`);
-  await mongoose.disconnect();
+  return { employees: PEOPLE.length, attendance: sheets.length, leaves: leaves.length, candidates: cands.length };
 }
 
-seed().catch(async (err) => { console.error('Seed failed:', err.message); await mongoose.disconnect(); process.exit(1); });
+// Preview self-setup: seed once when the demo database is empty. A unique lock document stops two
+// cold starts from seeding at the same time. Only ever runs on a database whose name ends in "_demo".
+async function ensureDemoSeeded() {
+  const db = mongoose.connection;
+  if (!db.name.endsWith('_demo')) return 'skipped: not a demo database';
+  if (await Employee.estimatedDocumentCount() > 0) return 'skipped: already seeded';
+  try {
+    await db.collection('demo_meta').insertOne({ _id: 'seed-lock', at: new Date() });
+  } catch (e) {
+    return 'skipped: another instance is seeding';
+  }
+  try {
+    const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });
+    console.log(`[Demo] Seeded ${db.name}: ${r.employees} employees, ${r.attendance} attendance records.`);
+    return 'seeded';
+  } catch (e) {
+    await db.collection('demo_meta').deleteOne({ _id: 'seed-lock' }); // let a later start retry
+    throw e;
+  }
+}
+
+module.exports = { seedDemoData, ensureDemoSeeded };
+
+// CLI: full rebuild (drops the demo database first).
+if (require.main === module) {
+  const envFlag = process.argv.indexOf('--env');
+  require('dotenv').config({ path: path.join(__dirname, '..', envFlag > -1 ? process.argv[envFlag + 1] : '.env.demo') });
+  const uri = process.env.MONGODB_URI || '';
+  const dbName = dbNameOf(uri);
+  const isLocal = /^mongodb:\/\/(127\.0\.0\.1|localhost)[:/]/.test(uri);
+  if (!dbName.endsWith('_demo') && !isLocal) {
+    console.error(`Refusing to seed: database "${dbName || '(none)'}" is not a demo database (name must end in "_demo").`);
+    process.exit(1);
+  }
+  (async () => {
+    await mongoose.connect(uri);
+    console.log(`Seeding demo database "${mongoose.connection.name}"...`);
+    await mongoose.connection.db.dropDatabase();
+    const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });
+    console.log(`Done: ${r.employees} employees, ${r.attendance} attendance records, ${r.leaves} leaves, ${r.candidates} candidates.`);
+    await mongoose.disconnect();
+  })().catch(async (err) => { console.error('Seed failed:', err.message); await mongoose.disconnect(); process.exit(1); });
+}

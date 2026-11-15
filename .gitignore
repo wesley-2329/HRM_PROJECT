@@ -46,3 +46,6 @@ backend/uploads/*
 !backend/uploads/**/.gitkeep
 scratch_test.pdf
 scratch_*prompt*.txt
+
+# Demo secrets (generated locally, never committed)
+backend/.env.demo

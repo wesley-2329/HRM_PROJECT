@@ -7,6 +7,7 @@ let cachedConn = null;
 let cachedPromise = null;
 let lastFailedTime = 0;
 let lastDbError = null;
+let demoSeedStatus = null;
 const FAIL_COOLDOWN_MS = 1000; // 1-second cooldown if connection failed to retry quickly
 
 const cleanUri = (rawUri) => {
@@ -21,6 +22,16 @@ const cleanUri = (rawUri) => {
   // Strip angle brackets around password if user copied template literal <password>
   uri = uri.replace(/<([^>]+)>/g, '$1');
   return uri;
+};
+
+// Production and Preview must never share a database. Vercel sets VERCEL_ENV on every deployment.
+const dbNameOf = (uri) => { try { return decodeURIComponent(new URL(uri).pathname.replace(/^\//, '')); } catch { return ''; } };
+const checkDbConfig = (uri, vercelEnv) => {
+  const name = dbNameOf(uri);
+  if (!name) return 'MONGODB_URI must include the database name, e.g. ...mongodb.net/hrorbit?retryWrites=true';
+  if (vercelEnv === 'preview' && !name.endsWith('_demo')) return `Preview deployments must use a *_demo database (got "${name}").`;
+  if (vercelEnv === 'production' && name.endsWith('_demo')) return `Production must not use a demo database (got "${name}").`;
+  return null;
 };
 
 const connectDB = async () => {
@@ -51,7 +62,15 @@ const connectDB = async () => {
   const connUri = cleanUri(process.env.MONGODB_URI);
 
   if (!connUri) {
-    console.warn('[DB Warning] MONGODB_URI environment variable is missing.');
+    lastDbError = 'MONGODB_URI environment variable is missing.';
+    console.warn('[DB Warning] ' + lastDbError);
+    return null;
+  }
+
+  const configError = checkDbConfig(connUri, process.env.VERCEL_ENV);
+  if (configError) {
+    lastDbError = configError;
+    console.error('[DB Config Error] ' + configError);
     return null;
   }
 
@@ -70,6 +89,15 @@ const connectDB = async () => {
     cachedConn = await cachedPromise;
     console.log(`[MongoDB Connected] Host: ${cachedConn.connection.host}, DB: ${cachedConn.connection.name}`);
     lastDbError = null;
+    // Preview self-setup: an empty demo database gets the demo data once.
+    if (process.env.VERCEL_ENV === 'preview' || process.env.DEMO_AUTO_SEED === 'true') {
+      try {
+        demoSeedStatus = await require('../scripts/seed_demo').ensureDemoSeeded();
+      } catch (e) {
+        demoSeedStatus = 'failed: ' + e.message;
+        console.error('[Demo Seed Error] ' + e.message);
+      }
+    }
     return cachedConn;
   } catch (error) {
     lastDbError = error.message;
@@ -91,5 +119,7 @@ mongoose.connection.on('reconnected', () => {
 });
 
 connectDB.getLastError = () => lastDbError;
+connectDB.checkDbConfig = checkDbConfig;
+connectDB.getDemoSeedStatus = () => demoSeedStatus;
 
 module.exports = connectDB;

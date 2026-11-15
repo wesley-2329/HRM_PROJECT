@@ -229,6 +229,12 @@ app.get('/api/health', async (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     dataSource: status,
     demo: (mongoose.connection.name || '').endsWith('_demo'), // preview runs on the demo database
+    dbName: mongoose.connection.readyState === 1 ? mongoose.connection.name : null,
+    environment: process.env.VERCEL_ENV || 'local',
+    demoSeed: connectDB.getDemoSeedStatus ? connectDB.getDemoSeedStatus() : null,
+    // Which settings are present (never their values), so a deployment's configuration can be checked from outside.
+    config: Object.fromEntries(['MONGODB_URI', 'JWT_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'DEMO_HR_PASSWORD', 'DEMO_EMPLOYEE_PASSWORD']
+      .map(k => [k, !!process.env[k]])),
     readyState: mongoose.connection.readyState,
     error: connectDB.getLastError ? connectDB.getLastError() : undefined,
     timestamp: new Date().toISOString(),

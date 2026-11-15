@@ -55,6 +55,20 @@ Databases:
 
 Tests run against a local database only: `MONGODB_URI=mongodb://127.0.0.1:27017/hrorbit_test npm test`.
 
+### Deployment (Vercel project `hrorbit.`)
+Each variable is set separately per environment:
+
+| Variable | Production | Preview |
+|---|---|---|
+| `MONGODB_URI` | `.../hrorbit?retryWrites=true&w=majority` | `.../hrorbit_demo?retryWrites=true&w=majority` |
+| `JWT_SECRET` | production secret | a different secret |
+| `DEMO_HR_PASSWORD`, `DEMO_EMPLOYEE_PASSWORD` | not set | demo logins (from `backend/.env.demo`) |
+| `CLOUDINARY_*` | set | set (optional) |
+
+The server enforces the split: a Preview deployment refuses any database not ending in `_demo`, Production refuses a `_demo` database,
+and a URI without a database name is rejected. On first start, a Preview deployment fills an empty demo database with the demo data.
+`GET /api/health` shows the database name and which variables are present (never their values).
+
 ---
 
 ### 2. Start Backend Server
