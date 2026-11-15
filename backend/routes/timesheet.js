@@ -179,7 +179,10 @@ router.post('/clock-out', protect, async (req, res, next) => {
 
     activeShift.clockOut = clockOutTime;
     activeShift.hours = hoursWorked;
-    activeShift.status = hoursWorked >= 8 ? 'Punctual' : 'Early Out';
+    // shortcut: one shift for everyone (09:30 IST start, 15 min grace); move to a shift roster when shifts differ.
+    const inMinutesIst = (clockInDate.getUTCHours() * 60 + clockInDate.getUTCMinutes() + 330) % 1440;
+    const isLate = inMinutesIst > 9 * 60 + 45;
+    activeShift.status = isLate ? 'Late Entry' : hoursWorked >= 8 ? 'Punctual' : 'Early Out';
 
     await activeShift.save();
     res.json(activeShift);

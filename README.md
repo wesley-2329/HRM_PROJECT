@@ -13,7 +13,7 @@ HRM_PROJECT/
 │   ├── middleware/     # Auth and validation middleware
 │   ├── models/         # Mongoose DB schemas
 │   ├── routes/         # Router controllers
-│   ├── seed.js         # Initial mock data seeding script
+│   ├── scripts/        # seed_demo.js (demo database only)
 │   └── server.js       # Main server entry
 ├── frontend/           # React SPA Client (Vite)
 │   ├── src/
@@ -31,16 +31,29 @@ HRM_PROJECT/
 
 Make sure you have [Node.js](https://nodejs.org/) installed.
 
-### 1. MongoDB Database Setup
-The backend connects to MongoDB locally. Ensure MongoDB is running on your machine:
-- Default Connection URI: `mongodb://127.0.0.1:27017/hrorbit`
-
-If you are using a hosted MongoDB cluster (e.g. MongoDB Atlas) or a different local port, configure it inside `backend/.env`:
+### 1. Configuration (environment variables only)
+The backend reads all configuration from environment variables; nothing has a built-in fallback.
+Put them in `backend/.env` (git-ignored):
 ```env
 PORT=5001
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=<connection string, including the database name, e.g. .../hrorbit?retryWrites=true>
 JWT_SECRET=<a long random string>
+CLOUDINARY_CLOUD_NAME=<optional, for avatar hosting>
+CLOUDINARY_API_KEY=<optional>
+CLOUDINARY_API_SECRET=<optional>
 ```
+
+Databases:
+- `hrorbit` — production (real records). Never seed or test against it.
+- `hrorbit_demo` — demo/preview data. Rebuild it with:
+  ```bash
+  cd backend
+  # backend/.env.demo (git-ignored) holds MONGODB_URI=.../hrorbit_demo?..., DEMO_HR_PASSWORD, DEMO_EMPLOYEE_PASSWORD
+  node scripts/seed_demo.js
+  ```
+  The script refuses to run unless the database name ends in `_demo` (or the host is local), and it drops that database first.
+
+Tests run against a local database only: `MONGODB_URI=mongodb://127.0.0.1:27017/hrorbit_test npm test`.
 
 ---
 

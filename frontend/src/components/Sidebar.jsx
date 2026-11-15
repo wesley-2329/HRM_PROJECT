@@ -1,3 +1,4 @@
+import { isModuleEnabled } from '../features';
 import React, { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -92,7 +93,7 @@ const Sidebar = ({ collapsed, setCollapsed, currentModule, mobileActive, setMobi
           </div>
         </div>
         <nav className="nav-list">
-          {menu.map((item) => (
+          {menu.filter(item => isModuleEnabled(item.id)).map((item) => (
             <a
               key={item.id}
               className={`nav-item ${

@@ -101,12 +101,13 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
       }
     }
 
-    // Set default password as defaultPass123
+    // One-time random password, shown to HR once; never a shared default.
+    const tempPassword = require('crypto').randomBytes(9).toString('base64url');
     const employee = await Employee.create({
       id: newEmpId,
       name,
       email: email.trim().toLowerCase(),
-      password: 'defaultPass123',
+      password: tempPassword,
       dept,
       role,
       joined,
@@ -119,7 +120,8 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
       status: 'Approved'
     });
 
-    res.status(201).json(employee);
+    const { password, ...safe } = employee.toObject();
+    res.status(201).json({ ...safe, tempPassword });
   } catch (error) { next(error); }
 });
 

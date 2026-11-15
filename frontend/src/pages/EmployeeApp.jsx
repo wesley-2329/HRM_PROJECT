@@ -1,3 +1,4 @@
+import { FEATURES } from '../features';
 import { useContext, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
@@ -1729,53 +1730,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
   const displayTasks = tasks || [];
 
-  const displayMeetings = meetings && meetings.length > 0 ? meetings : [
-    {
-      _id: 'mock-m1',
-      title: 'Monthly Team All-Hands Sync',
-      host: 'Aditya (CEO)',
-      time: 'Today, 4:00 PM',
-      type: 'Virtual',
-      status: 'Scheduled'
-    },
-    {
-      _id: 'mock-m2',
-      title: 'Feature Refinement Standup',
-      host: 'Neha (Team Lead)',
-      time: 'Tomorrow, 10:00 AM',
-      type: 'Virtual',
-      status: 'Scheduled'
-    }
-  ];
+  const displayMeetings = meetings || [];
 
-  const displayDiscussions = discussionMessages && discussionMessages.length > 0 ? discussionMessages : [
-    {
-      _id: 'mock-d1',
-      senderName: 'Aditya',
-      senderRole: 'CEO',
-      message: 'Welcome to the HR O central communication hub! Let\'s use this board for quick cross-functional updates.',
-      time: '10:15 AM',
-      senderAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-    },
-    {
-      _id: 'mock-d2',
-      senderName: 'Neha',
-      senderRole: 'Team Lead',
-      message: 'Looks great! I\'ve posted the weekly milestones and tasks lists. Please review and update tickets.',
-      time: '10:45 AM',
-      senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-    },
-    {
-      _id: 'mock-d3',
-      senderName: 'Rahul',
-      senderRole: 'Developer',
-      message: 'I am wrapping up the top navigation bar themes. Everything is fast and whitelists resolved successfully.',
-      time: '11:15 AM',
-      senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    }
-  ];
+  const displayDiscussions = discussionMessages || [];
 
-  const activeTasksCount = displayTasks.filter(t => t.status !== 'done').length;
+  const activeTasksCount = displayTasks.filter(t => t.empId === user?.id && t.status !== 'done').length; // own tasks only (leads also see their team's)
 
   const showOnboardingLock = authUser && authUser.role !== 'hr' && !complianceData.onboardingCompleted && complianceData.pendingCount > 0 && !dismissedLock;
 
@@ -1850,13 +1809,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                   </span>
                 </h2>
                 <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '16px' }}>
-                  Access directory tools, review attendance schedules, download payroll slips, view performance objectives, and join meetings directly from your dashboard.
+                  Access directory tools, review attendance schedules, view performance objectives, and join meetings directly from your dashboard.
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} className="quick-links">
                   <button className="btn btn-secondary" onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-profile`)}>My Profile</button>
                   <button className="btn btn-secondary" onClick={() => setRaiseTicketActive(true)}>Raise Ticket</button>
                   <button className="btn btn-secondary" onClick={() => { navigate(`/employee/${getEmpRouteHash()}/emp-attendance`); setAttSubTab('apply'); }}>Apply Leave</button>
-                  <button className="btn btn-secondary" onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>
+                  {FEATURES.payroll && <button className="btn btn-secondary" onClick={() => { setSelectedEmpForPayslip(user); setPayslipActive(true); }}>View Payslip</button>}
                 </div>
               </div>
               <div className="welcome-banner-img-container">
@@ -2005,6 +1964,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => navigate(`/employee/${getEmpRouteHash()}/emp-engagement`)}>Open Full Hub</button>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {displayDiscussions.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No messages yet. Start the conversation.</p>}
                     {displayDiscussions.slice(-8).map((msg) => (
                       <div key={msg._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.8rem' }}>
                         <img src={msg.senderAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="Avatar" />
@@ -2049,6 +2009,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     </button>
                   </div>
                   <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                    {displayMeetings.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No meetings scheduled.</p>}
                     {displayMeetings.map(m => {
                       let cardStyle = {
                         background: 'hsla(var(--warning), 0.15)'
@@ -2070,7 +2031,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                             <span className="badge badge-primary">{m.type || 'Virtual'}</span>
                           </div>
                           <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
-                            Agenda: Discuss sprint deliverables, whitelisting changes, and platform security checks.
+                            {m.agenda || m.notes ? `Agenda: ${m.agenda || m.notes}` : 'No agenda added.'}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '6px', marginTop: '2px' }}>
                             <span>Host: {m.host}</span>
@@ -3979,6 +3940,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         teammates={user.isTeamLead ? employees.filter(e => e.teamLeadId === user.id) : []}
       />
 
+      {FEATURES.payroll && (
       <PayslipModal
         active={payslipActive}
         onClose={() => setPayslipActive(false)}
@@ -3986,6 +3948,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         month={payslipMonth}
         showToast={showToast}
       />
+      )}
 
       {/* Simulated Mobile Notification Alert */}
       {showMobilePush && (

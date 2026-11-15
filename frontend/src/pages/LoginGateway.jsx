@@ -268,7 +268,7 @@ const LoginGateway = () => {
                   Your Work Directory, Simplified.
                 </h2>
                 <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.5 }}>
-                  Verify your active shift boards, check leave quotas, print audit-verified payslips, and check in to workspaces securely.
+                  Verify your active shift boards, check leave quotas, and check in to workspaces securely.
                 </p>
 
                 {/* Animated Office Desk Working Scene (Employee specific checkins/clocks) */}

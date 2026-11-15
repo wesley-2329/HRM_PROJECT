@@ -1,3 +1,4 @@
+import { FEATURES, isModuleEnabled } from '../features';
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -118,11 +119,12 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
     { title: 'My Profile', desc: 'Account details, contact info & security', path: '/hr/hr-profile', icon: 'fa-user', category: 'Account', keywords: 'profile account personal contact email password details' },
     { title: 'System Settings', desc: 'Platform configuration & access preferences', path: '/hr/settings-profile', icon: 'fa-gear', category: 'Account', keywords: 'settings system configuration access theme preferences dark mode' }
   ];
+  const visibleSearchIndex = searchIndex.filter(item => isModuleEnabled(item.path.split('/').pop()));
 
   const cleanQuery = searchQuery.trim().toLowerCase();
   const searchTokens = cleanQuery.split(/[\s,+/&|]+/).filter(t => t.length > 0 && t !== 'and' && t !== 'or' && t !== '&');
 
-  const filteredSuggestions = searchTokens.length === 0 ? searchIndex.slice(0, 6) : searchIndex.filter(item => {
+  const filteredSuggestions = searchTokens.length === 0 ? visibleSearchIndex.slice(0, 6) : visibleSearchIndex.filter(item => {
     const fullText = `${item.title} ${item.desc} ${item.category} ${item.keywords || ''}`.toLowerCase();
     if (fullText.includes(cleanQuery)) return true;
     return searchTokens.some(tok => fullText.includes(tok));
@@ -374,6 +376,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
                   <span className="hr-dropdown-item-desc">Monitor shift logs, leave approvals and rosters</span>
                 </div>
               </a>
+              {FEATURES.payroll && (
               <a
                 className={`hr-dropdown-item ${isTabActive('payroll-management') ? 'active' : ''}`}
                 onClick={() => handleNavClick('payroll-management')}
@@ -384,6 +387,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
                   <span className="hr-dropdown-item-desc">Handle payouts, tax deductions, and salary sheets</span>
                 </div>
               </a>
+              )}
               <a
                 className={`hr-dropdown-item ${isTabActive('document-vault') ? 'active' : ''}`}
                 onClick={() => handleNavClick('document-vault')}
@@ -736,7 +740,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
                     No features or tools matching &ldquo;{searchQuery}&rdquo;
                   </div>
                   <div style={{ fontSize: '0.72rem', marginTop: '8px', opacity: 0.85 }}>
-                    Try searching for <strong>payroll</strong>, <strong>leave</strong>, or <strong>attendance</strong>
+                    Try searching for <strong>leave</strong>, <strong>documents</strong>, or <strong>attendance</strong>
                   </div>
                 </div>
               )}

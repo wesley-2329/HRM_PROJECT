@@ -228,6 +228,7 @@ app.get('/api/health', async (req, res) => {
     status: 'ok',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     dataSource: status,
+    demo: (mongoose.connection.name || '').endsWith('_demo'), // preview runs on the demo database
     readyState: mongoose.connection.readyState,
     error: connectDB.getLastError ? connectDB.getLastError() : undefined,
     timestamp: new Date().toISOString(),

@@ -1,3 +1,4 @@
+import { isModuleEnabled } from './features';
 import React, { useState, useContext, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -34,6 +35,21 @@ export const decodeId = (hash) => {
   } catch (e) {
     return hash;
   }
+};
+
+// Small label so nobody mistakes the demo database for real records.
+const DemoDataBadge = () => {
+  const [isDemo, setIsDemo] = useState(false);
+  useEffect(() => {
+    api.get('/health').then(res => setIsDemo(!!res.data?.demo)).catch(() => {});
+  }, []);
+  if (!isDemo) return null;
+  return (
+    <div role="status" style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 9999, padding: '4px 10px', borderRadius: 999,
+      background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.02em' }}>
+      DEMO DATA
+    </div>
+  );
 };
 
 export const getAvatarUrl = (emp) => {
@@ -93,6 +109,10 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
   // Authorization checks
   useEffect(() => {
     if (!user) return;
+    if (!isModuleEnabled(overrideModule || module)) {
+      navigate(role === 'hr' ? '/hr/dashboard' : `/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
+      return;
+    }
     if (role === 'hr' && !isHRUser) {
       navigate(`/employee/${encodeId(user.id)}/emp-dashboard`, { replace: true });
     } else if (role === 'employee' && overrideModule !== 'org-structure') {
@@ -101,7 +121,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
         navigate(`/employee/${encodeId(user.id || user._id)}/emp-dashboard`, { replace: true });
       }
     }
-  }, [user, role, id, navigate, overrideModule, isHRUser]);
+  }, [user, role, id, navigate, overrideModule, isHRUser, module]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -318,6 +338,7 @@ const AppContent = () => {
         </div>
       )}
       <React.Suspense fallback={null}>
+      <DemoDataBadge />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={!user ? <LoginGateway /> : <Navigate to={defaultDashboard} replace />} />

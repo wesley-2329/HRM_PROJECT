@@ -211,56 +211,7 @@ const DocumentVault = ({ mode }) => {
     { name: 'Certifications Log', category: 'Academic' }
   ];
 
-  const activeDocs = vaultDocuments && vaultDocuments.length > 0 ? vaultDocuments : [
-    {
-      _id: 'mock-doc1',
-      documentName: 'Aadhaar Card Copy',
-      category: 'Identity',
-      employeeId: user?.id || 'mock-emp',
-      employeeName: user?.name || 'Aditya Singh',
-      status: 'Approved',
-      expiryDate: null,
-      updatedAt: '2026-06-15T12:00:00Z',
-      versions: [
-        { versionNumber: 1, fileName: 'Aadhaar_Card_Copy.pdf', uploadedBy: 'Self', changeSummary: 'Initial Aadhaar Card verification submission.' }
-      ],
-      auditTrail: [
-        { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'Aadhaar copy uploaded' }
-      ]
-    },
-    {
-      _id: 'mock-doc2',
-      documentName: 'PAN Card Copy',
-      category: 'Identity',
-      employeeId: user?.id || 'mock-emp',
-      employeeName: user?.name || 'Aditya Singh',
-      status: 'Approved',
-      expiryDate: null,
-      updatedAt: '2026-06-15T12:00:00Z',
-      versions: [
-        { versionNumber: 1, fileName: 'PAN_Card_Copy.pdf', uploadedBy: 'Self', changeSummary: 'PAN Card for TDS withholding configuration.' }
-      ],
-      auditTrail: [
-        { action: 'Upload', actor: 'System', timestamp: '2026-06-15T12:00:00Z', notes: 'PAN Card copy uploaded' }
-      ]
-    },
-    {
-      _id: 'mock-doc3',
-      documentName: 'Academic Graduation Certificate',
-      category: 'Academic',
-      employeeId: user?.id || 'mock-emp',
-      employeeName: user?.name || 'Aditya Singh',
-      status: 'Approved',
-      expiryDate: null,
-      updatedAt: '2026-06-16T12:00:00Z',
-      versions: [
-        { versionNumber: 1, fileName: 'Graduation_Certificate.pdf', uploadedBy: 'Self', changeSummary: 'Degree Certificate upload for verification check.' }
-      ],
-      auditTrail: [
-        { action: 'Upload', actor: 'System', timestamp: '2026-06-16T12:00:00Z', notes: 'Graduation degree uploaded' }
-      ]
-    }
-  ];
+  const activeDocs = vaultDocuments || [];
 
   // Map files for the current employee
   const myVaultDocs = standardDocumentTypes.map(std => {

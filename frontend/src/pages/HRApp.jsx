@@ -1,3 +1,4 @@
+import { FEATURES } from '../features';
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
@@ -795,9 +796,13 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         }
       } else {
         const res = await api.post('/employees', formData);
+        const { tempPassword, ...created } = res.data || {};
         showToast('Employee details saved successfully!', 'success');
-        if (res.data) {
-          setEmployees(prev => [res.data, ...prev.filter(e => e.id !== res.data.id && e._id !== res.data._id)]);
+        if (tempPassword) {
+          window.alert(`Temporary password for ${created.name} (${created.email}):\n\n${tempPassword}\n\nShare it securely. It is shown only once; the employee can change it after logging in.`);
+        }
+        if (created.id) {
+          setEmployees(prev => [created, ...prev.filter(e => e.id !== created.id && e._id !== created._id)]);
         }
       }
       setAddEmpActive(false);
@@ -977,8 +982,15 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     const late = recent.filter(t => t.status === 'Late Entry').length;
     const expected = headcountApproved * workdays;
     const pct = (n, d) => (d ? Math.round((n / d) * 100) : 0);
-    return { punctual: pct(present - late, present), late: pct(late, present), absent: Math.max(0, 100 - pct(present, expected)), hasData: present > 0 };
+    return { punctual: pct(present - late, present), late: pct(late, present), absent: Math.max(0, 100 - pct(present, expected)), hasData: present > 0, sinceStr, workdays };
   })();
+  const deptStats = [...new Set(employees.filter(e => e.status === 'Approved').map(e => e.dept).filter(Boolean))].sort().map(dept => {
+    const ids = new Set(employees.filter(e => e.dept === dept && e.status === 'Approved').map(e => e.id));
+    const recent = timesheets.filter(t => ids.has(t.empId) && t.date >= attendanceQuality.sinceStr && t.date <= todayUtc);
+    const present = new Set(recent.map(t => `${t.empId}|${t.date}`)).size;
+    const expected = ids.size * attendanceQuality.workdays;
+    return { dept, headcount: ids.size, rate: expected ? Math.min(100, Math.round((present / expected) * 100)) : null, late: recent.filter(t => t.status === 'Late Entry').length };
+  });
 
   return (
     <>
@@ -1934,62 +1946,43 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       {currentModule === 'reports-analytics' && (
         <section id="hr-mod-reports-analytics" className="hr-module">
           <div className="dashboard-layout">
-            <div className="card">
+            <div className="card" style={FEATURES.payroll ? undefined : { gridColumn: '1 / -1' }}>
               <div className="card-title">Headcount by Department</div>
               <div className="chart-container">
                 <canvas ref={hrDeptDonutRef}></canvas>
               </div>
             </div>
-            <div className="card">
-              <div className="card-title">Payroll Expenditure by Month (₹ Values)</div>
-              <div className="chart-container">
-                <canvas ref={hrPayrollBarRef}></canvas>
+            {FEATURES.payroll && (
+              <div className="card">
+                <div className="card-title">Payroll Expenditure by Month (₹ Values)</div>
+                <div className="chart-container">
+                  <canvas ref={hrPayrollBarRef}></canvas>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="card">
-            <div className="card-title">Corporate Audit Table (All Metrics)</div>
+            <div className="card-title">Department Summary</div>
             <div className="table-responsive">
               <table className="custom-table">
                 <thead>
                   <tr>
                     <th>Department</th>
                     <th>Headcount</th>
-                    <th>Avg Salary YTD</th>
-                    <th>Attendance Rate</th>
+                    <th>Attendance Rate (30 days)</th>
+                    <th>Late Entries (30 days)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>Engineering</td>
-                    <td>{employees.filter(e => e.dept === 'Engineering' && e.status === 'Approved').length}</td>
-                    <td>₹1,02,000</td>
-                    <td>96.5%</td>
-                  </tr>
-                  <tr>
-                    <td>Human Resources</td>
-                    <td>{employees.filter(e => e.dept === 'Human Resources' && e.status === 'Approved').length}</td>
-                    <td>₹85,000</td>
-                    <td>95%</td>
-                  </tr>
-                  <tr>
-                    <td>Finance</td>
-                    <td>{employees.filter(e => e.dept === 'Finance' && e.status === 'Approved').length}</td>
-                    <td>₹90,000</td>
-                    <td>97.2%</td>
-                  </tr>
-                  <tr>
-                    <td>Design</td>
-                    <td>{employees.filter(e => e.dept === 'Design' && e.status === 'Approved').length}</td>
-                    <td>₹78,000</td>
-                    <td>94%</td>
-                  </tr>
-                  <tr>
-                    <td>Marketing</td>
-                    <td>{employees.filter(e => e.dept === 'Marketing' && e.status === 'Approved').length}</td>
-                    <td>₹80,000</td>
-                    <td>93%</td>
-                  </tr>
+                  {deptStats.map(d => (
+                    <tr key={d.dept}>
+                      <td>{d.dept}</td>
+                      <td>{d.headcount}</td>
+                      <td>{d.rate === null ? '—' : `${d.rate}%`}</td>
+                      <td>{d.late}</td>
+                    </tr>
+                  ))}
+                  {deptStats.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No employees yet.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -2708,6 +2701,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                     <label>Portal Primary Access Name</label>
                     <input type="text" className="form-control" defaultValue="HR O HR Portal" />
                   </div>
+                  {FEATURES.payroll && (
                   <div className="form-group" style={{ marginTop: '16px' }}>
                     <label>Automatic Payslip Release Date</label>
                     <select className="form-control" defaultValue="1st of every Month">
@@ -2715,6 +2709,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                       <option>30th of every Month</option>
                     </select>
                   </div>
+                  )}
                   <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -2820,6 +2815,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       leaves={leaves}
     />
 
+    {FEATURES.payroll && (
     <PayslipModal
       active={payslipActive}
       onClose={() => setPayslipActive(false)}
@@ -2827,6 +2823,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       month={payslipMonth}
       showToast={showToast}
     />
+    )}
 
     <AddWalkinModal
       active={walkinActive}

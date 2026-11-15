@@ -1,3 +1,4 @@
+import { FEATURES, isModuleEnabled } from '../features';
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -143,11 +144,12 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
     { title: 'Account Settings', desc: 'Theme colors, security preferences & notifications', path: `/employee/${hashId}/emp-settings`, icon: 'fa-gear', category: 'Account', keywords: 'settings password change security preferences theme dark mode navbar' },
     { title: 'Alerts Center', desc: 'Direct messages, status changes & system alerts', path: `/employee/${hashId}/emp-notifications`, icon: 'fa-bell', category: 'Alerts', keywords: 'alerts notifications messages inbox updates reminders system' }
   ];
+  const visibleSearchIndex = searchIndex.filter(item => isModuleEnabled(item.path.split('/').pop()));
 
   const cleanQuery = searchQuery.trim().toLowerCase();
   const searchTokens = cleanQuery.split(/[\s,+/&|]+/).filter(t => t.length > 0 && t !== 'and' && t !== 'or' && t !== '&');
 
-  const filteredSuggestions = searchTokens.length === 0 ? searchIndex.slice(0, 6) : searchIndex.filter(item => {
+  const filteredSuggestions = searchTokens.length === 0 ? visibleSearchIndex.slice(0, 6) : visibleSearchIndex.filter(item => {
     const fullText = `${item.title} ${item.desc} ${item.category} ${item.keywords || ''}`.toLowerCase();
     if (fullText.includes(cleanQuery)) return true;
     return searchTokens.some(tok => fullText.includes(tok));
@@ -382,6 +384,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
                   <span className="emp-dropdown-item-desc">Log your work shifts and check leave schedules</span>
                 </div>
               </a>
+              {FEATURES.payroll && (
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-payroll') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-payroll')}
@@ -392,6 +395,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
                   <span className="emp-dropdown-item-desc">Download payslips and verify benefits payouts</span>
                 </div>
               </a>
+              )}
               <a
                 className={`emp-dropdown-item ${isTabActive('emp-documents') ? 'active' : ''}`}
                 onClick={() => handleNavClick('emp-documents')}
@@ -666,7 +670,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
                     No features or tools matching &ldquo;{searchQuery}&rdquo;
                   </div>
                   <div style={{ fontSize: '0.72rem', marginTop: '8px', opacity: 0.85 }}>
-                    Try searching for <strong>payroll</strong>, <strong>leave</strong>, or <strong>attendance</strong>
+                    Try searching for <strong>leave</strong>, <strong>documents</strong>, or <strong>attendance</strong>
                   </div>
                 </div>
               )}
