@@ -3,7 +3,7 @@ const router = express.Router();
 const ActionClosureTracker = require('../models/ActionClosureTracker');
 const Employee = require('../models/Employee');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to generate next action ID
 const generateActionId = async () => {
@@ -60,7 +60,7 @@ router.get('/', protect, async (req, res, next) => {
 
 // @route   POST /api/action-closures
 // @desc    Create a new action item entry
-router.post('/', protect, async (req, res, next) => {
+router.post('/', protect, adminOnly, async (req, res, next) => {
   const { observationType, department, description, priority, dueDate } = req.body;
 
   if (!dueDate) {
@@ -98,7 +98,7 @@ router.post('/', protect, async (req, res, next) => {
 
 // @route   PUT /api/action-closures/:id/assign
 // @desc    Assign owner and reviewer details
-router.put('/:id/assign', protect, async (req, res, next) => {
+router.put('/:id/assign', protect, adminOnly, async (req, res, next) => {
   const { assignedToId, responsibleDepartment, dueDate, reviewerId, remarks } = req.body;
 
   try {
@@ -163,6 +163,9 @@ router.put('/:id/progress', protect, async (req, res, next) => {
   try {
     const action = await ActionClosureTracker.findById(req.params.id);
     if (!action) return res.status(404).json({ message: 'Action item not found' });
+    if (req.user.role !== 'hr' && action.assignedToId !== req.user.id) {
+      return res.status(403).json({ message: 'Only HR or the assigned owner can update this action.' });
+    }
 
     if (action.status === 'Closed') {
       return res.status(400).json({ message: 'Closed action records cannot be modified' });

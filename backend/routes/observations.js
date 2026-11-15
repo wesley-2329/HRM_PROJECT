@@ -3,7 +3,7 @@ const router = express.Router();
 const ObservationTracker = require('../models/ObservationTracker');
 const Employee = require('../models/Employee');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to generate next observation ID
 const generateObsId = async () => {
@@ -111,7 +111,7 @@ router.post('/', protect, async (req, res, next) => {
 
 // @route   PUT /api/observations/:id/assign
 // @desc    Update assignee
-router.put('/:id/assign', protect, async (req, res, next) => {
+router.put('/:id/assign', protect, adminOnly, async (req, res, next) => {
   const { assigneeId, dueDate } = req.body;
 
   try {
@@ -177,6 +177,9 @@ router.put('/:id/action', protect, async (req, res, next) => {
   try {
     const obs = await ObservationTracker.findById(req.params.id);
     if (!obs) return res.status(404).json({ message: 'Observation not found' });
+    if (req.user.role !== 'hr' && obs.assigneeId !== req.user.id) {
+      return res.status(403).json({ message: 'Only HR or the assignee can record corrective action.' });
+    }
 
     if (obs.status === 'Closed') {
       return res.status(400).json({ message: 'Closed observation cannot be edited' });

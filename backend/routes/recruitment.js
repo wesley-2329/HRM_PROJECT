@@ -15,7 +15,7 @@ const RecruitmentMaster = require('../models/RecruitmentMaster');
 const RecruitmentAuditLog = require('../models/RecruitmentAuditLog');
 const PositionMaster = require('../models/PositionMaster');
 const Department = require('../models/Department');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 const { saveUpload, uploadFileFilter, UPLOAD_MAX_BYTES } = require('../utils/gridStore');
 
 // Multer storage for Resumes
@@ -218,7 +218,7 @@ router.get('/requisitions', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/requisitions', protect, async (req, res, next) => {
+router.post('/requisitions', protect, adminOnly, async (req, res, next) => {
   try {
     // Idempotency check: prevent rapid duplicate creation within 10 seconds
     const existingDuplicate = await ManpowerRequisition.findOne({
@@ -284,7 +284,7 @@ router.post('/requisitions', protect, async (req, res, next) => {
 });
 
 // Requisition Status & Multi-step Workflow Transitions
-router.put('/requisitions/:id/approval', protect, async (req, res, next) => {
+router.put('/requisitions/:id/approval', protect, adminOnly, async (req, res, next) => {
   try {
     const { action, comments, approverName, approverId } = req.body; // action: 'Approve', 'Reject', 'Hold', 'Send Back'
     const reqDoc = await ManpowerRequisition.findById(req.params.id);
@@ -337,7 +337,7 @@ router.put('/requisitions/:id/approval', protect, async (req, res, next) => {
 });
 
 // Assign Recruiter
-router.put('/requisitions/:id/assign', protect, async (req, res, next) => {
+router.put('/requisitions/:id/assign', protect, adminOnly, async (req, res, next) => {
   try {
     const { recruiterId, recruiterName } = req.body;
     const reqDoc = await ManpowerRequisition.findById(req.params.id);
@@ -376,7 +376,7 @@ router.get('/positions', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/positions', protect, async (req, res, next) => {
+router.post('/positions', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     if (['candidate', 'employee'].includes(role)) {
@@ -401,7 +401,7 @@ router.post('/positions', protect, async (req, res, next) => {
   }
 });
 
-router.put('/positions/:id/approve', protect, async (req, res, next) => {
+router.put('/positions/:id/approve', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     if (!['super_admin', 'hr', 'hr_admin', 'management'].includes(role)) {
@@ -479,7 +479,7 @@ router.get('/budgets', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/budgets', protect, async (req, res, next) => {
+router.post('/budgets', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     if (['candidate', 'employee'].includes(role)) {
@@ -544,7 +544,7 @@ router.post('/budgets', protect, async (req, res, next) => {
   }
 });
 
-router.put('/budgets/:id/approve', protect, async (req, res, next) => {
+router.put('/budgets/:id/approve', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     if (!['super_admin', 'hr', 'hr_admin', 'management', 'finance'].includes(role)) {
@@ -694,7 +694,7 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
   }
 });
 
-router.put('/resumes/:id/trigger-interview', protect, async (req, res, next) => {
+router.put('/resumes/:id/trigger-interview', protect, adminOnly, async (req, res, next) => {
   try {
     const { interviewDate, remarks } = req.body;
     const analysis = await ResumeAnalysis.findById(req.params.id);
@@ -754,7 +754,7 @@ router.get('/candidates', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/candidates', protect, async (req, res, next) => {
+router.post('/candidates', protect, adminOnly, async (req, res, next) => {
   try {
     const newCandidate = new Candidate({
       ...req.body,
@@ -773,7 +773,7 @@ router.post('/candidates', protect, async (req, res, next) => {
   }
 });
 
-router.put('/candidates/:id/stage', protect, async (req, res, next) => {
+router.put('/candidates/:id/stage', protect, adminOnly, async (req, res, next) => {
   try {
     const { stage, stageRejectedAt, rejectionReason, interviewStage } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -801,7 +801,7 @@ router.put('/candidates/:id/stage', protect, async (req, res, next) => {
 });
 
 // Offer Release
-router.put('/candidates/:id/offer', protect, async (req, res, next) => {
+router.put('/candidates/:id/offer', protect, adminOnly, async (req, res, next) => {
   try {
     const { offeredCtc, joiningDate, offeredDesignation } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -832,7 +832,7 @@ router.put('/candidates/:id/offer', protect, async (req, res, next) => {
 });
 
 // Onboarding Joining Confirmation
-router.put('/candidates/:id/join', protect, async (req, res, next) => {
+router.put('/candidates/:id/join', protect, adminOnly, async (req, res, next) => {
   try {
     const cand = await Candidate.findById(req.params.id);
     if (!cand) return res.status(404).json({ message: 'Candidate not found' });
@@ -857,7 +857,7 @@ router.put('/candidates/:id/join', protect, async (req, res, next) => {
 });
 
 // Communication Log Entry
-router.post('/candidates/:id/communication', protect, async (req, res, next) => {
+router.post('/candidates/:id/communication', protect, adminOnly, async (req, res, next) => {
   try {
     const { medium, message } = req.body;
     const cand = await Candidate.findById(req.params.id);
@@ -887,7 +887,7 @@ router.get('/talent-pool', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/talent-pool', protect, async (req, res, next) => {
+router.post('/talent-pool', protect, adminOnly, async (req, res, next) => {
   try {
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
@@ -905,7 +905,7 @@ router.post('/talent-pool', protect, async (req, res, next) => {
   }
 });
 
-router.put('/talent-pool/:id/reactivate', protect, async (req, res, next) => {
+router.put('/talent-pool/:id/reactivate', protect, adminOnly, async (req, res, next) => {
   try {
     const { reason } = req.body;
     const item = await TalentPool.findById(req.params.id);
@@ -963,7 +963,7 @@ router.get('/costs', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/costs', protect, async (req, res, next) => {
+router.post('/costs', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     if (['candidate', 'employee'].includes(role)) {
@@ -1036,7 +1036,7 @@ router.get('/masters', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/masters', protect, async (req, res, next) => {
+router.post('/masters', protect, adminOnly, async (req, res, next) => {
   try {
     const newMaster = new RecruitmentMaster(req.body);
     await newMaster.save();

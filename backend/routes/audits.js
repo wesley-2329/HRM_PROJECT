@@ -339,7 +339,7 @@ router.put('/:id/verify-close', protect, adminOnly, async (req, res, next) => {
 
 // Alias API Requirements support:
 // 1. Create Audit POST /api/audits/create
-router.post('/create', protect, async (req, res, next) => {
+router.post('/create', protect, adminOnly, async (req, res, next) => {
   const { name, type, category, date, department, auditorName } = req.body;
   try {
     const count = await Audit.countDocuments();
@@ -371,7 +371,7 @@ router.post('/create', protect, async (req, res, next) => {
 });
 
 // 2. Add Observation POST /api/audits/observation
-router.post('/observation', protect, async (req, res, next) => {
+router.post('/observation', protect, adminOnly, async (req, res, next) => {
   const { auditId, observation, severity, evidenceUrl } = req.body;
   if (!auditId) return res.status(400).json({ message: 'auditId is required' });
   try {
@@ -395,7 +395,7 @@ router.post('/observation', protect, async (req, res, next) => {
 });
 
 // 3. Update Action PUT /api/audits/action
-router.put('/action', protect, async (req, res, next) => {
+router.put('/action', protect, adminOnly, async (req, res, next) => {
   const { auditId, actionId, status, closureRemarks } = req.body;
   if (!auditId || !actionId) return res.status(400).json({ message: 'auditId and actionId are required' });
   try {

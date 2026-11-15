@@ -27,42 +27,19 @@ const ExitModule = ({ searchQuery = '' }) => {
     completedExits: 18
   });
 
-  const [resignations, setResignations] = useState([
-    { exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', department: 'Engineering', designation: 'Software Engineer', resignationDate: '2026-08-01', proposedLwd: '2026-10-31', approvedLwd: '2026-10-31', reasonCategory: 'Career Growth', status: 'Notice Active', exitCoordinator: 'Gara Nandini' },
-    { exitId: 'EXT-1002', employeeId: 'EMP-1005', employeeName: 'Sneha Roy', department: 'Sales & Marketing', designation: 'Account Executive', resignationDate: '2026-08-10', proposedLwd: '2026-09-10', approvedLwd: '2026-09-10', reasonCategory: 'Personal / Relocation', status: 'Manager Review', exitCoordinator: 'Gara Nandini' },
-    { exitId: 'EXT-1003', employeeId: 'EMP-1006', employeeName: 'Vikram Patel', department: 'Operations', designation: 'Ops Specialist', resignationDate: '2026-08-12', proposedLwd: '2026-09-12', approvedLwd: '2026-09-12', reasonCategory: 'Higher Studies', status: 'HR Review', exitCoordinator: 'Gara Nandini' }
-  ]);
+  const [resignations, setResignations] = useState([]);
 
-  const [noticePeriods, setNoticePeriods] = useState([
-    { noticeId: 'NTC-301', exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', policyNoticeDays: 90, remainingDays: 72, noticeStartDate: '2026-08-01', lastWorkingDay: '2026-10-31', buyoutRequested: false, status: 'Active' },
-    { noticeId: 'NTC-302', exitId: 'EXT-1002', employeeId: 'EMP-1005', employeeName: 'Sneha Roy', policyNoticeDays: 30, remainingDays: 22, noticeStartDate: '2026-08-10', lastWorkingDay: '2026-09-10', buyoutRequested: true, status: 'Active' }
-  ]);
+  const [noticePeriods, setNoticePeriods] = useState([]);
 
-  const [clearances, setClearances] = useState([
-    { clearanceId: 'CLR-401', exitId: 'EXT-1001', departmentName: 'Reporting Manager', approverName: 'Akhil Sirivella', clearanceStatus: 'Approved', remarks: 'Knowledge Transfer 100% complete.', actionDate: '2026-08-05' },
-    { clearanceId: 'CLR-402', exitId: 'EXT-1001', departmentName: 'IT Department', approverName: 'IT Admin', clearanceStatus: 'Approved', remarks: 'Laptop returned, AD access revoked.', actionDate: '2026-08-06' },
-    { clearanceId: 'CLR-403', exitId: 'EXT-1001', departmentName: 'Finance', approverName: 'Finance Exec', clearanceStatus: 'Pending', remarks: 'Loan recovery verification in progress.', actionDate: null },
-    { clearanceId: 'CLR-404', exitId: 'EXT-1001', departmentName: 'Admin & Security', approverName: 'Security Officer', clearanceStatus: 'Approved', remarks: 'Access card & locker key received.', actionDate: '2026-08-07' }
-  ]);
+  const [clearances, setClearances] = useState([]);
 
-  const [assets, setAssets] = useState([
-    { assetReturnId: 'AST-501', exitId: 'EXT-1001', assetName: 'MacBook Pro 16"', assetSerialNo: 'C02GX9921', category: 'IT', status: 'Returned', recoveryAmount: 0 },
-    { assetReturnId: 'AST-502', exitId: 'EXT-1001', assetName: 'Employee ID Card & Access Badge', assetSerialNo: 'BADGE-9912', category: 'Security', status: 'Returned', recoveryAmount: 0 },
-    { assetReturnId: 'AST-503', exitId: 'EXT-1001', assetName: 'Corporate Mobile SIM', assetSerialNo: 'SIM-987654', category: 'IT', status: 'Returned', recoveryAmount: 0 }
-  ]);
+  const [assets, setAssets] = useState([]);
 
-  const [interviews, setInterviews] = useState([
-    { interviewId: 'INT-601', exitId: 'EXT-1001', employeeName: 'Anil Kumar', interviewerName: 'Gara Nandini', scheduledDate: '2026-08-08', overallSatisfactionScore: 4, primaryReason: 'Career Growth', feedbackComments: 'Great culture and supportive team, moving for an executive lead role.', status: 'Completed' }
-  ]);
+  const [interviews, setInterviews] = useState([]);
 
-  const [settlements, setSettlements] = useState([
-    { settlementId: 'FFS-701', exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', lastWorkingDay: '2026-10-31', pendingSalary: 45000, leaveEncashmentAmount: 32000, gratuityAmount: 125000, totalEarnings: 202000, noticePayRecovery: 0, loanRecovery: 0, totalDeductions: 0, netSettlementAmount: 202000, clearanceVerified: true, status: 'HR Approved' }
-  ]);
+  const [settlements, setSettlements] = useState([]);
 
-  const [historyLogs, setHistoryLogs] = useState([
-    { auditId: 'AUD-EXIT-101', action: 'RESIGNATION_SUBMITTED', module: 'Exit Workflow & F&F', entityId: 'EXT-1001', performedBy: 'Anil Kumar', userRole: 'Employee', changes: 'Submitted resignation with proposed LWD 2026-10-31', timestamp: '2026-08-01 09:30 AM' },
-    { auditId: 'AUD-EXIT-102', action: 'MANAGER_APPROVED', module: 'Exit Workflow & F&F', entityId: 'EXT-1001', performedBy: 'Akhil Sirivella', userRole: 'Reporting Manager', changes: 'Approved resignation request, recommended LWD 2026-10-31', timestamp: '2026-08-03 02:15 PM' }
-  ]);
+  const [historyLogs, setHistoryLogs] = useState([]);
 
   // Modal States
   const [showResignModal, setShowResignModal] = useState(false);
@@ -106,22 +83,22 @@ const ExitModule = ({ searchQuery = '' }) => {
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
       } else if (activeTab === 'ess-portal' || activeTab === 'hr-exits') {
         const res = await api.get('/exit/resignations');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setResignations(res.data);
+        if (Array.isArray(res.data)) setResignations(res.data);
       } else if (activeTab === 'notice-period') {
         const res = await api.get('/exit/notice-period');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setNoticePeriods(res.data);
+        if (Array.isArray(res.data)) setNoticePeriods(res.data);
       } else if (activeTab === 'clearance') {
         const res = await api.get('/exit/clearance');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setClearances(res.data);
+        if (Array.isArray(res.data)) setClearances(res.data);
       } else if (activeTab === 'assets') {
         const res = await api.get('/exit/assets');
         if (res.data && res.data.assets) setAssets(res.data.assets);
       } else if (activeTab === 'interview') {
         const res = await api.get('/exit/interview');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setInterviews(res.data);
+        if (Array.isArray(res.data)) setInterviews(res.data);
       } else if (activeTab === 'settlement') {
         const res = await api.get('/exit/settlement');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           const seen = new Set();
           const deduped = [];
           for (const s of res.data) {
@@ -135,10 +112,10 @@ const ExitModule = ({ searchQuery = '' }) => {
         }
       } else if (activeTab === 'history') {
         const res = await api.get('/exit/history');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setHistoryLogs(res.data);
+        if (Array.isArray(res.data)) setHistoryLogs(res.data);
       }
     } catch (err) {
-      console.warn('Using stateful fallback for exit module:', err.message);
+      showToast('Could not load exit module data. Please refresh.', 'error');
     }
   };
 
@@ -155,22 +132,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       setResignations([res.data, ...resignations]);
       setShowResignModal(false);
     } catch (err) {
-      const mockItem = {
-        exitId: 'EXT-' + Math.floor(Math.random() * 9000 + 1000),
-        employeeId: user?.id || 'EMP-1004',
-        employeeName: user?.name || 'Anil Kumar',
-        department: 'Engineering',
-        designation: 'Software Engineer',
-        resignationDate: new Date().toISOString().split('T')[0],
-        proposedLwd: newResignation.proposedLwd || '2026-11-15',
-        approvedLwd: newResignation.proposedLwd || '2026-11-15',
-        reasonCategory: newResignation.reasonCategory,
-        status: 'Submitted',
-        exitCoordinator: 'Gara Nandini'
-      };
-      setResignations([mockItem, ...resignations]);
-      showToast('Resignation submitted (offline mode).', 'success');
-      setShowResignModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -186,20 +148,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       setInterviews([res.data, ...interviews]);
       setShowInterviewModal(false);
     } catch (err) {
-      const mockItem = {
-        interviewId: 'INT-' + Date.now(),
-        exitId: newInterview.exitId,
-        employeeName: newInterview.employeeName,
-        interviewerName: 'Gara Nandini',
-        scheduledDate: new Date().toISOString().split('T')[0],
-        overallSatisfactionScore: Number(newInterview.overallSatisfactionScore),
-        primaryReason: newInterview.primaryReason,
-        feedbackComments: newInterview.feedbackComments,
-        status: 'Completed'
-      };
-      setInterviews([mockItem, ...interviews]);
-      showToast('Exit interview submitted (offline mode).', 'success');
-      setShowInterviewModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -244,36 +193,9 @@ const ExitModule = ({ searchQuery = '' }) => {
           return;
         }
       } catch (refetchErr) {
-        // Server unreachable: fall through to the offline row below
+        // Server unreachable: nothing to show
       }
-      const earnings = Number(newFfs.pendingSalary) + Number(newFfs.leaveEncashmentAmount) + Number(newFfs.gratuityAmount);
-      const deductions = Number(newFfs.noticePayRecovery) + Number(newFfs.loanRecovery);
-      const mockItem = {
-        settlementId: 'FFS-' + (newFfs.exitId ? newFfs.exitId.replace('EXT-', '') : Date.now()),
-        exitId: newFfs.exitId,
-        employeeId: newFfs.employeeId,
-        employeeName: newFfs.employeeName,
-        lastWorkingDay: '2026-10-31',
-        pendingSalary: Number(newFfs.pendingSalary),
-        leaveEncashmentAmount: Number(newFfs.leaveEncashmentAmount),
-        gratuityAmount: Number(newFfs.gratuityAmount),
-        totalEarnings: earnings,
-        noticePayRecovery: Number(newFfs.noticePayRecovery),
-        loanRecovery: Number(newFfs.loanRecovery),
-        totalDeductions: deductions,
-        netSettlementAmount: earnings - deductions,
-        clearanceVerified: true,
-        status: 'HR Approved'
-      };
-      setSettlements((prev) => {
-        const exitKey = mockItem.exitId;
-        const filtered = prev.filter(
-          (s) => s.settlementId !== mockItem.settlementId && s.exitId !== exitKey
-        );
-        return [mockItem, ...filtered];
-      });
-      showToast('F&F Settlement calculated (offline mode).', 'success');
-      setShowFfsModal(false);
+      showToast('Could not reach the server. The settlement was not saved; please try again.', 'error');
     } finally {
       setIsSubmitting(false);
       submittingFfsRef.current = false;

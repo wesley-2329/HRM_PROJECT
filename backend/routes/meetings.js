@@ -89,6 +89,9 @@ router.put('/:id/status', protect, async (req, res, next) => {
     if (!meeting) {
       return res.status(404).json({ message: 'Meeting not found' });
     }
+    if (req.user.role !== 'hr' && meeting.empId !== req.user.id) {
+      return res.status(403).json({ message: 'Only the organiser or HR can update this meeting.' });
+    }
 
     if (status) meeting.status = status;
     if (notes) meeting.notes = notes;

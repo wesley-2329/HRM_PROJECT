@@ -33,55 +33,25 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
     lwfApplicableEmployees: 520
   });
 
-  const [overviewActs, setOverviewActs] = useState([
-    { actId: 'ACT-PF', actCode: 'EPF-1952', actName: 'Employees Provident Fund Act 1952', governingBody: 'EPFO', frequency: 'Monthly', nextDueDate: '2026-08-15', currentStatus: 'Compliant', riskLevel: 'Low' },
-    { actId: 'ACT-ESI', actCode: 'ESI-1948', actName: 'Employees State Insurance Act 1948', governingBody: 'ESIC', frequency: 'Monthly', nextDueDate: '2026-08-15', currentStatus: 'Compliant', riskLevel: 'Low' },
-    { actId: 'ACT-PT', actCode: 'PT-ACT', actName: 'Karnataka Professional Tax Act', governingBody: 'Commercial Tax Dept', frequency: 'Monthly', nextDueDate: '2026-08-20', currentStatus: 'Compliant', riskLevel: 'Low' },
-    { actId: 'ACT-LWF', actCode: 'LWF-ACT', actName: 'Labour Welfare Fund Act', governingBody: 'Labour Welfare Board', frequency: 'Half-Yearly', nextDueDate: '2026-12-31', currentStatus: 'Compliant', riskLevel: 'Low' }
-  ]);
+  const [overviewActs, setOverviewActs] = useState([]);
 
-  const [calendarEvents, setCalendarEvents] = useState([
-    { eventId: 'EVT-101', title: 'Monthly PF ECR Deposit (Jul 2026)', statutoryType: 'PF', dueDate: '2026-08-15', responsibleOfficer: 'Payroll Exec', status: 'Upcoming' },
-    { eventId: 'EVT-102', title: 'ESI Monthly Contribution Filing', statutoryType: 'ESI', dueDate: '2026-08-15', responsibleOfficer: 'Payroll Exec', status: 'Upcoming' },
-    { eventId: 'EVT-103', title: 'Karnataka PT Monthly Return', statutoryType: 'PT', dueDate: '2026-08-20', responsibleOfficer: 'Compliance Officer', status: 'Upcoming' }
-  ]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
-  const [pfProfiles, setPfProfiles] = useState([
-    { pfProfileId: 'PF-001', employeeId: 'EMP-1001', employeeName: 'Gara Nandini', uan: '100988776655', pfWage: 15000, vpfStatus: false, kycStatus: 'Verified', nominationStatus: 'Completed' },
-    { pfProfileId: 'PF-002', employeeId: 'EMP-1002', employeeName: 'Akhil Sirivella', uan: '100988776656', pfWage: 15000, vpfStatus: true, kycStatus: 'Verified', nominationStatus: 'Completed' }
-  ]);
+  const [pfProfiles, setPfProfiles] = useState([]);
 
-  const [esiProfiles, setEsiProfiles] = useState([
-    { esiProfileId: 'ESI-001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', ipNumber: '3124567890', grossWage: 18500, benefitPeriod: 'Apr-Sep', status: 'Active' }
-  ]);
+  const [esiProfiles, setEsiProfiles] = useState([]);
 
-  const [challans, setChallans] = useState([
-    { challanId: 'CHL-801', challanNumber: 'CHL-PF-202607', statutoryType: 'PF', wageMonth: 'Jul 2026', totalAmount: 1850000, employeeCount: 480, paymentStatus: 'Paid', dueDate: '2026-08-15' },
-    { challanId: 'CHL-802', challanNumber: 'CHL-ESI-202607', statutoryType: 'ESI', wageMonth: 'Jul 2026', totalAmount: 320000, employeeCount: 210, paymentStatus: 'Paid', dueDate: '2026-08-15' },
-    { challanId: 'CHL-803', challanNumber: 'CHL-PT-202607', statutoryType: 'PT', wageMonth: 'Jul 2026', totalAmount: 104000, employeeCount: 520, paymentStatus: 'Generated', dueDate: '2026-08-20' }
-  ]);
+  const [challans, setChallans] = useState([]);
 
-  const [returns, setReturns] = useState([
-    { returnId: 'RET-901', returnType: 'PF ECR', frequency: 'Monthly', period: 'Jul 2026', ackNumber: 'ACK-EPF-9921', filingStatus: 'Filed', filingDueDate: '2026-08-15' },
-    { returnId: 'RET-902', returnType: 'ESI Monthly Return', frequency: 'Monthly', period: 'Jul 2026', ackNumber: 'ACK-ESI-8812', filingStatus: 'Filed', filingDueDate: '2026-08-15' }
-  ]);
+  const [returns, setReturns] = useState([]);
 
-  const [notices, setNotices] = useState([
-    { noticeId: 'NTC-701', noticeNumber: 'EPFO/BANG/2026/04', department: 'EPFO', issueDate: '2026-07-10', dueDate: '2026-08-25', priority: 'High', description: 'UAN KYC verification audit clarification requested', status: 'Under Review' }
-  ]);
+  const [notices, setNotices] = useState([]);
 
-  const [inspections, setInspections] = useState([
-    { inspectionId: 'INS-601', authority: 'Labour Department Karnataka', location: 'HQ Bangalore', inspectorName: 'Mr. R. V. Swamy', inspectionDate: '2026-06-15', findings: 'All registers verified. No deviations observed.', closureStatus: 'Closed' }
-  ]);
+  const [inspections, setInspections] = useState([]);
 
-  const [documents, setDocuments] = useState([
-    { docId: 'DOC-501', title: 'PF ECR Payment Receipt Jul 2026', category: 'Challan Receipt', fileUrl: '/uploads/compliance/pf_receipt.pdf', uploadedBy: 'Payroll Exec' },
-    { docId: 'DOC-502', title: 'Factory License Renewal Certificate 2026-27', category: 'Labour License', fileUrl: '/uploads/compliance/factory_license.pdf', uploadedBy: 'Compliance Officer' }
-  ]);
+  const [documents, setDocuments] = useState([]);
 
-  const [historyLogs, setHistoryLogs] = useState([
-    { auditId: 'AUD-COMP-101', action: 'PF_CHALLAN_PAID', module: 'Statutory Compliance', entityId: 'CHL-801', performedBy: 'Finance Manager', userRole: 'Finance Manager', changes: 'Paid PF Challan of ₹1,850,000 via Net Banking', timestamp: '2026-08-14 11:00 AM' }
-  ]);
+  const [historyLogs, setHistoryLogs] = useState([]);
 
   // Modals
   const [showChallanModal, setShowChallanModal] = useState(false);
@@ -159,10 +129,10 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
       } else if (activeTab === 'overview') {
         const res = await api.get('/compliance/overview');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setOverviewActs(res.data);
+        if (Array.isArray(res.data)) setOverviewActs(res.data);
       } else if (activeTab === 'calendar') {
         const res = await api.get('/compliance/calendar');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setCalendarEvents(res.data);
+        if (Array.isArray(res.data)) setCalendarEvents(res.data);
       } else if (activeTab === 'pf') {
         const res = await api.get('/compliance/pf');
         if (res.data && res.data.profiles) setPfProfiles(res.data.profiles);
@@ -171,22 +141,22 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
         if (res.data && res.data.profiles) setEsiProfiles(res.data.profiles);
       } else if (activeTab === 'challans') {
         const res = await api.get('/compliance/challans');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setChallans(res.data);
+        if (Array.isArray(res.data)) setChallans(res.data);
       } else if (activeTab === 'returns') {
         const res = await api.get('/compliance/returns');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setReturns(res.data);
+        if (Array.isArray(res.data)) setReturns(res.data);
       } else if (activeTab === 'notices') {
         const res = await api.get('/compliance/notices');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setNotices(res.data);
+        if (Array.isArray(res.data)) setNotices(res.data);
       } else if (activeTab === 'inspections') {
         const res = await api.get('/compliance/inspections');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setInspections(res.data);
+        if (Array.isArray(res.data)) setInspections(res.data);
       } else if (activeTab === 'documents') {
         const res = await api.get('/compliance/documents');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setDocuments(res.data);
+        if (Array.isArray(res.data)) setDocuments(res.data);
       } else if (activeTab === 'history') {
         const res = await api.get('/compliance/history');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           const parsedLogs = res.data.map((item) => {
             const rawChanges = item.changes || item.details;
             if (typeof rawChanges === 'string') {
@@ -203,7 +173,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
         }
       }
     } catch (err) {
-      console.warn('Using stateful fallback for statutory compliance module:', err.message);
+      showToast('Could not load statutory compliance module data. Please refresh.', 'error');
     }
   };
 
@@ -215,19 +185,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       setChallans([res.data, ...challans]);
       setShowChallanModal(false);
     } catch (err) {
-      const mockItem = {
-        challanId: 'CHL-' + Date.now(),
-        challanNumber: 'CHL-NO-' + Math.floor(Math.random() * 900000 + 100000),
-        statutoryType: newChallan.statutoryType,
-        wageMonth: newChallan.wageMonth,
-        totalAmount: Number(newChallan.totalAmount),
-        employeeCount: Number(newChallan.employeeCount),
-        paymentStatus: 'Generated',
-        dueDate: '2026-08-15'
-      };
-      setChallans([mockItem, ...challans]);
-      showToast('Challan generated (offline mode).', 'success');
-      setShowChallanModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -239,19 +197,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       setNotices([res.data, ...notices]);
       setShowNoticeModal(false);
     } catch (err) {
-      const mockItem = {
-        noticeId: 'NTC-' + Date.now(),
-        noticeNumber: newNotice.noticeNumber || 'NOT-' + Math.floor(Math.random() * 80000),
-        department: newNotice.department,
-        issueDate: new Date().toISOString().split('T')[0],
-        dueDate: '2026-09-15',
-        priority: newNotice.priority,
-        description: newNotice.description,
-        status: 'Received'
-      };
-      setNotices([mockItem, ...notices]);
-      showToast('Government notice logged (offline mode).', 'success');
-      setShowNoticeModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -263,18 +209,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       setInspections([res.data, ...inspections]);
       setShowInspectionModal(false);
     } catch (err) {
-      const mockItem = {
-        inspectionId: 'INS-' + Date.now(),
-        authority: newInspection.authority,
-        location: newInspection.location,
-        inspectorName: newInspection.inspectorName || 'Inspector',
-        inspectionDate: new Date().toISOString().split('T')[0],
-        findings: newInspection.findings || 'Inspection completed cleanly.',
-        closureStatus: 'Closed'
-      };
-      setInspections([mockItem, ...inspections]);
-      showToast('Inspection record logged (offline mode).', 'success');
-      setShowInspectionModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -286,16 +221,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       setDocuments([res.data, ...documents]);
       setShowDocModal(false);
     } catch (err) {
-      const mockItem = {
-        docId: 'DOC-COMP-' + Date.now(),
-        title: newDoc.title,
-        category: newDoc.category,
-        fileUrl: '/uploads/compliance/sample.pdf',
-        uploadedBy: 'Compliance Officer'
-      };
-      setDocuments([mockItem, ...documents]);
-      showToast('Document uploaded (offline mode).', 'success');
-      setShowDocModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 

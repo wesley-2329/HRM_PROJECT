@@ -31,38 +31,17 @@ const BudgetingModule = ({ searchQuery = '' }) => {
     utilizationPercentage: '62.8%'
   });
 
-  const [budgets, setBudgets] = useState([
-    { budgetId: 'BDG-1001', financialYear: 'FY 2026-2027', department: 'Engineering', costCenter: 'CC-ENG-101', budgetCategory: 'Manpower', budgetType: 'Operational', proposedBudget: 4500000, approvedBudget: 4200000, forecastBudget: 4200000, utilizedBudget: 2800000, status: 'Approved', version: 1 },
-    { budgetId: 'BDG-1002', financialYear: 'FY 2026-2027', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', budgetCategory: 'Recruitment', budgetType: 'Operational', proposedBudget: 2800000, approvedBudget: 2500000, forecastBudget: 2500000, utilizedBudget: 1600000, status: 'Approved', version: 1 },
-    { budgetId: 'BDG-1003', financialYear: 'FY 2026-2027', department: 'Human Resources', costCenter: 'CC-HR-103', budgetCategory: 'Welfare', budgetType: 'Operational', proposedBudget: 1500000, approvedBudget: 1400000, forecastBudget: 1400000, utilizedBudget: 920000, status: 'Approved', version: 2 },
-    { budgetId: 'BDG-1004', financialYear: 'FY 2026-2027', department: 'Operations', costCenter: 'CC-OPS-104', budgetCategory: 'Training', budgetType: 'Operational', proposedBudget: 2200000, approvedBudget: 2000000, forecastBudget: 2000000, utilizedBudget: 1250000, status: 'Approved', version: 1 }
-  ]);
+  const [budgets, setBudgets] = useState([]);
 
-  const [allocations, setAllocations] = useState([
-    { allocationId: 'ALLOC-201', budgetId: 'BDG-1001', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower Budget', allocatedAmount: 4200000, utilizedAmount: 2800000, remainingAmount: 1400000, utilizationPercentage: 66.7, status: 'Active' },
-    { allocationId: 'ALLOC-202', budgetId: 'BDG-1002', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment Budget', allocatedAmount: 2500000, utilizedAmount: 1600000, remainingAmount: 900000, utilizationPercentage: 64.0, status: 'Active' },
-    { allocationId: 'ALLOC-203', budgetId: 'BDG-1003', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Welfare Budget', allocatedAmount: 1400000, utilizedAmount: 920000, remainingAmount: 480000, utilizationPercentage: 65.7, status: 'Active' }
-  ]);
+  const [allocations, setAllocations] = useState([]);
 
-  const [manpowerBudgets, setManpowerBudgets] = useState([
-    { budgetId: 'MPB-301', financialYear: 'FY 2026-2027', department: 'Engineering', designation: 'Senior Software Engineer', currentHeadcount: 24, approvedHeadcount: 30, proposedHeadcount: 32, vacancyCount: 6, avgMonthlySalary: 140000, annualSalaryBudget: 50400000, recruitmentBudget: 360000, status: 'Approved' },
-    { budgetId: 'MPB-302', financialYear: 'FY 2026-2027', department: 'Sales & Marketing', designation: 'Account Executive', currentHeadcount: 15, approvedHeadcount: 20, proposedHeadcount: 22, vacancyCount: 5, avgMonthlySalary: 85000, annualSalaryBudget: 20400000, recruitmentBudget: 250000, status: 'Approved' }
-  ]);
+  const [manpowerBudgets, setManpowerBudgets] = useState([]);
 
-  const [recruitmentExpenses, setRecruitmentExpenses] = useState([
-    { expenseId: 'RCX-401', expenseCategory: 'Job Portal Subscription', vendorName: 'Naukri.com Enterprise', invoiceNumber: 'INV-NK-9921', expenseDate: '2026-07-15', amount: 450000, taxAmount: 81000, totalAmount: 531000, paymentStatus: 'Paid', hiringSource: 'Portal' },
-    { expenseId: 'RCX-402', expenseCategory: 'Recruitment Agency', vendorName: 'Talent Scout Global', invoiceNumber: 'INV-TS-3341', expenseDate: '2026-08-01', amount: 350000, taxAmount: 63000, totalAmount: 413000, paymentStatus: 'Paid', hiringSource: 'Agency' }
-  ]);
+  const [recruitmentExpenses, setRecruitmentExpenses] = useState([]);
 
-  const [welfareExpenses, setWelfareExpenses] = useState([
-    { expenseId: 'WFX-501', welfareActivity: 'Annual Health Camp 2026', welfareCategory: 'Health Check-up', vendorName: 'Apollo Diagnostics', expenseDate: '2026-06-20', invoiceNumber: 'INV-AP-1082', invoiceAmount: 280000, taxAmount: 50400, totalAmount: 330400, beneficiariesCount: 220, paymentStatus: 'Paid' },
-    { expenseId: 'WFX-502', welfareActivity: 'Executive Transport Subsidy', welfareCategory: 'Transportation', vendorName: 'Uber Corporate', expenseDate: '2026-07-31', invoiceNumber: 'INV-UB-7782', invoiceAmount: 185000, taxAmount: 33300, totalAmount: 218300, beneficiariesCount: 140, paymentStatus: 'Paid' }
-  ]);
+  const [welfareExpenses, setWelfareExpenses] = useState([]);
 
-  const [historyLogs, setHistoryLogs] = useState([
-    { auditId: 'AUD-901', action: 'BUDGET_APPROVED', module: 'HR Budgeting', entityId: 'BDG-1001', performedBy: 'Finance Manager', userRole: 'Finance Manager', changes: { department: 'Engineering', proposedBudget: 4000000, approvedBudget: 4200000, status: 'Approved' }, timestamp: '2026-08-01 10:30 AM' },
-    { auditId: 'AUD-902', action: 'ALLOCATION_TRANSFERRED', module: 'HR Budgeting', entityId: 'ALLOC-202', performedBy: 'HR Director', userRole: 'HR Manager', changes: { sourceDepartment: 'Operations', targetDepartment: 'Sales Recruitment', transferAmount: 150000 }, timestamp: '2026-08-10 02:15 PM' }
-  ]);
+  const [historyLogs, setHistoryLogs] = useState([]);
 
   const [masters, setMasters] = useState({
     financialYears: [
@@ -83,36 +62,14 @@ const BudgetingModule = ({ searchQuery = '' }) => {
   });
 
   // Cost Analytics State (Bug 070)
-  const [costAnalytics, setCostAnalytics] = useState([
-    { analyticsId: 'CST-001', financialYear: 'FY 2026-2027', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', budgetAmount: 4200000, actualCost: 2800000, varianceAmount: 1400000, variancePercentage: 33.3, headcount: 48, costPerHead: 87500, burnRate: 66.7, rating: 'High Efficiency', color: '#10b981' },
-    { analyticsId: 'CST-002', financialYear: 'FY 2026-2027', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', budgetAmount: 2500000, actualCost: 1600000, varianceAmount: 900000, variancePercentage: 36.0, headcount: 32, costPerHead: 50000, burnRate: 64.0, rating: 'Optimal', color: '#3b82f6' },
-    { analyticsId: 'CST-003', financialYear: 'FY 2026-2027', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', budgetAmount: 1400000, actualCost: 920000, varianceAmount: 480000, variancePercentage: 34.3, headcount: 18, costPerHead: 51100, burnRate: 65.7, rating: 'Optimal', color: '#3b82f6' },
-    { analyticsId: 'CST-004', financialYear: 'FY 2026-2027', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', budgetAmount: 2000000, actualCost: 1250000, varianceAmount: 750000, variancePercentage: 37.5, headcount: 24, costPerHead: 52000, burnRate: 62.5, rating: 'High Efficiency', color: '#10b981' },
-    { analyticsId: 'CST-005', financialYear: 'FY 2026-2027', department: 'Finance & Legal', costCenter: 'CC-FIN-105', category: 'Compliance & Audit', budgetAmount: 1200000, actualCost: 780000, varianceAmount: 420000, variancePercentage: 35.0, headcount: 12, costPerHead: 56000, burnRate: 65.0, rating: 'Optimal', color: '#3b82f6' }
-  ]);
+  const [costAnalytics, setCostAnalytics] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState(null);
 
   // Forecast & Variance State (Bug 071)
-  const [forecastList, setForecastList] = useState([
-    { forecastId: 'FC-101', budgetId: 'BDG-1001', financialYear: 'FY 2026-2027', period: 'Annual', scenario: 'Expected', bestCase: 11200000, expectedCase: 11850000, worstCase: 12600000, costSavings: 650000, accuracy: 94.6 },
-    { forecastId: 'FC-102', budgetId: 'BDG-1002', financialYear: 'FY 2026-2027', period: 'Quarterly', scenario: 'Expected', bestCase: 2750000, expectedCase: 2960000, worstCase: 3150000, costSavings: 140000, accuracy: 95.2 },
-    { forecastId: 'FC-103', budgetId: 'BDG-1003', financialYear: 'FY 2026-2027', period: 'Monthly', scenario: 'Best Case', bestCase: 920000, expectedCase: 987000, worstCase: 1050000, costSavings: 67000, accuracy: 96.1 }
-  ]);
-  const [varianceList, setVarianceList] = useState([
-    { varianceId: 'VAR-201', budgetId: 'BDG-1001', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', plannedBudget: 4200000, actualExpense: 2800000, variance: 1400000, variancePercentage: 33.3, varianceType: 'Favorable', rootCause: 'Delayed Q2 lateral hiring ramp', actionPlan: 'Accelerate campus onboarding in Q3' },
-    { varianceId: 'VAR-202', budgetId: 'BDG-1002', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', plannedBudget: 2500000, actualExpense: 1600000, variance: 900000, variancePercentage: 36.0, varianceType: 'Favorable', rootCause: 'Optimized direct referral channel over agencies', actionPlan: 'Maintain internal referral program' },
-    { varianceId: 'VAR-203', budgetId: 'BDG-1003', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', plannedBudget: 1400000, actualExpense: 920000, variance: 480000, variancePercentage: 34.3, varianceType: 'Favorable', rootCause: 'Group insurance renegotiation rebate', actionPlan: 'Lock in tiered premium discount' },
-    { varianceId: 'VAR-204', budgetId: 'BDG-1004', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', plannedBudget: 2000000, actualExpense: 1250000, variance: 750000, variancePercentage: 37.5, varianceType: 'Favorable', rootCause: 'Digital LMS adoption reduced venue expenses', actionPlan: 'Expand cloud certification tracks' },
-    { varianceId: 'VAR-205', budgetId: 'BDG-1005', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Overtime & Allowances', plannedBudget: 650000, actualExpense: 680000, variance: -30000, variancePercentage: -4.6, varianceType: 'Unfavorable', rootCause: 'Weekend migration and deployment sprints', actionPlan: 'Implement sprint rota to balance shift caps' }
-  ]);
-  const [quarterlyProjections, setQuarterlyProjections] = useState([
-    { cat: 'Manpower & Salaries', q1: 6100000, q2: 6120000, q3: 6150000, q4: 6130000, total: 24500000, budget: 25000000, status: '+₹500,000 Favorable', color: '#10b981' },
-    { cat: 'Recruitment & Sourcing', q1: 480000, q2: 510000, q3: 440000, q4: 420000, total: 1850000, budget: 1900000, status: '+₹50,000 Favorable', color: '#10b981' },
-    { cat: 'Employee Welfare & Benefits', q1: 340000, q2: 370000, q3: 360000, q4: 350000, total: 1420000, budget: 1450000, status: '+₹30,000 Favorable', color: '#10b981' },
-    { cat: 'Training & Skill Development', q1: 210000, q2: 260000, q3: 250000, q4: 230000, total: 950000, budget: 980000, status: '+₹30,000 Favorable', color: '#10b981' },
-    { cat: 'Overtime & Allowances', q1: 170000, q2: 180000, q3: 165000, q4: 165000, total: 680000, budget: 650000, status: '-₹30,000 Variance Warning', color: '#ef4444' }
-  ]);
+  const [forecastList, setForecastList] = useState([]);
+  const [varianceList, setVarianceList] = useState([]);
+  const [quarterlyProjections, setQuarterlyProjections] = useState([]);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState(null);
 
@@ -225,10 +182,10 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
       } else if (activeTab === 'planning') {
         const res = await api.get('/budget/planning');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setBudgets(res.data);
+        if (Array.isArray(res.data)) setBudgets(res.data);
       } else if (activeTab === 'allocation') {
         const res = await api.get('/budget/allocation');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) setAllocations(res.data);
+        if (Array.isArray(res.data)) setAllocations(res.data);
       } else if (activeTab === 'manpower') {
         const res = await api.get('/budget/manpower');
         if (res.data && res.data.manpower) setManpowerBudgets(res.data.manpower);
@@ -240,7 +197,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         if (res.data && res.data.expenses) setWelfareExpenses(res.data.expenses);
       } else if (activeTab === 'history') {
         const res = await api.get('/budget/history');
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        if (Array.isArray(res.data)) {
           const parsedLogs = res.data.map((item) => {
             if (typeof item.changes === 'string') {
               try {
@@ -259,11 +216,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         setAnalyticsError(null);
         try {
           const res = await api.get('/budget/analytics');
-          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          if (Array.isArray(res.data)) {
             setCostAnalytics(res.data);
           }
         } catch (err) {
-          console.warn('Analytics fetch error, retaining initial state:', err.message);
+          setAnalyticsError('Could not load cost analytics. Please refresh.');
         } finally {
           setAnalyticsLoading(false);
         }
@@ -273,15 +230,11 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         try {
           const res = await api.get('/budget/forecast');
           if (res.data) {
-            if (Array.isArray(res.data.forecasts) && res.data.forecasts.length > 0) {
-              setForecastList(res.data.forecasts);
-            }
-            if (Array.isArray(res.data.variances) && res.data.variances.length > 0) {
-              setVarianceList(res.data.variances);
-            }
+            if (Array.isArray(res.data.forecasts)) setForecastList(res.data.forecasts);
+            if (Array.isArray(res.data.variances)) setVarianceList(res.data.variances);
           }
         } catch (err) {
-          console.warn('Forecast fetch error, retaining initial state:', err.message);
+          setForecastError('Could not load forecasts. Please refresh.');
         } finally {
           setForecastLoading(false);
         }
@@ -300,7 +253,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         else if (activeTab === 'recruitment-expense' || activeTab === 'recruitment-budget') setRecruitmentExpenses([]);
         return;
       }
-      console.warn('Using stateful fallback for budget module:', err.message);
+      showToast('Could not load budget module data. Please refresh.', 'error');
     }
   };
 
@@ -312,28 +265,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setBudgets([res.data, ...budgets]);
       setShowPlanningModal(false);
     } catch (err) {
-      // Bug 055: an auth failure must not be masked as an offline save
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        showToast('Session expired or not authorized. Please log in again.', 'error');
-        return;
-      }
-      const mockNew = {
-        budgetId: 'BDG-' + Date.now(),
-        financialYear: filterFY,
-        department: newBudget.department,
-        costCenter: newBudget.costCenter,
-        budgetCategory: newBudget.budgetCategory,
-        budgetType: 'Operational',
-        proposedBudget: Number(newBudget.proposedBudget),
-        approvedBudget: Number(newBudget.proposedBudget),
-        forecastBudget: Number(newBudget.proposedBudget),
-        utilizedBudget: 0,
-        status: 'Draft',
-        version: 1
-      };
-      setBudgets([mockNew, ...budgets]);
-      showToast('Budget draft saved (offline mode).', 'success');
-      setShowPlanningModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -345,26 +277,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setRecruitmentExpenses([res.data, ...recruitmentExpenses]);
       setShowRecruitmentModal(false);
     } catch (err) {
-      // Bug 055: an auth failure must not be masked as an offline save
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        showToast('Session expired or not authorized. Please log in again.', 'error');
-        return;
-      }
-      const mockItem = {
-        expenseId: 'RCX-' + Date.now(),
-        expenseCategory: newRecExpense.expenseCategory,
-        vendorName: newRecExpense.vendorName,
-        invoiceNumber: newRecExpense.invoiceNumber || 'INV-' + Math.floor(Math.random()*10000),
-        expenseDate: new Date().toISOString().split('T')[0],
-        amount: Number(newRecExpense.amount),
-        taxAmount: Number(newRecExpense.taxAmount),
-        totalAmount: Number(newRecExpense.amount) + Number(newRecExpense.taxAmount),
-        paymentStatus: 'Paid',
-        hiringSource: newRecExpense.hiringSource
-      };
-      setRecruitmentExpenses([mockItem, ...recruitmentExpenses]);
-      showToast('Recruitment expense recorded (offline mode).', 'success');
-      setShowRecruitmentModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -376,27 +289,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setWelfareExpenses([res.data, ...welfareExpenses]);
       setShowWelfareModal(false);
     } catch (err) {
-      // Bug 055: an auth failure must not be masked as an offline save
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        showToast('Session expired or not authorized. Please log in again.', 'error');
-        return;
-      }
-      const mockItem = {
-        expenseId: 'WFX-' + Date.now(),
-        welfareActivity: newWelExpense.welfareActivity || 'Employee Program',
-        welfareCategory: newWelExpense.welfareCategory,
-        vendorName: newWelExpense.vendorName || 'Vendor Co.',
-        expenseDate: new Date().toISOString().split('T')[0],
-        invoiceNumber: 'INV-' + Math.floor(Math.random()*10000),
-        invoiceAmount: Number(newWelExpense.invoiceAmount),
-        taxAmount: Number(newWelExpense.taxAmount),
-        totalAmount: Number(newWelExpense.invoiceAmount) + Number(newWelExpense.taxAmount),
-        beneficiariesCount: Number(newWelExpense.beneficiariesCount),
-        paymentStatus: 'Paid'
-      };
-      setWelfareExpenses([mockItem, ...welfareExpenses]);
-      showToast('Welfare expense logged (offline mode).', 'success');
-      setShowWelfareModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -408,27 +301,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       setManpowerBudgets([res.data, ...manpowerBudgets]);
       setShowManpowerModal(false);
     } catch (err) {
-      // Bug 055: an auth failure must not be masked as an offline save
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        showToast('Session expired or not authorized. Please log in again.', 'error');
-        return;
-      }
-      const mockItem = {
-        budgetId: 'MPB-' + Date.now(),
-        financialYear: filterFY,
-        department: newManpower.department,
-        designation: newManpower.designation,
-        currentHeadcount: Number(newManpower.currentHeadcount),
-        approvedHeadcount: Number(newManpower.approvedHeadcount),
-        proposedHeadcount: Number(newManpower.proposedHeadcount),
-        vacancyCount: Number(newManpower.approvedHeadcount) - Number(newManpower.currentHeadcount),
-        avgMonthlySalary: Number(newManpower.avgMonthlySalary),
-        annualSalaryBudget: Number(newManpower.approvedHeadcount) * Number(newManpower.avgMonthlySalary) * 12,
-        status: 'Submitted'
-      };
-      setManpowerBudgets([mockItem, ...manpowerBudgets]);
-      showToast('Manpower budget submitted (offline mode).', 'success');
-      setShowManpowerModal(false);
+      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
     }
   };
 
@@ -744,6 +617,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {activeTab === 'analytics' && (
         <div data-testid="cost-analytics-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {analyticsError && <div className="card" style={{ color: 'hsl(var(--danger))' }}>{analyticsError}</div>}
           {/* Top Analytics Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px' }}>
@@ -979,6 +853,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {activeTab === 'forecast' && (
         <div data-testid="forecast-variance-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {forecastError && <div className="card" style={{ color: 'hsl(var(--danger))' }}>{forecastError}</div>}
           {/* Top Forecast Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px' }}>
@@ -1054,6 +929,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {quarterlyProjections.length === 0 && <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>No quarterly spend has been recorded yet.</p>}
                     {quarterlyProjections.map(q => {
                       const totalBudget = q.budget || 25000000;
                       const q1Pct = Math.min(25, Math.round((q.q1 / totalBudget) * 100));
@@ -1193,6 +1069,9 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                       </tr>
                     </thead>
                     <tbody>
+                      {quarterlyProjections.length === 0 && (
+                        <tr><td colSpan="8" style={{ textAlign: 'center', color: 'hsl(var(--text-secondary))' }}>No quarterly projections yet.</td></tr>
+                      )}
                       {quarterlyProjections.map((row) => (
                         <tr key={row.cat}>
                           <td><strong>{row.cat}</strong></td>

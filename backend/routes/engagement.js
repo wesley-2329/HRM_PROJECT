@@ -10,7 +10,7 @@ const CommunicationReadLog = require('../models/CommunicationReadLog');
 const EngagementCategoryMaster = require('../models/EngagementCategoryMaster');
 const EngagementAuditLog = require('../models/EngagementAuditLog');
 const Notification = require('../models/Notification');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Helper to log audit actions
 const logAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -352,7 +352,7 @@ router.post('/helpdesk', protect, async (req, res, next) => {
 });
 
 // Update Ticket Status / Assign / Resolve / Rate
-router.put('/helpdesk/:id', protect, async (req, res, next) => {
+router.put('/helpdesk/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const ticket = await HelpdeskTicket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
@@ -480,7 +480,7 @@ router.post('/welfare', protect, async (req, res, next) => {
 });
 
 // Approve / Verify Welfare Request
-router.put('/welfare/:id/status', protect, async (req, res, next) => {
+router.put('/welfare/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
     const reqItem = await WelfareRequest.findById(req.params.id);
     if (!reqItem) return res.status(404).json({ message: 'Welfare request not found' });
@@ -609,7 +609,7 @@ router.get('/communications', protect, async (req, res, next) => {
 });
 
 // Publish Communication
-router.post('/communications', protect, async (req, res, next) => {
+router.post('/communications', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await Communication.countDocuments();
     const communicationId = `COM-${1000 + count + 1}`;

@@ -78,13 +78,14 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   });
 
   // Goal Form State
+  // Forms start empty: the employee must be picked, and text is written by the user (no sample content).
   const initialGoalForm = {
-    employeeId: 'EMP-1002',
-    employeeName: 'Akhil Sirivella',
-    department: 'Human Resources',
-    designation: 'HR Manager',
-    kraName: 'HRMS Performance & Appraisal Framework Deployment',
-    target: 'Deploy performance & appraisal system with 100% test coverage',
+    employeeId: '',
+    employeeName: '',
+    department: '',
+    designation: '',
+    kraName: '',
+    target: '',
     weightage: 25,
     priority: 'Critical',
     startDate: new Date().toISOString().split('T')[0],
@@ -94,15 +95,16 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   const submittingGoalRef = useRef(false);
 
   // Mid-Year Review Form State
+  // Mid-year review is a self-review: always the logged-in employee.
   const [midYearForm, setMidYearForm] = useState({
-    employeeId: 'EMP-1002',
-    employeeName: 'Akhil Sirivella',
-    department: 'Human Resources',
-    designation: 'HR Manager',
-    selfGoalAchievement: 'Delivered ATS and Core HR ahead of schedule.',
-    keyAchievements: 'Built automated approval stepper workflows.',
-    majorChallenges: 'Cross-functional dependencies.',
-    developmentNeeds: 'Financial Strategy Masterclass'
+    employeeId: user?.id || '',
+    employeeName: user?.name || '',
+    department: user?.dept || '',
+    designation: user?.designation || '',
+    selfGoalAchievement: '',
+    keyAchievements: '',
+    majorChallenges: '',
+    developmentNeeds: ''
   });
 
   // Annual Assessment Form State
@@ -111,54 +113,54 @@ const PerformanceModule = ({ searchQuery = '' }) => {
     managerKpiScore: 90,
     managerCompetencyScore: 95,
     managerBehaviourScore: 90,
-    strengths: 'Technical leadership, rapid execution.',
-    improvementAreas: 'Strategic long-term budgeting.',
+    strengths: '',
+    improvementAreas: '',
     recommendedAction: 'Promotion & Increment'
   });
 
   // Promotion Form State
   const initialPromoForm = {
-    employeeId: 'EMP-1002',
-    employeeName: 'Akhil Sirivella',
-    currentDepartment: 'Human Resources',
-    currentDesignation: 'HR Manager',
-    currentGrade: 'Grade C',
-    proposedDesignation: 'Senior HR Director',
-    proposedGrade: 'Grade D',
+    employeeId: '',
+    employeeName: '',
+    currentDepartment: '',
+    currentDesignation: '',
+    currentGrade: '',
+    proposedDesignation: '',
+    proposedGrade: '',
     effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    justification: 'Exceeded performance goals with 5.0 Rating in Annual Review.'
+    justification: ''
   };
   const [promoForm, setPromoForm] = useState(initialPromoForm);
   const submittingPromoRef = useRef(false);
 
   // Increment Form State
   const initialIncForm = {
-    employeeId: 'EMP-1002',
-    employeeName: 'Akhil Sirivella',
-    currentDepartment: 'Human Resources',
-    currentDesignation: 'HR Manager',
-    currentGrade: 'Grade C',
-    currentCtc: 1800000,
-    incrementPercentage: 15,
+    employeeId: '',
+    employeeName: '',
+    currentDepartment: '',
+    currentDesignation: '',
+    currentGrade: '',
+    currentCtc: '',
+    incrementPercentage: '',
     effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     revisionType: 'Annual Increment',
-    reason: 'Outstanding Performance Rating (5.0)'
+    reason: ''
   };
   const [incForm, setIncForm] = useState(initialIncForm);
   const submittingIncRef = useRef(false);
 
   // PIP Form State
   const initialPipForm = {
-    employeeId: 'EMP-1009',
-    employeeName: 'Rohan Das',
-    department: 'Sales & Marketing',
-    designation: 'Sales Executive',
+    employeeId: '',
+    employeeName: '',
+    department: '',
+    designation: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     durationDays: 60,
-    performanceGap: 'Lead conversion rate 45% below quota target.',
-    expectedPerformance: 'Achieve minimum 85% lead conversion quota.',
-    actionPlan: 'Weekly sales coaching and daily pipeline CRM updates.'
+    performanceGap: '',
+    expectedPerformance: '',
+    actionPlan: ''
   };
   const [pipForm, setPipForm] = useState(initialPipForm);
   const submittingPipRef = useRef(false);
@@ -181,7 +183,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
         api.get('/performance/promotions').catch(() => ({ data: [] })),
         api.get('/performance/increments').catch(() => ({ data: [] })),
         api.get('/performance/pip').catch(() => ({ data: [] })),
-        api.get('/performance/audit-logs').catch(() => ({ data: [] }))
+        user?.role === 'hr' ? api.get('/performance/audit-logs').catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
       ]);
 
       setDashboardData(dashRes.data);

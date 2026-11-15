@@ -52,8 +52,10 @@ const TransferManagement = () => {
       setTransfers(res.data.data);
       setSummary(res.data.summary);
 
-      const histRes = await api.get('/transfers/history');
-      setHistories(histRes.data);
+      if (isHr) {
+        const histRes = await api.get('/transfers/history');
+        setHistories(histRes.data);
+      }
 
       const deptsRes = await api.get('/org/departments');
       setDepts(deptsRes.data);

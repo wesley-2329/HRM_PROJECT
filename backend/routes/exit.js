@@ -201,13 +201,19 @@ router.get('/interview', protect, async (req, res, next) => {
 router.post('/interview', protect, async (req, res, next) => {
   try {
     const body = req.body;
+    // Employees record their own interview; HR may record it for the exiting employee.
+    const employeeId = req.user.role === 'hr' ? body.employeeId : req.user.id;
+    const employeeName = req.user.role === 'hr' ? body.employeeName : req.user.name;
+    const score = Number(body.overallSatisfactionScore);
+    if (!body.exitId || !employeeId) return res.status(400).json({ message: 'Exit ID and employee are required.' });
+    if (!(score >= 1 && score <= 5)) return res.status(400).json({ message: 'Overall satisfaction must be between 1 and 5.' });
     const interviewId = 'INT-' + Date.now();
     const newInterview = await ExitInterview.create({
       interviewId,
-      exitId: body.exitId || 'EXT-1001',
-      employeeId: body.employeeId || 'EMP-1004',
-      employeeName: body.employeeName || 'Anil Kumar',
-      overallSatisfactionScore: Number(body.overallSatisfactionScore) || 4,
+      exitId: body.exitId,
+      employeeId,
+      employeeName,
+      overallSatisfactionScore: score,
       primaryReason: body.primaryReason || 'Career Growth',
       feedbackComments: body.feedbackComments || '',
       status: 'Completed'

@@ -41,7 +41,8 @@ before(async () => {
   await require('../config/db')();
   await Employee.deleteMany({ email: /@test\.local$/ });
   for (const u of users) {
-    await Employee.create({ ...u, name: u.id, dept: 'Engineering', joined: '2024-01-01', aadhaar: '123412341234', phone: '9999999999', status: 'Approved' });
+    await Employee.create({ ...u, name: u.id, dept: 'Engineering', joined: '2024-01-01', aadhaar: '123412341234', phone: '9999999999', status: 'Approved',
+      functionalManagerId: u.id === 'T-OTHER' ? 'T-EMP' : '' });
   }
   server = app.listen(0);
   base = `http://127.0.0.1:${server.address().port}`;
@@ -52,6 +53,11 @@ before(async () => {
 
 after(async () => {
   await Employee.deleteMany({ email: /@test\.local$/ });
+  await mongoose.connection.collection('promotionrequests').deleteMany({ employeeId: /^T-/ });
+  await mongoose.connection.collection('piprecords').deleteMany({ employeeId: /^T-/ });
+  await mongoose.connection.collection('trainingprograms').deleteMany({ programId: /^T-PRG/ });
+  await mongoose.connection.collection('meetings').deleteMany({ title: /^T-MEET/ });
+  await mongoose.connection.collection('exitinterviews').deleteMany({ exitId: /^T-EXT/ });
   await SalaryRevisionRequest.deleteMany({ employeeId: /^T-/ });
   await TransferRequest.deleteMany({ employeeId: /^T-/ });
   await Leave.deleteMany({ empId: /^T-/ });
@@ -189,4 +195,30 @@ test('leave rules: dates, overlap, balance, cancel, revoke', async () => {
   assert.strictEqual(rv.data.status, 'Revoked');
   const notes = await call('GET', '/api/notifications', other);
   assert.ok(JSON.stringify(notes.data).includes('revoked'));
+});
+
+test('performance: only HR or the reporting manager can recommend; employee needs an employeeId', async () => {
+  const body = { employeeId: 'T-OTHER', proposedDesignation: 'Senior Engineer', proposedGrade: 'G5', effectiveDate: '2027-01-01', justification: 'Delivered', currentSalary: 100, proposedSalary: 120 };
+  assert.strictEqual((await call('POST', '/api/performance/promotions', emp, {})).status, 400, 'no employee');
+  assert.strictEqual((await call('POST', '/api/performance/promotions', other, { ...body, employeeId: 'T-EMP' })).status, 403, 'not their manager');
+  const byMgr = await call('POST', '/api/performance/promotions', emp, body);
+  assert.ok([200, 201].includes(byMgr.status), 'manager may recommend: ' + JSON.stringify(byMgr.data).slice(0, 200));
+  assert.strictEqual((await call('POST', '/api/performance/pip', other, { employeeId: 'T-HR' })).status, 403);
+});
+
+test('training: enrolment respects capacity', async () => {
+  const P = mongoose.connection.collection('trainingprograms');
+  await P.insertOne({ programId: 'T-PRG-1', title: 'T-PRG Capacity', capacity: 1, enrolledEmployees: [], status: 'Scheduled', scheduleDate: new Date(Date.now() + 864e6) });
+  assert.strictEqual((await call('POST', '/api/training/programs/T-PRG-1/enroll', emp)).status, 200);
+  const full = await call('POST', '/api/training/programs/T-PRG-1/enroll', other);
+  assert.strictEqual(full.status, 400, JSON.stringify(full.data));
+  assert.match(full.data.message, /full/);
+  assert.strictEqual((await call('POST', '/api/training/programs/a.*/enroll', other)).status, 404, 'search text is not a regex');
+});
+
+test('exit interview: employee records own; required fields validated', async () => {
+  assert.strictEqual((await call('POST', '/api/exit/interview', emp, {})).status, 400);
+  const r = await call('POST', '/api/exit/interview', emp, { exitId: 'T-EXT-1', employeeId: 'T-OTHER', overallSatisfactionScore: 3, primaryReason: 'Relocation' });
+  assert.strictEqual(r.status, 201, JSON.stringify(r.data));
+  assert.strictEqual(r.data.employeeId, 'T-EMP', 'cannot file for someone else');
 });

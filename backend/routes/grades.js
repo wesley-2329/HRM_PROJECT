@@ -182,7 +182,7 @@ router.get('/movements', protect, async (req, res, next) => {
 
 // @route   POST /api/grades/movements
 // @desc    Create grade movement request (Promotion/Same Grade justification)
-router.post('/movements', protect, async (req, res, next) => {
+router.post('/movements', protect, adminOnly, async (req, res, next) => {
   const { employeeId, proposedGrade, proposedBand, reason, effectiveDate, attachmentUrl } = req.body;
 
   if (!employeeId || !proposedGrade || !proposedBand || !effectiveDate) {

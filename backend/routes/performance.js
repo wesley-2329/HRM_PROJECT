@@ -17,6 +17,14 @@ const Employee = require('../models/Employee');
 const Counter = require('../models/Counter');
 const { protect, adminOnly } = require('../middleware/auth');
 
+// HR, or the employee's reporting manager, may act on that employee's performance records.
+const canManage = async (req, employeeId) => {
+  if (req.user.role === 'hr') return true;
+  const emp = await Employee.findOne({ id: employeeId }).select('functionalManagerId');
+  return !!emp && emp.functionalManagerId === req.user.id;
+};
+const forbid = (res) => res.status(403).json({ message: 'Only HR or the reporting manager can do this.' });
+
 // Audit Logger Helper
 const logPerfAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
   try {
@@ -258,7 +266,8 @@ router.get('/goals', protect, async (req, res, next) => {
 
 router.post('/goals', protect, async (req, res, next) => {
   try {
-    const employeeId = req.body.employeeId || 'EMP-1002';
+    const employeeId = req.body.employeeId || req.user.id;
+    if (employeeId !== req.user.id && !(await canManage(req, employeeId))) return forbid(res);
     const kraName = (req.body.kraName || 'KRA Objective').trim();
     const weightage = Number(req.body.weightage) || 20;
 
@@ -364,6 +373,7 @@ router.put('/goals/:id/progress', protect, async (req, res, next) => {
     const { achievementValue, achievementPct, goalStatus, employeeComments, managerComments } = req.body;
     const goal = await EmployeeGoal.findById(req.params.id);
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
+    if (goal.employeeId !== req.user.id && !(await canManage(req, goal.employeeId))) return forbid(res);
 
     const prev = goal.toObject();
     if (achievementValue !== undefined) goal.achievementValue = achievementValue;
@@ -394,6 +404,7 @@ router.put('/goals/:id/revision', protect, async (req, res, next) => {
     const { revisedGoal, revisedTarget, reason } = req.body;
     const goal = await EmployeeGoal.findById(req.params.id);
     if (!goal) return res.status(404).json({ message: 'Goal not found' });
+    if (!(await canManage(req, goal.employeeId))) return forbid(res);
 
     goal.revisionHistory.push({
       originalGoal: goal.kraName,
@@ -429,8 +440,11 @@ router.get('/mid-year-reviews', protect, async (req, res, next) => {
 
 router.post('/mid-year-reviews', protect, async (req, res, next) => {
   try {
+    const employeeId = req.body.employeeId || req.user.id;
+    if (employeeId !== req.user.id && !(await canManage(req, employeeId))) return forbid(res);
     const newReview = new MidYearReview({
       ...req.body,
+      employeeId,
       status: 'Submitted'
     });
     await newReview.save();
@@ -446,6 +460,7 @@ router.put('/mid-year-reviews/:id/manager-review', protect, async (req, res, nex
     const { managerRating, strengths, improvementAreas, managerComments, developmentPlan } = req.body;
     const review = await MidYearReview.findById(req.params.id);
     if (!review) return res.status(404).json({ message: 'Mid-year review not found' });
+    if (!(await canManage(req, review.employeeId))) return forbid(res);
 
     review.managerRating = managerRating || review.managerRating;
     review.strengths = strengths || review.strengths;
@@ -475,8 +490,11 @@ router.get('/annual-reviews', protect, async (req, res, next) => {
 
 router.post('/annual-reviews', protect, async (req, res, next) => {
   try {
+    const employeeId = req.body.employeeId || req.user.id;
+    if (employeeId !== req.user.id && !(await canManage(req, employeeId))) return forbid(res);
     const newAnnual = new AnnualReview({
       ...req.body,
+      employeeId,
       status: 'Self-Appraisal Submitted'
     });
     await newAnnual.save();
@@ -492,6 +510,7 @@ router.put('/annual-reviews/:id/manager-assessment', protect, async (req, res, n
     const { managerKraScore, managerKpiScore, managerCompetencyScore, managerBehaviourScore, strengths, improvementAreas, recommendedAction } = req.body;
     const review = await AnnualReview.findById(req.params.id);
     if (!review) return res.status(404).json({ message: 'Annual review not found' });
+    if (!(await canManage(req, review.employeeId))) return forbid(res);
 
     const prev = review.toObject();
     if (managerKraScore !== undefined) review.managerKraScore = managerKraScore;
@@ -541,6 +560,7 @@ router.put('/annual-reviews/:id/acknowledge', protect, async (req, res, next) =>
     const { comments } = req.body;
     const review = await AnnualReview.findById(req.params.id);
     if (!review) return res.status(404).json({ message: 'Annual review not found' });
+    if (review.employeeId !== req.user.id) return res.status(403).json({ message: 'You can only acknowledge your own review.' });
 
     review.acknowledgedByEmployee = true;
     review.employeeAcknowledgementDate = new Date();
@@ -583,7 +603,9 @@ router.get('/promotions', protect, async (req, res, next) => {
 
 router.post('/promotions', protect, async (req, res, next) => {
   try {
-    const employeeId = req.body.employeeId || 'EMP-1002';
+    const employeeId = req.body.employeeId;
+    if (!employeeId) return res.status(400).json({ message: 'Select an employee.' });
+    if (!(await canManage(req, employeeId))) return forbid(res);
     const proposedDesignation = (req.body.proposedDesignation || '').trim();
     const proposedGrade = (req.body.proposedGrade || '').trim();
 
@@ -752,7 +774,9 @@ router.get('/increments', protect, async (req, res, next) => {
 
 router.post('/increments', protect, async (req, res, next) => {
   try {
-    const employeeId = req.body.employeeId || 'EMP-1002';
+    const employeeId = req.body.employeeId;
+    if (!employeeId) return res.status(400).json({ message: 'Select an employee.' });
+    if (!(await canManage(req, employeeId))) return forbid(res);
     const revisedCtc = Number(req.body.revisedCtc) || Number(req.body.currentCtc) || 0;
     const incrementPercentage = Number(req.body.incrementPercentage) || 0;
 
@@ -906,7 +930,9 @@ router.get('/pip', protect, async (req, res, next) => {
 
 router.post('/pip', protect, async (req, res, next) => {
   try {
-    const employeeId = req.body.employeeId || 'EMP-1002';
+    const employeeId = req.body.employeeId;
+    if (!employeeId) return res.status(400).json({ message: 'Select an employee.' });
+    if (!(await canManage(req, employeeId))) return forbid(res);
 
     // 1. 10-Second Idempotency Check
     const tenSecondsAgo = new Date(Date.now() - 10000);
@@ -1010,6 +1036,7 @@ router.put('/pip/:id/review', protect, async (req, res, next) => {
     const { managerFeedback, rating, objectiveUpdates, outcome } = req.body;
     const pip = await PipRecord.findById(req.params.id);
     if (!pip) return res.status(404).json({ message: 'PIP record not found' });
+    if (!(await canManage(req, pip.employeeId))) return forbid(res);
 
     const prev = pip.toObject();
     if (managerFeedback) {

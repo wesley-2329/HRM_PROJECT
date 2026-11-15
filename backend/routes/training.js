@@ -9,7 +9,7 @@ const CompetencyMatrix = require('../models/CompetencyMatrix');
 const AssessmentCertification = require('../models/AssessmentCertification');
 const LearningHistory = require('../models/LearningHistory');
 const TrainingAuditLog = require('../models/TrainingAuditLog');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 // Audit logger helper
 const logAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -85,7 +85,7 @@ router.post('/tna', protect, async (req, res, next) => {
   }
 });
 
-router.put('/tna/:id/status', protect, async (req, res, next) => {
+router.put('/tna/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
     const tna = await TrainingNeedsAnalysis.findById(req.params.id);
     if (!tna) return res.status(404).json({ message: 'TNA request not found' });
@@ -115,7 +115,7 @@ router.get('/annual-plan', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/annual-plan', protect, async (req, res, next) => {
+router.post('/annual-plan', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await AnnualTrainingPlan.countDocuments();
     const planId = `ATP-${2026 + count}`;
@@ -237,25 +237,7 @@ const handleEnrollment = async (req, res) => {
       prog = await TrainingProgram.findOne({ programId: targetId });
     }
     if (!prog) {
-      prog = await TrainingProgram.findOne({ title: new RegExp(targetId, 'i') });
-    }
-
-    // Auto-provision TRN-1002 if missing
-    if (!prog && (targetId === 'TRN-1002' || targetId?.toUpperCase?.() === 'TRN-1002')) {
-      prog = new TrainingProgram({
-        programId: 'TRN-1002',
-        title: 'Cloud DevOps & Kubernetes Orchestration',
-        category: 'Technical & Engineering',
-        mode: 'Classroom',
-        durationHours: 12,
-        trainer: { id: 'TRN-VAL-01', name: 'Dr. Rajesh Kumar (External SME)', type: 'External' },
-        venue: { name: 'Auditorium Hall A', location: 'HQ Bangalore', link: '' },
-        capacity: 25,
-        enrolledEmployees: [],
-        scheduleDate: new Date(Date.now() + 10 * 86400000),
-        status: 'Scheduled'
-      });
-      await prog.save();
+      prog = await TrainingProgram.findOne({ title: new RegExp('^' + String(targetId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
     }
 
     if (!prog) {
@@ -275,6 +257,9 @@ const handleEnrollment = async (req, res) => {
       (e.name && e.name.toLowerCase() === empName.toLowerCase())
     );
 
+    if (!exists && prog.capacity && prog.enrolledEmployees.length >= prog.capacity) {
+      return res.status(400).json({ message: `This program is full (${prog.capacity} seats).` });
+    }
     if (!exists) {
       prog.enrolledEmployees.push({
         id: empId,
@@ -314,7 +299,7 @@ router.get('/trainers-venues', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/trainers-venues', protect, async (req, res, next) => {
+router.post('/trainers-venues', protect, adminOnly, async (req, res, next) => {
   try {
     const newItem = new TrainerVenue(req.body);
     await newItem.save();
@@ -338,7 +323,7 @@ router.get('/skill-matrix', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/skill-matrix', protect, async (req, res, next) => {
+router.post('/skill-matrix', protect, adminOnly, async (req, res, next) => {
   try {
     const count = await SkillMatrix.countDocuments();
     const skillId = `SKL-${1000 + count + 1}`;
