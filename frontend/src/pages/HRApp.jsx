@@ -359,23 +359,43 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       }
     });
 
+    // Chart data is derived from loaded records only. Timesheet dates are UTC "YYYY-MM-DD".
+    const dayStr = (d) => d.toISOString().slice(0, 10);
+    const presentByDate = {};
+    timesheets.forEach(t => { if (t.date) (presentByDate[t.date] ||= new Set()).add(t.empId); });
+    const headcount = employees.filter(e => e.status === 'Approved').length;
+
     if (currentModule === 'dashboard') {
+      const last14 = [...Array(14)].map((_, i) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - 13 + i); return d; });
+      const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weekdayPresent = [0, 0, 0, 0, 0, 0, 0];
+      for (let i = 0; i < 28; i++) {
+        const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
+        weekdayPresent[(d.getUTCDay() + 6) % 7] += presentByDate[dayStr(d)]?.size || 0;
+      }
+      const avgPresent = weekdayPresent.slice(0, 5).map(n => Math.round(n / 4)); // Mon–Fri working days
+      const months = [...Array(6)].map((_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return d; });
+      const leavesPerMonth = months.map(m => leaves.filter(l => (l.createdAt || '').slice(0, 7) === m.toISOString().slice(0, 7)).length);
+      const deptOf = Object.fromEntries(employees.map(e => [e.id, e.dept]));
+      const lateByDept = {};
+      timesheets.filter(t => t.status === 'Late Entry').forEach(t => { const d = deptOf[t.empId] || 'Unassigned'; lateByDept[d] = (lateByDept[d] || 0) + 1; });
+
       const ctxLine = hrAttendanceTrendsRef.current?.getContext('2d');
       if (ctxLine) {
         chartsInstanceRef.current.trends = new window.Chart(ctxLine, {
           type: 'line',
           data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            labels: last14.map(d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })),
             datasets: [{
-              label: 'Attendance Rate %',
-              data: [92, 94, 91, 95, 96, 94, 95, 93, 94, 75],
+              label: 'Employees present',
+              data: last14.map(d => presentByDate[dayStr(d)]?.size || 0),
               borderColor: themeColor('--chart-1'),
               backgroundColor: themeColor('--chart-1', 0.1),
               fill: true,
               tension: 0.3
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, suggestedMax: headcount, ticks: { precision: 0 } } } }
         });
       }
 
@@ -384,32 +404,29 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         chartsInstanceRef.current.byDay = new window.Chart(ctxBar, {
           type: 'bar',
           data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: weekdayNames.slice(0, 5),
             datasets: [
-              { label: 'Present', data: [22, 21, 23, 22, 20, 15, 6], backgroundColor: themeColor('--chart-success', 0.85) },
-              { label: 'Absent', data: [2, 3, 1, 2, 4, 9, 19], backgroundColor: themeColor('--chart-danger', 0.85) }
+              { label: 'Present (avg, last 4 weeks)', data: avgPresent, backgroundColor: themeColor('--chart-success', 0.85) },
+              { label: 'Absent (avg)', data: avgPresent.map(n => Math.max(0, headcount - n)), backgroundColor: themeColor('--chart-danger', 0.85) }
             ]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
         });
       }
 
       const ctxOps = hrTotalOperationsRef.current?.getContext('2d');
       if (ctxOps) {
         chartsInstanceRef.current.ops = new window.Chart(ctxOps, {
-          type: 'line',
+          type: 'bar',
           data: {
-            labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            labels: months.map(m => m.toLocaleDateString('en-IN', { month: 'short' })),
             datasets: [{
-              label: 'Total Operations Completed',
-              data: [120, 145, 130, 165, 180, 210],
-              borderColor: themeColor('--chart-1'),
-              backgroundColor: themeColor('--chart-1', 0.1),
-              fill: true,
-              tension: 0.3
+              label: 'Leave requests',
+              data: leavesPerMonth,
+              backgroundColor: themeColor('--chart-1', 0.85)
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
         });
       }
 
@@ -418,14 +435,14 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         chartsInstanceRef.current.late = new window.Chart(ctxLate, {
           type: 'bar',
           data: {
-            labels: ['Engineering', 'HR', 'Finance', 'Design', 'Marketing'],
+            labels: Object.keys(lateByDept).length ? Object.keys(lateByDept) : ['No late entries'],
             datasets: [{
-              label: 'Late Entry Count',
-              data: [4, 1, 2, 5, 8],
+              label: 'Late entries',
+              data: Object.keys(lateByDept).length ? Object.values(lateByDept) : [0],
               backgroundColor: themeColor('--chart-danger', 0.85)
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
         });
       }
     }
@@ -434,7 +451,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       const ctxDonut = hrDeptDonutRef.current?.getContext('2d');
       if (ctxDonut) {
         // Calculate dynamic department headcount
-        const depts = ['Engineering', 'Human Resources', 'Finance', 'Design', 'Marketing'];
+        const depts = [...new Set(employees.filter(e => e.status === 'Approved').map(e => e.dept).filter(Boolean))];
         const counts = depts.map(d => employees.filter(e => e.dept === d && e.status === 'Approved').length);
         
         chartsInstanceRef.current.deptDonut = new window.Chart(ctxDonut, {
@@ -442,7 +459,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           data: {
             labels: depts,
             datasets: [{
-              data: counts.some(c => c > 0) ? counts : [2, 1, 1, 1, 1], // fallback
+              data: counts,
               backgroundColor: themeColors(['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'])
             }]
           },
@@ -466,7 +483,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
         });
       }
     }
-  }, [currentModule, employees]);
+  }, [currentModule, employees, timesheets, leaves]);
 
   // Clock in/out Shift Stopwatch and Persistent Shift Tracking
   const now = new Date();
@@ -935,26 +952,33 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     return matchesSearch && matchesDept && matchesRole;
   });
 
-  const displayPendingLeaves = leaves.filter(l => l.status === 'Pending').length > 0
-    ? leaves.filter(l => l.status === 'Pending')
-    : [
-        {
-          _id: 'mock-l1',
-          empName: 'Vikram Malhotra',
-          type: 'Sick Leave',
-          start: 'Tomorrow',
-          status: 'Pending'
-        },
-        {
-          _id: 'mock-l2',
-          empName: 'Aishwarya Roy',
-          type: 'Casual Leave',
-          start: 'Next Monday',
-          status: 'Pending'
-        }
-      ];
+  const displayPendingLeaves = leaves.filter(l => l.status === 'Pending');
 
   const pendingLeavesCount = displayPendingLeaves.length;
+  // Dashboard figures come straight from loaded records; no placeholders. Timesheet dates are stored in UTC.
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const presentTodayCount = new Set(timesheets.filter(t => t.date === todayUtc).map(t => t.empId)).size;
+  const departmentCount = new Set(employees.map(e => e.dept).filter(Boolean)).size;
+  const quarterStart = (() => { const d = new Date(); return new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1).toISOString().slice(0, 10); })();
+  const joinedThisQuarter = employees.filter(e => (e.joined || '') >= quarterStart).length;
+  const headcountApproved = employees.filter(e => e.status === 'Approved').length;
+  const openTicketsCount = tickets.filter(t => !['Closed', 'Resolved', 'Cancelled'].includes(t.status)).length;
+  const screeningCount = candidates.filter(c => c.stage === 'screening').length;
+  // Attendance quality over the last 30 days (Mon–Fri), from timesheets.
+  const attendanceQuality = (() => {
+    const since = new Date(); since.setUTCDate(since.getUTCDate() - 29);
+    const sinceStr = since.toISOString().slice(0, 10);
+    let workdays = 0;
+    for (const d = new Date(since); d.toISOString().slice(0, 10) <= todayUtc; d.setUTCDate(d.getUTCDate() + 1)) {
+      if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6) workdays++;
+    }
+    const recent = timesheets.filter(t => t.date >= sinceStr && t.date <= todayUtc);
+    const present = new Set(recent.map(t => `${t.empId}|${t.date}`)).size;
+    const late = recent.filter(t => t.status === 'Late Entry').length;
+    const expected = headcountApproved * workdays;
+    const pct = (n, d) => (d ? Math.round((n / d) * 100) : 0);
+    return { punctual: pct(present - late, present), late: pct(late, present), absent: Math.max(0, 100 - pct(present, expected)), hasData: present > 0 };
+  })();
 
   return (
     <>
@@ -984,30 +1008,26 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             <div className="metric-card primary">
               <div>
                 <span className="metric-label">Total Employees</span>
-                <div className="metric-val"><span className="count-up" data-target={employees.length || 8}>{employees.length || 8}</span></div>
-                <span className="metric-trend up"><i className="fa-solid fa-arrow-up"></i> +12% this quarter</span>
+                <div className="metric-val">{employees.length}</div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{joinedThisQuarter} joined this quarter</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-user-group"></i></div>
             </div>
             <div className="metric-card success">
               <div>
                 <span className="metric-label">Present Today</span>
-                <div className="metric-val">
-                  <span className="count-up" data-target={timesheets.length > 0 ? timesheets.filter(t => t.status === 'Punctual' || t.status === 'Late Entry' || t.date === new Date().toISOString().split('T')[0]).length : (employees.length ? Math.max(1, Math.round(employees.length * 0.85)) : 7)}>
-                    {timesheets.length > 0 ? timesheets.filter(t => t.status === 'Punctual' || t.status === 'Late Entry' || t.date === new Date().toISOString().split('T')[0]).length : (employees.length ? Math.max(1, Math.round(employees.length * 0.85)) : 7)}
-                  </span>
-                </div>
-                <span className="metric-trend up"><i className="fa-solid fa-check"></i> Live check-in</span>
+                <div className="metric-val">{presentTodayCount}</div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Checked in today</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-user-check"></i></div>
             </div>
             <div className="metric-card info">
               <div>
-                <span className="metric-label">Total Employee Count</span>
-                <div className="metric-val"><span className="count-up" data-target={employees.length || 8}>{employees.length || 8}</span></div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Across all departments</span>
+                <span className="metric-label">Departments</span>
+                <div className="metric-val">{departmentCount}</div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>With active employees</span>
               </div>
-              <div className="metric-icon-box"><i className="fa-solid fa-users"></i></div>
+              <div className="metric-icon-box"><i className="fa-solid fa-sitemap"></i></div>
             </div>
             <div className="metric-card warning">
               <div>
@@ -1022,44 +1042,42 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <div className="dashboard-layout">
             <div className="lg:col-span-2">
               <div className="card">
-                <div className="card-title">Monthly Attendance Trends</div>
+                <div className="card-title">Daily Attendance (Last 14 Days)</div>
                 <div className="chart-container">
                   <canvas ref={hrAttendanceTrendsRef}></canvas>
                 </div>
               </div>
               <div className="card">
-                <div className="card-title">Monthly Attendance by Day</div>
+                <div className="card-title">Attendance by Weekday (Last 4 Weeks)</div>
                 <div className="chart-container">
                   <canvas ref={hrAttendanceByDayRef}></canvas>
                 </div>
               </div>
             </div>
             <div className="lg:col-span-1">
-              <div className="card" style={{ background: 'linear-gradient(135deg, var(--color-indigo-950, #0f172a) 0%, var(--color-indigo-800, #1e3a5f) 100%)', color: '#fff', border: 'none' }}>
-                <div className="card-title" style={{ color: '#fff' }}>HR O AI™ Insights</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.875rem' }}>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#a5b4fc', fontSize: '1.2rem', marginTop: '3px' }}></i>
-                    <p>Attendance is up 4% compared to this day last week. Friday drop is stabilized.</p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <i className="fa-solid fa-triangle-exclamation" style={{ color: '#fdba74', fontSize: '1.2rem', marginTop: '3px' }}></i>
-                    <p>{pendingLeavesCount} employees have pending leave requests. Resolve soon.</p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <i className="fa-solid fa-circle-check" style={{ color: '#6ee7b7', fontSize: '1.2rem', marginTop: '3px' }}></i>
-                    <p>All candidates in <strong>Screening</strong> have completed HR screening calls.</p>
-                  </div>
+              <div className="card">
+                <div className="card-title">Today at a Glance</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.875rem' }}>
+                  {[
+                    { icon: 'fa-user-check', label: 'Attendance today', value: headcountApproved ? `${presentTodayCount} of ${headcountApproved} (${Math.round((presentTodayCount / headcountApproved) * 100)}%)` : '—' },
+                    { icon: 'fa-plane', label: 'Leave requests awaiting you', value: pendingLeavesCount },
+                    { icon: 'fa-headset', label: 'Open support tickets', value: openTicketsCount },
+                    { icon: 'fa-user-tie', label: 'Candidates in screening', value: screeningCount }
+                  ].map(row => (
+                    <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}><i className={`fa-solid ${row.icon}`} style={{ width: '20px' }}></i> {row.label}</span>
+                      <strong>{row.value}</strong>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="card">
                 <div className="card-title">Upcoming Tasks & Actions</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
-                  {(displayPendingLeaves && displayPendingLeaves.length > 0 ? displayPendingLeaves : [
-                    { _id: 'task-101', empName: 'Anil Kumar', type: 'Annual Leave', start: '2026-10-15' },
-                    { _id: 'task-102', empName: 'Priya Sharma', type: 'Casual Leave', start: '2026-10-18' },
-                    { _id: 'task-103', empName: 'Rahul Verma', type: 'Sick Leave', start: '2026-10-20' }
-                  ]).map(l => (
+                  {displayPendingLeaves.length === 0 && (
+                    <p style={{ color: 'var(--text-secondary)' }}>No pending approvals. You are all caught up.</p>
+                  )}
+                  {displayPendingLeaves.map(l => (
                     <div key={l._id} style={{ padding: '10px', background: 'hsl(var(--bg-main))', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <strong>Approve Leave for {l.empName}</strong>
@@ -1072,7 +1090,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </div>
 
               {/* Secure HR Notepad Widget */}
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '400px' }}>
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '400px' }}>
                 <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span><i className="fa-solid fa-user-shield" style={{ marginRight: '8px', color: 'hsl(var(--primary))' }}></i>Secure HR Notepad</span>
                   {editingNoteId && <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => { setEditingNoteId(null); setNewNoteTitle(''); setNewNoteContent(''); }}>Cancel</button>}
@@ -1122,7 +1140,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <div className="dashboard-layout">
             <div>
               <div className="card">
-                <div className="card-title">Total Operations Completed (Last 6 Months)</div>
+                <div className="card-title">Leave Requests (Last 6 Months)</div>
                 <div className="chart-container">
                   <canvas ref={hrTotalOperationsRef}></canvas>
                 </div>
@@ -1139,70 +1157,6 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           </div>
 
           {/* Competitor Analysis Report Overview */}
-          <div className="card">
-            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <i className="fa-solid fa-square-poll-horizontal" style={{ color: 'hsl(var(--primary))' }}></i>
-              HR Intelligence: Competitive Benchmarking Overview
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', fontSize: '0.85rem' }}>
-              <div>
-                <h4 style={{ fontWeight: 700, marginBottom: '10px' }}>HR O vs Market Leaders</h4>
-                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.4', marginBottom: '12px' }}>
-                  Comparing core structures against leading HRMS platforms (Workday, BambooHR, Rippling, Gusto, and Personio).
-                </p>
-                <div className="table-responsive">
-                  <table className="custom-table" style={{ fontSize: '0.75rem' }}>
-                    <thead>
-                      <tr>
-                        <th>Brand</th>
-                        <th>Target Segment</th>
-                        <th>Core Edge</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td><strong>Workday</strong></td>
-                        <td>Enterprise</td>
-                        <td>Deep analytics & planning</td>
-                      </tr>
-                      <tr>
-                        <td><strong>BambooHR</strong></td>
-                        <td>SMB</td>
-                        <td>Employee onboarding & culture</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Rippling</strong></td>
-                        <td>Tech Mid-market</td>
-                        <td>App & device provisioning</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Gusto</strong></td>
-                        <td>Small Business</td>
-                        <td>1-click automated payroll</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Personio</strong></td>
-                        <td>European SME</td>
-                        <td>Localized compliance logs</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <h4 style={{ fontWeight: 700 }}>Key Competitive Insights</h4>
-                <div style={{ padding: '10px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                  <strong>Compliance Automation:</strong> Localized credential alerts (inspired by Personio) keep organizations risk-free.
-                </div>
-                <div style={{ padding: '10px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                  <strong>Engagement Focus:</strong> Integrated social chat & interactive trivia (inspired by BambooHR) drives daily active usage.
-                </div>
-                <div style={{ padding: '10px', background: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                  <strong>Clean Payroll:</strong> Focus on simplicity (inspired by Gusto) using a transparent HRA + Allowances structure.
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
       )}
 
@@ -1748,30 +1702,31 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
               </div>
 
               <div className="card">
-                <div className="card-title">Attendance Quality Breakdown</div>
+                <div className="card-title">Attendance Quality (Last 30 Days)</div>
+                {!attendanceQuality.hasData && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No check-ins recorded in the last 30 days.</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
-                      <span>Punctuality Rate</span><strong>94%</strong>
+                      <span>Punctuality Rate</span><strong>{attendanceQuality.punctual}%</strong>
                     </div>
                     <div style={{ height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: '94%', height: '100%', backgroundColor: 'hsl(var(--success))' }}></div>
+                      <div style={{ width: `${attendanceQuality.punctual}%`, height: '100%', backgroundColor: 'hsl(var(--success))' }}></div>
                     </div>
                   </div>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
-                      <span>Late Arrivals</span><strong>4%</strong>
+                      <span>Late Arrivals</span><strong>{attendanceQuality.late}%</strong>
                     </div>
                     <div style={{ height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: '4%', height: '100%', backgroundColor: 'hsl(var(--warning))' }}></div>
+                      <div style={{ width: `${attendanceQuality.late}%`, height: '100%', backgroundColor: 'hsl(var(--warning))' }}></div>
                     </div>
                   </div>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
-                      <span>Absenteeism</span><strong>2%</strong>
+                      <span>Absenteeism</span><strong>{attendanceQuality.absent}%</strong>
                     </div>
                     <div style={{ height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: '2%', height: '100%', backgroundColor: 'hsl(var(--danger))' }}></div>
+                      <div style={{ width: `${attendanceQuality.absent}%`, height: '100%', backgroundColor: 'hsl(var(--danger))' }}></div>
                     </div>
                   </div>
                 </div>

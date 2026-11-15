@@ -311,11 +311,13 @@ const LoginGateway = () => {
                     {/* Typing Arms Animation */}
                     <motion.path 
                       stroke="#065f46" strokeWidth="3.5" fill="none" strokeLinecap="round"
+                      d="M 128 66 Q 112 70 100 92" initial={false}
                       animate={{ d: ["M 128 66 Q 112 70 100 92", "M 128 66 Q 112 78 100 91", "M 128 66 Q 112 70 100 92"] }}
                       transition={{ duration: 0.18, repeat: Infinity, ease: 'linear' }}
                     />
                     <motion.path 
                       stroke="#065f46" strokeWidth="3.5" fill="none" strokeLinecap="round"
+                      d="M 128 66 Q 115 82 102 92" initial={false}
                       animate={{ d: ["M 128 66 Q 115 82 102 92", "M 128 66 Q 115 84 102 93", "M 128 66 Q 115 82 102 92"] }}
                       transition={{ duration: 0.22, repeat: Infinity, ease: 'linear' }}
                     />
@@ -650,12 +652,16 @@ const LoginGateway = () => {
 
                 {/* Left wing: rests at the side, lifts to cover the eyes */}
                 <motion.path
+                  d="M 30 72 Q 16 92 32 106 Q 37 88 34 74 Z"
+                  initial={false}
                   animate={isPasswordFocused ? { d: "M 30 72 Q 28 48 50 46 Q 60 56 44 68 Z" } : { d: "M 30 72 Q 16 92 32 106 Q 37 88 34 74 Z" }}
                   transition={{ duration: 0.45, ease: "easeInOut" }}
                   fill="var(--c-primary-hover, #17307b)"
                 />
                 {/* Right wing */}
                 <motion.path
+                  d="M 90 72 Q 104 92 88 106 Q 83 88 86 74 Z"
+                  initial={false}
                   animate={isPasswordFocused ? { d: "M 90 72 Q 92 48 70 46 Q 60 56 76 68 Z" } : { d: "M 90 72 Q 104 92 88 106 Q 83 88 86 74 Z" }}
                   transition={{ duration: 0.45, ease: "easeInOut" }}
                   fill="var(--c-primary-hover, #17307b)"

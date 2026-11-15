@@ -212,6 +212,34 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   };
 
   const presentDaysCount = timesheets.filter(t => t.status === 'Punctual' || t.status === 'Late Entry').length;
+  // Attendance by month from real timesheets: distinct check-in days vs Mon–Fri working days (UTC dates, as stored).
+  const attendanceByMonth = (() => {
+    const days = new Set(timesheets.map(t => t.date).filter(Boolean));
+    const today = new Date().toISOString().slice(0, 10);
+    return [...Array(6)].map((_, i) => {
+      const m = new Date(); m.setUTCDate(1); m.setUTCMonth(m.getUTCMonth() - 5 + i);
+      const ym = m.toISOString().slice(0, 7);
+      let workdays = 0;
+      for (const d = new Date(m); d.toISOString().slice(0, 7) === ym && d.toISOString().slice(0, 10) <= today; d.setUTCDate(d.getUTCDate() + 1)) {
+        if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6) workdays++;
+      }
+      const present = [...days].filter(d => d.startsWith(ym)).length;
+      const late = timesheets.filter(t => (t.date || '').startsWith(ym) && t.status === 'Late Entry').length;
+      return { label: m.toLocaleDateString('en-IN', { month: 'short', timeZone: 'UTC' }), present, workdays, late, rate: workdays ? Math.min(100, Math.round((present / workdays) * 100)) : 0 };
+    });
+  })();
+  const thisMonthAttendance = attendanceByMonth[5];
+  // Next public holidays. shortcut: fixed national list; move to a company holiday master when offices differ.
+  const upcomingHolidays = (() => {
+    const goodFriday = { 2026: '04-03', 2027: '03-26', 2028: '04-14' };
+    const today = new Date().toISOString().slice(0, 10);
+    const y = new Date().getFullYear();
+    return [y, y + 1].flatMap(yr => [
+      ['Republic Day', `${yr}-01-26`], ['Good Friday', goodFriday[yr] && `${yr}-${goodFriday[yr]}`], ['Labour Day', `${yr}-05-01`],
+      ['Independence Day', `${yr}-08-15`], ['Gandhi Jayanti', `${yr}-10-02`], ['Christmas', `${yr}-12-25`]
+    ]).filter(([, d]) => d && d >= today).slice(0, 5)
+      .map(([name, d]) => ({ name, date: new Date(d + 'T00:00:00Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) }));
+  })();
   // Leave balance comes from the server (same rule it enforces); refreshed whenever the leave list changes.
   const [leaveBalance, setLeaveBalance] = useState(null);
   useEffect(() => {
@@ -333,6 +361,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [leaveFrom, setLeaveFrom] = useState('');
   const [leaveTo, setLeaveTo] = useState('');
   const [leaveReason, setLeaveReason] = useState('');
+  // The apply form shows the balance of the year being booked (may differ from the dashboard's current year).
+  const formYear = (leaveFrom || '').slice(0, 4) || String(new Date().getFullYear());
+  const [formBalance, setFormBalance] = useState(null);
+  useEffect(() => {
+    if (!/^\d{4}$/.test(formYear)) return;
+    api.get(`/leaves/balance?year=${formYear}`).then(res => setFormBalance(res.data.balance)).catch(() => setFormBalance(null));
+  }, [leaves, formYear]);
 
   const [ticketTitle, setTicketTitle] = useState('');
   const [ticketCategory, setTicketCategory] = useState('HR Query');
@@ -855,14 +890,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
     if (currentModule === 'emp-dashboard') {
       const ctxDonut = empAttendanceDonutRef.current?.getContext('2d');
       if (ctxDonut) {
-        const curMonthRate = timesheets.length > 0 ? Math.round((presentDaysCount / timesheets.length) * 100) : 95;
         chartsInstanceRef.current.dashboardDonut = new window.Chart(ctxDonut, {
           type: 'bar',
           data: {
-            labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            labels: attendanceByMonth.map(m => m.label),
             datasets: [{
               label: 'Attendance Rate (%)',
-              data: [92, 94, 96, 93, 97, curMonthRate],
+              data: attendanceByMonth.map(m => m.rate),
               backgroundColor: themeColor('--chart-1', 0.85),
               borderColor: themeColor('--chart-1'),
               borderWidth: 1
@@ -889,10 +923,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         chartsInstanceRef.current.dashboardLine = new window.Chart(ctxLine, {
           type: 'line',
           data: {
-            labels: timesheets.length > 0 ? timesheets.slice(-7).map(t => new Date(t.date).toLocaleDateString(undefined, { weekday: 'short' })) : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: timesheets.slice(-7).map(t => new Date(t.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })),
             datasets: [{
               label: 'Working Hours',
-              data: timesheets.length > 0 ? timesheets.slice(-7).map(t => t.hours) : [9.0, 8.8, 9.1, 8.9, 8.8, 0, 0],
+              data: timesheets.slice(-7).map(t => t.hours || 0),
               borderColor: themeColor('--chart-1'),
               tension: 0.2,
               fill: true,
@@ -910,10 +944,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         chartsInstanceRef.current.attendanceAnalysis = new window.Chart(ctxBar, {
           type: 'bar',
           data: {
-            labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            labels: attendanceByMonth.map(m => m.label),
             datasets: [{
               label: 'Attendance rate %',
-              data: [95, 96, 94, 98, 92, 95],
+              data: attendanceByMonth.map(m => m.rate),
               backgroundColor: themeColor('--chart-1', 0.8)
             }]
           },
@@ -987,7 +1021,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         });
       }
     }
-  }, [currentModule, attSubTab]);
+  }, [currentModule, attSubTab, timesheets]);
 
   // Trigger count-up and module entry animations
   useEffect(() => {
@@ -1839,8 +1873,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <div className="metric-card primary">
                 <div>
                   <span className="metric-label">Attendance This Month</span>
-                  <div className="metric-val"><span className="count-up" data-target={presentDaysCount}>{presentDaysCount}</span>/<span className="count-up" data-target={timesheets.length || 24}>{timesheets.length || 24}</span> Days</div>
-                  <span className="badge badge-success">Punctual</span>
+                  <div className="metric-val">{thisMonthAttendance.present}/{thisMonthAttendance.workdays} Days</div>
+                  {thisMonthAttendance.present === 0
+                    ? <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>No check-ins yet this month</span>
+                    : thisMonthAttendance.late > 0
+                      ? <span className="badge badge-warning">{thisMonthAttendance.late} late {thisMonthAttendance.late === 1 ? 'entry' : 'entries'}</span>
+                      : <span className="badge badge-success">On time</span>}
                 </div>
                 <div className="metric-icon-box"><i className="fa-solid fa-calendar-check"></i></div>
               </div>
@@ -2483,13 +2521,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                     <div className="card">
                       <div className="card-title">Upcoming Holidays</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {[
-                          { name: 'Republic Day', date: '26 Jan 2026' },
-                          { name: 'Good Friday', date: '18 Apr 2026' },
-                          { name: 'Labour Day', date: '01 May 2026' },
-                          { name: 'Independence Day', date: '15 Aug 2026' },
-                          { name: 'Gandhi Jayanti', date: '02 Oct 2026' }
-                        ].map((h, idx) => (
+                        {upcomingHolidays.map((h, idx) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '8px' }}>
                             <span>{h.name}</span><strong style={{ color: 'hsl(var(--primary))' }}>{h.date}</strong>
                           </div>
@@ -2513,10 +2545,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <option value="Sick">Sick Leave</option>
                         <option value="Earned">Earned Leave</option>
                       </select>
-                      {leaveBalance?.[leaveType] && (
+                      {formBalance?.[leaveType] && (
                         <small style={{ color: 'var(--text-secondary)' }}>
-                          {Math.max(0, leaveBalance[leaveType].available)} of {leaveBalance[leaveType].quota} days available
-                          {leaveBalance[leaveType].pending > 0 ? ` (${leaveBalance[leaveType].pending} pending approval)` : ''}
+                          {Math.max(0, formBalance[leaveType].available)} of {formBalance[leaveType].quota} days available in {formYear}
+                          {formBalance[leaveType].pending > 0 ? ` (${formBalance[leaveType].pending} pending approval)` : ''}
                         </small>
                       )}
                     </div>

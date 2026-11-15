@@ -27,7 +27,8 @@ const getBalance = async (empId, year = new Date().getUTCFullYear()) => {
 router.get('/balance', protect, async (req, res, next) => {
   try {
     const empId = req.user.role === 'hr' && req.query.empId ? req.query.empId : req.user.id;
-    res.json({ empId, year: new Date().getUTCFullYear(), balance: await getBalance(empId) });
+    const year = Number(req.query.year) || new Date().getUTCFullYear();
+    res.json({ empId, year, balance: await getBalance(empId, year) });
   } catch (error) { next(error); }
 });
 
