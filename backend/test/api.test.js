@@ -234,3 +234,9 @@ test('engagement dashboard: counts come from the database, no fixed scores', asy
   assert.ok(!('slaPerformanceScore' in after) && !('employeeEngagementScore' in after));
   await T.deleteMany({ ticketId: /^T-HD-/ });
 });
+
+test('demo reset does not exist outside a demo deployment', async () => {
+  // This test server is not a Preview deployment and its database is not *_demo, like production.
+  assert.strictEqual((await call('POST', '/api/demo/reset', emp)).status, 403, 'employees never');
+  assert.strictEqual((await call('POST', '/api/demo/reset', hr)).status, 404, 'HR outside demo: not found');
+});

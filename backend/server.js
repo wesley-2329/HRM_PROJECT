@@ -214,6 +214,9 @@ app.use('/api/grades', gradesRoute.default || gradesRoute);
 const salaryRevisionsRoute = require('./routes/salaryRevisions');
 app.use('/api/salary-revisions', salaryRevisionsRoute.default || salaryRevisionsRoute);
 
+const demoRoute = require('./routes/demo');
+app.use('/api/demo', demoRoute.default || demoRoute);
+
 // Dedicated Health Check Endpoint to trace DB/API connection health accurately
 app.get('/api/health', async (req, res) => {
   if (mongoose.connection.readyState !== 1) {

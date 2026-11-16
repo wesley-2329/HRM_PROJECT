@@ -191,10 +191,10 @@ async function seedDemoData({ hrPassword, employeePassword }) {
 // missing (never seeded, or holding stray records) it is cleared and seeded. A lock document, claimable
 // again after 5 minutes, stops two cold starts from doing this at once.
 // Only ever runs on a database whose name ends in "_demo".
-async function ensureDemoSeeded() {
+async function ensureDemoSeeded({ force = false } = {}) {
   const db = mongoose.connection;
   if (!db.name.endsWith('_demo')) return 'skipped: not a demo database';
-  if (await Employee.countDocuments({ email: { $in: ['hr@company.com', 'employee@company.com'] } }) === 2) return 'skipped: already seeded';
+  if (!force && await Employee.countDocuments({ email: { $in: ['hr@company.com', 'employee@company.com'] } }) === 2) return 'skipped: already seeded';
   if (!process.env.DEMO_HR_PASSWORD || !process.env.DEMO_EMPLOYEE_PASSWORD) return 'skipped: demo passwords are not set';
   try {
     await db.collection('demo_meta').updateOne({ _id: 'seed-lock', at: { $lt: new Date(Date.now() - 5 * 60 * 1000) } }, { $set: { at: new Date() } }, { upsert: true });
@@ -209,9 +209,8 @@ async function ensureDemoSeeded() {
     const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });
     console.log(`[Demo] Seeded ${db.name}: ${r.employees} employees, ${r.attendance} attendance records.`);
     return 'seeded';
-  } catch (e) {
-    await db.collection('demo_meta').deleteOne({ _id: 'seed-lock' }); // let a later start retry
-    throw e;
+  } finally {
+    await db.collection('demo_meta').deleteOne({ _id: 'seed-lock' }); // free the lock (also lets a failed seed retry)
   }
 }
 
