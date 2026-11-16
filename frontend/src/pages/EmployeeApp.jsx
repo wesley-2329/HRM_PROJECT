@@ -243,10 +243,13 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   })();
   // Leave balance comes from the server (same rule it enforces); refreshed whenever the leave list changes.
   const [leaveBalance, setLeaveBalance] = useState(null);
+  const balanceSeq = useRef({ sent: 0, shown: 0 });
   useEffect(() => {
-    let current = true; // ignore an older answer that arrives after a newer request
-    api.get('/leaves/balance').then(res => current && setLeaveBalance(res.data.balance)).catch(() => current && setLeaveBalance(null));
-    return () => { current = false; };
+    // Show answers in request order: an older answer may fill the card, but never replaces a newer one.
+    const n = ++balanceSeq.current.sent;
+    api.get('/leaves/balance').then(res => {
+      if (n > balanceSeq.current.shown) { balanceSeq.current.shown = n; setLeaveBalance(res.data.balance); }
+    }).catch(() => {});
   }, [leaves]);
   const totalLeaveAvailable = leaveBalance ? Object.values(leaveBalance).reduce((n, b) => n + Math.max(0, b.available), 0) : null;
 
@@ -367,11 +370,18 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // The apply form shows the balance of the year being booked (may differ from the dashboard's current year).
   const formYear = (leaveFrom || '').slice(0, 4) || String(new Date().getFullYear());
   const [formBalance, setFormBalance] = useState(null);
+  const formBalanceSeq = useRef({ sent: 0, shown: 0 });
+  const formYearRef = useRef(formYear);
+  formYearRef.current = formYear;
+  const formYearBalance = formBalance?.year === formYear ? formBalance.balance : null; // never another year's figures
   useEffect(() => {
     if (!/^\d{4}$/.test(formYear)) return;
-    let current = true; // drop answers that arrive after the year changed (they would show the wrong year's balance)
-    api.get(`/leaves/balance?year=${formYear}`).then(res => current && setFormBalance(res.data.balance)).catch(() => current && setFormBalance(null));
-    return () => { current = false; };
+    // Only the year currently being booked may fill the hint, newest answer wins.
+    const n = ++formBalanceSeq.current.sent;
+    const year = formYear;
+    api.get(`/leaves/balance?year=${year}`).then(res => {
+      if (year === formYearRef.current && n > formBalanceSeq.current.shown) { formBalanceSeq.current.shown = n; setFormBalance({ year, balance: res.data.balance }); }
+    }).catch(() => {});
   }, [leaves, formYear]);
 
   const [ticketTitle, setTicketTitle] = useState('');
@@ -2510,10 +2520,10 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                         <option value="Sick">Sick Leave</option>
                         <option value="Earned">Earned Leave</option>
                       </select>
-                      {formBalance?.[leaveType] && (
+                      {formYearBalance?.[leaveType] && (
                         <small style={{ color: 'var(--text-secondary)' }}>
-                          {Math.max(0, formBalance[leaveType].available)} of {formBalance[leaveType].quota} days available in {formYear}
-                          {formBalance[leaveType].pending > 0 ? ` (${formBalance[leaveType].pending} pending approval)` : ''}
+                          {Math.max(0, formYearBalance[leaveType].available)} of {formYearBalance[leaveType].quota} days available in {formYear}
+                          {formYearBalance[leaveType].pending > 0 ? ` (${formYearBalance[leaveType].pending} pending approval)` : ''}
                         </small>
                       )}
                     </div>
