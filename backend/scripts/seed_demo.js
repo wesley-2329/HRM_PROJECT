@@ -187,16 +187,23 @@ async function seedDemoData({ hrPassword, employeePassword }) {
   return { employees: PEOPLE.length, attendance: sheets.length, leaves: leaves.length, candidates: cands.length };
 }
 
-// Preview self-setup: seed once when the demo database is empty. A unique lock document stops two
-// cold starts from seeding at the same time. Only ever runs on a database whose name ends in "_demo".
+// Preview self-setup: a demo database is usable only if both documented demo logins exist. If either is
+// missing (never seeded, or holding stray records) it is cleared and seeded. A lock document, claimable
+// again after 5 minutes, stops two cold starts from doing this at once.
+// Only ever runs on a database whose name ends in "_demo".
 async function ensureDemoSeeded() {
   const db = mongoose.connection;
   if (!db.name.endsWith('_demo')) return 'skipped: not a demo database';
-  if (await Employee.estimatedDocumentCount() > 0) return 'skipped: already seeded';
+  if (await Employee.countDocuments({ email: { $in: ['hr@company.com', 'employee@company.com'] } }) === 2) return 'skipped: already seeded';
+  if (!process.env.DEMO_HR_PASSWORD || !process.env.DEMO_EMPLOYEE_PASSWORD) return 'skipped: demo passwords are not set';
   try {
-    await db.collection('demo_meta').insertOne({ _id: 'seed-lock', at: new Date() });
+    await db.collection('demo_meta').updateOne({ _id: 'seed-lock', at: { $lt: new Date(Date.now() - 5 * 60 * 1000) } }, { $set: { at: new Date() } }, { upsert: true });
   } catch (e) {
     return 'skipped: another instance is seeding';
+  }
+  // deleteMany keeps each collection's indexes, so the seed's unique fields still apply
+  for (const c of await db.db.listCollections().toArray()) {
+    if (c.name !== 'demo_meta' && !c.name.startsWith('system.')) await db.db.collection(c.name).deleteMany({});
   }
   try {
     const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });

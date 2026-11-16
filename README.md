@@ -51,6 +51,8 @@ Databases:
   # backend/.env.demo (git-ignored) holds MONGODB_URI=.../hrorbit_demo?..., DEMO_HR_PASSWORD, DEMO_EMPLOYEE_PASSWORD
   node scripts/seed_demo.js
   ```
+
+On Vercel Preview the backend checks the demo database at start-up: if either demo login (`hr@company.com`, `employee@company.com`) is missing, it clears `hrorbit_demo` and seeds it again. Deleting a demo login therefore resets the demo data.
   The script refuses to run unless the database name ends in `_demo` (or the host is local), and it drops that database first.
 
 Tests run against a local database only: `MONGODB_URI=mongodb://127.0.0.1:27017/hrorbit_test npm test`.
