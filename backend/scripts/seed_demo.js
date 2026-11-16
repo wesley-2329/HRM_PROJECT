@@ -30,7 +30,8 @@ const Training = require('../models/Training');
 const DiscussionMessage = require('../models/DiscussionMessage');
 
 // Deterministic "random" so every seed produces the same demo.
-let state = 20261115;
+const SEED = 20261115;
+let state = SEED;
 const rand = () => ((state = (state * 1103515245 + 12345) % 2147483648) / 2147483648);
 const DAY = 864e5;
 const ymd = (d) => d.toISOString().slice(0, 10);
@@ -56,6 +57,7 @@ const nameOf = Object.fromEntries(PEOPLE.map(p => [p[0], p[1]]));
 
 // Fills the CONNECTED database with demo data. Callers guarantee it is a *_demo (or local) database.
 async function seedDemoData({ hrPassword, employeePassword }) {
+  state = SEED; // same demo on every run, even when a warm server process seeds more than once
   if (!hrPassword || !employeePassword) throw new Error('Demo passwords are not set (DEMO_HR_PASSWORD, DEMO_EMPLOYEE_PASSWORD).');
   const LOGINS = { 'EMP-0001': ['hr@company.com', hrPassword], 'EMP-0002': ['employee@company.com', employeePassword] };
 
