@@ -419,13 +419,15 @@ export const DataProvider = ({ children }) => {
 
   const fetchAllData = async () => {
     if (!user) return;
+    // Dashboard data first (the first batch of 6), so the first screen fills in one round-trip.
     const tasks = [
+      ...(user.role === 'hr' ? [fetchEmployees, fetchCandidates] : []),
       fetchLeaves,
-      fetchTasks,
+      fetchTimesheets,
       fetchTickets,
+      fetchTasks,
       fetchMeetings,
       fetchTrainings,
-      fetchTimesheets,
       fetchNotifications,
       fetchDiscussionMessages,
       fetchWarningLetters,
@@ -452,7 +454,7 @@ export const DataProvider = ({ children }) => {
       fetchDocuments,
       fetchSuccessionPlans,
       fetchHeadcountPlans,
-      ...(user.role === 'hr' ? [fetchEmployees, fetchCandidates, fetchOrgAuditLogs] : [fetchChatMessages])
+      ...(user.role === 'hr' ? [fetchOrgAuditLogs] : [fetchChatMessages])
     ];
 
     // Execute in staggered chunks of 6 matching standard browser concurrent connection limits
