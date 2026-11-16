@@ -372,11 +372,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [formBalance, setFormBalance] = useState(null);
   const formBalanceSeq = useRef({ sent: 0, shown: 0 });
   const formYearRef = useRef(formYear);
-  formYearRef.current = formYear;
   const formYearBalance = formBalance?.year === formYear ? formBalance.balance : null; // never another year's figures
   useEffect(() => {
     if (!/^\d{4}$/.test(formYear)) return;
     // Only the year currently being booked may fill the hint, newest answer wins.
+    formYearRef.current = formYear;
     const n = ++formBalanceSeq.current.sent;
     const year = formYear;
     api.get(`/leaves/balance?year=${year}`).then(res => {
