@@ -396,7 +396,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {(activeTab === 'dashboard' || activeTab === 'executive') && (
         <div>
           {/* KPI Cards Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COMPLIANCE %</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0', color: '#10b981' }}>{kpis.compliancePercentage}</h2>

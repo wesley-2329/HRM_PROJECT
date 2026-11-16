@@ -414,6 +414,7 @@ const OrgChartPage = ({ mode }) => {
           {/* Tree View Canvas with Drag Pan & Zoom */}
           {chartSubView === 'hierarchy' && (
             <div 
+              className="org-chart-canvas"
               onMouseDown={startPan}
               onMouseMove={onPan}
               onMouseUp={endPan}

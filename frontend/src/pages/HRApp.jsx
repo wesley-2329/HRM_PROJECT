@@ -1212,9 +1212,9 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <select className="form-control" style={{ width: '180px' }} value={empDeptFilter} onChange={(e) => setEmpDeptFilter(e.target.value)}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: '1 1 auto', minWidth: 0 }}>
+              <select className="form-control" style={{ width: '180px', flex: '1 1 140px' }} value={empDeptFilter} onChange={(e) => setEmpDeptFilter(e.target.value)}>
                 <option value="All">All Departments</option>
                 <option value="Engineering">Engineering</option>
                 <option value="Human Resources">Human Resources</option>
@@ -1222,7 +1222,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
                 <option value="Design">Design</option>
                 <option value="Marketing">Marketing</option>
               </select>
-              <select className="form-control" style={{ width: '180px' }} value={empRoleFilter} onChange={(e) => setEmpRoleFilter(e.target.value)}>
+              <select className="form-control" style={{ width: '180px', flex: '1 1 140px' }} value={empRoleFilter} onChange={(e) => setEmpRoleFilter(e.target.value)}>
                 <option value="All">All Staff</option>
                 <option value="Leads">Team Leads Only</option>
               </select>

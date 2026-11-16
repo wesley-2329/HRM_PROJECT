@@ -11,14 +11,13 @@ const EngagementModule = ({ searchQuery = '' }) => {
 
   // Module Data States
   const [dashboardMetrics, setDashboardMetrics] = useState({
-    activeCommunications: 3,
-    openGrievances: 1,
-    openHelpdeskTickets: 2,
-    welfareRequestsPending: 1,
-    recognitionPosts: 4,
-    suggestionCount: 5,
-    employeeEngagementScore: '94.2%',
-    slaPerformanceScore: '98.5%'
+    activeCommunications: 0,
+    openGrievances: 0,
+    openHelpdeskTickets: 0,
+    overdueHelpdeskTickets: 0,
+    welfareRequestsPending: 0,
+    recognitionPosts: 0,
+    suggestionCount: 0
   });
 
   const [suggestions, setSuggestions] = useState([]);
@@ -445,9 +444,9 @@ const EngagementModule = ({ searchQuery = '' }) => {
           {/* KPI Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
-              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>EMPLOYEE ENGAGEMENT</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6366f1' }}>{dashboardMetrics.employeeEngagementScore}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>↑ 2.4% vs last quarter</div>
+              <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>SUGGESTIONS</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6366f1' }}>{dashboardMetrics.suggestionCount}</div>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '4px' }}>Ideas submitted by employees</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
@@ -465,7 +464,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>
               <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600 }}>OPEN HELPDESK TICKETS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#3b82f6' }}>{dashboardMetrics.openHelpdeskTickets}</div>
-              <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>SLA Compliance: {dashboardMetrics.slaPerformanceScore}</div>
+              <div style={{ fontSize: '0.75rem', color: dashboardMetrics.overdueHelpdeskTickets > 0 ? '#ef4444' : '#10b981', marginTop: '4px' }}>{dashboardMetrics.overdueHelpdeskTickets || 0} past SLA due time</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', borderRadius: '14px' }}>

@@ -222,3 +222,15 @@ test('exit interview: employee records own; required fields validated', async ()
   assert.strictEqual(r.status, 201, JSON.stringify(r.data));
   assert.strictEqual(r.data.employeeId, 'T-EMP', 'cannot file for someone else');
 });
+
+test('engagement dashboard: counts come from the database, no fixed scores', async () => {
+  const T = mongoose.connection.collection('helpdesktickets');
+  await T.deleteMany({ ticketId: /^T-HD-/ });
+  const before = (await call('GET', '/api/engagement/dashboard', hr)).data;
+  await T.insertOne({ ticketId: 'T-HD-1', category: 'IT Support', subject: 's', description: 'd', raisedBy: { id: 'T-EMP', name: 'T' }, status: 'Open', dueDate: new Date(Date.now() - 36e5) });
+  const after = (await call('GET', '/api/engagement/dashboard', hr)).data;
+  assert.strictEqual(after.openHelpdeskTickets, before.openHelpdeskTickets + 1);
+  assert.strictEqual(after.overdueHelpdeskTickets, before.overdueHelpdeskTickets + 1);
+  assert.ok(!('slaPerformanceScore' in after) && !('employeeEngagementScore' in after));
+  await T.deleteMany({ ticketId: /^T-HD-/ });
+});

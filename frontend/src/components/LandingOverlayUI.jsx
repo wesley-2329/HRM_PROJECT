@@ -364,7 +364,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
           </motion.h1>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+          <div className="landing-cta-row" style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
             <button
               onClick={onEnterPortal}
               style={{
@@ -405,7 +405,7 @@ const LandingOverlayUI = ({ scrollProgress, onEnterPortal }) => {
           </div>
 
           {/* System Info */}
-          <div style={{
+          <div className="landing-stats-row" style={{
             display: 'flex',
             justifyContent: 'center',
             gap: '64px',

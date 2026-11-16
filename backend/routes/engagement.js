@@ -678,6 +678,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
     const totalComms = await Communication.countDocuments({ status: 'Published' });
     const openGrievances = await Grievance.countDocuments({ status: { $in: ['Submitted', 'Assigned', 'Under Investigation'] } });
     const openTickets = await HelpdeskTicket.countDocuments({ status: { $in: ['Open', 'Assigned', 'In Progress'] } });
+    const overdueTickets = await HelpdeskTicket.countDocuments({ status: { $in: ['Open', 'Assigned', 'In Progress'] }, dueDate: { $lt: new Date() } });
     const pendingWelfare = await WelfareRequest.countDocuments({ status: { $in: ['Submitted', 'HR Verified'] } });
     const totalRecognitions = await RecognitionPost.countDocuments();
     const totalSuggestions = await Suggestion.countDocuments();
@@ -688,9 +689,8 @@ router.get('/dashboard', protect, async (req, res, next) => {
       openHelpdeskTickets: openTickets,
       welfareRequestsPending: pendingWelfare,
       recognitionPosts: totalRecognitions,
-      suggestionCount: totalSuggestions,
-      employeeEngagementScore: '94.2%',
-      slaPerformanceScore: '98.5%'
+      overdueHelpdeskTickets: overdueTickets,
+      suggestionCount: totalSuggestions
     });
   } catch (err) { next(err); }
 });

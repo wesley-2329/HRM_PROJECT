@@ -2915,13 +2915,13 @@ body.dark-mode .emp-search:focus-within {
 
 .split-layout-2col {
   display: grid;
-  grid-template-cols: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
 }
 
 @media (min-width: 1024px) {
   .split-layout-2col {
-    grid-template-cols: 1fr 2fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
 }
 
@@ -3408,22 +3408,79 @@ body.dark-mode .welcome-card-banner {
   border-color: hsl(var(--border));
 }
 
-/* Phones: the header used to widen the whole page to ~634px. Keep every header item, but let the
-   header row scroll sideways inside itself (blur removed so the fixed dropdown panels are not clipped). */
-@media (max-width: 640px) {
-  .hr-header, .emp-header {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    padding: 0 12px;
+/* ===== Responsive header =====
+   >= 1280px: horizontal menu. Below: hamburger + slide-in drawer where each group expands on tap.
+   The search box is an icon that opens on demand below 1600px, so the menu fits without sideways scrolling. */
+.nav-hamburger { display: none; }
+.nav-backdrop { display: none; }
+.search-suggestions-dropdown { max-width: calc(100vw - 24px); }
+@media (max-width: 1599px) {
+  .hr-search:not(.open), .emp-search:not(.open) { min-width: 0 !important; width: 40px; height: 40px; padding: 0; justify-content: center; cursor: pointer; }
+  /* collapsed: the invisible input covers the icon so one tap focuses it */
+  .hr-search:not(.open) input, .emp-search:not(.open) input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+}
+/* laptops: tighter menu so all seven groups fit in one row without the scroll arrows */
+@media (min-width: 1280px) and (max-width: 1599px) {
+  .hr-header, .emp-header { padding: 0 16px; }
+  .hr-nav-menu, .emp-nav-menu { gap: 0; }
+  .hr-menu-link, .emp-menu-link { padding: 6px 8px; }
+  .hr-header-right, .emp-header-right { gap: 10px; padding-left: 8px; }
+}
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .hr-menu-link > i:first-child, .emp-menu-link > i:first-child { display: none; }
+}
+@media (min-width: 1280px) and (max-width: 1365px) {
+  .hr-menu-link, .emp-menu-link { padding: 6px; font-size: 0.8rem; }
+}
+@media (max-width: 1279px) {
+  /* a blurred header would become the containing block of the fixed drawer */
+  .hr-header, .emp-header { backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0 16px; }
+  .nav-hamburger {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 40px; height: 40px; border-radius: var(--rd-radius-sm); border: 1px solid hsl(var(--border));
+    background: hsl(var(--bg-card)); color: hsl(var(--text-primary)); font-size: 1.05rem; cursor: pointer;
   }
-  .hr-header::-webkit-scrollbar, .emp-header::-webkit-scrollbar { display: none; }
-  .hr-header-left, .emp-header-left { flex: 0 0 auto; min-width: 0; }
-  .hr-header-right, .emp-header-right { gap: 10px; }
-  .hr-search, .emp-search { width: 150px; }
-  .hr-search:focus-within, .emp-search:focus-within { width: 180px; }
+  .nav-scroll-arrows { display: none !important; }
+  .hr-brand-section, .emp-brand-section { margin-right: auto; }
+  .nav-open .nav-backdrop { display: block; position: fixed; inset: 70px 0 0 0; background: rgba(15, 23, 42, 0.45); z-index: 10002; }
+  .hr-options-scroll-section, .emp-options-scroll-section {
+    position: fixed; top: 70px; left: 0; bottom: 0; width: min(340px, 100vw); height: auto; flex: none;
+    display: block; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    background: hsl(var(--bg-card)); border-right: 1px solid hsl(var(--border)); box-shadow: var(--rd-shadow-lg);
+    padding: 12px; z-index: 10004;
+    transform: translateX(-100%); visibility: hidden;
+    transition: transform 0.25s var(--rd-ease), visibility 0.25s;
+  }
+  .nav-open .hr-options-scroll-section, .nav-open .emp-options-scroll-section { transform: none; visibility: visible; }
+  .hr-nav-menu, .emp-nav-menu { flex-direction: column; align-items: stretch; height: auto; gap: 2px; white-space: normal; }
+  .hr-menu-item, .emp-menu-item { display: block; height: auto; }
+  .hr-menu-link, .emp-menu-link { min-height: 44px; padding: 10px 12px; font-size: 0.95rem; gap: 10px; }
+  .hr-menu-link > i:first-child, .emp-menu-link > i:first-child { width: 20px; text-align: center; }
+  .hr-menu-link i.fa-chevron-down, .emp-menu-link i.fa-chevron-down { margin-left: auto; }
+  /* groups open in place (accordion) instead of floating panels; only an explicit tap opens them */
+  .hr-dropdown-panel, .emp-dropdown-panel,
+  .hr-menu-item:hover .hr-dropdown-panel, .emp-menu-item:hover .emp-dropdown-panel {
+    position: static; display: none; min-width: 0 !important; transform: none !important; opacity: 1 !important; visibility: visible !important;
+    pointer-events: auto !important; box-shadow: none !important; border: none !important; background: transparent !important;
+    padding: 0 0 8px 18px; transition: none;
+  }
+  .hr-dropdown-panel.open, .emp-dropdown-panel.open { display: flex !important; }
+  .hr-dropdown-panel::before, .emp-dropdown-panel::before { display: none; }
+  .hr-dropdown-item, .emp-dropdown-item { min-height: 44px; }
+  .hr-header-right, .emp-header-right { gap: 12px; padding-left: 8px; }
+}
+@media (max-width: 640px) {
+  .hr-header, .emp-header { padding: 0 12px; }
+  .hr-header-right, .emp-header-right { position: static; gap: 6px; padding-left: 4px; background: transparent !important; }
+  .hr-brand-section, .emp-brand-section { gap: 8px; margin-right: auto; }
+  /* open search takes the whole header row */
+  .hr-search.open, .emp-search.open { position: absolute !important; left: 12px; right: 12px; top: 13px; width: auto; min-width: 0 !important; z-index: 10006; }
+  .hr-search.open .search-suggestions-dropdown, .emp-search.open .search-suggestions-dropdown { width: 100% !important; }
+  .nav-user-name, .user-dropdown-btn .fa-chevron-down { display: none; }
+  .hr-header .nav-icon-btn, .emp-header .nav-icon-btn, .hr-header .theme-toggle-btn, .emp-header .theme-toggle-btn, .hr-header .palette-toggle-btn, .emp-header .palette-toggle-btn { min-width: 36px; min-height: 40px; }
+}
+@media (max-width: 380px) {
+  .hr-logo > span, .emp-logo > span { display: none; }
 }
 
 /* ===== Layout rhythm: one grid gap everywhere (24px desktop, 16px phones) ===== */
@@ -3459,3 +3516,148 @@ body.dark-mode .welcome-card-banner {
 /* Cards inside any inline grid / gapped flex layout are spaced by that gap only (no double spacing) */
 [style*="display: grid"] > :is(.card, .glass-card, .emp-card, .metric-card),
 [style*="display: flex"][style*="gap"] > :is(.card, .glass-card, .emp-card, .metric-card) { margin-bottom: 0; }
+
+/* ===== Phones and small tablets: layouts written as inline styles =====
+   Most pages set their grids inline (style={{ gridTemplateColumns: ... }}), which a class cannot reach,
+   so these rules match the inline value itself. One place to maintain instead of ~200 call sites. */
+/* a grid/flex child may shrink below its content; without this one long word widens the whole page */
+[style*="display: grid"] > *, .metric-grid > *, .dashboard-layout > * { min-width: 0; }
+.card, .glass-card, .emp-card, .metric-card { min-width: 0; max-width: 100%; }
+img, video, canvas, svg { max-width: 100%; }
+.card-title { flex-wrap: wrap; gap: var(--space-2); }
+
+@media (max-width: 640px) {
+  /* fixed two/three-column splits (form field pairs, side-by-side panels) stack */
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns: 1.2fr 1fr"], [style*="grid-template-columns: 1.5fr 1fr"],
+  [style*="grid-template-columns: 1.8fr 1.2fr"], [style*="grid-template-columns: 2fr 1.2fr"],
+  [style*="grid-template-columns: 2.5fr 1fr"], [style*="grid-template-columns: 1fr 1.2fr"],
+  [style*="grid-template-columns: 1fr 2.2fr"], [style*="grid-template-columns: repeat(2, 1fr)"],
+  /* auto-fit tracks with a 280px+ minimum cannot fit beside page and card padding */
+  [style*="minmax(28"], [style*="minmax(3"], [style*="minmax(4"] { grid-template-columns: minmax(0, 1fr) !important; }
+  [style*="grid-template-columns: repeat(4, 1fr)"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* toolbars (title left, actions right) and button rows wrap instead of pushing off screen */
+  [style*="display: flex"][style*="justify-content: space-between"]:not([style*="flex-direction: column"]),
+  [style*="display: flex"]:has(> .btn):not([style*="flex-direction: column"]):not([style*="overflow-x"]):not([style*="overflow: auto"]) { flex-wrap: wrap; row-gap: var(--space-2); }
+  [style*="overflow-x: auto"] > .btn { flex: 0 0 auto; }
+  /* filter rows (label + select) wrap; fields never exceed their row */
+  [style*="display: flex"]:has(> select, > .form-control, > input):not([style*="flex-direction: column"]) { flex-wrap: wrap; }
+  select, .form-control { max-width: 100%; }
+  [style*="flex: 1 1 0%"] { min-width: 0; }
+  /* underlined tab rows (a flex row with a bottom border and plain buttons) scroll sideways as one line */
+  [style*="display: flex"][style*="border-bottom"]:has(> button) { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; flex-wrap: nowrap !important; }
+  [style*="display: flex"][style*="border-bottom"]:has(> button) > button { flex: 0 0 auto; white-space: nowrap; }
+  .chat-container input { min-width: 0; }
+  /* tab strips scroll sideways inside themselves */
+  .sub-tabs { overflow-x: auto; scrollbar-width: none; }
+  .sub-tabs > * { flex: 0 0 auto; }
+  .split-layout-2col { grid-template-columns: minmax(0, 1fr); }
+  /* fixed minimum widths written for desktop */
+  [style*="min-width: 280px"], [style*="min-width: 300px"], [style*="min-width: 320px"], [style*="min-width: 400px"] { min-width: 0 !important; }
+  /* cards and page gutters: 16px instead of 24px+ */
+  .card, .glass-card, .emp-card { padding: var(--space-4); }
+  .modal-overlay, .modal-backdrop { padding: var(--space-2); align-items: flex-end; }
+  .modal-content { padding: var(--space-4); max-height: 92dvh; border-radius: var(--rd-radius-lg) var(--rd-radius-lg) 0 0; }
+  .custom-table th, .custom-table td { padding: 10px 12px; }
+  /* touch targets and iOS zoom: 16px inputs do not zoom the page on focus */
+  .btn { min-height: 40px; }
+  .form-control, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px; }
+}
+@media (max-width: 400px) {
+  [style*="minmax(2"] { grid-template-columns: minmax(0, 1fr) !important; }
+  [style*="min-width: 220px"], [style*="min-width: 240px"], [style*="min-width: 200px"] { min-width: 0 !important; }
+}
+
+/* Login on tablets and phones: the form alone, full width (the showcase panel is desktop-only) */
+@media (max-width: 860px) {
+  #login-page-wrapper { padding: 16px !important; align-items: flex-start !important; }
+  #login-container { display: block !important; min-height: 0 !important; max-width: 480px !important; margin: 0 auto !important; border-radius: var(--rd-radius-lg) !important; }
+  .login-showcase { display: none !important; }
+  .login-form-col { padding: 28px 20px !important; }
+}
+
+/* Landing page on tablets and phones */
+@media (max-width: 1024px) {
+  .landing-overlay-container [style*="grid-template-columns: repeat(4, 1fr)"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 768px) {
+  .landing-overlay-container > header { padding: 12px 16px !important; }
+  .landing-overlay-container > header nav > span { display: none; } /* section anchors: the page is one scroll on a phone */
+  .landing-overlay-container section { padding-left: 20px !important; padding-right: 20px !important; }
+  .landing-overlay-container section:not(#hero-section) { padding-top: 64px !important; padding-bottom: 64px !important; min-height: 0 !important; }
+  .landing-overlay-container h2 { font-size: clamp(1.6rem, 7vw, 3rem) !important; line-height: 1.15; }
+  .landing-cta-row { flex-direction: column; width: 100%; max-width: 340px; }
+  .landing-stats-row { gap: 16px !important; flex-wrap: wrap; }
+  .landing-stats-row > div { flex: 1 1 90px; }
+  .landing-overlay-container [style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
+  .custom-cursor-dot, .custom-cursor-ring { display: none !important; }
+}
+
+/* KPI tiles: two per row on phones (one per row made every dashboard several screens tall) */
+@media (max-width: 640px) {
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+  .metric-card { padding: 14px; gap: var(--space-2); align-items: flex-start; }
+  .metric-val { font-size: var(--fs-xl); }
+  .metric-label { font-size: 11px; }
+  .metric-card .metric-icon-box { display: none; } /* the label needs the full tile width at two per row */
+  /* page titles: desktop sizes wrapped to three lines */
+  .module-viewport h1 { font-size: clamp(1.3rem, 6vw, 1.6rem) !important; line-height: 1.2 !important; }
+  .module-viewport h2 { font-size: clamp(1.1rem, 5vw, 1.35rem) !important; line-height: 1.25 !important; }
+  .module-viewport { overscroll-behavior-y: contain; }
+}
+@media (max-width: 340px) {
+  .metric-card .metric-icon-box { display: none; }
+}
+
+/* Touch targets */
+.close-modal { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: -8px -8px -8px 0; border-radius: var(--rd-radius-sm); }
+.close-modal:hover { background: hsl(var(--border) / 0.6); }
+@media (max-width: 640px) {
+  .btn { min-width: 40px; }
+  .emp-card select.form-control { height: 36px !important; font-size: 14px !important; padding: 4px 8px !important; width: auto !important; min-width: 130px; }
+  .metric-label { display: block; line-height: 1.3; }
+}
+
+/* Dialogs on phones: the shared modal and the modules' own fixed overlays both fit the screen and scroll inside */
+@media (max-width: 640px) {
+  .modal-content { width: 100% !important; max-width: 100% !important; }
+  [style*="position: fixed"][style*="inset: 0"] { padding: 8px !important; }
+  [style*="position: fixed"][style*="inset: 0"] > * { max-width: 100% !important; min-width: 0 !important; max-height: 94dvh !important; overflow-y: auto; }
+  .dual-modal-wrapper { width: 100%; }
+}
+
+/* Module dialogs written with inline styles: sit above the sticky header, and their plain "input" fields get the standard field look */
+[style*="position: fixed"][style*="inset: 0"],
+[style*="position: fixed"][style*="top: 0"][style*="bottom: 0"][style*="left: 0"][style*="right: 0"] { z-index: 100000 !important; }
+input.input, textarea.input, select.input {
+  border: 1px solid hsl(var(--border)); background-color: hsl(var(--bg-card)); color: hsl(var(--text-primary));
+  border-radius: var(--rd-radius-sm); outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input.input:focus, textarea.input:focus, select.input:focus { border-color: hsl(var(--primary)); box-shadow: var(--rd-focus); }
+@media (max-width: 640px) {
+  [style*="position: fixed"][style*="top: 0"][style*="bottom: 0"][style*="left: 0"][style*="right: 0"] { padding: 8px !important; }
+  [style*="position: fixed"][style*="top: 0"][style*="bottom: 0"][style*="left: 0"][style*="right: 0"] > * { max-width: 100% !important; min-width: 0 !important; max-height: 94dvh !important; overflow-y: auto; }
+}
+
+/* Organization section below 900px: the side menu becomes a scrolling chip row above the page */
+@media (max-width: 900px) {
+  .org-shell { flex-direction: column; min-height: 0 !important; }
+  .org-subnav {
+    width: 100% !important; height: auto !important; position: sticky !important; top: 0 !important; flex-direction: row !important;
+    padding: 8px 12px !important; gap: 0 !important; border-right: none !important; border-bottom: 1px solid hsl(var(--border));
+    overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none;
+  }
+  .org-subnav::-webkit-scrollbar { display: none; }
+  .org-subnav-head, .org-subnav-title { display: none !important; }
+  .org-subnav-groups { flex-direction: row !important; gap: 6px !important; flex: 0 0 auto !important; }
+  .org-subnav-group { flex-direction: row !important; gap: 6px !important; }
+  .org-subnav-item { width: auto !important; flex: 0 0 auto; white-space: nowrap; min-height: 40px; border: 1px solid hsl(var(--border)) !important; border-radius: 999px !important; padding: 6px 14px !important; }
+  .org-subnav-item[aria-current="page"] { border-color: hsl(var(--primary)) !important; }
+  .org-content { overflow: visible !important; }
+}
+
+/* Org chart: drag-to-pan is mouse-only, so touch screens scroll the canvas natively instead.
+   shortcut: no pinch-zoom on touch, add pointer-event panning if the chart outgrows simple scrolling */
+@media (pointer: coarse) {
+  .org-chart-canvas { overflow: auto !important; -webkit-overflow-scrolling: touch; cursor: default !important; }
+}

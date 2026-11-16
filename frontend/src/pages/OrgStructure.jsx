@@ -143,9 +143,10 @@ const OrgStructure = ({ mode }) => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', background: 'hsl(var(--bg-main))' }}>
+    <div className="org-shell" style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', background: 'hsl(var(--bg-main))' }}>
       {/* Persistent Sub-Navigation Sidebar */}
       <div 
+        className="org-subnav"
         style={{ 
           width: '260px', 
           background: 'hsl(var(--bg-card))', 
@@ -162,7 +163,7 @@ const OrgStructure = ({ mode }) => {
           zIndex: 10
         }}
       >
-        <div style={{ padding: '0 8px' }}>
+        <div className="org-subnav-head" style={{ padding: '0 8px' }}>
           <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <i className="fa-solid fa-layer-group"></i>
             <span>Org Structure Hub</span>
@@ -170,10 +171,10 @@ const OrgStructure = ({ mode }) => {
           <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', display: 'block', marginTop: '4px' }}>Unified Setup & Controls</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+        <div className="org-subnav-groups" style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
           {menuSections.map((sec, idx) => (
-            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: 'hsl(var(--text-secondary))', letterSpacing: '0.05em', padding: '0 8px', marginBottom: '4px' }}>
+            <div key={idx} className="org-subnav-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span className="org-subnav-title" style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700, color: 'hsl(var(--text-secondary))', letterSpacing: '0.05em', padding: '0 8px', marginBottom: '4px' }}>
                 {sec.title}
               </span>
               {sec.items.map((item, itemIdx) => {
@@ -199,6 +200,8 @@ const OrgStructure = ({ mode }) => {
                 return (
                   <button
                     key={itemIdx}
+                    className="org-subnav-item"
+                    aria-current={isActive ? 'page' : undefined}
                     onClick={() => navigate(item.path)}
                     style={{
                       display: 'flex',
@@ -229,7 +232,7 @@ const OrgStructure = ({ mode }) => {
       </div>
 
       {/* Right Content Panel */}
-      <div style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+      <div className="org-content" style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
         {renderActivePage()}
       </div>
     </div>

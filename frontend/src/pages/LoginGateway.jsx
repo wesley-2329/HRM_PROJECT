@@ -120,7 +120,7 @@ const LoginGateway = () => {
       }}>
         
         {/* LEFT COLUMN: Concept Showcase Panel (with dynamic background matching dashboard theme) */}
-        <div style={{
+        <div className="login-showcase" style={{
           gridColumn: 'span 5',
           background: role === 'hr' 
             ? 'linear-gradient(135deg, #f5f3ff 0%, #faf8f5 100%)' 
@@ -359,7 +359,7 @@ const LoginGateway = () => {
         </div>
 
         {/* RIGHT COLUMN: The Login Form Panel & animated owl mascot on the right */}
-        <div style={{
+        <div className="login-form-col" style={{
           gridColumn: 'span 7',
           padding: '40px 48px',
           background: 'rgba(255,255,255,0.95)',

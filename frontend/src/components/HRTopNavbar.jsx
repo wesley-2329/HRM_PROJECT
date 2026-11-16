@@ -12,6 +12,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   const { notifications } = useContext(DataContext);
   const [profileDropdownActive, setProfileDropdownActive] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [navOpen, setNavOpen] = useState(false); // drawer menu, used below 1280px
   const dropdownTimeoutRef = useRef(null);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
   const optionsScrollRef = useRef(null);
@@ -131,14 +132,17 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   }).sort((a, b) => {
     const aFull = `${a.title} ${a.desc} ${a.keywords || ''}`.toLowerCase();
     const bFull = `${b.title} ${b.desc} ${b.keywords || ''}`.toLowerCase();
-    const aExact = aFull.includes(cleanQuery) ? 3 : 0;
-    const bExact = bFull.includes(cleanQuery) ? 3 : 0;
+    const aExact = (aFull.includes(cleanQuery) ? 3 : 0) + (a.title.toLowerCase().includes(cleanQuery) ? 5 : 0);
+    const bExact = (bFull.includes(cleanQuery) ? 3 : 0) + (b.title.toLowerCase().includes(cleanQuery) ? 5 : 0);
     const aTokenMatches = searchTokens.filter(t => aFull.includes(t)).length;
     const bTokenMatches = searchTokens.filter(t => bFull.includes(t)).length;
     return (bExact + bTokenMatches) - (aExact + aTokenMatches);
   }).slice(0, 7);
 
+  const isDrawerNav = () => window.matchMedia('(max-width: 1279px)').matches;
+
   const handleMouseEnter = (name) => {
+    if (isDrawerNav()) return;
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
       dropdownTimeoutRef.current = null;
@@ -153,6 +157,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   };
 
   const handleMouseLeave = () => {
+    if (isDrawerNav()) return;
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
     }
@@ -185,7 +190,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
       if (!e.target.closest('.user-dropdown-btn') && !e.target.closest('.dropdown-menu')) {
         setProfileDropdownActive(false);
       }
-      if (!e.target.closest('.hr-menu-item') && !e.target.closest('.hr-dropdown-panel')) {
+      if (!e.target.closest('.hr-menu-item') && !e.target.closest('.hr-dropdown-panel') && !e.target.closest('.nav-hamburger')) {
         setActiveDropdown(null);
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
@@ -202,6 +207,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
   const handleNavClick = (mod) => {
     setActiveDropdown(null);
+    setNavOpen(false);
     setProfileDropdownActive(false);
     if (mod === 'org-structure') {
       navigate('/organization');
@@ -240,15 +246,19 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
   };
 
   return (
-    <header className="hr-header">
+    <header className={`hr-header ${navOpen ? 'nav-open' : ''}`}>
+      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)}></div>}
       {/* 1. Fixed Brand Logo & Navigation Arrows (Never Scrolls) */}
       <div className="hr-brand-section">
+        <button type="button" className="nav-hamburger" aria-label={navOpen ? 'Close menu' : 'Open menu'} aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}>
+          <i className={`fa-solid ${navOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+        </button>
         <div className="hr-logo" onClick={() => navigate('/hr/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
           <img src={hrorbitLogo} alt="HR O Logo" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
           <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'hsl(var(--primary))', letterSpacing: '0.5px' }}>HR O</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
+        <div className="nav-scroll-arrows" style={{ display: canScrollLeft || canScrollRight ? 'flex' : 'none', gap: '6px', marginRight: '6px', flexShrink: 0 }}>
           <button 
             type="button"
             onClick={() => scrollOptions(-1)} 
@@ -662,11 +672,12 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
 
       <div className="hr-header-right">
         {/* Global Search */}
-        <div className="hr-search" ref={searchContainerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
+        <div className={`hr-search ${showSearchDropdown ? 'open' : ''}`} ref={searchContainerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
           <i className="fa-solid fa-search"></i>
           <input
             type="text"
             placeholder="Search features, tools or docs..."
+            aria-label="Search"
             value={searchQuery}
             onFocus={() => setShowSearchDropdown(true)}
             onChange={(e) => {
@@ -800,7 +811,7 @@ const HRTopNavbar = ({ currentModule, darkMode, setDarkMode, onSearch }) => {
         <div style={{ position: 'relative' }}>
           <div className="user-dropdown-btn" onClick={() => setProfileDropdownActive(prev => !prev)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
             <img src={getAvatarUrl(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+            <span className="nav-user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
               {user.name.split(' ')[0]}
             </span>
             <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.7rem', color: 'hsl(var(--text-secondary))' }}></i>
