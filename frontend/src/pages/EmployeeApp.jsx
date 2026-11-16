@@ -244,7 +244,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // Leave balance comes from the server (same rule it enforces); refreshed whenever the leave list changes.
   const [leaveBalance, setLeaveBalance] = useState(null);
   useEffect(() => {
-    api.get('/leaves/balance').then(res => setLeaveBalance(res.data.balance)).catch(() => setLeaveBalance(null));
+    let current = true; // ignore an older answer that arrives after a newer request
+    api.get('/leaves/balance').then(res => current && setLeaveBalance(res.data.balance)).catch(() => current && setLeaveBalance(null));
+    return () => { current = false; };
   }, [leaves]);
   const totalLeaveAvailable = leaveBalance ? Object.values(leaveBalance).reduce((n, b) => n + Math.max(0, b.available), 0) : null;
 
@@ -367,7 +369,9 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [formBalance, setFormBalance] = useState(null);
   useEffect(() => {
     if (!/^\d{4}$/.test(formYear)) return;
-    api.get(`/leaves/balance?year=${formYear}`).then(res => setFormBalance(res.data.balance)).catch(() => setFormBalance(null));
+    let current = true; // drop answers that arrive after the year changed (they would show the wrong year's balance)
+    api.get(`/leaves/balance?year=${formYear}`).then(res => current && setFormBalance(res.data.balance)).catch(() => current && setFormBalance(null));
+    return () => { current = false; };
   }, [leaves, formYear]);
 
   const [ticketTitle, setTicketTitle] = useState('');
