@@ -17,19 +17,19 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
   // Data States
   const [kpis, setKpis] = useState({
-    totalBudget: 12500000,
-    totalUtilized: 7850000,
-    totalRemaining: 4650000,
-    budgetVariance: '37.2%',
-    recruitmentBudget: 1850000,
-    welfareBudget: 1420000,
-    trainingBudget: 950000,
-    payrollCost: 24500000,
-    overtimeCost: 680000,
-    costPerEmployee: 18500,
-    costPerDepartment: 1560000,
-    utilizationPercentage: '62.8%'
+    totalBudget: 0,
+    totalUtilized: 0,
+    totalRemaining: 0,
+    budgetVariance: null,
+    recruitmentBudget: 0,
+    welfareBudget: 0,
+    costPerEmployee: 0,
+    costPerDepartment: 0,
+    departmentCount: 0,
+    utilizationPercentage: null
   });
+  const [charts, setCharts] = useState({ departmentUtilization: [], categoryBreakdown: [] });
+  const [welfareBudgets, setWelfareBudgets] = useState([]);
 
   const [budgets, setBudgets] = useState([]);
 
@@ -180,6 +180,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       if (activeTab === 'dashboard') {
         const res = await api.get('/budget/dashboard');
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
+        if (res.data && res.data.charts) setCharts(res.data.charts);
       } else if (activeTab === 'planning') {
         const res = await api.get('/budget/planning');
         if (Array.isArray(res.data)) setBudgets(res.data);
@@ -195,6 +196,14 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       } else if (activeTab === 'welfare-expense' || activeTab === 'welfare-budget') {
         const res = await api.get('/budget/welfare');
         if (res.data && res.data.expenses) setWelfareExpenses(res.data.expenses);
+        if (res.data && Array.isArray(res.data.budgets)) setWelfareBudgets(res.data.budgets);
+      } else if (activeTab === 'reports') {
+        // reports are built from these lists, which are otherwise only loaded by their own tabs
+        const [plan, rec, wel, man] = await Promise.all(['/budget/planning', '/budget/recruitment', '/budget/welfare', '/budget/manpower'].map(u => api.get(u)));
+        if (Array.isArray(plan.data)) setBudgets(plan.data);
+        if (rec.data && rec.data.expenses) setRecruitmentExpenses(rec.data.expenses);
+        if (wel.data && wel.data.expenses) setWelfareExpenses(wel.data.expenses);
+        if (man.data && man.data.manpower) setManpowerBudgets(man.data.manpower);
       } else if (activeTab === 'history') {
         const res = await api.get('/budget/history');
         if (Array.isArray(res.data)) {
@@ -215,10 +224,12 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         setAnalyticsLoading(true);
         setAnalyticsError(null);
         try {
-          const res = await api.get('/budget/analytics');
+          const [res, dash] = await Promise.all([api.get('/budget/analytics'), api.get('/budget/dashboard')]);
           if (Array.isArray(res.data)) {
             setCostAnalytics(res.data);
           }
+          if (dash.data && dash.data.kpis) setKpis(dash.data.kpis);
+          if (dash.data && dash.data.charts) setCharts(dash.data.charts);
         } catch (err) {
           setAnalyticsError('Could not load cost analytics. Please refresh.');
         } finally {
@@ -393,13 +404,13 @@ const BudgetingModule = ({ searchQuery = '' }) => {
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>TOTAL HR BUDGET</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalBudget || 0).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>FY 2026-2027 Approved</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Approved (or proposed) budget lines</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET UTILIZED</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalUtilized || 0).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{kpis.utilizationPercentage} Utilized</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{kpis.utilizationPercentage ?? '—'} utilized</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
@@ -410,20 +421,20 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET VARIANCE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.budgetVariance}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>Favorable Variance</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.budgetVariance ?? '—'}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Share of budget not yet spent</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RECRUITMENT SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.recruitmentBudget || 0).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Agency & Portal Costs</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Recorded recruitment expenses</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>WELFARE SPEND</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.welfareBudget || 0).toLocaleString()}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Canteen, Transport, Insurance</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Recorded welfare expenses</span>
             </div>
           </div>
 
@@ -434,27 +445,26 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 <span>Department Budget Utilization</span>
                 <i className="fa-solid fa-building-user" style={{ color: 'hsl(var(--primary))' }}></i>
               </div>
+              {charts.departmentUtilization.length === 0 ? (
+                <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem', marginTop: '16px' }}>No budget lines recorded yet. Add one under Budget Planning.</p>
+              ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-                {[
-                  { dept: 'Engineering', allocated: 4500000, spent: 2800000, color: '#6366f1' },
-                  { dept: 'Sales & Marketing', allocated: 2800000, spent: 1600000, color: '#3b82f6' },
-                  { dept: 'Human Resources', allocated: 1500000, spent: 920000, color: '#ec4899' },
-                  { dept: 'Operations', allocated: 2200000, spent: 1250000, color: '#10b981' }
-                ].map((item) => {
-                  const pct = Math.round((item.spent / item.allocated) * 100);
+                {charts.departmentUtilization.map((item, i) => {
+                  const pct = item.budget > 0 ? Math.round((item.actual / item.budget) * 100) : 0;
                   return (
-                    <div key={item.dept}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '4px', fontWeight: 600 }}>
-                        <span>{item.dept}</span>
-                        <span>₹{item.spent.toLocaleString()} / ₹{item.allocated.toLocaleString()} ({pct}%)</span>
+                    <div key={item.department}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', fontSize: '0.82rem', marginBottom: '4px', fontWeight: 600 }}>
+                        <span>{item.department}</span>
+                        <span>₹{item.actual.toLocaleString('en-IN')} / ₹{item.budget.toLocaleString('en-IN')} ({pct}%)</span>
                       </div>
-                      <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', background: item.color, borderRadius: '4px' }}></div>
+                      <div style={{ height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: pct > 100 ? '#ef4444' : ['#6366f1', '#3b82f6', '#ec4899', '#10b981', '#f59e0b'][i % 5], borderRadius: '4px' }}></div>
                       </div>
                     </div>
                   );
                 })}
               </div>
+              )}
             </div>
 
             <div className="card" style={{ padding: '20px' }}>
@@ -462,26 +472,21 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 <span>Cost Category Breakdown</span>
                 <i className="fa-solid fa-chart-pie" style={{ color: 'hsl(var(--primary))' }}></i>
               </div>
+              {charts.categoryBreakdown.length === 0 ? (
+                <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem', marginTop: '16px' }}>No budget lines recorded yet. Add one under Budget Planning.</p>
+              ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                {[
-                  { label: 'Payroll & Salary Budget', amount: 24500000, pct: '72%', icon: 'fa-money-check-dollar' },
-                  { label: 'Recruitment & Sourcing', amount: 1850000, pct: '12%', icon: 'fa-user-plus' },
-                  { label: 'Employee Welfare & Benefits', amount: 1420000, pct: '9%', icon: 'fa-heart' },
-                  { label: 'Training & Development', amount: 950000, pct: '5%', icon: 'fa-graduation-cap' },
-                  { label: 'Overtime & Allowance', amount: 680000, pct: '2%', icon: 'fa-clock' }
-                ].map((c) => (
-                  <div key={c.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <i className={`fa-solid ${c.icon}`} style={{ color: 'hsl(var(--primary))' }}></i>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{c.label}</span>
-                    </div>
+                {charts.categoryBreakdown.map((c) => (
+                  <div key={c.category} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '8px 12px', background: 'hsl(var(--bg-main))', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{c.category}</span>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>₹{c.amount.toLocaleString()}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginLeft: '8px' }}>({c.pct})</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>₹{c.budget.toLocaleString('en-IN')}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginLeft: '8px' }}>({Math.round(c.budget / (charts.categoryBreakdown.reduce((a, c) => a + c.budget, 0) || 1) * 100)}%)</span>
                     </div>
                   </div>
                 ))}
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -622,23 +627,23 @@ const BudgetingModule = ({ searchQuery = '' }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COST PER EMPLOYEE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerEmployee || 18500).toLocaleString('en-IN')}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Within Target Band (₹20,000 cap)</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerEmployee || 0).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Utilized spend ÷ employees</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>AVG DEPT MONTHLY RUNWAY</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerDepartment || 1560000).toLocaleString('en-IN')}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Across 5 Core Business Units</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>AVG SPEND PER DEPARTMENT</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.costPerDepartment || 0).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Across {kpis.departmentCount || 0} departments with a budget</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OVERTIME & SHIFT COST</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.overtimeCost || 680000).toLocaleString('en-IN')}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>2.8% of Total Operational Spend</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>BUDGET REMAINING</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.totalRemaining || 0).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Approved budget minus utilized</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>TOTAL UTILIZATION RATE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.utilizationPercentage || '62.8%'}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Optimal Pacing (Q2 Benchmark: 65%)</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.utilizationPercentage ?? '—'}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Utilized ÷ approved budget</span>
             </div>
           </div>
 
@@ -694,9 +699,9 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {costAnalytics.slice(0, 5).map(item => {
-                      const maxVal = 4500000;
-                      const allocPct = Math.min(100, Math.round(((item.budgetAmount || 4000000) / maxVal) * 100));
-                      const spendPct = Math.min(100, Math.round(((item.actualCost || 2500000) / maxVal) * 100));
+                      const maxVal = Math.max(1, ...costAnalytics.map(r => Math.max(r.budgetAmount || 0, r.actualCost || 0)));
+                      const allocPct = Math.min(100, Math.round(((item.budgetAmount || 0) / maxVal) * 100));
+                      const spendPct = Math.min(100, Math.round(((item.actualCost || 0) / maxVal) * 100));
                       const burnRate = item.burnRate || (Math.round(((item.actualCost || 1) / (item.budgetAmount || 1)) * 1000) / 10);
                       return (
                         <div key={item.analyticsId || item.department}>
@@ -724,23 +729,18 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                     <i className="fa-solid fa-chart-pie" style={{ color: 'hsl(var(--primary))' }}></i>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    {[
-                      { cat: 'Manpower & Salaries', amount: 24500000, share: 77.2, color: '#6366f1' },
-                      { cat: 'Recruitment & Sourcing', amount: 1850000, share: 5.8, color: '#3b82f6' },
-                      { cat: 'Employee Welfare & Benefits', amount: 1420000, share: 4.5, color: '#10b981' },
-                      { cat: 'Training & Skill Development', amount: 950000, share: 3.0, color: '#f59e0b' },
-                      { cat: 'Overtime & Allowances', amount: 680000, share: 2.1, color: '#ec4899' }
-                    ].map(c => (
+                    {charts.categoryBreakdown.length === 0 && <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>No budget lines recorded yet.</p>}
+                    {charts.categoryBreakdown.map((row, i) => ({ cat: row.category, amount: row.budget, share: Math.round(row.budget / (charts.categoryBreakdown.reduce((a, c) => a + c.budget, 0) || 1) * 1000) / 10, color: ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'][i % 5] })).map(c => (
                       <div key={c.cat}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ width: '8px', height: '8px', background: c.color, borderRadius: '50%' }}></span>
                             {c.cat}
                           </span>
                           <span>₹{c.amount.toLocaleString('en-IN')} ({c.share}%)</span>
                         </div>
-                        <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${Math.min(100, c.share * 1.25)}%`, height: '100%', background: c.color, borderRadius: '4px' }}></div>
+                        <div style={{ width: '100%', height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.min(100, c.share)}%`, height: '100%', background: c.color, borderRadius: '4px' }}></div>
                         </div>
                       </div>
                     ))}
@@ -757,7 +757,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                       Headcount intensity, per-employee cost metrics, and efficiency ratings by department
                     </p>
                   </div>
-                  <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>5 Active Departments</span>
+                  <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>{new Set(costAnalytics.map(r => r.department)).size} Departments</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
@@ -778,19 +778,19 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                         <tr key={row.analyticsId || row.department}>
                           <td><strong>{row.department}</strong></td>
                           <td><code>{row.costCenter}</code></td>
-                          <td>{row.headcount || 25} Active</td>
-                          <td>₹{(row.costPerHead || 60000).toLocaleString('en-IN')}</td>
+                          <td>{row.headcount ?? '—'}</td>
+                          <td>{row.costPerHead != null ? `₹${row.costPerHead.toLocaleString('en-IN')}` : '—'}</td>
                           <td>₹{(row.budgetAmount || 0).toLocaleString('en-IN')}</td>
                           <td><strong>₹{(row.actualCost || 0).toLocaleString('en-IN')}</strong></td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                                <div style={{ width: `${row.burnRate || 65}%`, height: '100%', background: row.color || '#10b981', borderRadius: '3px' }}></div>
+                                <div style={{ width: `${Math.min(100, row.burnRate || 0)}%`, height: '100%', background: (row.burnRate || 0) > 100 ? '#ef4444' : '#10b981', borderRadius: '3px' }}></div>
                               </div>
-                              <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{row.burnRate || 65}%</span>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{row.burnRate || 0}%</span>
                             </div>
                           </td>
-                          <td><span className="badge" style={{ background: `${row.color || '#10b981'}15`, color: row.color || '#10b981', fontWeight: 700 }}>{row.rating || 'Optimal'}</span></td>
+                          <td>{(() => { const over = (row.burnRate || 0) > 100; const c = over ? '#ef4444' : '#10b981'; return <span className="badge" style={{ background: `${c}15`, color: c, fontWeight: 700 }}>{row.rating || (over ? 'Over budget' : 'Within budget')}</span>; })()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -858,23 +858,23 @@ const BudgetingModule = ({ searchQuery = '' }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PROJECTED ANNUAL SPEND</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹11,850,000</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>-5.2% Below Approved FY Cap</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{forecastList.find(f => f.period === 'Annual') ? `₹${(forecastList.find(f => f.period === 'Annual').expectedCase || 0).toLocaleString('en-IN')}` : '—'}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Expected case of the annual forecast</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>NET PROJECTED VARIANCE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>+₹650,000</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Favorable Surplus Expected</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>NET VARIANCE</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0', color: varianceList.reduce((a, v) => a + (v.variance || 0), 0) < 0 ? '#ef4444' : undefined }}>{varianceList.reduce((a, v) => a + (v.variance || 0), 0) >= 0 ? '+' : '-'}₹{Math.abs(varianceList.reduce((a, v) => a + (v.variance || 0), 0)).toLocaleString('en-IN')}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Planned minus actual, all variance lines</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>FORECAST CONFIDENCE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>94.6%</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Based on 6-Month Realized Trend</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>FORECASTS RECORDED</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{forecastList.length}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Monthly, quarterly and annual</span>
             </div>
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RUNWAY STATUS</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>Healthy</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Zero Capital Calls Needed</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OVER-BUDGET LINES</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{varianceList.filter(v => v.varianceType === 'Unfavorable').length}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Variance lines with spend above plan</span>
             </div>
           </div>
 
@@ -931,7 +931,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {quarterlyProjections.length === 0 && <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>No quarterly spend has been recorded yet.</p>}
                     {quarterlyProjections.map(q => {
-                      const totalBudget = q.budget || 25000000;
+                      const totalBudget = q.budget || (q.q1 + q.q2 + q.q3 + q.q4) || 1;
                       const q1Pct = Math.min(25, Math.round((q.q1 / totalBudget) * 100));
                       const q2Pct = Math.min(25, Math.round((q.q2 / totalBudget) * 100));
                       const q3Pct = Math.min(25, Math.round((q.q3 / totalBudget) * 100));
@@ -959,36 +959,26 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div>
                       <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>Predictive Scenario Modeling</h4>
-                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Budget Sensitivity Simulation for FY 2026-2027</p>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>Best, expected and worst case of the annual forecast</p>
                     </div>
-                    <i className="fa-solid fa-wand-magic-sparkles" style={{ color: 'hsl(var(--primary))' }}></i>
+                    <i className="fa-solid fa-chart-line" style={{ color: 'hsl(var(--primary))' }}></i>
                   </div>
+                  {!forecastList.find(f => f.period === 'Annual') ? (
+                    <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>No annual forecast has been recorded yet.</p>
+                  ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#10b981' }}>Best Case Scenario</span>
-                        <span className="badge" style={{ background: '#10b98120', color: '#10b981', fontWeight: 700 }}>96.1% Accuracy</span>
+                    {[
+                      { label: 'Best Case', amount: forecastList.find(f => f.period === 'Annual').bestCase, color: '#10b981' },
+                      { label: 'Expected Case', amount: forecastList.find(f => f.period === 'Annual').expectedCase, color: '#6366f1' },
+                      { label: 'Worst Case', amount: forecastList.find(f => f.period === 'Annual').worstCase, color: '#ef4444' }
+                    ].map(sc => (
+                      <div key={sc.label} style={{ padding: '12px', borderRadius: '8px', background: `${sc.color}14`, border: `1px solid ${sc.color}33` }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: sc.color, marginBottom: '4px' }}>{sc.label}</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹{(sc.amount || 0).toLocaleString('en-IN')}</div>
                       </div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹11,200,000</div>
-                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Expected Cost Savings: ₹1,300,000 (Aggressive hiring freeze on non-core roles)</div>
-                    </div>
-                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#6366f1' }}>Expected Case Scenario (Baseline)</span>
-                        <span className="badge" style={{ background: '#6366f120', color: '#6366f1', fontWeight: 700 }}>94.6% Accuracy</span>
-                      </div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹11,850,000</div>
-                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Expected Cost Savings: ₹650,000 (Current realized pace with planned Q3 onboarding)</div>
-                    </div>
-                    <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#ef4444' }}>Worst Case Scenario</span>
-                        <span className="badge" style={{ background: '#ef444420', color: '#ef4444', fontWeight: 700 }}>92.4% Accuracy</span>
-                      </div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>₹12,600,000</div>
-                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Variance Overrun Risk: -₹100,000 (Overtime surge + expedited recruitment agency fees)</div>
-                    </div>
+                    ))}
                   </div>
+                  )}
                 </div>
               </div>
 
@@ -1002,7 +992,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                     </p>
                   </div>
                   <span className="badge" style={{ background: '#10b98115', color: '#10b981', fontWeight: 700 }}>
-                    Net Variance: +₹2,600,000 Favorable
+                    Net Variance: {varianceList.reduce((a, v) => a + (v.variance || 0), 0) >= 0 ? '+' : '-'}₹{Math.abs(varianceList.reduce((a, v) => a + (v.variance || 0), 0)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
@@ -1186,7 +1176,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
         <div className="card p-5">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
-              <h3 style={{ margin: 0, fontWeight: 700 }}>Employee Welfare Budget Allocations (FY 2026-2027)</h3>
+              <h3 style={{ margin: 0, fontWeight: 700 }}>Employee Welfare Budget Allocations</h3>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
                 Annual statutory and non-statutory employee welfare program allocations and coverage quotas.
               </p>
@@ -1210,13 +1200,14 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { id: 'WFA-101', cat: 'Group Health & Medical Insurance', budget: 650000, spent: 420000, rem: 230000, cov: '100% Workforce', pct: 64.6, status: 'Active' },
-                  { id: 'WFA-102', cat: 'Executive & Shift Transport Subsidy', budget: 350000, spent: 218300, rem: 131700, cov: 'Shift Workers', pct: 62.4, status: 'Active' },
-                  { id: 'WFA-103', cat: 'Cafeteria & Canteen Operations', budget: 220000, spent: 145000, rem: 75000, cov: 'All Employees', pct: 65.9, status: 'Active' },
-                  { id: 'WFA-104', cat: 'Annual Health Camp & Check-ups', budget: 120000, spent: 85000, rem: 35000, cov: 'All Employees', pct: 70.8, status: 'Active' },
-                  { id: 'WFA-105', cat: 'Recreation, Sports & Wellness', budget: 80000, spent: 51700, rem: 28300, cov: 'All Employees', pct: 64.6, status: 'Active' }
-                ].map((item) => (
+                {welfareBudgets.length === 0 && (
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'hsl(var(--text-secondary))' }}>No welfare budget allocations recorded yet.</td></tr>
+                )}
+                {welfareBudgets.map(w => {
+                  const budget = w.approvedBudget || w.proposedBudget || 0;
+                  const spent = w.utilizedBudget || 0;
+                  return { id: w.welfareBudgetId, cat: w.welfareCategory, budget, spent, rem: Math.max(0, budget - spent), cov: w.department, pct: budget > 0 ? Math.round(spent / budget * 1000) / 10 : 0, status: w.status };
+                }).map((item) => (
                   <tr key={item.id}>
                     <td><strong>{item.id}</strong></td>
                     <td>{item.cat}</td>
@@ -1530,12 +1521,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 title: 'Annual HR Budget Report',
                 subtitle: 'Consolidated Department & Cost Center Summary',
                 headers: ['Department', 'Cost Center', 'Category', 'Proposed (INR)', 'Approved (INR)', 'Utilized (INR)', 'Remaining (INR)', 'Status'],
-                rows: (budgets.length ? budgets : [
-                  { department: 'Engineering', costCenter: 'CC-ENG-101', budgetCategory: 'Manpower', proposedBudget: 4500000, approvedBudget: 4200000, utilizedBudget: 2800000, status: 'Approved' },
-                  { department: 'Sales & Marketing', costCenter: 'CC-SLS-102', budgetCategory: 'Recruitment', proposedBudget: 2800000, approvedBudget: 2500000, utilizedBudget: 1600000, status: 'Approved' },
-                  { department: 'Human Resources', costCenter: 'CC-HR-103', budgetCategory: 'Welfare', proposedBudget: 1500000, approvedBudget: 1400000, utilizedBudget: 920000, status: 'Approved' },
-                  { department: 'Operations', costCenter: 'CC-OPS-104', budgetCategory: 'Training', proposedBudget: 2200000, approvedBudget: 2000000, utilizedBudget: 1250000, status: 'Approved' }
-                ]).map(b => [
+                rows: budgets.map(b => [
                   b.department,
                   b.costCenter || 'CC-GEN-100',
                   b.budgetCategory || 'Operational',
@@ -1552,14 +1538,9 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 title: 'Budget Variance & Forecast Report',
                 subtitle: 'Planned vs Actual Cost Analysis & Scenario Forecast',
                 headers: ['Department', 'Planned Budget (INR)', 'Actual Spent (INR)', 'Variance (INR)', 'Variance %', 'Q4 Forecast (INR)', 'Status'],
-                rows: (budgets.length ? budgets : [
-                  { department: 'Engineering', approvedBudget: 4200000, utilizedBudget: 2800000 },
-                  { department: 'Sales & Marketing', approvedBudget: 2500000, utilizedBudget: 1600000 },
-                  { department: 'Human Resources', approvedBudget: 1400000, utilizedBudget: 920000 },
-                  { department: 'Operations', approvedBudget: 2000000, utilizedBudget: 1250000 }
-                ]).map(b => {
-                  const planned = b.approvedBudget || 4000000;
-                  const actual = b.utilizedBudget || 2500000;
+                rows: budgets.map(b => {
+                  const planned = b.approvedBudget || b.proposedBudget || 0;
+                  const actual = b.utilizedBudget || 0;
                   const diff = planned - actual;
                   const pct = ((diff / planned) * 100).toFixed(1);
                   const forecast = Math.round(actual * 1.35);
@@ -1580,10 +1561,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 title: 'Recruitment Cost ROI Report',
                 subtitle: 'Vendor Performance, Cost Per Hire & Agency Spending',
                 headers: ['Expense ID', 'Category', 'Vendor / Source', 'Invoice Ref', 'Amount (INR)', 'Tax (INR)', 'Total (INR)', 'Status'],
-                rows: (recruitmentExpenses.length ? recruitmentExpenses : [
-                  { expenseId: 'RCX-401', expenseCategory: 'Job Portal Subscription', vendorName: 'Naukri.com Enterprise', invoiceNumber: 'INV-NK-9921', amount: 450000, taxAmount: 81000, totalAmount: 531000, paymentStatus: 'Paid' },
-                  { expenseId: 'RCX-402', expenseCategory: 'Recruitment Agency', vendorName: 'Talent Scout Global', invoiceNumber: 'INV-TS-3341', amount: 350000, taxAmount: 63000, totalAmount: 413000, paymentStatus: 'Paid' }
-                ]).map(r => [
+                rows: recruitmentExpenses.map(r => [
                   r.expenseId,
                   r.expenseCategory,
                   r.vendorName || r.hiringSource || 'Direct',
@@ -1600,10 +1578,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 title: 'Welfare Expenditure Register',
                 subtitle: 'Category-wise Canteen, Transport, Health & Employee Benefits',
                 headers: ['Expense ID', 'Welfare Activity', 'Category', 'Vendor', 'Beneficiaries', 'Amount (INR)', 'Status'],
-                rows: (welfareExpenses.length ? welfareExpenses : [
-                  { expenseId: 'WFX-501', welfareActivity: 'Annual Health Camp 2026', welfareCategory: 'Health Check-up', vendorName: 'Apollo Diagnostics', beneficiariesCount: 220, totalAmount: 330400, paymentStatus: 'Paid' },
-                  { expenseId: 'WFX-502', welfareActivity: 'Executive Transport Subsidy', welfareCategory: 'Transportation', vendorName: 'Uber Corporate', beneficiariesCount: 140, totalAmount: 218300, paymentStatus: 'Paid' }
-                ]).map(w => [
+                rows: welfareExpenses.map(w => [
                   w.expenseId,
                   w.welfareActivity,
                   w.welfareCategory,
@@ -1619,10 +1594,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 title: 'Manpower Headcount Financials',
                 subtitle: 'Salary Budgets, Vacancy Projections & Increment Cost',
                 headers: ['Budget Ref', 'Department', 'Designation', 'Current Headcount', 'Approved Headcount', 'Vacancies', 'Avg Monthly Salary', 'Annual Budget (INR)'],
-                rows: (manpowerBudgets.length ? manpowerBudgets : [
-                  { budgetId: 'MPB-301', department: 'Engineering', designation: 'Senior Software Engineer', currentHeadcount: 24, approvedHeadcount: 30, vacancyCount: 6, avgMonthlySalary: 140000, annualSalaryBudget: 50400000 },
-                  { budgetId: 'MPB-302', department: 'Sales & Marketing', designation: 'Account Executive', currentHeadcount: 15, approvedHeadcount: 20, vacancyCount: 5, avgMonthlySalary: 85000, annualSalaryBudget: 20400000 }
-                ]).map(m => [
+                rows: manpowerBudgets.map(m => [
                   m.budgetId,
                   m.department,
                   m.designation,

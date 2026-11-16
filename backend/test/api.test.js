@@ -240,3 +240,51 @@ test('demo reset does not exist outside a demo deployment', async () => {
   assert.strictEqual((await call('POST', '/api/demo/reset', emp)).status, 403, 'employees never');
   assert.strictEqual((await call('POST', '/api/demo/reset', hr)).status, 404, 'HR outside demo: not found');
 });
+
+test('budget dashboard and analytics: totals come from stored budget lines only', async () => {
+  const B = mongoose.connection.collection('hrbudgets');
+  await B.deleteMany({ budgetId: /^T-BDG-/ });
+  const before = (await call('GET', '/api/budget/dashboard', hr)).data;
+  await B.insertOne({ budgetId: 'T-BDG-1', financialYear: 'FY T', department: 'T-Dept', costCenter: 'CC-T', budgetCategory: 'T-Cat', proposedBudget: 1000, approvedBudget: 800, utilizedBudget: 200 });
+  const after = (await call('GET', '/api/budget/dashboard', hr)).data;
+  assert.strictEqual(after.kpis.totalBudget - before.kpis.totalBudget, 800);
+  assert.strictEqual(after.kpis.totalUtilized - before.kpis.totalUtilized, 200);
+  assert.deepStrictEqual(after.charts.departmentUtilization.find(d => d.department === 'T-Dept'), { department: 'T-Dept', budget: 800, actual: 200 });
+  assert.ok(after.charts.categoryBreakdown.some(c => c.category === 'T-Cat' && c.budget === 800));
+  const fc = (await call('GET', '/api/budget/forecast', hr)).data;
+  assert.ok(!fc.forecasts.some(f => f.forecastId === 'FC-101'), 'no built-in sample forecasts');
+  await B.deleteMany({ budgetId: /^T-BDG-/ });
+});
+
+test('compliance dashboard counts stored due dates; listing documents never creates any', async () => {
+  const D = mongoose.connection.collection('duedatetrackers');
+  await D.deleteMany({ title: /^T-DUE/ });
+  const docsBefore = await mongoose.connection.collection('compliancedocuments').countDocuments();
+  await call('GET', '/api/compliance/documents', hr);
+  assert.strictEqual(await mongoose.connection.collection('compliancedocuments').countDocuments(), docsBefore, 'GET must not write');
+  const before = (await call('GET', '/api/compliance/dashboard', hr)).data.kpis;
+  await D.insertMany([
+    { title: 'T-DUE-1', dueDate: new Date(Date.now() - 864e5), status: 'Pending' },
+    { title: 'T-DUE-2', dueDate: new Date(Date.now() + 3 * 864e5), status: 'Pending' },
+    { title: 'T-DUE-3', dueDate: new Date(Date.now() - 864e5), status: 'Completed' }
+  ]);
+  const after = (await call('GET', '/api/compliance/dashboard', hr)).data.kpis;
+  assert.strictEqual(after.overdueItems - before.overdueItems, 1, 'past due and not completed');
+  assert.strictEqual(after.upcomingDueDates - before.upcomingDueDates, 1, 'within 15 days');
+  assert.strictEqual(after.completedActivities - before.completedActivities, 1);
+  assert.notStrictEqual(after.compliancePercentage, '96.8%');
+  assert.ok(!('complianceRiskScore' in after));
+  await D.deleteMany({ title: /^T-DUE/ });
+});
+
+test('recruitment and training dashboards: no invented series or rates', async () => {
+  const r = (await call('GET', '/api/recruitment/dashboard', hr)).data;
+  const candidates = await mongoose.connection.collection('candidates').countDocuments({ deletedAt: null });
+  assert.strictEqual(r.recruitmentFunnel[0].count, candidates, 'Applied = stored candidates');
+  assert.strictEqual(r.monthlyHiringTrend.length, 6);
+  assert.notDeepStrictEqual(r.monthlyHiringTrend.map(m => m.count), [12, 18, 15, 22, 28, 35]);
+  assert.ok(!r.departmentHiring.some(d => d.dept === 'Product Design' && d.vacancies === 3));
+  const t = (await call('GET', '/api/training/dashboard', hr)).data;
+  assert.ok(!('trainingBudgetUtilization' in t));
+  assert.notStrictEqual(t.skillGapClosurePercentage, '88.4%');
+});

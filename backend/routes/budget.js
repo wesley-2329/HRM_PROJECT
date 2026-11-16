@@ -15,6 +15,7 @@ const BudgetApprovalMatrixMaster = require('../models/BudgetApprovalMatrixMaster
 const BudgetNotificationTemplateMaster = require('../models/BudgetNotificationTemplateMaster');
 
 const HrBudget = require('../models/HrBudget');
+const Employee = require('../models/Employee');
 const BudgetAllocation = require('../models/BudgetAllocation');
 const BudgetRevision = require('../models/BudgetRevision');
 const BudgetUtilization = require('../models/BudgetUtilization');
@@ -68,48 +69,39 @@ router.get('/dashboard', protect, async (req, res, next) => {
     const recruitmentCosts = await RecruitmentExpense.find();
     const welfareCosts = await WelfareExpense.find();
 
-    const totalBudget = budgets.reduce((acc, b) => acc + (b.approvedBudget || b.proposedBudget || 0), 0) || 12500000;
-    const totalUtilized = budgets.reduce((acc, b) => acc + (b.utilizedBudget || 0), 0) || 7850000;
-    const totalRemaining = Math.max(0, totalBudget - totalUtilized);
-    const budgetVariance = ((totalBudget - totalUtilized) / totalBudget * 100).toFixed(1);
+    // Every figure is summed from stored budgets and expenses; with none recorded the dashboard shows zeros.
+    const sum = (rows, pick) => rows.reduce((acc, r) => acc + (pick(r) || 0), 0);
+    const pct = (n, d) => (d > 0 ? `${(n / d * 100).toFixed(1)}%` : null);
+    const planned = b => b.approvedBudget || b.proposedBudget;
+    const groupBy = (key) => Object.values(budgets.reduce((acc, b) => {
+      const k = b[key] || 'Unassigned';
+      acc[k] = acc[k] || { name: k, budget: 0, actual: 0 };
+      acc[k].budget += planned(b) || 0;
+      acc[k].actual += b.utilizedBudget || 0;
+      return acc;
+    }, {})).sort((x, y) => y.budget - x.budget);
 
-    const recruitmentTotal = recruitmentCosts.reduce((acc, r) => acc + (r.totalAmount || 0), 0) || 1850000;
-    const welfareTotal = welfareCosts.reduce((acc, w) => acc + (w.totalAmount || 0), 0) || 1420000;
-    const trainingTotal = 950000;
-    const payrollTotal = 24500000;
-    const overtimeTotal = 680000;
+    const totalBudget = sum(budgets, planned);
+    const totalUtilized = sum(budgets, b => b.utilizedBudget);
+    const byDepartment = groupBy('department');
+    const headcount = await Employee.countDocuments();
 
     res.json({
       kpis: {
         totalBudget,
         totalUtilized,
-        totalRemaining,
-        budgetVariance: `${budgetVariance}%`,
-        recruitmentBudget: recruitmentTotal,
-        welfareBudget: welfareTotal,
-        trainingBudget: trainingTotal,
-        payrollCost: payrollTotal,
-        overtimeCost: overtimeTotal,
-        costPerEmployee: 18500,
-        costPerDepartment: 1560000,
-        utilizationPercentage: ((totalUtilized / totalBudget) * 100).toFixed(1)
+        totalRemaining: Math.max(0, totalBudget - totalUtilized),
+        budgetVariance: pct(totalBudget - totalUtilized, totalBudget),
+        recruitmentBudget: sum(recruitmentCosts, r => r.totalAmount),
+        welfareBudget: sum(welfareCosts, w => w.totalAmount),
+        costPerEmployee: headcount ? Math.round(totalUtilized / headcount) : 0,
+        costPerDepartment: byDepartment.length ? Math.round(totalUtilized / byDepartment.length) : 0,
+        departmentCount: byDepartment.length,
+        utilizationPercentage: pct(totalUtilized, totalBudget)
       },
       charts: {
-        budgetVsActual: [
-          { month: 'Apr', budget: 1000000, actual: 920000 },
-          { month: 'May', budget: 1000000, actual: 980000 },
-          { month: 'Jun', budget: 1100000, actual: 1050000 },
-          { month: 'Jul', budget: 1100000, actual: 1120000 },
-          { month: 'Aug', budget: 1200000, actual: 1150000 },
-          { month: 'Sep', budget: 1200000, actual: 1180000 }
-        ],
-        departmentUtilization: [
-          { department: 'Engineering', budget: 4500000, actual: 3800000 },
-          { department: 'Sales & Marketing', budget: 2800000, actual: 2100000 },
-          { department: 'Operations', budget: 2200000, actual: 1850000 },
-          { department: 'Human Resources', budget: 1500000, actual: 1100000 },
-          { department: 'Finance & Legal', budget: 1500000, actual: 1000000 }
-        ]
+        departmentUtilization: byDepartment.map(d => ({ department: d.name, budget: d.budget, actual: d.actual })),
+        categoryBreakdown: groupBy('budgetCategory').map(c => ({ category: c.name, budget: c.budget, actual: c.actual }))
       }
     });
   } catch (err) { next(err); }
@@ -201,24 +193,19 @@ router.post('/allocation', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 router.get('/analytics', protect, async (req, res, next) => {
   try {
-    let analytics = [];
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
-      try {
-        analytics = await CostAnalytics.find();
-      } catch (dbErr) {
-        console.warn('CostAnalytics DB query warning:', dbErr.message);
-      }
-    }
-    if (!analytics || analytics.length === 0) {
-      analytics = [
-        { analyticsId: 'CST-001', financialYear: 'FY 2026-2027', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', budgetAmount: 4200000, actualCost: 2800000, varianceAmount: 1400000, variancePercentage: 33.3, headcount: 48, costPerHead: 87500, burnRate: 66.7, rating: 'High Efficiency', color: '#10b981' },
-        { analyticsId: 'CST-002', financialYear: 'FY 2026-2027', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', budgetAmount: 2500000, actualCost: 1600000, varianceAmount: 900000, variancePercentage: 36.0, headcount: 32, costPerHead: 50000, burnRate: 64.0, rating: 'Optimal', color: '#3b82f6' },
-        { analyticsId: 'CST-003', financialYear: 'FY 2026-2027', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', budgetAmount: 1400000, actualCost: 920000, varianceAmount: 480000, variancePercentage: 34.3, headcount: 18, costPerHead: 51100, burnRate: 65.7, rating: 'Optimal', color: '#3b82f6' },
-        { analyticsId: 'CST-004', financialYear: 'FY 2026-2027', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', budgetAmount: 2000000, actualCost: 1250000, varianceAmount: 750000, variancePercentage: 37.5, headcount: 24, costPerHead: 52000, burnRate: 62.5, rating: 'High Efficiency', color: '#10b981' },
-        { analyticsId: 'CST-005', financialYear: 'FY 2026-2027', department: 'Finance & Legal', costCenter: 'CC-FIN-105', category: 'Compliance & Audit', budgetAmount: 1200000, actualCost: 780000, varianceAmount: 420000, variancePercentage: 35.0, headcount: 12, costPerHead: 56000, burnRate: 65.0, rating: 'Optimal', color: '#3b82f6' }
-      ];
-    }
-    res.json(analytics);
+    const stored = await CostAnalytics.find();
+    if (stored.length) return res.json(stored);
+    // No analytics rows saved: derive one row per budget line from the budgets themselves.
+    const budgets = await HrBudget.find();
+    res.json(budgets.map(b => {
+      const budgetAmount = b.approvedBudget || b.proposedBudget || 0;
+      const actualCost = b.utilizedBudget || 0;
+      return {
+        analyticsId: b.budgetId, financialYear: b.financialYear, department: b.department, costCenter: b.costCenter,
+        category: b.budgetCategory, budgetAmount, actualCost, variance: budgetAmount - actualCost,
+        burnRate: budgetAmount > 0 ? Math.round(actualCost / budgetAmount * 1000) / 10 : 0
+      };
+    }));
   } catch (err) { next(err); }
 });
 
@@ -227,32 +214,7 @@ router.get('/analytics', protect, async (req, res, next) => {
 // ==========================================
 router.get('/forecast', protect, async (req, res, next) => {
   try {
-    let forecasts = [];
-    let variances = [];
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
-      try {
-        forecasts = await ForecastData.find();
-        variances = await VarianceAnalysis.find();
-      } catch (dbErr) {
-        console.warn('Forecast DB query warning:', dbErr.message);
-      }
-    }
-    if (!forecasts || forecasts.length === 0) {
-      forecasts = [
-        { forecastId: 'FC-101', budgetId: 'BDG-1001', financialYear: 'FY 2026-2027', period: 'Annual', scenario: 'Expected', bestCase: 11200000, expectedCase: 11850000, worstCase: 12600000, costSavings: 650000, accuracy: 94.6 },
-        { forecastId: 'FC-102', budgetId: 'BDG-1002', financialYear: 'FY 2026-2027', period: 'Quarterly', scenario: 'Expected', bestCase: 2750000, expectedCase: 2960000, worstCase: 3150000, costSavings: 140000, accuracy: 95.2 },
-        { forecastId: 'FC-103', budgetId: 'BDG-1003', financialYear: 'FY 2026-2027', period: 'Monthly', scenario: 'Best Case', bestCase: 920000, expectedCase: 987000, worstCase: 1050000, costSavings: 67000, accuracy: 96.1 }
-      ];
-    }
-    if (!variances || variances.length === 0) {
-      variances = [
-        { varianceId: 'VAR-201', budgetId: 'BDG-1001', department: 'Engineering', costCenter: 'CC-ENG-101', category: 'Manpower & Salaries', plannedBudget: 4200000, actualExpense: 2800000, variance: 1400000, variancePercentage: 33.3, varianceType: 'Favorable', rootCause: 'Delayed Q2 lateral hiring ramp', actionPlan: 'Accelerate campus onboarding in Q3' },
-        { varianceId: 'VAR-202', budgetId: 'BDG-1002', department: 'Sales & Marketing', costCenter: 'CC-SLS-102', category: 'Recruitment & Sourcing', plannedBudget: 2500000, actualExpense: 1600000, variance: 900000, variancePercentage: 36.0, varianceType: 'Favorable', rootCause: 'Optimized direct referral channel over agencies', actionPlan: 'Maintain internal referral program' },
-        { varianceId: 'VAR-203', budgetId: 'BDG-1003', department: 'Human Resources', costCenter: 'CC-HR-103', category: 'Employee Welfare & Benefits', plannedBudget: 1400000, actualExpense: 920000, variance: 480000, variancePercentage: 34.3, varianceType: 'Favorable', rootCause: 'Group insurance renegotiation rebate', actionPlan: 'Lock in tiered premium discount' },
-        { varianceId: 'VAR-204', budgetId: 'BDG-1004', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Training & Skill Development', plannedBudget: 2000000, actualExpense: 1250000, variance: 750000, variancePercentage: 37.5, varianceType: 'Favorable', rootCause: 'Digital LMS adoption reduced venue expenses', actionPlan: 'Expand cloud certification tracks' },
-        { varianceId: 'VAR-205', budgetId: 'BDG-1005', department: 'Operations & Infra', costCenter: 'CC-OPS-104', category: 'Overtime & Allowances', plannedBudget: 650000, actualExpense: 680000, variance: -30000, variancePercentage: -4.6, varianceType: 'Unfavorable', rootCause: 'Weekend migration and deployment sprints', actionPlan: 'Implement sprint rota to balance shift caps' }
-      ];
-    }
+    const [forecasts, variances] = await Promise.all([ForecastData.find(), VarianceAnalysis.find()]);
     res.json({ forecasts, variances });
   } catch (err) { next(err); }
 });

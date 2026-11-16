@@ -3567,6 +3567,9 @@ img, video, canvas, svg { max-width: 100%; }
 }
 @media (max-width: 400px) {
   [style*="minmax(2"] { grid-template-columns: minmax(0, 1fr) !important; }
+  /* label + value rows with a fixed 140px label: the label goes above the value */
+  [style*="display: flex"]:has(> [style*="width: 140px"][style*="flex-shrink: 0"]) { flex-wrap: wrap; row-gap: 6px; }
+  [style*="width: 140px"][style*="flex-shrink: 0"] { width: 100% !important; }
   [style*="min-width: 220px"], [style*="min-width: 240px"], [style*="min-width: 200px"] { min-width: 0 !important; }
 }
 
@@ -3662,4 +3665,19 @@ input.input:focus, textarea.input:focus, select.input:focus { border-color: hsl(
    shortcut: no pinch-zoom on touch, add pointer-event panning if the chart outgrows simple scrolling */
 @media (pointer: coarse) {
   .org-chart-canvas { overflow: auto !important; -webkit-overflow-scrolling: touch; cursor: default !important; }
+}
+
+/* Module KPI rows (inline grids of small figure tiles): two per row on phones, like the dashboards' .metric-grid */
+@media (max-width: 640px) {
+  [style*="display: grid"]:is(
+    :has(> .card:first-child > h2:nth-child(2)),
+    :has(> .stat-card-training),
+    :has(> .glass-card:first-child > div:nth-child(2)[style*="font-size: 1.8rem"])
+  ) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--space-3) !important; }
+  [style*="display: grid"] > .card:has(> h2:nth-child(2)),
+  [style*="display: grid"] > .glass-card:has(> div:nth-child(2)[style*="font-size: 1.8rem"]) { padding: 14px !important; }
+  [style*="display: grid"] > .card:has(> h2:nth-child(2)) > span:first-child,
+  [style*="display: grid"] > .glass-card:has(> div:nth-child(2)[style*="font-size: 1.8rem"]) > div:first-child { display: block; line-height: 1.3; }
+  [style*="display: grid"] > .card > h2:nth-child(2),
+  [style*="display: grid"] > .glass-card > div:nth-child(2)[style*="font-size: 1.8rem"] { font-size: 1.2rem !important; overflow-wrap: anywhere; }
 }

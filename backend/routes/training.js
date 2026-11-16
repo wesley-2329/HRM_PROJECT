@@ -425,6 +425,9 @@ router.get('/dashboard', protect, async (req, res, next) => {
     const totalTnas = await TrainingNeedsAnalysis.countDocuments();
     const approvedTnas = await TrainingNeedsAnalysis.countDocuments({ status: 'HR Approved' });
     const certificatesCount = await LearningHistory.countDocuments({ status: { $in: ['Completed', 'Passed with Distinction'] } });
+    const skills = await SkillMatrix.find({}, 'gapScore');
+    const scores = (await AssessmentCertification.find({}, 'issuedCertificates.score'))
+      .flatMap(a => a.issuedCertificates.map(c => c.score)).filter(n => typeof n === 'number');
 
     res.json({
       totalTrainingPrograms: totalPrograms,
@@ -432,9 +435,9 @@ router.get('/dashboard', protect, async (req, res, next) => {
       tnaRequestsTotal: totalTnas,
       approvedTnaRequests: approvedTnas,
       issuedCertificates: certificatesCount,
-      skillGapClosurePercentage: '88.4%',
-      averageAssessmentScore: '86.2%',
-      trainingBudgetUtilization: '74.5%'
+      skillMatrixEntries: skills.length,
+      skillGapClosurePercentage: skills.length ? `${(skills.filter(x => !x.gapScore).length / skills.length * 100).toFixed(1)}%` : null,
+      averageAssessmentScore: scores.length ? `${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}%` : null
     });
   } catch (err) { next(err); }
 });

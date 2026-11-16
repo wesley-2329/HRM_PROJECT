@@ -17,20 +17,19 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
   // Data States
   const [kpis, setKpis] = useState({
-    overallComplianceStatus: 'Compliant',
-    compliancePercentage: '96.8%',
-    complianceRiskScore: 'Low (12/100)',
-    pendingActivities: 4,
-    upcomingDueDates: 8,
-    completedActivities: 42,
-    overdueItems: 1,
-    monthlyStatutoryLiability: 4850000,
-    totalStatutoryPayments: 4200000,
-    openGovernmentNotices: 2,
-    pfEligibleEmployees: 480,
-    esiInsuredEmployees: 210,
-    ptApplicableEmployees: 520,
-    lwfApplicableEmployees: 520
+    overallComplianceStatus: '',
+    compliancePercentage: null,
+    pendingActivities: 0,
+    upcomingDueDates: 0,
+    completedActivities: 0,
+    overdueItems: 0,
+    monthlyStatutoryLiability: 0,
+    totalStatutoryPayments: 0,
+    openGovernmentNotices: 0,
+    pfEligibleEmployees: 0,
+    esiInsuredEmployees: 0,
+    ptApplicableEmployees: 0,
+    lwfApplicableEmployees: 0
   });
 
   const [overviewActs, setOverviewActs] = useState([]);
@@ -399,18 +398,18 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>COMPLIANCE %</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0', color: '#10b981' }}>{kpis.compliancePercentage}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{kpis.overallComplianceStatus}</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0', color: kpis.overdueItems > 0 ? '#ef4444' : '#10b981' }}>{kpis.compliancePercentage ?? '—'}</h2>
+              <span style={{ fontSize: '0.75rem', color: kpis.overdueItems > 0 ? '#ef4444' : '#10b981', fontWeight: 600 }}>{kpis.overallComplianceStatus}</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>RISK SCORE</span>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.complianceRiskScore}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>Zero Penalty Exposure</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OVERDUE ITEMS</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.overdueItems}</h2>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Past their due date</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>MONTHLY LIABILITY</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>CHALLAN LIABILITY</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>₹{(kpis.monthlyStatutoryLiability || 0).toLocaleString()}</h2>
               <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>PF, ESI, PT & LWF</span>
             </div>
@@ -424,13 +423,13 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>OPEN GOVT NOTICES</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.openGovernmentNotices}</h2>
-              <span style={{ fontSize: '0.75rem', color: '#ec4899', fontWeight: 600 }}>Under Reply Review</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Not yet closed</span>
             </div>
 
             <div className="card" style={{ padding: '16px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>PF MEMBERS</span>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '8px 0 4px 0' }}>{kpis.pfEligibleEmployees}</h2>
-              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>UAN Mapped</span>
+              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>PF profiles on record</span>
             </div>
           </div>
 
@@ -438,50 +437,52 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             <div className="card" style={{ padding: '20px' }}>
               <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>State-wise Compliance Health</span>
-                <i className="fa-solid fa-map-location-dot" style={{ color: 'hsl(var(--primary))' }}></i>
+                <span>Due Date Status</span>
+                <i className="fa-solid fa-calendar-check" style={{ color: 'hsl(var(--primary))' }}></i>
               </div>
+              {(kpis.completedActivities + kpis.pendingActivities + kpis.overdueItems) === 0 ? (
+                <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.85rem', marginTop: '16px' }}>No statutory due dates are being tracked yet.</p>
+              ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
                 {[
-                  { state: 'Karnataka', pct: 98.2, status: 'Compliant', color: '#10b981' },
-                  { state: 'Maharashtra', pct: 96.5, status: 'Compliant', color: '#3b82f6' },
-                  { state: 'Tamil Nadu', pct: 95.0, status: 'Compliant', color: '#6366f1' },
-                  { state: 'Telangana', pct: 97.1, status: 'Compliant', color: '#8b5cf6' }
+                  { label: 'Completed', n: kpis.completedActivities, color: '#10b981' },
+                  { label: 'Pending', n: kpis.pendingActivities, color: '#3b82f6' },
+                  { label: 'Overdue', n: kpis.overdueItems, color: '#ef4444' }
                 ].map((item) => (
-                  <div key={item.state}>
+                  <div key={item.label}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '4px', fontWeight: 600 }}>
-                      <span>{item.state}</span>
-                      <span>{item.pct}% ({item.status})</span>
+                      <span>{item.label}</span>
+                      <span>{item.n}</span>
                     </div>
-                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${item.pct}%`, height: '100%', background: item.color, borderRadius: '4px' }}></div>
+                    <div style={{ height: '8px', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${item.n / (kpis.completedActivities + kpis.pendingActivities + kpis.overdueItems) * 100}%`, height: '100%', background: item.color, borderRadius: '4px' }}></div>
                     </div>
                   </div>
                 ))}
               </div>
+              )}
             </div>
 
             <div className="card" style={{ padding: '20px' }}>
               <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Statutory Compliance Matrix Summary</span>
+                <span>Employee Statutory Profiles</span>
                 <i className="fa-solid fa-scale-balanced" style={{ color: 'hsl(var(--primary))' }}></i>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                 {[
-                  { label: 'Provident Fund (EPFO)', count: '480 Active Members', status: 'ECR Deposited', icon: 'fa-piggy-bank' },
-                  { label: 'Employee State Insurance (ESIC)', count: '210 Active Insured', status: 'Challan Paid', icon: 'fa-hospital-user' },
-                  { label: 'Professional Tax (PT)', count: '520 Applicable Staff', status: 'Returns Filed', icon: 'fa-coins' },
-                  { label: 'Labour Welfare Fund (LWF)', count: '520 Covered Staff', status: 'Up-to-Date', icon: 'fa-hands-holding-child' }
+                  { label: 'Provident Fund (EPFO)', count: kpis.pfEligibleEmployees, icon: 'fa-piggy-bank' },
+                  { label: 'Employee State Insurance (ESIC)', count: kpis.esiInsuredEmployees, icon: 'fa-hospital-user' },
+                  { label: 'Professional Tax (PT)', count: kpis.ptApplicableEmployees, icon: 'fa-coins' },
+                  { label: 'Labour Welfare Fund (LWF)', count: kpis.lwfApplicableEmployees, icon: 'fa-hands-holding-child' }
                 ].map((c) => (
                   <div key={c.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <i className={`fa-solid ${c.icon}`} style={{ color: 'hsl(var(--primary))' }}></i>
                       <div>
                         <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{c.label}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{c.count}</div>
                       </div>
                     </div>
-                    <span className="badge badge-success">{c.status}</span>
+                    <strong style={{ fontSize: '0.9rem' }}>{c.count} <span style={{ fontWeight: 400, fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>employee profiles</span></strong>
                   </div>
                 ))}
               </div>
@@ -510,6 +511,9 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 </tr>
               </thead>
               <tbody>
+                {overviewActs.length === 0 && (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: 'hsl(var(--text-secondary))' }}>No statutory acts have been set up yet.</td></tr>
+                )}
                 {overviewActs.map((a) => (
                   <tr key={a.actId}>
                     <td><strong>{a.actCode}</strong></td>
@@ -1229,42 +1233,11 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                   <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{viewingDoc.uploadedBy || 'Compliance Officer'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>Statutory Status</div>
-                  <div><span className="badge badge-success" style={{ fontSize: '0.75rem' }}>Verified & Compliant</span></div>
+                  <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>Uploaded On</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{viewingDoc.createdAt ? new Date(viewingDoc.createdAt).toLocaleDateString() : '—'}</div>
                 </div>
               </div>
 
-              {/* Challan Receipt Specific Details */}
-              {(viewingDoc.category === 'Challan Receipt' || (viewingDoc.title && viewingDoc.title.toLowerCase().includes('receipt'))) && (
-                <div style={{ padding: '14px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(16,185,129,0.05))', border: '1px solid rgba(99,102,241,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <strong style={{ fontSize: '0.9rem', color: '#6366f1', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i className="fa-solid fa-receipt"></i> Statutory Payment & Bank Settlement Record
-                    </strong>
-                    <span className="badge" style={{ background: '#10b981', color: '#ffffff', fontSize: '0.72rem' }}>Paid via NetBanking</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', fontSize: '0.82rem' }}>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>Challan / ECR Ref:</span> <strong>CHL-PF-202607</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>Wage Month:</span> <strong>Jul 2026</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>Total Amount Paid:</span> <strong style={{ color: '#10b981' }}>₹1,850,000</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>Employees Covered:</span> <strong>480 Staff Members</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>Bank Reference:</span> <strong>HDFC-EPFO-TXN-984210</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-secondary))' }}>EPFO TRRN:</span> <strong>TRRN-2026-9921-0814</strong>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Embedded Document Reading Canvas */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

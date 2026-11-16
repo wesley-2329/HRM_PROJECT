@@ -122,7 +122,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
 
     const totalAllocatedBudget = budgetReqs.reduce((acc, curr) => acc + (curr.allocatedBudget || curr.totalFinancialImpact || 0), 0);
     const totalUtilizedBudget = budgetReqs.reduce((acc, curr) => acc + (curr.utilizedBudget || 0), 0) + totalExpense;
-    const budgetUtilizationPct = totalAllocatedBudget > 0 ? Math.min(100, Math.round((totalUtilizedBudget / totalAllocatedBudget) * 100)) : 42;
+    const budgetUtilizationPct = totalAllocatedBudget > 0 ? Math.min(100, Math.round((totalUtilizedBudget / totalAllocatedBudget) * 100)) : null;
 
     res.json({
       kpis: {
@@ -139,39 +139,32 @@ router.get('/dashboard', protect, async (req, res, next) => {
         totalExpense,
         budgetUtilizationPct
       },
-      monthlyHiringTrend: [
-        { month: 'Jan', count: 12 },
-        { month: 'Feb', count: 18 },
-        { month: 'Mar', count: 15 },
-        { month: 'Apr', count: 22 },
-        { month: 'May', count: 28 },
-        { month: 'Jun', count: 35 }
-      ],
+      // last 6 months, counted from candidates who joined (joiningDate)
+      monthlyHiringTrend: Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i);
+        const inMonth = c => c.joiningDate && c.joiningDate.getFullYear() === d.getFullYear() && c.joiningDate.getMonth() === d.getMonth();
+        return { month: d.toLocaleString('en-US', { month: 'short' }), count: candidates.filter(c => c.stage === 'joined' && inMonth(c)).length };
+      }),
       recruitmentFunnel: [
-        { stage: 'Applied', count: candidates.length || 140 },
-        { stage: 'Screening', count: candidates.filter(c => c.stage === 'screening').length || 85 },
-        { stage: 'Interview', count: candidates.filter(c => c.stage === 'interview').length || 42 },
-        { stage: 'Offered', count: candidates.filter(c => c.stage === 'offered' || c.stage === 'selected').length || 18 },
-        { stage: 'Joined', count: candidates.filter(c => c.stage === 'joined').length || 14 }
+        { stage: 'Applied', count: candidates.length },
+        { stage: 'Screening', count: candidates.filter(c => c.stage === 'screening').length },
+        { stage: 'Interview', count: candidates.filter(c => c.stage === 'interview').length },
+        { stage: 'Offered', count: candidates.filter(c => c.stage === 'offered' || c.stage === 'selected').length },
+        { stage: 'Joined', count: candidates.filter(c => c.stage === 'joined').length }
       ],
-      departmentHiring: [
-        { dept: 'Engineering', vacancies: 12, filled: 8 },
-        { dept: 'Human Resources', vacancies: 4, filled: 3 },
-        { dept: 'Finance', vacancies: 5, filled: 4 },
-        { dept: 'Sales & Marketing', vacancies: 8, filled: 5 },
-        { dept: 'Product Design', vacancies: 3, filled: 2 }
-      ],
-      recruitmentSource: [
-        { source: 'Job Portal', count: candidates.filter(c => c.source === 'Job Portal').length || 45 },
-        { source: 'Career Page', count: candidates.filter(c => c.source === 'Career Page').length || 32 },
-        { source: 'Referral', count: candidates.filter(c => c.source === 'Referral').length || 20 },
-        { source: 'Walk-In', count: candidates.filter(c => c.source === 'Walk-In').length || 15 },
-        { source: 'Consultancy', count: candidates.filter(c => c.source === 'Consultancy').length || 18 }
-      ],
+      departmentHiring: Object.values(requisitions.reduce((acc, r) => {
+        const k = r.department || 'Unassigned';
+        acc[k] = acc[k] || { dept: k, vacancies: 0, filled: 0 };
+        acc[k].vacancies += r.vacancyCount || 1;
+        if (r.status === 'Fulfilled') acc[k].filled += r.vacancyCount || 1;
+        return acc;
+      }, {})),
+      recruitmentSource: ['Job Portal', 'Career Page', 'Referral', 'Walk-In', 'Consultancy']
+        .map(source => ({ source, count: candidates.filter(c => c.source === source).length })),
       budgetAnalysis: {
-        allocated: totalAllocatedBudget || 2500000,
-        utilized: totalUtilizedBudget || 1450000,
-        variance: (totalAllocatedBudget || 2500000) - (totalUtilizedBudget || 1450000)
+        allocated: totalAllocatedBudget,
+        utilized: totalUtilizedBudget,
+        variance: totalAllocatedBudget - totalUtilizedBudget
       }
     });
   } catch (err) { next(err); }

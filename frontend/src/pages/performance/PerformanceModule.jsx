@@ -861,11 +861,11 @@ const PerformanceModule = ({ searchQuery = '' }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
                 <div style={{ padding: '12px', background: 'hsla(var(--primary), 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Active PIPs</span>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'hsl(var(--warning))' }}>{pips.filter(p => p.outcome === 'In Progress').length || 1}</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'hsl(var(--warning))' }}>{pips.filter(p => p.outcome === 'In Progress').length}</div>
                 </div>
                 <div style={{ padding: '12px', background: 'hsla(142, 72%, 29%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg Performance Score</span>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'hsl(var(--success))' }}>86.5%</div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg Annual Rating</span>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'hsl(var(--success))' }}>{(() => { const r = annualReviews.map(a => Number(a.finalRating)).filter(n => n > 0); return r.length ? `${(r.reduce((a, b) => a + b, 0) / r.length).toFixed(1)} ★` : '—'; })()}</div>
                 </div>
               </div>
             </div>

@@ -235,6 +235,11 @@ const RecruitmentModule = () => {
   // Initialize Dashboard Charts
   useEffect(() => {
     if (activeTab !== 'dashboard' || !window.Chart) return;
+    const dash = dashboardData || {};
+    const funnel = dash.recruitmentFunnel || [];
+    const trend = dash.monthlyHiringTrend || [];
+    const depts = dash.departmentHiring || [];
+    const sources = dash.recruitmentSource || [];
 
     // Destroy existing
     Object.keys(chartInstances.current).forEach(key => {
@@ -247,10 +252,10 @@ const RecruitmentModule = () => {
       chartInstances.current.funnel = new window.Chart(ctxFunnel, {
         type: 'bar',
         data: {
-          labels: ['Applied', 'Screened', 'Interviewed', 'Offered', 'Joined'],
+          labels: funnel.map(f => f.stage),
           datasets: [{
             label: 'Candidates Count',
-            data: [142, 85, 44, 18, 14],
+            data: funnel.map(f => f.count),
             backgroundColor: ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#10b981'],
             borderRadius: 6
           }]
@@ -270,17 +275,17 @@ const RecruitmentModule = () => {
       chartInstances.current.trend = new window.Chart(ctxTrend, {
         type: 'line',
         data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          labels: trend.map(t => t.month),
           datasets: [{
             label: 'Monthly Hires',
-            data: [12, 18, 15, 22, 28, 35],
+            data: trend.map(t => t.count),
             borderColor: 'hsl(230, 80%, 55%)',
             backgroundColor: 'rgba(99, 102, 241, 0.15)',
             fill: true,
             tension: 0.3
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, suggestedMax: 5, ticks: { precision: 0 } } } }
       });
     }
 
@@ -290,10 +295,10 @@ const RecruitmentModule = () => {
       chartInstances.current.dept = new window.Chart(ctxDept, {
         type: 'bar',
         data: {
-          labels: ['Engineering', 'HR', 'Finance', 'Marketing', 'Design'],
+          labels: depts.map(d => d.dept),
           datasets: [
-            { label: 'Open Vacancies', data: [12, 4, 5, 8, 3], backgroundColor: '#f59e0b' },
-            { label: 'Positions Filled', data: [8, 3, 4, 5, 2], backgroundColor: '#10b981' }
+            { label: 'Requested Vacancies', data: depts.map(d => d.vacancies), backgroundColor: '#f59e0b' },
+            { label: 'Positions Filled', data: depts.map(d => d.filled), backgroundColor: '#10b981' }
           ]
         },
         options: { responsive: true, maintainAspectRatio: false }
@@ -306,16 +311,16 @@ const RecruitmentModule = () => {
       chartInstances.current.source = new window.Chart(ctxSource, {
         type: 'doughnut',
         data: {
-          labels: ['Job Portals', 'Career Page', 'Referrals', 'Walk-In', 'Consultancies'],
+          labels: sources.map(x => x.source),
           datasets: [{
-            data: [45, 32, 20, 15, 18],
+            data: sources.map(x => x.count),
             backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']
           }]
         },
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
-  }, [activeTab]);
+  }, [activeTab, dashboardData]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
@@ -883,7 +888,7 @@ const RecruitmentModule = () => {
             <div className="metric-card primary">
               <div>
                 <span className="metric-label">Total Requisitions</span>
-                <div className="metric-val">{requisitions.length || 14}</div>
+                <div className="metric-val">{requisitions.length}</div>
                 <span className="metric-trend up"><i className="fa-solid fa-arrow-up"></i> {requisitions.filter(r => r.status === 'Approved').length} Approved</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-file-contract"></i></div>
@@ -892,7 +897,7 @@ const RecruitmentModule = () => {
             <div className="metric-card warning">
               <div>
                 <span className="metric-label">Pending Approvals</span>
-                <div className="metric-val">{requisitions.filter(r => r.status !== 'Approved' && r.status !== 'Rejected').length || 5}</div>
+                <div className="metric-val">{requisitions.filter(r => r.status !== 'Approved' && r.status !== 'Rejected').length}</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Awaiting Sign-off</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-clock"></i></div>
@@ -901,8 +906,8 @@ const RecruitmentModule = () => {
             <div className="metric-card success">
               <div>
                 <span className="metric-label">Open Vacancies</span>
-                <div className="metric-val">28</div>
-                <span className="metric-trend up"><i className="fa-solid fa-check"></i> Active Sourcing</span>
+                <div className="metric-val">{dashboardData?.kpis?.openVacancies ?? 0}</div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>On approved requisitions</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-briefcase"></i></div>
             </div>
@@ -910,7 +915,7 @@ const RecruitmentModule = () => {
             <div className="metric-card info">
               <div>
                 <span className="metric-label">Cost Per Hire</span>
-                <div className="metric-val">₹{dashboardData?.kpis?.costPerHire ? dashboardData.kpis.costPerHire.toLocaleString() : '18,500'}</div>
+                <div className="metric-val">₹{(dashboardData?.kpis?.costPerHire || 0).toLocaleString()}</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Avg Expense / Hire</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-calculator"></i></div>
@@ -1434,19 +1439,19 @@ const RecruitmentModule = () => {
                 <div id="widget-automated-extraction" style={{ padding: '12px', background: 'hsla(var(--primary), 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Automated Extraction</span>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>
-                    {resumes.length > 0 ? `${resumes.length} Parsed (98.4%)` : '98.4% Accuracy'}
+                    {resumes.length > 0 ? `${resumes.length} Parsed` : 'None yet'}
                   </div>
                 </div>
                 <div id="widget-jd-match-score" style={{ padding: '12px', background: 'hsla(217, 91%, 60%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg JD Match Score</span>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2563eb' }}>
-                    {resumes.length > 0 ? `${Math.round(resumes.reduce((acc, r) => acc + (r.jdMatchScore || 0), 0) / resumes.length)}%` : '85% Avg'}
+                    {resumes.length > 0 ? `${Math.round(resumes.reduce((acc, r) => acc + (r.jdMatchScore || 0), 0) / resumes.length)}%` : '—'}
                   </div>
                 </div>
                 <div id="widget-duplicate-detection" style={{ padding: '12px', background: 'hsla(142, 72%, 29%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Duplicate Detection</span>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
-                    {resumes.some(r => r.isDuplicate) ? `${resumes.filter(r => r.isDuplicate).length} Flagged` : 'Active'}
+                    {resumes.some(r => r.isDuplicate) ? `${resumes.filter(r => r.isDuplicate).length} Flagged` : 'None flagged'}
                   </div>
                 </div>
               </div>

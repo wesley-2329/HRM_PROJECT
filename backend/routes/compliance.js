@@ -73,42 +73,31 @@ router.get('/dashboard', protect, async (req, res, next) => {
     const notices = await GovernmentNotice.find();
     const dueDates = await DueDateTracker.find();
 
-    const totalLiability = challans.reduce((acc, c) => acc + (c.totalAmount || 0), 0) || 4850000;
-    const paidChallans = challans.filter(c => c.paymentStatus === 'Paid').reduce((acc, c) => acc + (c.totalAmount || 0), 0) || 4200000;
-    const openNoticesCount = notices.filter(n => n.status !== 'Closed').length || 2;
-    const overdueCount = dueDates.filter(d => d.status === 'Overdue').length || 1;
+    // Every figure is counted from stored records; with no records the dashboard shows zeros.
+    const now = new Date();
+    const in15Days = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+    const completed = dueDates.filter(d => d.status === 'Completed').length;
+    const open = dueDates.filter(d => d.status !== 'Completed');
+    const overdue = open.filter(d => d.status === 'Overdue' || d.dueDate < now).length;
+    const upcoming = open.filter(d => d.dueDate >= now && d.dueDate <= in15Days).length;
+    const [pf, esi, pt, lwf] = await Promise.all([EmployeePfProfile, EmployeeEsiProfile, EmployeePtProfile, EmployeeLwfProfile].map(M => M.countDocuments()));
 
     res.json({
       kpis: {
-        overallComplianceStatus: 'Compliant',
-        compliancePercentage: '96.8%',
-        complianceRiskScore: 'Low (12/100)',
-        pendingActivities: 4,
-        upcomingDueDates: 8,
-        completedActivities: 42,
-        overdueItems: overdueCount,
-        monthlyStatutoryLiability: totalLiability,
-        totalStatutoryPayments: paidChallans,
-        openGovernmentNotices: openNoticesCount,
-        pfEligibleEmployees: 480,
-        esiInsuredEmployees: 210,
-        ptApplicableEmployees: 520,
-        lwfApplicableEmployees: 520
-      },
-      charts: {
-        monthlyComplianceTrend: [
-          { month: 'Mar', compliancePct: 94.2 },
-          { month: 'Apr', compliancePct: 95.8 },
-          { month: 'May', compliancePct: 96.1 },
-          { month: 'Jun', compliancePct: 97.4 },
-          { month: 'Jul', compliancePct: 96.8 }
-        ],
-        stateCompliance: [
-          { state: 'Karnataka', pct: 98.2, status: 'Compliant' },
-          { state: 'Maharashtra', pct: 96.5, status: 'Compliant' },
-          { state: 'Tamil Nadu', pct: 95.0, status: 'Compliant' },
-          { state: 'Telangana', pct: 97.1, status: 'Compliant' }
-        ]
+        overallComplianceStatus: overdue > 0 ? 'Action required' : dueDates.length ? 'On track' : 'No due dates tracked',
+        // share of closed-out obligations among those already due; null until something has fallen due
+        compliancePercentage: completed + overdue > 0 ? `${(completed / (completed + overdue) * 100).toFixed(1)}%` : null,
+        pendingActivities: open.length - overdue,
+        upcomingDueDates: upcoming,
+        completedActivities: completed,
+        overdueItems: overdue,
+        monthlyStatutoryLiability: challans.reduce((acc, c) => acc + (c.totalAmount || 0), 0),
+        totalStatutoryPayments: challans.filter(c => c.paymentStatus === 'Paid').reduce((acc, c) => acc + (c.totalAmount || 0), 0),
+        openGovernmentNotices: notices.filter(n => n.status !== 'Closed').length,
+        pfEligibleEmployees: pf,
+        esiInsuredEmployees: esi,
+        ptApplicableEmployees: pt,
+        lwfApplicableEmployees: lwf
       }
     });
   } catch (err) { next(err); }
@@ -119,13 +108,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // ==========================================
 router.get('/overview', protect, async (req, res, next) => {
   try {
-    const list = await StatutoryActMaster.find();
-    res.json(list.length > 0 ? list : [
-      { actId: 'ACT-PF', actCode: 'EPF-1952', actName: 'Employees Provident Fund Act 1952', governingBody: 'EPFO', frequency: 'Monthly', nextDueDate: '2026-08-15', currentStatus: 'Compliant', riskLevel: 'Low' },
-      { actId: 'ACT-ESI', actCode: 'ESI-1948', actName: 'Employees State Insurance Act 1948', governingBody: 'ESIC', frequency: 'Monthly', nextDueDate: '2026-08-15', currentStatus: 'Compliant', riskLevel: 'Low' },
-      { actId: 'ACT-PT', actCode: 'PT-ACT', actName: 'Karnataka Professional Tax Act', governingBody: 'Commercial Tax Dept', frequency: 'Monthly', nextDueDate: '2026-08-20', currentStatus: 'Compliant', riskLevel: 'Low' },
-      { actId: 'ACT-LWF', actCode: 'LWF-ACT', actName: 'Labour Welfare Fund Act', governingBody: 'Labour Welfare Board', frequency: 'Half-Yearly', nextDueDate: '2026-12-31', currentStatus: 'Compliant', riskLevel: 'Low' }
-    ]);
+    res.json(await StatutoryActMaster.find());
   } catch (err) { next(err); }
 });
 
@@ -353,30 +336,6 @@ router.post('/inspections', protect, adminOnly, async (req, res, next) => {
 // 12. COMPLIANCE DOCUMENTS REPOSITORY
 // ==========================================
 
-const DEFAULT_COMPLIANCE_DOCS = [
-  {
-    docId: 'DOC-501',
-    title: 'PF ECR Payment Receipt Jul 2026',
-    category: 'Challan Receipt',
-    fileUrl: '/uploads/compliance/pf_receipt.pdf',
-    uploadedBy: 'Payroll Exec',
-    challanNumber: 'CHL-PF-202607',
-    wageMonth: 'Jul 2026',
-    totalAmount: 1850000,
-    employeeCount: 480,
-    paymentStatus: 'Paid'
-  },
-  {
-    docId: 'DOC-502',
-    title: 'Factory License Renewal Certificate 2026-27',
-    category: 'Labour License',
-    fileUrl: '/uploads/compliance/factory_license.pdf',
-    uploadedBy: 'Compliance Officer',
-    wageMonth: '2026-2027',
-    paymentStatus: 'Approved'
-  }
-];
-
 function escapePdfText(str) {
   if (!str) return '';
   return String(str)
@@ -485,18 +444,8 @@ function generateCompliancePdfBinary(doc) {
 
 router.get('/documents', protect, async (req, res, next) => {
   try {
-    let docs = await ComplianceDocument.find().sort({ createdAt: -1 });
-    if (!docs || docs.length === 0) {
-      try {
-        docs = await ComplianceDocument.create(DEFAULT_COMPLIANCE_DOCS);
-      } catch (seedErr) {
-        docs = DEFAULT_COMPLIANCE_DOCS;
-      }
-    }
-    res.json(docs);
-  } catch (err) {
-    res.json(DEFAULT_COMPLIANCE_DOCS);
-  }
+    res.json(await ComplianceDocument.find().sort({ createdAt: -1 }));
+  } catch (err) { next(err); }
 });
 
 router.get('/documents/:id', protect, async (req, res, next) => {
@@ -519,13 +468,6 @@ router.get('/documents/:id', protect, async (req, res, next) => {
           { title: new RegExp(`^${trimmedId}$`, 'i') }
         ]
       });
-    }
-
-    if (!doc) {
-      doc = DEFAULT_COMPLIANCE_DOCS.find(d =>
-        d.docId.toLowerCase() === trimmedId.toLowerCase() ||
-        d.title.toLowerCase() === trimmedId.toLowerCase()
-      );
     }
 
     if (!doc) {
@@ -556,13 +498,6 @@ router.get(['/documents/:id/preview', '/documents/:id/download', '/documents/:id
           { title: new RegExp(`^${trimmedId}$`, 'i') }
         ]
       });
-    }
-
-    if (!doc) {
-      doc = DEFAULT_COMPLIANCE_DOCS.find(d =>
-        d.docId.toLowerCase() === trimmedId.toLowerCase() ||
-        d.title.toLowerCase() === trimmedId.toLowerCase()
-      );
     }
 
     if (!doc) {

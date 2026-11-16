@@ -582,28 +582,12 @@ export const StatsModal = ({ active, onClose, employee, timesheets = [], leaves 
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.875rem' }}>
           <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Total Days Present</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>{presentDays || 22} Days</p>
+            <span style={{ color: 'var(--text-secondary)' }}>Days Present (recorded)</span>
+            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>{presentDays} Days</p>
           </div>
           <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Total Leaves Taken</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>{leavesTaken || 2} Days</p>
-          </div>
-          <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Total Payroll Paid YTD</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>₹4,33,500</p>
-          </div>
-          <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Performance Rating</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px', color: 'hsl(var(--warning))' }}><i className="fa-solid fa-star"></i> 4.2</p>
-          </div>
-          <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Task Completion Rate</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>88.2%</p>
-          </div>
-          <div style={{ background: 'hsl(var(--bg-main))', padding: '10px', borderRadius: '8px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Trainings Completed</span>
-            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>3 Courses</p>
+            <span style={{ color: 'var(--text-secondary)' }}>Approved Leave Requests</span>
+            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: '4px' }}>{leavesTaken}</p>
           </div>
         </div>
       </div>

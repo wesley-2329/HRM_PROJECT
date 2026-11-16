@@ -11,15 +11,16 @@ const TrainingModule = ({ searchQuery = '' }) => {
 
   // State
   const [metrics, setMetrics] = useState({
-    totalTrainingPrograms: 4,
-    completedPrograms: 2,
-    tnaRequestsTotal: 3,
-    approvedTnaRequests: 2,
-    issuedCertificates: 5,
-    skillGapClosurePercentage: '88.4%',
-    averageAssessmentScore: '86.2%',
-    trainingBudgetUtilization: '74.5%'
+    totalTrainingPrograms: 0,
+    completedPrograms: 0,
+    tnaRequestsTotal: 0,
+    approvedTnaRequests: 0,
+    issuedCertificates: 0,
+    skillMatrixEntries: 0,
+    skillGapClosurePercentage: null,
+    averageAssessmentScore: null
   });
+
 
   const [tnas, setTnas] = useState([]);
   const [annualPlans, setAnnualPlans] = useState([]);
@@ -244,7 +245,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
             <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SCHEDULED PROGRAMS</div>
               <div className="stat-value-emerald" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#047857' }}>{metrics.totalTrainingPrograms}</div>
-              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} Completed this month</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>{metrics.completedPrograms} completed</div>
             </div>
 
             <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
@@ -256,13 +257,13 @@ const TrainingModule = ({ searchQuery = '' }) => {
             <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>ISSUED CERTIFICATES</div>
               <div className="stat-value-purple" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#6d28d9' }}>{metrics.issuedCertificates}</div>
-              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Avg Score: {metrics.averageAssessmentScore ?? '—'}</div>
             </div>
 
             <div className="glass-card stat-card-training" style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'hsl(var(--bg-card))' }}>
               <div className="stat-label" style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: 700, letterSpacing: '0.025em' }}>SKILL GAP CLOSURE</div>
-              <div className="stat-value-amber" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#b45309' }}>{metrics.skillGapClosurePercentage}</div>
-              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Budget Utilization: {metrics.trainingBudgetUtilization}</div>
+              <div className="stat-value-amber" style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '4px', color: '#b45309' }}>{metrics.skillGapClosurePercentage ?? '—'}</div>
+              <div className="stat-sublabel" style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', fontWeight: 600 }}>Of {metrics.skillMatrixEntries || 0} skill matrix entries</div>
             </div>
           </div>
 
