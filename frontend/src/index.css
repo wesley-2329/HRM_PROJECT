@@ -3465,6 +3465,8 @@ body.dark-mode .welcome-card-banner {
     padding: 0 0 8px 18px; transition: none;
   }
   .hr-dropdown-panel.open, .emp-dropdown-panel.open { display: flex !important; }
+  /* dark mode gives the floating panels a solid card look; inside the drawer they stay flat */
+  body.dark-mode .hr-dropdown-panel, body.dark-mode .emp-dropdown-panel { background: transparent !important; border: none !important; box-shadow: none !important; }
   .hr-dropdown-panel::before, .emp-dropdown-panel::before { display: none; }
   .hr-dropdown-item, .emp-dropdown-item { min-height: 44px; }
   .hr-header-right, .emp-header-right { gap: 12px; padding-left: 8px; }
