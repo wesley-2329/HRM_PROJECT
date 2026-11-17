@@ -39,60 +39,6 @@ const BudgetingModule = lazy(() => import('./budgeting/BudgetingModule'));
 const StatutoryComplianceModule = lazy(() => import('./compliance/StatutoryComplianceModule'));
 const ExitModule = lazy(() => import('./exit/ExitModule'));
 
-const SubjectSparkline = ({ progress }) => {
-  const canvasRef = useRef(null);
-  const chartInstanceRef = useRef(null);
-
-  useEffect(() => {
-    if (!window.Chart || !canvasRef.current) return;
-
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-    }
-    const ctx = canvasRef.current.getContext('2d');
-
-    // Draw micro sparkline
-    const mockData = Array.from({ length: 6 }, (_, i) => Math.min(100, Math.max(0, progress - 15 + Math.random() * 30)));
-    mockData[mockData.length - 1] = progress; // ensure final matches
-
-    chartInstanceRef.current = new window.Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['', '', '', '', '', ''],
-        datasets: [{
-          data: mockData,
-          borderColor: themeColor('--chart-1'),
-          borderWidth: 1.5,
-          pointRadius: 0,
-          fill: false,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        }
-      }
-    });
-
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-      }
-    };
-  }, [progress]);
-
-  return (
-    <div style={{ width: '80px', height: '24px' }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-};
-
 const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const navigate = useNavigate();
   const {
@@ -1448,9 +1394,12 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       return;
     }
 
-    const link = m.link || "https://meet.hrorbit.company/join/tck-standup";
+    if (!m.link) {
+      showToast('This meeting has no video link. Ask the organiser to add one.', 'info');
+      return;
+    }
     showToast(`Joining meeting: ${m.title}...`, 'success');
-    window.open(link, '_blank');
+    window.open(m.link, '_blank', 'noopener');
   };
 
   const handleCreateMeeting = async (e) => {
@@ -1486,7 +1435,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       return;
     }
 
-    const link = newMeetLink.trim() || `https://meet.hrorbit.company/join/sync-${Math.random().toString(36).substring(7)}`;
+    const link = newMeetLink.trim(); // no invented links: a meeting without one simply has none
 
     let durationHours = 0;
     if (newMeetFromTime && newMeetToTime) {
@@ -3371,7 +3320,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
               <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div className="card-title">Security & Config</div>
                 <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '20px' }}>
-                  Manage your credentials, update your account language preferences, choose your custom portal color highlights, and enable email or SMS logs.
+                  Change your password and choose your portal colour theme.
                 </p>
                 <img 
                   src={secureVaultIllustration || "/secure_vault_illustration.jpg"} 
@@ -3414,23 +3363,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
 
                 <div className="card">
                   <div className="card-title">Portal Preferences</div>
-                  <div className="form-group">
-                    <label>System Display Language</label>
-                    <select className="form-control" defaultValue="English">
-                      <option>English</option>
-                      <option>Hindi</option>
-                      <option>Tamil</option>
-                      <option>Telugu</option>
-                      <option>Kannada</option>
-                      <option>Gujarati</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label><input type="checkbox" defaultChecked /> Email notifications</label>
-                  </div>
-                  <div className="form-group">
-                    <label><input type="checkbox" defaultChecked /> SMS notifications</label>
-                  </div>
                   <div className="form-group" style={{ marginTop: '16px', marginBottom: '20px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Navbar Color Theme</label>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -3467,7 +3399,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       })}
                     </div>
                   </div>
-                  <button className="btn btn-secondary" onClick={() => showToast('Preferences updated.', 'success')}>Save Preferences</button>
                 </div>
               </div>
             </div>

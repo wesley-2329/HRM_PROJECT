@@ -593,9 +593,6 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
         <div className="card p-5">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontWeight: 700 }}>Employees' Provident Fund (EPF & EPS) Management</h3>
-            <button className="btn btn-primary" onClick={() => showToast('Monthly ECR File Generated successfully for EPFO portal.', 'success')}>
-              <i className="fa-solid fa-file-export"></i> Generate Monthly ECR File
-            </button>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="table" style={{ width: '100%', fontSize: '0.85rem' }}>
@@ -619,9 +616,9 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     <td>{p.employeeName}</td>
                     <td><strong style={{ letterSpacing: '0.5px' }}>{p.uan}</strong></td>
                     <td>₹{(p.pfWage || 0).toLocaleString()}</td>
-                    <td><span className="badge badge-success">{p.kycStatus}</span></td>
-                    <td><span className="badge badge-success">{p.nominationStatus}</span></td>
-                    <td><span className="badge badge-success">Active Member</span></td>
+                    <td><span className={`badge ${p.kycStatus === 'Verified' ? 'badge-success' : p.kycStatus === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{p.kycStatus}</span></td>
+                    <td><span className={`badge ${p.nominationStatus === 'Completed' ? 'badge-success' : 'badge-warning'}`}>{p.nominationStatus}</span></td>
+                    <td><span className={`badge ${p.status === 'Inactive' ? 'badge-secondary' : 'badge-success'}`}>{p.status === 'Inactive' ? 'Inactive' : 'Active Member'}</span></td>
                   </tr>
                 ))}
               </tbody>

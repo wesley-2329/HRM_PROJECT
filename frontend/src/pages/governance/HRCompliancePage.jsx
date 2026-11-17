@@ -196,100 +196,20 @@ const HRCompliancePage = ({ currentSubModule }) => {
     }
   };
 
-  // Calendar dates mock
-  const complianceEvents = [
-    { id: 1, date: '2026-07-07', title: 'TDS Deposit Submission', type: 'Statutory', status: 'Completed', color: 'bg-emerald-500' },
-    { id: 2, date: '2026-07-15', title: 'Provident Fund (PF) E-Return Filing', type: 'Statutory', status: 'Completed', color: 'bg-emerald-500' },
-    { id: 3, date: '2026-07-15', title: 'Employee State Insurance (ESI) Payment', type: 'Statutory', status: 'Completed', color: 'bg-emerald-500' },
-    { id: 4, date: '2026-07-25', title: 'Quarterly TDS Return (Form 24Q)', type: 'Taxation', status: 'Pending', color: 'bg-amber-500' },
-    { id: 5, date: '2026-07-31', title: 'Professional Tax (PT) Deposit', type: 'Statutory', status: 'Pending', color: 'bg-amber-500' },
-    { id: 6, date: '2026-08-05', title: 'Internal Audit Review Cycle Q2', type: 'Audit', status: 'Upcoming', color: 'bg-blue-500' }
-  ];
-
-  // Audit Logs mock
-  const [auditLogs, setAuditLogs] = useState([
-    { id: 'AUD-021', auditName: 'Quarterly Financial Statutory Review', auditor: 'Deloitte India LLP', date: '2026-06-18', score: '98%', status: 'Passed' },
-    { id: 'AUD-022', auditName: 'ISO 27001 Data Security Certification', auditor: 'TÜV SÜD Group', date: '2026-05-10', score: '95%', status: 'Passed' },
-    { id: 'AUD-023', auditName: 'National Labor Law Compliance Sweep', auditor: 'Govt Joint Commissioner of Labor', date: '2026-04-12', score: '100%', status: 'Passed' }
-  ]);
-
-  // Observations mock
-  const [observations, setObservations] = useState([
-    { id: 'OBS-102', area: 'Access Controls', severity: 'High', desc: 'Active employee list includes 2 accounts with missing active designations in system logs.', observer: 'TÜV SÜD Group', targetDate: '2026-08-15', status: 'Open' },
-    { id: 'OBS-103', area: 'ESI Registers', severity: 'Medium', desc: 'Manual registers at Branch Bangalore not signed off for May payroll cycle logs.', observer: 'Internal Governance Team', targetDate: '2026-07-30', status: 'Resolved' },
-    { id: 'OBS-104', area: 'Fire Safety Code', severity: 'Low', desc: 'Evacuation route signage at floor 2 needs replacement with photoluminescent materials.', observer: 'National Safety Inspectors', targetDate: '2026-09-01', status: 'Open' }
-  ]);
-
-  // Action Closures mock
-  const [actions, setActions] = useState([
-    { id: 'ACT-901', sourceObs: 'OBS-103', CAPA: 'Implement dual-authorization digital signature for monthly ESI registers.', owner: 'Finance Lead (Arjun Mehta)', targetDate: '2026-07-15', status: 'Closed', closureDate: '2026-07-14' },
-    { id: 'ACT-902', sourceObs: 'OBS-102', CAPA: 'Run automatic script sweep to crosscheck Employee database against Designation master records daily.', owner: 'Sys Admin Team', targetDate: '2026-08-01', status: 'In Progress', closureDate: '-' },
-    { id: 'ACT-903', sourceObs: 'OBS-104', CAPA: 'Procure and install Glow-in-Dark directional signage templates.', owner: 'Facilities Manager (Rohan Sen)', targetDate: '2026-08-20', status: 'Pending', closureDate: '-' }
-  ]);
-
-  // Internal Audit Reports mock
-  const auditReports = [
-    {
-      title: 'Q1 Statutory Compliance Report 2026',
-      filename: 'Q1_Statutory_Compliance_Report_2026.pdf',
-      date: '2026-04-15',
-      size: '1.4 MB',
-      author: 'Anjali Sharma (Internal Auditor)',
-      standard: 'Statutory Labor Laws & Regulations',
-      findings: [
-        '1. All EPFO, ESIC, and Professional Tax monthly remittances reconciled with zero outstanding variance.',
-        '2. Annual statutory employee health and safety inspection passed with full certification.',
-        '3. Zero regulatory non-conformance penalties or citations issued by authorities during Q1 2026.'
-      ],
-      tableHeaders: ['Statutory Act', 'Filing Period', 'Compliance Status', 'Audit Sign-off'],
-      tableRows: [
-        ['Employees Provident Fund (EPF)', 'Monthly Q1 2026', '100% Remitted (ECR Generated)', 'Verified'],
-        ['Employees State Insurance (ESI)', 'Monthly Q1 2026', '100% Reconciled & Paid', 'Verified'],
-        ['Payment of Gratuity Act', 'Annual 2026', 'Trust Fund Fully Provisioned', 'Verified'],
-        ['Professional Tax (PT)', 'Quarterly Q1 2026', 'State Returns Filed On-time', 'Verified']
-      ]
-    },
-    {
-      title: 'ISO 27001 Compliance Statement 2026',
-      filename: 'ISO_27001_Compliance_Statement_2026.pdf',
-      date: '2026-05-15',
-      size: '890 KB',
-      author: 'Vipul Shah (CISO)',
-      standard: 'ISO/IEC 27001:2022 ISMS Standard',
-      findings: [
-        '1. Human resource security controls (Annex A.6) vetted across all new onboardings and separation checklists.',
-        '2. RBAC access privileges periodically reviewed and certified across enterprise HRMS systems.',
-        '3. Physical and cryptographic controls for employee document vault fully compliant with zero vulnerabilities.'
-      ],
-      tableHeaders: ['ISMS Control Domain', 'Clause Ref', 'Verification Status', 'Assurance Level'],
-      tableRows: [
-        ['Information Security Policies', 'Clause 5.1', 'Approved by Board & Published', 'Level 5 (Optimized)'],
-        ['Human Resource Security', 'Annex A.6', 'Background Verification 100% Done', 'Level 5 (Optimized)'],
-        ['Access Control & Encryption', 'Annex A.9', 'AES-256 Vault Encryption Active', 'Level 5 (Optimized)'],
-        ['Incident Management', 'Annex A.16', 'Zero High/Critical Incidents Logged', 'Level 5 (Optimized)']
-      ]
-    },
-    {
-      title: 'POSH Annual Compliance Audit 2026',
-      filename: 'POSH_Annual_Compliance_Audit_2026.pdf',
-      date: '2026-06-30',
-      size: '2.1 MB',
-      author: 'POSH ICC Committee',
-      standard: 'POSH Act 2013 Statutory Compliance',
-      findings: [
-        '1. Internal Complaints Committee (ICC) constituted in full compliance with presiding female officer and external NGO representative.',
-        '2. Mandatory employee sensitization training completed by 100% of workforce with digital verification.',
-        '3. Annual POSH report filed with District Officer within statutory deadline with zero unresolved grievances.'
-      ],
-      tableHeaders: ['Compliance Obligation', 'Statutory Section', 'Status Summary', 'Authority Status'],
-      tableRows: [
-        ['ICC Constitution & Quorum', 'Section 4(2)', 'Compliant (External Member Included)', 'Fully Constituted'],
-        ['Workforce Sensitization', 'Section 19(c)', '100% Completed Across Locations', 'Certified'],
-        ['Annual Report Submission', 'Section 21(1)', 'Submitted to District Officer', 'Official Receipt On Record'],
-        ['Complaints Resolution Cycle', 'Section 11-13', 'Zero Pending Inquiries at Year-end', '100% Resolved']
-      ]
+  // Compliance filing schedule: the due dates tracked under Statutory Compliance
+  const [dueDates, setDueDates] = useState([]);
+  const [loadingDueDates, setLoadingDueDates] = useState(false);
+  const fetchDueDates = async () => {
+    setLoadingDueDates(true);
+    try {
+      const res = await api.get('/compliance/due-dates');
+      setDueDates(res.data);
+    } catch (err) {
+      showToast('Error loading compliance due dates.', 'error');
+    } finally {
+      setLoadingDueDates(false);
     }
-  ];
+  };
 
   // Load Audits
   const fetchAudits = async () => {
@@ -355,18 +275,6 @@ const HRCompliancePage = ({ currentSubModule }) => {
     } catch (err) {
       showToast(err.response?.data?.message || 'Error recording observation.', 'error');
     }
-  };
-
-  const handleMockUpload = () => {
-    const mockUrls = [
-      'https://talentsphere-vault.s3.amazonaws.com/evidence/fire_safety_signage_proof.jpg',
-      'https://talentsphere-vault.s3.amazonaws.com/evidence/employee_handbook_signoffs.pdf',
-      'https://talentsphere-vault.s3.amazonaws.com/evidence/tds_return_receipt_q1.pdf',
-      'https://talentsphere-vault.s3.amazonaws.com/evidence/bg_verification_sample.pdf'
-    ];
-    const randomUrl = mockUrls[Math.floor(Math.random() * mockUrls.length)];
-    setObsForm(prev => ({ ...prev, evidenceUrl: randomUrl }));
-    showToast('Mock Evidence file uploaded successfully.', 'success');
   };
 
   const handleAddCAPA = async (e) => {
@@ -440,6 +348,12 @@ const HRCompliancePage = ({ currentSubModule }) => {
   useEffect(() => {
     fetchPolicies();
     fetchReports();
+    if (currentSubModule === 'compliance-calendar') {
+      fetchDueDates();
+    }
+    if (currentSubModule === 'internal-audit') {
+      fetchAudits();
+    }
     if (currentSubModule === 'hr-audit') {
       fetchAudits();
       fetchAuditStats();
@@ -1021,23 +935,15 @@ const HRCompliancePage = ({ currentSubModule }) => {
                           </select>
                         </div>
                         <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label>Supporting Evidence Upload</label>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              type="button"
-                              onClick={handleMockUpload}
-                              className="btn btn-secondary"
-                              style={{ padding: '8px 12px', fontSize: '0.75rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                            >
-                              <i className="fa-solid fa-cloud-arrow-up"></i>
-                              {obsForm.evidenceUrl ? 'Uploaded!' : 'Upload File'}
-                            </button>
-                            {obsForm.evidenceUrl && (
-                              <div style={{ color: 'var(--emerald-500)', fontSize: '0.8rem', display: 'flex', alignItems: 'center' }}>
-                                <i className="fa-solid fa-circle-check"></i>
-                              </div>
-                            )}
-                          </div>
+                          <label htmlFor="obs-evidence-url">Supporting Evidence Link (optional)</label>
+                          <input
+                            id="obs-evidence-url"
+                            type="url"
+                            className="form-control"
+                            placeholder="https://… link to the document or photo"
+                            value={obsForm.evidenceUrl}
+                            onChange={(e) => setObsForm(prev => ({ ...prev, evidenceUrl: e.target.value }))}
+                          />
                         </div>
                       </div>
                       <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end', padding: '6px 14px', fontSize: '0.8rem' }}>
@@ -1397,24 +1303,27 @@ const HRCompliancePage = ({ currentSubModule }) => {
                 <thead>
                   <tr>
                     <th>Event</th>
-                    <th>Category</th>
+                    <th>Priority</th>
                     <th>Due Date</th>
                     <th>Filing Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {complianceEvents.map(ev => (
-                    <tr key={ev.id}>
-                      <td style={{ fontWeight: 600 }}>{ev.title}</td>
-                      <td>{ev.type}</td>
-                      <td>{new Date(ev.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                  {dueDates.map(ev => (
+                    <tr key={ev.trackerId}>
+                      <td style={{ fontWeight: 600 }}>{ev.complianceName}</td>
+                      <td>{ev.priority}</td>
+                      <td>{new Date(ev.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                       <td>
-                        <span className={`badge ${ev.status === 'Completed' ? 'badge-success' : ev.status === 'Pending' ? 'badge-warning' : 'badge-info'}`}>
+                        <span className={`badge ${ev.status === 'Completed' ? 'badge-success' : ev.status === 'Pending' ? 'badge-warning' : 'badge-danger'}`}>
                           {ev.status}
                         </span>
                       </td>
                     </tr>
                   ))}
+                  {dueDates.length === 0 && (
+                    <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{loadingDueDates ? 'Loading…' : 'No compliance due dates yet. Add them under Statutory Compliance → Due Dates.'}</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1423,29 +1332,16 @@ const HRCompliancePage = ({ currentSubModule }) => {
           <div className="card">
             <div className="card-title">Filing Calendar Insights</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--emerald-500)' }}></div>
-                <div style={{ fontSize: '0.85rem' }}>
-                  <strong>3 Completed</strong> this month.
+              {[
+                ['Completed', 'var(--emerald-500)', dueDates.filter(d => d.status === 'Completed').length],
+                ['Pending', 'var(--amber-500)', dueDates.filter(d => d.status === 'Pending').length],
+                ['Overdue or escalated', 'var(--rose-500)', dueDates.filter(d => d.status === 'Overdue' || d.status === 'Escalated').length]
+              ].map(([label, color, n]) => (
+                <div key={label} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: color }}></div>
+                  <div style={{ fontSize: '0.85rem' }}><strong>{loadingDueDates ? '…' : n}</strong> {label}</div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--amber-500)' }}></div>
-                <div style={{ fontSize: '0.85rem' }}>
-                  <strong>2 Action Required</strong>. TDS Quarter 1 and PT returns.
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--blue-500)' }}></div>
-                <div style={{ fontSize: '0.85rem' }}>
-                  <strong>1 Upcoming Review</strong>. Internal Audit Cycle Q2 in Aug.
-                </div>
-              </div>
-            </div>
-            <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '20px', paddingTop: '16px' }}>
-              <button className="btn btn-primary w-full" onClick={() => showToast('Syncing with statutory portal...', 'info')}>
-                <i className="fa-solid fa-sync" style={{ marginRight: '6px' }}></i> Sync Govt Portal Logs
-              </button>
+              ))}
             </div>
           </div>
         </div>
@@ -2640,26 +2536,10 @@ const HRCompliancePage = ({ currentSubModule }) => {
                     <input 
                       type="text" 
                       className="form-control" 
-                      placeholder="https://s3.aws.com/talentsphere/evidence.pdf" 
+                      placeholder="https://… link to the evidence document" 
                       value={obsActionForm.evidenceUrl}
                       onChange={(e) => setObsActionForm(prev => ({ ...prev, evidenceUrl: e.target.value }))}
                     />
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        const mockUrls = [
-                          'https://talentsphere-gov.s3.amazonaws.com/evidence/fire_drill_conducted.pdf',
-                          'https://talentsphere-gov.s3.amazonaws.com/evidence/safety_certificates.jpg',
-                          'https://talentsphere-gov.s3.amazonaws.com/evidence/labor_contracts_signed.pdf'
-                        ];
-                        const url = mockUrls[Math.floor(Math.random() * mockUrls.length)];
-                        setObsActionForm(prev => ({ ...prev, evidenceUrl: url }));
-                        showToast('Evidence link attached.', 'info');
-                      }}
-                    >
-                      Attach Mock File
-                    </button>
                   </div>
                 </div>
 
@@ -3356,25 +3236,10 @@ const HRCompliancePage = ({ currentSubModule }) => {
                     <input 
                       type="text" 
                       className="form-control" 
-                      placeholder="https://s3.aws.com/talentsphere/progress.jpg" 
+                      placeholder="https://… link to the progress photo or file" 
                       value={actionProgressForm.evidenceUrl}
                       onChange={(e) => setActionProgressForm(prev => ({ ...prev, evidenceUrl: e.target.value }))}
                     />
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        const mockUrls = [
-                          'https://talentsphere-gov.s3.amazonaws.com/evidence/action_resolved_floor2.jpg',
-                          'https://talentsphere-gov.s3.amazonaws.com/evidence/noise_levels_inspected.pdf'
-                        ];
-                        const url = mockUrls[Math.floor(Math.random() * mockUrls.length)];
-                        setActionProgressForm(prev => ({ ...prev, evidenceUrl: url }));
-                        showToast('Evidence link attached.', 'info');
-                      }}
-                    >
-                      Attach Mock File
-                    </button>
                   </div>
                 </div>
 
@@ -3649,60 +3514,47 @@ const HRCompliancePage = ({ currentSubModule }) => {
             Browse and download final approved quarterly internal audit reports and statements.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {auditReports.map((rep, idx) => (
-              <div key={idx} className="card" style={{ border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative' }}>
+            {audits.filter(a => a.status === 'Closed').map((a) => (
+              <div key={a.auditNumber} className="card" style={{ border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative' }}>
                 <div style={{ fontSize: '2.5rem', color: 'hsl(var(--primary))', opacity: 0.8 }}><i className="fa-solid fa-file-pdf"></i></div>
                 <div>
-                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '4px 0', wordBreak: 'break-all' }}>{rep.filename}</h4>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Filing Date: {new Date(rep.date).toLocaleDateString()}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Size: {rep.size} | Prepared by: {rep.author}</p>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '4px 0', overflowWrap: 'anywhere' }}>{a.auditNumber} · {a.name}</h4>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Closed: {new Date(a.closedAt || a.updatedAt).toLocaleDateString()}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.department} | Auditor: {a.auditorName}</p>
                 </div>
                 <button
-                  id={`btn-download-${rep.filename.replace(/\.pdf$/, '')}`}
+                  id={`btn-download-${a.auditNumber}`}
                   className="btn btn-secondary w-full"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                  onClick={() => {
-                    showToast(`Downloading report: ${rep.filename}`, 'info');
-                    downloadPdfDocument({
-                      title: `REGULATORY AUDIT REPORT: ${rep.title.toUpperCase()}`,
-                      subtitle: 'Governance & Regulatory Compliance Archive',
-                      docNumber: rep.filename.replace(/\.pdf$/, ''),
-                      recipient: `Prepared By: ${rep.author}`,
-                      metadata: [
-                        { label: 'Document Title', value: rep.title },
-                        { label: 'Filename', value: rep.filename },
-                        { label: 'Filing Date', value: new Date(rep.date).toLocaleDateString() },
-                        { label: 'Compliance Standard', value: rep.standard || 'Statutory & ISO Standards' },
-                        { label: 'Document Size', value: rep.size },
-                        { label: 'Prepared By', value: rep.author }
-                      ],
-                      sections: [
-                        {
-                          heading: 'Audit Summary Findings',
-                          paragraphs: rep.findings || [
-                            '1. All regulatory filings and statutory registers verified & 100% compliant.',
-                            '2. Zero penalty notices or non-conformance observations recorded during review cycle.',
-                            '3. Systemic audit verification complete across all operational departments.'
-                          ]
-                        },
-                        ...(rep.tableHeaders && rep.tableRows ? [{
-                          heading: 'Verification & Compliance Checklist Matrix',
-                          table: {
-                            headers: rep.tableHeaders,
-                            colWidths: [150, 140, 120, 85],
-                            rows: rep.tableRows
-                          }
-                        }] : [])
-                      ],
-                      footer: 'HR O Corp Compliance Office - Verified & Digitally Certified'
-                    }, rep.filename);
-                    showToast(`${rep.filename} downloaded successfully.`, 'success');
-                  }}
+                  onClick={() => downloadPdfDocument({
+                    title: `AUDIT REPORT: ${a.name.toUpperCase()}`,
+                    subtitle: 'Governance & Regulatory Compliance Archive',
+                    docNumber: a.auditNumber,
+                    recipient: `Auditor: ${a.auditorName}`,
+                    metadata: [
+                      { label: 'Audit', value: a.name },
+                      { label: 'Type / Category', value: `${a.type} / ${a.category}` },
+                      { label: 'Department', value: a.department },
+                      { label: 'Audit Date', value: new Date(a.date).toLocaleDateString() },
+                      { label: 'Closed', value: new Date(a.closedAt || a.updatedAt).toLocaleDateString() },
+                      { label: 'Approved By', value: a.approvedBy || '—' }
+                    ],
+                    sections: [
+                      { heading: 'Checklist', table: { headers: ['Question', 'Requirement', 'Status'], colWidths: [200, 190, 105], rows: (a.checklist || []).map(c => [c.question, c.complianceRequirement, c.status]) } },
+                      { heading: 'Observations', table: { headers: ['Observation', 'Severity', 'Status'], colWidths: [280, 100, 115], rows: (a.observations || []).map(o => [o.observation, o.severity, o.status]) } },
+                      { heading: 'Corrective Actions', table: { headers: ['Action', 'Owner', 'Status'], colWidths: [260, 130, 105], rows: (a.actions || []).map(x => [x.description, x.responsiblePerson || '', x.status]) } },
+                      ...(a.closureRemarks ? [{ heading: 'Closure Remarks', paragraphs: [a.closureRemarks] }] : [])
+                    ],
+                    footer: 'Generated from the audit record in HR Orbit'
+                  }, `${a.auditNumber}.pdf`)}
                 >
                   <i className="fa-solid fa-download"></i> Download Report
                 </button>
               </div>
             ))}
+            {!loadingAudits && !audits.some(a => a.status === 'Closed') && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No closed audits yet. An audit appears here once it is closed under HR Audit.</p>
+            )}
           </div>
         </div>
       )}
