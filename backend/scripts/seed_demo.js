@@ -29,6 +29,7 @@ const Task = require('../models/Task');
 const Training = require('../models/Training');
 const DiscussionMessage = require('../models/DiscussionMessage');
 const HrBudget = require('../models/HrBudget');
+const BudgetAllocation = require('../models/BudgetAllocation');
 const ManpowerBudget = require('../models/ManpowerBudget');
 const RecruitmentExpense = require('../models/RecruitmentExpense');
 const WelfareExpense = require('../models/WelfareExpense');
@@ -221,6 +222,16 @@ async function seedModuleDemo() {
     budgetId: `DEMO-BDG-${i + 1}`, financialYear: FY, department, costCenter, budgetCategory, status, remarks: NOTE,
     proposedBudget: amount, approvedBudget: status === 'Approved' ? amount : 0, forecastBudget: amount,
     utilizedBudget: status === 'Approved' ? used : 0, remainingBudget: status === 'Approved' ? amount - used : 0
+  })));
+  // One allocation per approved budget line, so the Allocation tab (and Transfer) has something to work with
+  await BudgetAllocation.create([
+    ['DEMO-BDG-1', 'Engineering', 'CC-ENG', 'Manpower', 4800000, 3100000],
+    ['DEMO-BDG-2', 'Engineering', 'CC-ENG', 'Training', 600000, 240000],
+    ['DEMO-BDG-3', 'Human Resources', 'CC-HR', 'Recruitment', 900000, 410000],
+    ['DEMO-BDG-6', 'Sales & Marketing', 'CC-SM', 'Manpower', 2400000, 1650000]
+  ].map(([budgetId, department, costCenter, category, allocatedAmount, utilizedAmount], i) => ({
+    allocationId: `DEMO-ALC-${i + 1}`, budgetId, financialYear: FY, department, costCenter, category, allocatedAmount, utilizedAmount,
+    remainingAmount: allocatedAmount - utilizedAmount, utilizationPercentage: Math.round((utilizedAmount / allocatedAmount) * 1000) / 10
   })));
   await ManpowerBudget.create([
     { budgetId: 'DEMO-MPB-1', financialYear: FY, department: 'Engineering', costCenter: 'CC-ENG', designation: 'Software Engineer', currentHeadcount: 5, approvedHeadcount: 7, proposedHeadcount: 7, vacancyCount: 2, avgMonthlySalary: 95000, annualSalaryBudget: 7980000, status: 'Approved', justification: NOTE },

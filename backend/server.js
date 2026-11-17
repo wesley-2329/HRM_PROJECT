@@ -245,6 +245,9 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// Unknown API paths answer in JSON, not with an HTML error page
+app.use('/api', (req, res) => res.status(404).json({ message: 'Not found' }));
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist')));

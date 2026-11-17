@@ -168,6 +168,35 @@ router.get('/allocation', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// Move unspent budget from one department's allocation to another's in the same financial year (Bug 052).
+router.post('/allocation/:id/transfer', protect, adminOnly, async (req, res, next) => {
+  try {
+    const amount = Number(req.body.amount);
+    const reason = String(req.body.reason || '').trim();
+    if (!(amount > 0)) return res.status(400).json({ message: 'Enter a transfer amount greater than zero.' });
+    if (!req.body.targetAllocationId) return res.status(400).json({ message: 'Choose the department to transfer to.' });
+    if (!reason) return res.status(400).json({ message: 'Please fill in: Transfer reason.' });
+    const source = await BudgetAllocation.findOne({ allocationId: req.params.id });
+    const target = await BudgetAllocation.findOne({ allocationId: req.body.targetAllocationId });
+    if (!source || !target) return res.status(404).json({ message: 'Budget allocation not found.' });
+    if (source.allocationId === target.allocationId) return res.status(400).json({ message: 'Choose a different department to transfer to.' });
+    if (source.financialYear !== target.financialYear) return res.status(400).json({ message: 'Budget can only move between allocations of the same financial year.' });
+    // Conditional decrement: a double click or a second tab cannot overdraw the source.
+    // shortcut: two separate updates, not a transaction; upgrade to a session transaction if the DB runs as a replica set everywhere.
+    const from = await BudgetAllocation.findOneAndUpdate(
+      { allocationId: source.allocationId, remainingAmount: { $gte: amount } },
+      { $inc: { allocatedAmount: -amount, remainingAmount: -amount } }, { new: true });
+    if (!from) return res.status(409).json({ message: `Only ₹${(source.remainingAmount || 0).toLocaleString('en-IN')} is left in ${source.department}'s allocation.` });
+    const to = await BudgetAllocation.findOneAndUpdate({ allocationId: target.allocationId }, { $inc: { allocatedAmount: amount, remainingAmount: amount } }, { new: true });
+    for (const a of [from, to]) {
+      a.utilizationPercentage = a.allocatedAmount > 0 ? Math.round((a.utilizedAmount / a.allocatedAmount) * 1000) / 10 : 0;
+      await a.save();
+    }
+    await logAudit(req, 'TRANSFER_BUDGET', 'BudgetAllocation', from.allocationId, { to: to.allocationId, toDepartment: to.department, amount, reason });
+    res.json({ from, to });
+  } catch (err) { next(err); }
+});
+
 router.post('/allocation', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;

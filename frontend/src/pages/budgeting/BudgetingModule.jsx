@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import { downloadPdfDocument } from '../../utils/pdfGenerator';
@@ -82,14 +82,17 @@ const BudgetingModule = ({ searchQuery = '' }) => {
   const [selectedAuditLog, setSelectedAuditLog] = useState(null);
   const [transferAllocationModal, setTransferAllocationModal] = useState(null);
   const [transferFormData, setTransferFormData] = useState({
-    targetDepartment: 'Sales & Marketing',
+    targetAllocationId: '',
     transferAmount: '',
-    reason: 'Inter-department resource re-allocation'
+    reason: ''
   });
 
-  const handleExecuteTransfer = (e) => {
+  // Bug 052: the transfer is saved on the server; the table shows what the server returns
+  const transferBusyRef = useRef(false);
+  const [transferBusy, setTransferBusy] = useState(false);
+  const handleExecuteTransfer = async (e) => {
     e.preventDefault();
-    if (!transferAllocationModal) return;
+    if (!transferAllocationModal || transferBusyRef.current) return;
     const amount = Number(transferFormData.transferAmount);
     if (!amount || amount <= 0) {
       showToast('Please enter a valid transfer amount.', 'warning');
@@ -99,23 +102,21 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       showToast(`Transfer amount cannot exceed remaining balance (₹${transferAllocationModal.remainingAmount.toLocaleString()}).`, 'error');
       return;
     }
-
-    setAllocations(prev => prev.map(item => {
-      if (item.allocationId === transferAllocationModal.allocationId) {
-        const newRemaining = Math.max(0, item.remainingAmount - amount);
-        const newUtilized = item.utilizedAmount + amount;
-        return {
-          ...item,
-          utilizedAmount: newUtilized,
-          remainingAmount: newRemaining,
-          utilizationPercentage: Math.round((newUtilized / item.allocatedAmount) * 1000) / 10
-        };
-      }
-      return item;
-    }));
-
-    showToast(`Successfully transferred ₹${amount.toLocaleString()} from ${transferAllocationModal.department} to ${transferFormData.targetDepartment}.`, 'success');
-    setTransferAllocationModal(null);
+    transferBusyRef.current = true;
+    setTransferBusy(true);
+    try {
+      const { data } = await api.post(`/budget/allocation/${transferAllocationModal.allocationId}/transfer`, {
+        targetAllocationId: transferFormData.targetAllocationId, amount, reason: transferFormData.reason
+      });
+      setAllocations(prev => prev.map(item => item.allocationId === data.from.allocationId ? data.from : item.allocationId === data.to.allocationId ? data.to : item));
+      showToast(`Transferred ₹${amount.toLocaleString()} from ${data.from.department} to ${data.to.department}.`, 'success');
+      setTransferAllocationModal(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not complete the transfer. Please try again.', 'error');
+    } finally {
+      transferBusyRef.current = false;
+      setTransferBusy(false);
+    }
   };
 
   // Helper functions for formatting audit logs and preventing horizontal overflow
@@ -607,12 +608,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                         style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
                         onClick={() => {
                           setTransferAllocationModal(a);
-                          setTransferFormData({
-                            targetDepartment: a.department === 'Sales & Marketing' ? 'Engineering' : 'Sales & Marketing',
-                            transferAmount: Math.min(100000, a.remainingAmount),
-                            reason: 'Inter-department resource re-allocation'
-                          });
-                          showToast('Transfer allocation request initiated', 'info');
+                          setTransferFormData({ targetAllocationId: '', transferAmount: '', reason: '' });
                         }}
                       >
                         <i className="fa-solid fa-right-left"></i> Transfer
@@ -2219,16 +2215,16 @@ const BudgetingModule = ({ searchQuery = '' }) => {
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>Target Department *</label>
                 <select 
+                  id="transfer-target"
                   className="form-control" 
-                  value={transferFormData.targetDepartment} 
-                  onChange={(e) => setTransferFormData({ ...transferFormData, targetDepartment: e.target.value })}
+                  value={transferFormData.targetAllocationId} 
+                  onChange={(e) => setTransferFormData({ ...transferFormData, targetAllocationId: e.target.value })}
                   required
                 >
-                  <option value="Engineering">Engineering</option>
-                  <option value="Sales & Marketing">Sales & Marketing</option>
-                  <option value="Human Resources">Human Resources</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Finance">Finance</option>
+                  <option value="">Select department…</option>
+                  {allocations.filter(x => x.allocationId !== transferAllocationModal.allocationId && x.financialYear === transferAllocationModal.financialYear).map(x => (
+                    <option key={x.allocationId} value={x.allocationId}>{x.department} · {x.category} ({x.allocationId})</option>
+                  ))}
                 </select>
               </div>
 
@@ -2257,8 +2253,8 @@ const BudgetingModule = ({ searchQuery = '' }) => {
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setTransferAllocationModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">
-                  <i className="fa-solid fa-check"></i> Complete Transfer
+                <button type="submit" id="btn-complete-transfer" className="btn btn-primary" disabled={transferBusy}>
+                  {transferBusy ? <><i className="fa-solid fa-spinner fa-spin"></i> Saving…</> : <><i className="fa-solid fa-check"></i> Complete Transfer</>}
                 </button>
               </div>
             </form>

@@ -432,3 +432,26 @@ test('resume parser: no invented contacts; duplicates matched on real email/phon
     await Candidate.deleteMany({ name: /^T-RES/ });
   }
 });
+
+test('budget transfer is saved, cannot overdraw, and survives two simultaneous requests (Bug 052)', async () => {
+  const A = require('../models/BudgetAllocation');
+  const mk = (id, dept, fy = 'FY T') => A.create({ allocationId: id, budgetId: 'T-B', financialYear: fy, department: dept, costCenter: 'CC', category: 'Ops', allocatedAmount: 1000, utilizedAmount: 200, remainingAmount: 800 });
+  try {
+    await mk('T-AL-1', 'Eng'); await mk('T-AL-2', 'Sales'); await mk('T-AL-3', 'Other', 'FY X');
+    const go = (tok, body) => call('POST', '/api/budget/allocation/T-AL-1/transfer', tok, { targetAllocationId: 'T-AL-2', reason: 'test', ...body });
+    assert.strictEqual((await go(emp, { amount: 100 })).status, 403);
+    assert.strictEqual((await go(hr, { amount: 0 })).status, 400);
+    assert.strictEqual((await go(hr, { amount: 100, reason: '' })).status, 400);
+    assert.strictEqual((await go(hr, { amount: 100, targetAllocationId: 'T-AL-3' })).status, 400, 'different FY');
+    const ok = await go(hr, { amount: 300 });
+    assert.strictEqual(ok.status, 200);
+    const [s, t] = await Promise.all([A.findOne({ allocationId: 'T-AL-1' }), A.findOne({ allocationId: 'T-AL-2' })]);
+    assert.deepStrictEqual([s.allocatedAmount, s.remainingAmount, t.allocatedAmount, t.remainingAmount], [700, 500, 1300, 1100], 'saved in the DB');
+    // two tabs each moving 400 of the remaining 500: exactly one succeeds
+    const both = await Promise.all([go(hr, { amount: 400 }), go(hr, { amount: 400 })]);
+    assert.deepStrictEqual(both.map(r => r.status).sort(), [200, 409]);
+    assert.strictEqual((await A.findOne({ allocationId: 'T-AL-1' })).remainingAmount, 100, 'never overdrawn');
+  } finally {
+    await A.deleteMany({ allocationId: /^T-AL-/ });
+  }
+});
