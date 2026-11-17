@@ -76,11 +76,11 @@ const connectDB = async () => {
 
   const attemptConnect = (uri) => {
     return mongoose.connect(uri, {
-      // Serverless: many short-lived instances share the cluster's connection limit (Atlas answers with
-      // "tlsv1 alert internal error" when it is exhausted), so keep no idle connections and a small pool.
+      // Serverless: many short-lived instances share the cluster's connection limit, so each keeps a small
+      // pool and no minimum; idle connections live 60 s so a warm instance reuses them instead of reconnecting.
       maxPoolSize: 5,
       minPoolSize: 0,
-      maxIdleTimeMS: 10000,
+      maxIdleTimeMS: 60000,
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 5000,
     });
