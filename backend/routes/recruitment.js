@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { normalizeEmail, duplicateContactQuery } = require('../utils/contact');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -608,21 +609,13 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
     const rawFileName = req.file.originalname || 'Resume.pdf';
     const parsedNameFromDoc = path.parse(rawFileName).name.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     const finalCandidateName = (candidateName && String(candidateName).trim()) ? String(candidateName).trim() : (parsedNameFromDoc || 'Applicant');
-    const finalEmail = (email && String(email).trim()) ? String(email).trim() : `applicant_${Date.now()}_${Math.floor(Math.random() * 1000)}@example.com`;
-    const finalPhone = (phone && String(phone).trim()) ? String(phone).trim() : '+91 98765 43210';
+    // Never invent contact details: a missing email/phone stays empty (Bug 075)
+    const finalEmail = normalizeEmail(email);
+    const finalPhone = phone ? String(phone).trim() : '';
 
-    // Duplicate check by email or phone
-    let existingCand = null;
-    try {
-      existingCand = await Candidate.findOne({ 
-        $or: [
-          { email: finalEmail }, 
-          { phone: finalPhone }
-        ] 
-      });
-    } catch (e) {
-      existingCand = null;
-    }
+    // Duplicate check on the contact details that exist; none at all means the profile is unique
+    const dupQuery = duplicateContactQuery(finalEmail, finalPhone);
+    const existingCand = dupQuery ? await Candidate.findOne(dupQuery) : null;
     const isDuplicate = !!existingCand;
 
     const newAnalysis = new ResumeAnalysis({
@@ -645,6 +638,7 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
       rankingScore,
       isDuplicate,
       duplicateCandidateId: existingCand ? existingCand._id : null,
+      candidateId: existingCand ? existingCand._id : undefined,
       recruiterRemarks: jdMatchScore > 75 ? 'Strong candidate recommendation.' : 'Requires technical screening.',
       status: 'Parsed'
     });
@@ -692,6 +686,7 @@ router.put('/resumes/:id/trigger-interview', protect, adminOnly, async (req, res
     const { interviewDate, remarks } = req.body;
     const analysis = await ResumeAnalysis.findById(req.params.id);
     if (!analysis) return res.status(404).json({ message: 'Resume analysis not found' });
+    if (analysis.isDuplicate) return res.status(409).json({ message: 'This resume is a duplicate of an existing candidate. Schedule the interview from that candidate instead.' });
 
     analysis.status = 'Interview Triggered';
     analysis.interviewTriggered = true;

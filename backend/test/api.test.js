@@ -392,3 +392,43 @@ test('compliance documents: HR deletes the record and its stored file; others ca
   assert.strictEqual((await call('GET', `/api/compliance/documents/${made.docId}`, hr)).status, 404);
   assert.strictEqual((await call('DELETE', `/api/compliance/documents/${made.docId}`, hr)).status, 404, 'second delete');
 });
+
+test('resume parser: no invented contacts; duplicates matched on real email/phone only (Bug 075)', async () => {
+  const Candidate = require('../models/Candidate');
+  const ResumeAnalysis = require('../models/ResumeAnalysis');
+  const upload = async (name, email, phone) => {
+    const fd = new FormData();
+    fd.append('candidateName', name);
+    if (email !== undefined) fd.append('email', email);
+    if (phone !== undefined) fd.append('phone', phone);
+    fd.append('resume', new Blob([Buffer.from('%PDF-1.4\n%%EOF')]), `${name}.pdf`);
+    const r = await fetch(base + '/api/recruitment/resumes/upload', { method: 'POST', headers: { Authorization: `Bearer ${hr}` }, body: fd });
+    return { status: r.status, data: await r.json() };
+  };
+  try {
+    const a = await upload('T-RES Asha');
+    const b = await upload('T-RES Bala');
+    assert.strictEqual(a.status, 201);
+    assert.strictEqual(a.data.email, '', 'no invented email');
+    assert.strictEqual(a.data.phone, '', 'no invented phone');
+    assert.strictEqual(b.data.isDuplicate, false, 'two resumes without contacts are not duplicates');
+
+    const c = await upload('T-RES Chitra', 'T-Res.Chitra@Example.org');
+    const c2 = await upload('T-RES Chitra again', '  t-res.chitra@example.ORG ');
+    assert.strictEqual(c.data.email, 't-res.chitra@example.org', 'email normalised');
+    assert.strictEqual(c2.data.isDuplicate, true, 'same email, different case');
+    assert.strictEqual(String(c2.data.duplicateCandidateId), String(c.data.candidateId), 'linked to the existing candidate');
+    assert.strictEqual(await Candidate.countDocuments({ email: /t-res\.chitra@example\.org/i }), 1, 'no second candidate');
+
+    const d = await upload('T-RES Dev', undefined, '+91 90000-12345');
+    const d2 = await upload('T-RES Dev again', undefined, '(900) 001 2345');
+    assert.strictEqual(d.data.isDuplicate, false);
+    assert.strictEqual(d2.data.isDuplicate, true, 'same phone, different formatting');
+
+    const t = await call('PUT', `/api/recruitment/resumes/${d2.data._id}/trigger-interview`, hr, {});
+    assert.strictEqual(t.status, 409, 'no interview on a duplicate row');
+  } finally {
+    await ResumeAnalysis.deleteMany({ candidateName: /^T-RES/ });
+    await Candidate.deleteMany({ name: /^T-RES/ });
+  }
+});

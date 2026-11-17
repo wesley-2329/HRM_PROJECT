@@ -76,6 +76,18 @@ const RecruitmentModule = () => {
 
   const [showCand360Modal, setShowCand360Modal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  // A duplicate resume row points at the candidate it matched; open that candidate's 360° view
+  const openExistingCandidate = async (id) => {
+    try {
+      const list = candidates.length ? candidates : (await api.get('/recruitment/candidates')).data || [];
+      const cand = list.find(c => String(c._id) === String(id));
+      if (!cand) return showToast('The matching candidate record could not be found.', 'error');
+      setSelectedCandidate(cand);
+      setShowCand360Modal(true);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not load the candidate.', 'error');
+    }
+  };
   const [cand360Tab, setCand360Tab] = useState('overview'); // 'overview', 'education', 'experience', 'docs', 'interviews', 'offer', 'communication', 'timeline'
 
   const [showReactivateModal, setShowReactivateModal] = useState(false);
@@ -1518,10 +1530,16 @@ const RecruitmentModule = () => {
                         </span>
                       </td>
                       <td>
-                        <span className={`badge ${r.interviewTriggered ? 'badge-success' : 'badge-info'}`}>{r.status}</span>
+                        {r.isDuplicate
+                          ? <span className="badge badge-warning">Duplicate — linked to existing candidate</span>
+                          : <span className={`badge ${r.interviewTriggered ? 'badge-success' : 'badge-info'}`}>{r.status}</span>}
                       </td>
                       <td>
-                        {!r.interviewTriggered ? (
+                        {r.isDuplicate ? (
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => openExistingCandidate(r.duplicateCandidateId)}>
+                            <i className="fa-solid fa-user"></i> Open existing candidate
+                          </button>
+                        ) : !r.interviewTriggered ? (
                           <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleTriggerInterview(r._id)}>
                             <i className="fa-solid fa-calendar-plus"></i> Trigger Interview
                           </button>
