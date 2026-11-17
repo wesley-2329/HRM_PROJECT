@@ -127,10 +127,13 @@ router.get('/calendar', protect, async (req, res, next) => {
 // ==========================================
 // 4. PROVIDENT FUND (PF)
 // ==========================================
+// PF/ESI hold each employee's UAN, wages and contributions: HR sees all, an employee only their own
+const ownScope = (req) => req.user.role === 'hr' ? {} : { employeeId: req.user.id };
+
 router.get('/pf', protect, async (req, res, next) => {
   try {
-    const pfProfiles = await EmployeePfProfile.find();
-    const contributions = await PfContribution.find().sort({ createdAt: -1 });
+    const pfProfiles = await EmployeePfProfile.find(ownScope(req));
+    const contributions = await PfContribution.find(ownScope(req)).sort({ createdAt: -1 });
     res.json({ profiles: pfProfiles, contributions });
   } catch (err) { next(err); }
 });
@@ -167,8 +170,8 @@ router.post('/pf/ecr', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 router.get('/esi', protect, async (req, res, next) => {
   try {
-    const esiProfiles = await EmployeeEsiProfile.find();
-    const contributions = await EsiContribution.find().sort({ createdAt: -1 });
+    const esiProfiles = await EmployeeEsiProfile.find(ownScope(req));
+    const contributions = await EsiContribution.find(ownScope(req)).sort({ createdAt: -1 });
     res.json({ profiles: esiProfiles, contributions });
   } catch (err) { next(err); }
 });

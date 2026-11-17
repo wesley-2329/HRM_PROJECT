@@ -223,9 +223,9 @@ router.put('/clearance/:id', protect, adminOnly, async (req, res, next) => {
 
 router.get('/assets', protect, async (req, res, next) => {
   try {
-    const assets = await AssetReturn.find();
-    const itStatus = await ItClearance.find();
-    const secStatus = await SecurityClearance.find();
+    const assets = await AssetReturn.find(ownScope(req));
+    const itStatus = await ItClearance.find(ownScope(req));
+    const secStatus = await SecurityClearance.find(ownScope(req));
     res.json({ assets, itStatus, secStatus });
   } catch (err) { next(err); }
 });

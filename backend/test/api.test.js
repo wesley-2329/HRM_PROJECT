@@ -483,3 +483,21 @@ test('recruitment lists: candidate email/phone visible to HR only', async () => 
     assert.ok((await call('GET', '/api/recruitment/resumes', emp)).data.every(r => r.email === undefined && r.phone === undefined));
   } finally { await Candidate.deleteMany({ name: /^T-CAND/ }); }
 });
+
+test('PF/ESI profiles and exit assets: employees see only their own', async () => {
+  const P = require('../models/EmployeePfProfile');
+  const X = require('../models/EmployeeEsiProfile');
+  await P.collection.insertMany([{ pfProfileId: 'T-PF-1', employeeId: 'T-EMP', employeeName: 'T-EMP', uan: '100000000001' }, { pfProfileId: 'T-PF-2', employeeId: 'T-OTHER', employeeName: 'T-OTHER', uan: '100000000002' }]);
+  await X.collection.insertMany([{ esiProfileId: 'T-ESI-1', employeeId: 'T-EMP' }, { esiProfileId: 'T-ESI-2', employeeId: 'T-OTHER' }]);
+  try {
+    const pfEmp = (await call('GET', '/api/compliance/pf', emp)).data.profiles.filter(p => /^T-PF/.test(p.pfProfileId));
+    assert.deepStrictEqual(pfEmp.map(p => p.employeeId), ['T-EMP']);
+    assert.strictEqual((await call('GET', '/api/compliance/pf', hr)).data.profiles.filter(p => /^T-PF/.test(p.pfProfileId)).length, 2);
+    const esiEmp = (await call('GET', '/api/compliance/esi', emp)).data.profiles.filter(p => /^T-ESI/.test(p.esiProfileId));
+    assert.deepStrictEqual(esiEmp.map(p => p.employeeId), ['T-EMP']);
+    assert.strictEqual((await call('GET', '/api/exit/assets', emp)).status, 200);
+  } finally {
+    await P.collection.deleteMany({ pfProfileId: /^T-PF/ });
+    await X.collection.deleteMany({ esiProfileId: /^T-ESI/ });
+  }
+});
