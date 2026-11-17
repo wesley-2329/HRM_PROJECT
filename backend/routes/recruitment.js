@@ -72,6 +72,9 @@ const getRequestedRole = (req) => {
   return String(role).toLowerCase();
 };
 
+// Candidate contact details are for HR only; other roles see the rest of the record
+const withoutContacts = (req, docs) => req.user?.role === 'hr' ? docs : docs.map(d => { const o = d.toObject ? d.toObject() : { ...d }; delete o.email; delete o.phone; return o; });
+
 // Helper to log audit events
 const logAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
   try {
@@ -574,7 +577,7 @@ router.put('/budgets/:id/approve', protect, adminOnly, async (req, res, next) =>
 router.get('/resumes', protect, async (req, res, next) => {
   try {
     const list = await ResumeAnalysis.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(list);
+    res.json(withoutContacts(req, list));
   } catch (err) { next(err); }
 });
 
@@ -738,7 +741,7 @@ router.get('/candidates', protect, async (req, res, next) => {
     }
 
     const candidates = await Candidate.find(filter).sort({ createdAt: -1 });
-    res.json(candidates);
+    res.json(withoutContacts(req, candidates));
   } catch (err) { next(err); }
 });
 
@@ -873,7 +876,7 @@ router.post('/candidates/:id/communication', protect, adminOnly, async (req, res
 router.get('/talent-pool', protect, async (req, res, next) => {
   try {
     const pool = await TalentPool.find({ deletedAt: null }).sort({ createdAt: -1 });
-    res.json(pool);
+    res.json(withoutContacts(req, pool));
   } catch (err) { next(err); }
 });
 

@@ -470,3 +470,16 @@ test('F&F settlement: simultaneous approve requests leave exactly one record per
     await F.deleteMany({ exitId: 'T-EXT-FNF' });
   }
 });
+
+test('recruitment lists: candidate email/phone visible to HR only', async () => {
+  const Candidate = require('../models/Candidate');
+  await Candidate.create({ name: 'T-CAND Ref', role: 'Engineer', source: 'Employee Referral', stage: 'screening', experience: '3 Years', email: 't-cand@example.org', phone: '9000000001' });
+  try {
+    const asEmp = (await call('GET', '/api/recruitment/candidates', emp)).data.find(c => c.name === 'T-CAND Ref');
+    const asHr = (await call('GET', '/api/recruitment/candidates', hr)).data.find(c => c.name === 'T-CAND Ref');
+    assert.ok(asEmp, 'employee still sees referral candidates');
+    assert.strictEqual(asEmp.email, undefined); assert.strictEqual(asEmp.phone, undefined);
+    assert.strictEqual(asHr.email, 't-cand@example.org');
+    assert.ok((await call('GET', '/api/recruitment/resumes', emp)).data.every(r => r.email === undefined && r.phone === undefined));
+  } finally { await Candidate.deleteMany({ name: /^T-CAND/ }); }
+});
