@@ -63,18 +63,64 @@ const ExitModule = ({ searchQuery = '' }) => {
   }, [resignations]);
 
   const selectedExitCase = resignations.find((r) => r.exitId === selectedExitCaseId) || resignations[0];
+  const isHR = user?.role === 'hr';
+
+  // Clearance status of the selected exit case, from its department clearance records.
+  const [ndc, setNdc] = useState(null);
+  const [ndcBusy, setNdcBusy] = useState(false);
+  const selectedExitId = selectedExitCase?.exitId;
+  useEffect(() => {
+    if (!selectedExitId || (activeTab !== 'no-due' && activeTab !== 'documents')) return;
+    let live = true;
+    setNdc(null);
+    api.get(`/exit/no-due/${selectedExitId}`)
+      .then((res) => { if (live) setNdc(res.data); })
+      .catch(() => { if (live) showToast('Could not load the clearance status.', 'error'); });
+    return () => { live = false; };
+  }, [activeTab, selectedExitId]);
+
+  const ndcAction = async (path, okMsg) => {
+    setNdcBusy(true);
+    try {
+      const res = await api.post(path);
+      setNdc(res.data);
+      showToast(okMsg, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not complete the request. Please try again.', 'error');
+    } finally {
+      setNdcBusy(false);
+    }
+  };
+
+  const handleClearanceDecision = async (c) => {
+    try {
+      const res = await api.put(`/exit/clearance/${c.clearanceId}`, { clearanceStatus: 'Approved' });
+      setClearances((prev) => prev.map((x) => (x.clearanceId === c.clearanceId ? res.data : x)));
+      showToast(`${c.departmentName} clearance approved.`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not update the clearance. Please try again.', 'error');
+    }
+  };
+
+  const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : '—');
 
   useEffect(() => {
     fetchData();
   }, [activeTab]);
 
+  // The page shows placeholder bars (.is-loading in index.css) while this runs, not zeros.
+  const [loading, setLoading] = useState(true);
   const fetchData = async () => {
+    setLoading(true);
+    try { await fetchDataInner(); } finally { setLoading(false); }
+  };
+  const fetchDataInner = async () => {
     try {
       if (activeTab === 'dashboard') {
         const res = await api.get('/exit/dashboard');
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
         setExitReasons(res.data?.charts?.exitReasons || []);
-      } else if (activeTab === 'ess-portal' || activeTab === 'hr-exits') {
+      } else if (['ess-portal', 'hr-exits', 'no-due', 'documents'].includes(activeTab)) {
         const res = await api.get('/exit/resignations');
         if (Array.isArray(res.data)) setResignations(res.data);
       } else if (activeTab === 'notice-period') {
@@ -214,7 +260,7 @@ const ExitModule = ({ searchQuery = '' }) => {
   ];
 
   return (
-    <div className="module-container p-6" style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
+    <div className={`module-container p-6${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
       
       {/* Module Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -493,15 +539,16 @@ const ExitModule = ({ searchQuery = '' }) => {
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><strong>{c.clearanceId}</strong></td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.exitId}</td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}><strong style={{ color: 'hsl(var(--primary))' }}>{c.departmentName}</strong></td>
-                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.approverName}</td>
-                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.actionDate || 'Pending'}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.approverName || '—'}</td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.actionDate ? fmtDate(c.actionDate) : 'Pending'}</td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.remarks}</td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle' }}>
-                      {c.clearanceStatus !== 'Approved' ? (
-                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} onClick={() => showToast(`Approved ${c.departmentName} Clearance.`, 'success')}>
+                      {c.clearanceStatus !== 'Approved' ? (isHR ? (
+                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} onClick={() => handleClearanceDecision(c)}>
                           Approve Clearance
                         </button>
+                      ) : <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Awaiting {c.departmentName}</span>
                       ) : (
                         <span className="badge badge-success">Completed</span>
                       )}
@@ -509,7 +556,7 @@ const ExitModule = ({ searchQuery = '' }) => {
                   </tr>
                 ))}
                 {clearances.length === 0 && (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No departmental clearances found.</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No clearance checklists yet. HR starts one from the No Due Certificate tab.</td></tr>
                 )}
               </tbody>
             </table>
@@ -756,123 +803,167 @@ const ExitModule = ({ searchQuery = '' }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
-            <div className="card p-5">
-              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>No Due Certificate (NDC) Generation</h3>
-              <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px border-dashed hsl(var(--border))' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <strong style={{ fontSize: '1rem', color: 'hsl(var(--primary))' }}>NDC-{selectedExitCase.exitId}-2026</strong>
-                  <span className="badge badge-success">Fully Cleared</span>
-                </div>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem' }}>Employee: <strong>{selectedExitCase.employeeName} ({selectedExitCase.employeeId})</strong></p>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Department: <strong>{selectedExitCase.department}</strong> | Designation: <strong>{selectedExitCase.designation || '—'}</strong></p>
-                <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Last Working Day: <strong>{selectedExitCase.approvedLwd || selectedExitCase.proposedLwd}</strong> (All 8 clearances verified)</p>
+          {!ndc ? (
+            <div className="card p-5" role="status" style={{ color: 'hsl(var(--text-secondary))' }}><i className="fa-solid fa-spinner fa-spin"></i> Loading clearance status…</div>
+          ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))', gap: '20px' }}>
+            <div className="card p-5" id="ndc-panel">
+              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>No Due Certificate (NDC)</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                <strong style={{ fontSize: '1rem', color: 'hsl(var(--primary))' }}>{ndc.certificate ? ndc.certificate.certificateNumber : 'Not issued'}</strong>
+                {ndc.certificate ? <span className="badge badge-success">Issued {fmtDate(ndc.certificate.issuedDate)}</span>
+                  : !ndc.started ? <span className="badge badge-secondary">Clearance not started</span>
+                  : ndc.allCleared ? <span className="badge badge-success">All clearances approved</span>
+                  : <span className="badge badge-warning">{ndc.pending.length} of {ndc.required.length} pending</span>}
+              </div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem' }}>Employee: <strong>{selectedExitCase.employeeName} ({selectedExitCase.employeeId})</strong></p>
+              <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Last Working Day: <strong>{fmtDate(selectedExitCase.approvedLwd || selectedExitCase.proposedLwd)}</strong></p>
+              {ndc.started && (
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px 0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {ndc.required.map((dept) => {
+                    const c = ndc.clearances.find((x) => x.departmentName === dept);
+                    const ok = c?.clearanceStatus === 'Approved';
+                    return (
+                      <li key={dept} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '0.82rem' }}>
+                        <span><i className={`fa-solid ${ok ? 'fa-circle-check' : 'fa-clock'}`} style={{ color: ok ? '#10b981' : '#f59e0b', marginRight: '6px' }}></i>{dept}</span>
+                        <span style={{ color: 'hsl(var(--text-secondary))', textAlign: 'right' }}>{ok ? `${c.approverName || ''} · ${fmtDate(c.actionDate)}` : (c?.clearanceStatus || 'Not started')}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {!ndc.started && (
+                <p style={{ fontSize: '0.82rem', color: 'hsl(var(--text-secondary))', margin: '0 0 14px 0' }}>
+                  No department clearances are on record for this exit case. Required: {ndc.required.join(', ')}.
+                </p>
+              )}
+              {ndc.started && !ndc.allCleared && !ndc.certificate && (
+                <p style={{ fontSize: '0.82rem', color: '#b45309', margin: '0 0 14px 0' }}>Waiting for: {ndc.pending.join(', ')}. The certificate can be issued once every department has approved.</p>
+              )}
+              {isHR && !ndc.started && (
+                <button id="btn-start-clearance" className="btn btn-primary" style={{ width: '100%', fontSize: '0.82rem' }} disabled={ndcBusy}
+                  onClick={() => ndcAction(`/exit/clearance/start/${selectedExitCase.exitId}`, 'Clearance checklist created.')}>
+                  <i className="fa-solid fa-list-check" style={{ marginRight: '6px' }}></i> Start Clearance Checklist
+                </button>
+              )}
+              {isHR && ndc.started && !ndc.certificate && (
+                <button id="btn-issue-ndc" className="btn btn-primary" style={{ width: '100%', fontSize: '0.82rem' }} disabled={ndcBusy || !ndc.allCleared}
+                  title={ndc.allCleared ? '' : 'All required clearances must be approved first'}
+                  onClick={() => ndcAction(`/exit/no-due/${selectedExitCase.exitId}`, 'No Due Certificate issued.')}>
+                  <i className="fa-solid fa-certificate" style={{ marginRight: '6px' }}></i> Issue No Due Certificate
+                </button>
+              )}
+              {ndc.certificate && (
                 <button
                   id="btn-download-ndc-pdf"
                   className="btn btn-primary"
                   style={{ width: '100%', fontSize: '0.82rem' }}
                   onClick={() => {
-                    showToast('Downloading Official No Due Certificate (NDC) PDF...', 'info');
                     downloadPdfDocument({
-                      title: 'NO DUE CERTIFICATE (NDC) - OFFICIAL CLEARANCE',
-                      subtitle: 'HR O Central Governance & Exit Clearance Record',
-                      docNumber: `NDC-${selectedExitCase.exitId}-2026`,
-                      recipient: `${selectedExitCase.employeeName} (${selectedExitCase.employeeId})`,
+                      title: 'NO DUE CERTIFICATE',
+                      subtitle: 'Exit Clearance Record',
+                      docNumber: ndc.certificate.certificateNumber,
+                      recipient: `${ndc.certificate.employeeName} (${ndc.certificate.employeeId})`,
                       metadata: [
-                        { label: 'Employee Name', value: selectedExitCase.employeeName },
-                        { label: 'Employee ID', value: selectedExitCase.employeeId },
-                        { label: 'Department', value: selectedExitCase.department },
-                        { label: 'Designation', value: selectedExitCase.designation || '—' },
-                        { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd },
-                        { label: 'Clearance Status', value: 'Fully Cleared & Authorized' },
-                        { label: 'Signatory', value: 'Head of HR Governance' }
+                        { label: 'Employee Name', value: ndc.certificate.employeeName },
+                        { label: 'Employee ID', value: ndc.certificate.employeeId },
+                        { label: 'Department', value: ndc.certificate.department },
+                        { label: 'Last Working Day', value: fmtDate(ndc.certificate.lastWorkingDay) },
+                        { label: 'Issued On', value: fmtDate(ndc.certificate.issuedDate) }
                       ],
                       sections: [
                         {
                           heading: 'Department Clearance Sign-offs',
                           table: {
-                            headers: ['Department', 'Verifier', 'Status', 'Date'],
+                            headers: ['Department', 'Approved By', 'Status', 'Date'],
                             colWidths: [130, 140, 110, 115],
-                            rows: [
-                              ['Information Technology', 'IT Security Lead', 'Cleared (Assets Returned)', '2026-10-28'],
-                              ['Human Resources', 'HR Exit Coordinator', 'Cleared (Exit Interview Done)', '2026-10-29'],
-                              ['Finance & Accounts', 'Finance Manager', 'Cleared (F&F Settled)', '2026-10-30'],
-                              ['Administration & Facilities', 'Facility Lead', 'Cleared (Access Card Surrendered)', '2026-10-31']
-                            ]
+                            rows: ndc.clearances.map((c) => [c.departmentName, c.approverName || '—', c.clearanceStatus, fmtDate(c.actionDate)])
                           }
                         },
                         {
-                          heading: 'Authorization Confirmation',
-                          paragraphs: [
-                            'This document certifies that the aforementioned employee has successfully handed over all company assets and has zero outstanding financial or contractual obligations.'
-                          ]
+                          heading: 'Confirmation',
+                          paragraphs: [`Every required department (${ndc.required.join(', ')}) has recorded its clearance for this employee.`]
                         }
                       ],
-                      footer: 'Official HR O Record - Verified by Corporate Human Resources'
-                    }, `No_Due_Certificate_${selectedExitCase.employeeName.replace(/\s+/g, '_')}_${selectedExitCase.employeeId}.pdf`);
-                    showToast('No Due Certificate (NDC) downloaded successfully.', 'success');
+                      footer: 'Generated from the clearance records in HR Orbit'
+                    }, `No_Due_Certificate_${ndc.certificate.employeeId}.pdf`);
                   }}
                 >
-                  <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download Official NDC PDF
+                  <i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download NDC PDF
                 </button>
-              </div>
+              )}
             </div>
 
             <div className="card p-5">
-              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Official Exit Letters Generator</h3>
+              <h3 style={{ margin: '0 0 16px 0', fontWeight: 700 }}>Exit Letters</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
-                  { type: 'Relieving Letter', idBtn: 'btn-generate-relieving', desc: 'Formal release confirmation with last working day statement', icon: 'fa-envelope-open-text' },
-                  { type: 'Experience Certificate', idBtn: 'btn-generate-experience', desc: 'Tenure, designation history, and appreciation summary', icon: 'fa-award' },
-                  { type: 'Full & Final Statement', idBtn: 'btn-generate-fnf', desc: 'Complete breakdown of earnings, encashment, & deductions', icon: 'fa-file-invoice-dollar' }
+                  { type: 'Relieving Letter', idBtn: 'btn-generate-relieving', desc: 'Confirms release and the last working day', icon: 'fa-envelope-open-text', ready: !!ndc.certificate, why: 'Available once the No Due Certificate is issued' },
+                  { type: 'Experience Certificate', idBtn: 'btn-generate-experience', desc: 'Tenure and designation', icon: 'fa-award', ready: !!ndc.certificate, why: 'Available once the No Due Certificate is issued' },
+                  { type: 'Full & Final Statement', idBtn: 'btn-generate-fnf', desc: 'Earnings, encashment and deductions', icon: 'fa-file-invoice-dollar', ready: !!ndc.settlement, why: 'Available once the F&F settlement is calculated' }
                 ].map((doc) => (
-                  <div key={doc.type} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div key={doc.type} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                       <i className={`fa-solid ${doc.icon}`} style={{ color: 'hsl(var(--primary))' }}></i>
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{doc.type}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{doc.desc}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>{doc.ready ? doc.desc : doc.why}</div>
                       </div>
                     </div>
+                    {isHR && (
                     <button
                       id={doc.idBtn}
                       className="btn btn-secondary"
-                      style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', flexShrink: 0 }}
+                      disabled={!doc.ready}
                       onClick={() => {
-                        showToast(`Generating official ${doc.type}...`, 'info');
+                        const ffs = ndc.settlement;
+                        const lwd = fmtDate(selectedExitCase.approvedLwd || selectedExitCase.proposedLwd);
+                        const body = doc.type === 'Full & Final Statement'
+                          ? [{
+                              heading: 'Settlement',
+                              table: {
+                                headers: ['Component', 'Amount (INR)'],
+                                colWidths: [300, 195],
+                                rows: [
+                                  ['Pending Salary', ffs.pendingSalary], ['Leave Encashment', ffs.leaveEncashmentAmount], ['Gratuity', ffs.gratuityAmount],
+                                  ['Notice Pay Recovery', -ffs.noticePayRecovery], ['Loan Recovery', -ffs.loanRecovery], ['Asset Recovery', -ffs.assetDamageRecovery],
+                                  ['Net Settlement', ffs.netSettlementAmount]
+                                ].map(([k, v]) => [k, `Rs. ${(v || 0).toLocaleString()}`])
+                              }
+                            }, { heading: 'Status', paragraphs: [`Settlement status: ${ffs.status}. Clearances: ${ndc.allCleared ? 'all approved' : 'pending - ' + ndc.pending.join(', ')}.`] }]
+                          : [{
+                              heading: 'Statement of Record',
+                              paragraphs: [doc.type === 'Relieving Letter'
+                                ? `${selectedExitCase.employeeName} is relieved of their duties with effect from ${lwd}. Department clearances are complete (No Due Certificate ${ndc.certificate.certificateNumber}).`
+                                : `${selectedExitCase.employeeName} worked with us${selectedExitCase.joiningDate ? ` from ${fmtDate(selectedExitCase.joiningDate)}` : ''} until ${lwd}${selectedExitCase.designation ? `, last as ${selectedExitCase.designation}` : ''} in ${selectedExitCase.department}.`]
+                            }];
                         downloadPdfDocument({
-                          title: `OFFICIAL DOCUMENT: ${doc.type.toUpperCase()}`,
-                          subtitle: 'HR O Corporate Separation Record',
-                          docNumber: `DOC-EXT-${Date.now().toString().slice(-6)}`,
+                          title: doc.type.toUpperCase(),
+                          subtitle: 'Separation Record',
+                          docNumber: `${selectedExitCase.exitId}-${doc.type === 'Relieving Letter' ? 'RL' : doc.type === 'Experience Certificate' ? 'EC' : 'FNF'}`,
                           recipient: `${selectedExitCase.employeeName} (${selectedExitCase.employeeId})`,
                           metadata: [
                             { label: 'Employee Name', value: selectedExitCase.employeeName },
                             { label: 'Employee ID', value: selectedExitCase.employeeId },
                             { label: 'Department', value: selectedExitCase.department },
                             { label: 'Designation', value: selectedExitCase.designation || '—' },
-                            { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd }
+                            { label: 'Last Working Day', value: lwd }
                           ],
-                          sections: [
-                            {
-                              heading: 'Statement of Record',
-                              paragraphs: [
-                                `This is an official ${doc.type} issued by HR O Corp for ${selectedExitCase.employeeName}. All contractual terms, clearances, and Full & Final settlements have been successfully verified and concluded.`,
-                                'We place on record our sincere appreciation for their contributions during their tenure and wish them continued success in their future professional endeavors.'
-                              ]
-                            }
-                          ],
-                          footer: 'Authorized HR Signatory - HR O Corp Management'
-                        }, `${doc.type.replace(/\s+/g, '_')}_${selectedExitCase.employeeName.replace(/\s+/g, '_')}.pdf`);
-                        showToast(`${doc.type} generated and downloaded.`, 'success');
+                          sections: body,
+                          footer: 'Generated from the exit records in HR Orbit'
+                        }, `${doc.type.replace(/\W+/g, '_')}_${selectedExitCase.employeeId}.pdf`);
                       }}
                     >
                       Generate
                     </button>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           </div>
+          )}
         </div>
       )}
 

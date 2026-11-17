@@ -87,9 +87,12 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // ==========================================
 // 2. RESIGNATION WORKFLOW
 // ==========================================
+// Employees see only their own exit case; HR sees all.
+const ownScope = (req) => req.user.role === 'hr' ? {} : { employeeId: req.user.id };
+
 router.get('/resignations', protect, async (req, res, next) => {
   try {
-    const list = await EmployeeExit.find().sort({ createdAt: -1 });
+    const list = await EmployeeExit.find(ownScope(req)).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
@@ -144,7 +147,7 @@ router.put('/resignations/:id', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 router.get('/notice-period', protect, async (req, res, next) => {
   try {
-    const list = await NoticePeriod.find().sort({ createdAt: -1 });
+    const list = await NoticePeriod.find(ownScope(req)).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
@@ -154,21 +157,66 @@ router.get('/notice-period', protect, async (req, res, next) => {
 // ==========================================
 router.get('/clearance', protect, async (req, res, next) => {
   try {
-    const clearances = await DepartmentClearance.find();
+    const exitIds = req.user.role === 'hr' ? null : (await EmployeeExit.find(ownScope(req)).select('exitId')).map(e => e.exitId);
+    const clearances = await DepartmentClearance.find(exitIds ? { exitId: { $in: exitIds } } : {}).sort({ exitId: 1, createdAt: 1 });
     res.json(clearances);
+  } catch (err) { next(err); }
+});
+
+// Departments that must sign off before a No Due Certificate can be issued: the active mandatory
+// entries of the clearance master, or this standard set when the master is empty.
+const STANDARD_CLEARANCES = ['Reporting Manager', 'IT', 'Finance', 'Admin', 'HR'];
+const requiredDepartments = async () => {
+  const fromMaster = await ClearanceDepartmentMaster.find({ status: 'Active', isMandatory: true }).distinct('departmentName');
+  return fromMaster.length ? fromMaster : STANDARD_CLEARANCES;
+};
+
+// Where an exit case stands: every required department's clearance, which are still open, and
+// whether a certificate may be issued (all required departments Approved).
+const clearanceStatus = async (exitId) => {
+  const [required, records, settlement, certificate] = await Promise.all([
+    requiredDepartments(),
+    DepartmentClearance.find({ exitId }).sort({ createdAt: 1 }).lean(),
+    FullFinalSettlement.findOne({ exitId }).lean(),
+    NoDueCertificate.findOne({ exitId }).lean()
+  ]);
+  const byDept = Object.fromEntries(records.map(r => [r.departmentName, r]));
+  const pending = required.filter(d => byDept[d]?.clearanceStatus !== 'Approved');
+  return { required, clearances: records, pending, started: records.length > 0, allCleared: pending.length === 0, settlement, certificate };
+};
+
+// HR opens the clearance checklist for an exit case: one task per required department (idempotent).
+router.post('/clearance/start/:exitId', protect, adminOnly, async (req, res, next) => {
+  try {
+    const { exitId } = req.params;
+    const exitCase = await EmployeeExit.findOne({ exitId });
+    if (!exitCase) return res.status(404).json({ message: 'Exit case not found.' });
+    const existing = await DepartmentClearance.find({ exitId }).distinct('departmentName');
+    const missing = (await requiredDepartments()).filter(d => !existing.includes(d));
+    const stamp = Date.now();
+    await DepartmentClearance.insertMany(missing.map((departmentName, i) => ({ clearanceId: `CLR-${stamp}-${i + 1}`, exitId, departmentName })));
+    if (exitCase.status !== 'Separated') await EmployeeExit.updateOne({ exitId }, { status: 'Clearance In Progress' });
+    await logAudit(req, 'START_EXIT_CLEARANCE', 'EmployeeExit', exitId, { created: missing });
+    res.status(missing.length ? 201 : 200).json(await clearanceStatus(exitId));
   } catch (err) { next(err); }
 });
 
 router.put('/clearance/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const body = req.body;
+    const { clearanceStatus: status, remarks } = req.body;
+    if (!['Approved', 'Rejected', 'On Hold', 'Pending'].includes(status)) return res.status(400).json({ message: 'Choose a clearance status.' });
+    if (status !== 'Approved' && !String(remarks || '').trim()) return res.status(400).json({ message: 'Please fill in: Remarks (why it is not approved).' });
+    const current = await DepartmentClearance.findOne({ clearanceId: id });
+    if (!current) return res.status(404).json({ message: 'Clearance not found.' });
+    // An issued certificate certifies these sign-offs, so they can no longer be reopened.
+    if (await NoDueCertificate.exists({ exitId: current.exitId })) return res.status(409).json({ message: 'A No Due Certificate has already been issued for this exit case.' });
     const updated = await DepartmentClearance.findOneAndUpdate(
       { clearanceId: id },
-      { clearanceStatus: body.clearanceStatus || 'Approved', remarks: body.remarks || '', actionDate: new Date() },
+      { clearanceStatus: status, remarks: String(remarks || '').trim(), approverId: req.user.id, approverName: req.user.name, actionDate: new Date() },
       { new: true }
     );
-    await logAudit(req, 'APPROVE_DEPARTMENT_CLEARANCE', 'DepartmentClearance', id, updated);
+    await logAudit(req, 'UPDATE_DEPARTMENT_CLEARANCE', 'DepartmentClearance', id, updated);
     res.json(updated);
   } catch (err) { next(err); }
 });
@@ -187,7 +235,7 @@ router.get('/assets', protect, async (req, res, next) => {
 // ==========================================
 router.get('/interview', protect, async (req, res, next) => {
   try {
-    const interviews = await ExitInterview.find().sort({ createdAt: -1 });
+    const interviews = await ExitInterview.find(ownScope(req)).sort({ createdAt: -1 });
     res.json(interviews);
   } catch (err) { next(err); }
 });
@@ -223,7 +271,7 @@ router.post('/interview', protect, async (req, res, next) => {
 // ==========================================
 router.get('/settlement', protect, async (req, res, next) => {
   try {
-    const list = await FullFinalSettlement.find().sort({ createdAt: -1 });
+    const list = await FullFinalSettlement.find(ownScope(req)).sort({ createdAt: -1 });
     // Deduplicate settlements by exitId / settlementId to prevent duplicate rows in register
     const seen = new Set();
     const deduped = [];
@@ -277,7 +325,7 @@ router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) 
       assetDamageRecovery: assetRecovery,
       totalDeductions,
       netSettlementAmount,
-      clearanceVerified: true,
+      clearanceVerified: (await clearanceStatus(exitId)).allCleared,
       status: 'HR Approved'
     };
 
@@ -331,23 +379,41 @@ router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) 
 // ==========================================
 // 7. NO DUE CERTIFICATE & DOCUMENTS
 // ==========================================
+// Clearance status of one exit case. HR, or the exiting employee for their own case.
 router.get('/no-due/:exitId', protect, async (req, res, next) => {
   try {
-    const { exitId } = req.params;
-    let ndc = await NoDueCertificate.findOne({ exitId });
-    if (!ndc) {
-      ndc = await NoDueCertificate.create({
-        certificateId: 'NDC-' + Date.now(),
-        certificateNumber: 'NDC-2026-' + Math.floor(Math.random() * 899 + 100),
-        exitId,
-        employeeId: 'EMP-1004',
-        employeeName: 'Anil Kumar',
-        department: 'Engineering',
-        lastWorkingDay: new Date(),
-        pdfUrl: '/uploads/exit/ndc_sample.pdf'
-      });
+    const exitCase = await EmployeeExit.findOne({ exitId: req.params.exitId, ...ownScope(req) }).lean();
+    if (!exitCase) return res.status(404).json({ message: 'Exit case not found.' });
+    res.json({ exitCase, ...(await clearanceStatus(exitCase.exitId)) });
+  } catch (err) { next(err); }
+});
+
+// Issue the No Due Certificate. HR only, and only once every required department has approved.
+router.post('/no-due/:exitId', protect, adminOnly, async (req, res, next) => {
+  try {
+    const exitCase = await EmployeeExit.findOne({ exitId: req.params.exitId });
+    if (!exitCase) return res.status(404).json({ message: 'Exit case not found.' });
+    const status = await clearanceStatus(exitCase.exitId);
+    if (status.certificate) return res.json({ exitCase, ...status });
+    if (!status.started || !status.allCleared) {
+      return res.status(409).json({ message: `Clearance pending: ${status.pending.join(', ')}.`, pending: status.pending });
     }
-    res.json(ndc);
+    const seq = await NoDueCertificate.countDocuments() + 1;
+    const done = (d) => status.clearances.some(c => c.departmentName === d && c.clearanceStatus === 'Approved');
+    await NoDueCertificate.create({
+      certificateId: 'NDC-' + Date.now(),
+      certificateNumber: `NDC-${new Date().getFullYear()}-${String(seq).padStart(4, '0')}`,
+      exitId: exitCase.exitId,
+      employeeId: exitCase.employeeId,
+      employeeName: exitCase.employeeName,
+      department: exitCase.department,
+      lastWorkingDay: exitCase.approvedLwd || exitCase.proposedLwd,
+      hrCleared: done('HR'), financeCleared: done('Finance'), payrollCleared: done('Payroll'), itCleared: done('IT'),
+      securityCleared: done('Security'), assetsCleared: done('Admin'), complianceCleared: done('Compliance'),
+      digitalSignatureHash: '', qrVerificationCode: ''
+    });
+    await logAudit(req, 'ISSUE_NO_DUE_CERTIFICATE', 'EmployeeExit', exitCase.exitId, { issuedBy: req.user.name });
+    res.status(201).json({ exitCase, ...(await clearanceStatus(exitCase.exitId)) });
   } catch (err) { next(err); }
 });
 
