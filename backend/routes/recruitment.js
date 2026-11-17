@@ -595,7 +595,8 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
     await saveUpload(req.file, `resumes/${req.file.filename}`);
     const filePath = `uploads/resumes/${req.file.filename}`;
 
-    // Simulate intelligent NLP parsing & JD matching
+    // shortcut: SIMULATED parsing (random skills, experience and score) — the file is not read. The UI labels
+    // these as simulated; replace with real text extraction (e.g. pdf-parse) before presenting them as facts.
     const sampleSkillsPool = ['React.js', 'Node.js', 'Express', 'MongoDB', 'Python', 'Docker', 'AWS', 'PostgreSQL', 'System Architecture', 'TypeScript'];
     const extractedSkills = sampleSkillsPool.filter(() => Math.random() > 0.4);
     if (!extractedSkills.includes('React.js')) extractedSkills.push('React.js');
@@ -636,17 +637,17 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
       parsedQualifications: ['B.Tech Computer Science', 'M.Tech / Equivalent'],
       experienceYears: Math.floor(Math.random() * 6) + 2,
       parsedCertifications: ['AWS Certified Developer', 'Scrum Master'],
-      extractedText: `Professional resume summary for ${finalCandidateName}. Expertise in full-stack architecture, API backend engineering, microservices.`,
+      extractedText: 'Resume text not extracted: this analysis is simulated until a real parser is added.',
       targetRole: targetRole || 'Senior Software Engineer',
       jdMatchScore,
       matchedSkills,
       missingSkills,
-      skillGapAnalysis: `Matched ${matchedSkills.length} key skills. Missing: ${missingSkills.join(', ') || 'None'}. Excellent fit for core stack.`,
+      skillGapAnalysis: `Simulated: matched ${matchedSkills.length} of ${jdRequiredSkills.length} JD skills. Missing: ${missingSkills.join(', ') || 'None'}.`,
       rankingScore,
       isDuplicate,
       duplicateCandidateId: existingCand ? existingCand._id : null,
       candidateId: existingCand ? existingCand._id : undefined,
-      recruiterRemarks: jdMatchScore > 75 ? 'Strong candidate recommendation.' : 'Requires technical screening.',
+      recruiterRemarks: 'Simulated analysis: review the resume manually before deciding.',
       status: 'Parsed'
     });
 
@@ -659,13 +660,12 @@ router.post('/resumes/upload', protect, uploadResumeMiddleware, async (req, res)
           name: newAnalysis.candidateName || 'Applicant',
           role: newAnalysis.targetRole || 'Software Engineer',
           source: 'Resume Parser',
-          experience: newAnalysis.experienceYears ? `${newAnalysis.experienceYears} Years` : '2 Years',
+          // The resume is not read yet, so the simulated skills/experience/score stay on the analysis, not the profile
+          experience: 'Not stated',
           stage: 'screening',
           email: newAnalysis.email,
           phone: newAnalysis.phone,
-          skills: newAnalysis.parsedSkills.join(', '),
-          jdMatchScore: newAnalysis.jdMatchScore,
-          recruiterRemarks: newAnalysis.recruiterRemarks,
+          recruiterRemarks: 'Added from a resume upload; skills and experience not yet reviewed.',
           resumeLink: filePath
         });
         await newCandidate.save();

@@ -1449,19 +1449,19 @@ const RecruitmentModule = () => {
 
             {/* AI Resume Matcher Insights */}
             <div className="card">
-              <div className="card-title"><i className="fa-solid fa-brain"></i> Intelligent Matching Engine Highlights</div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-                The Resume Parser extracts candidate technical skills, education, certifications, and experience. It compares extracted profile tokens against Job Descriptions to produce a <strong>JD Match Score</strong>, <strong>Skill Gap Comparison Matrix</strong>, and <strong>Duplicate Candidate Detection</strong>.
-              </p>
+              <div className="card-title"><i className="fa-solid fa-brain"></i> Resume Matching</div>
+              <div id="resume-simulation-notice" role="note" style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '16px', padding: '10px 12px', borderRadius: '8px', background: 'hsla(38, 92%, 50%, 0.1)', border: '1px solid hsla(38, 92%, 50%, 0.4)', color: 'hsl(var(--text-primary))' }}>
+                <strong>Simulated analysis.</strong> Uploaded resumes are stored but not read yet, so the skills, experience, JD match score and skill gap shown here are generated for demonstration and are <strong>not taken from the resume</strong>. Duplicate detection is real: it compares the email and phone entered with existing candidates.
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                 <div id="widget-automated-extraction" style={{ padding: '12px', background: 'hsla(var(--primary), 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Automated Extraction</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Resumes Uploaded</span>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>
-                    {resumes.length > 0 ? `${resumes.length} Parsed` : 'None yet'}
+                    {resumes.length > 0 ? `${resumes.length}` : 'None yet'}
                   </div>
                 </div>
                 <div id="widget-jd-match-score" style={{ padding: '12px', background: 'hsla(217, 91%, 60%, 0.05)', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg JD Match Score</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Avg JD Match (simulated)</span>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#2563eb' }}>
                     {resumes.length > 0 ? `${Math.round(resumes.reduce((acc, r) => acc + (r.jdMatchScore || 0), 0) / resumes.length)}%` : '—'}
                   </div>
@@ -1478,17 +1478,17 @@ const RecruitmentModule = () => {
 
           {/* Parsed Resumes Results Table */}
           <div className="card">
-            <div className="card-title">Parsed Candidates & Skill Gap Matrix</div>
+            <div className="card-title">Uploaded Resumes</div>
             <div className="table-responsive">
               <table className="custom-table">
                 <thead>
                   <tr>
                     <th>Candidate</th>
                     <th>Target Role</th>
-                    <th>Experience</th>
-                    <th>Parsed Skills</th>
-                    <th>JD Match Score</th>
-                    <th>Skill Gap Analysis</th>
+                    <th>Experience <span className="badge badge-warning" style={{ fontSize: '0.6rem' }}>Simulated</span></th>
+                    <th>Skills <span className="badge badge-warning" style={{ fontSize: '0.6rem' }}>Simulated</span></th>
+                    <th>JD Match <span className="badge badge-warning" style={{ fontSize: '0.6rem' }}>Simulated</span></th>
+                    <th>Skill Gap <span className="badge badge-warning" style={{ fontSize: '0.6rem' }}>Simulated</span></th>
                     <th>Duplicate Status</th>
                     <th>Status</th>
                     <th>Action</th>

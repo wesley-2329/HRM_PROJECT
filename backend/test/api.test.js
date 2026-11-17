@@ -532,3 +532,23 @@ test('career portal: employees see open jobs without budget or approval data', a
     assert.strictEqual(full.totalBudgetEstimated, 900000);
   } finally { await R.collection.deleteMany({ reqNumber: /^T-REQ/ }); }
 });
+
+test('resume parser: simulated results are labelled and not copied into the candidate profile', async () => {
+  const Candidate = require('../models/Candidate');
+  const ResumeAnalysis = require('../models/ResumeAnalysis');
+  const fd = new FormData();
+  fd.append('candidateName', 'T-RES Sim'); fd.append('email', 't-res.sim@example.org');
+  fd.append('resume', new Blob([Buffer.from('%PDF-1.4\n%%EOF')]), 'sim.pdf');
+  try {
+    const a = await (await fetch(base + '/api/recruitment/resumes/upload', { method: 'POST', headers: { Authorization: `Bearer ${hr}` }, body: fd })).json();
+    assert.match(a.recruiterRemarks, /Simulated/);
+    assert.match(a.extractedText, /not extracted/);
+    const c = await Candidate.findById(a.candidateId);
+    assert.strictEqual(c.skills, '', 'no generated skills on the candidate');
+    assert.strictEqual(c.experience, 'Not stated');
+    assert.strictEqual(c.jdMatchScore, 0);
+  } finally {
+    await ResumeAnalysis.deleteMany({ candidateName: /^T-RES/ });
+    await Candidate.deleteMany({ name: /^T-RES/ });
+  }
+});
