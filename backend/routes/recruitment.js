@@ -796,7 +796,9 @@ router.put('/candidates/:id/stage', protect, adminOnly, async (req, res, next) =
 // Offer Release
 router.put('/candidates/:id/offer', protect, adminOnly, async (req, res, next) => {
   try {
-    const { offeredCtc, joiningDate, offeredDesignation } = req.body;
+    const { joiningDate, offeredDesignation } = req.body;
+    const offeredCtc = Number(req.body.offeredCtc);
+    if (!(offeredCtc > 0) || !joiningDate) return res.status(400).json({ message: 'Please fill in: Offered annual CTC and joining date.' });
     const cand = await Candidate.findById(req.params.id);
     if (!cand) return res.status(404).json({ message: 'Candidate not found' });
 
@@ -804,15 +806,15 @@ router.put('/candidates/:id/offer', protect, adminOnly, async (req, res, next) =
     cand.stage = 'offered';
     cand.offerDetails = {
       offeredDesignation: offeredDesignation || cand.role,
-      offeredCtc: offeredCtc || 1200000,
-      joiningDate: joiningDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      offeredCtc,
+      joiningDate,
       offerStatus: 'Released',
       releasedDate: new Date()
     };
     cand.timeline.push({
       stage: 'offered',
       title: 'Formal Offer Letter Released',
-      description: `Offer released for ${cand.role} with annual CTC ₹${(offeredCtc || 1200000).toLocaleString()}`,
+      description: `Offer released for ${cand.role} with annual CTC ₹${offeredCtc.toLocaleString()}`,
       updatedBy: req.user?.name || 'HR Admin'
     });
 
@@ -1006,7 +1008,7 @@ router.post('/costs', protect, adminOnly, async (req, res, next) => {
       costCategory: req.body.costCategory || 'Job Portal',
       department: req.body.department || 'Engineering',
       costCenter: req.body.costCenter || 'CC-101',
-      recruiterId: req.user?.id || 'EMP-1004',
+      recruiterId: req.user.id,
       recruiterName: req.user?.name || 'Recruiter',
       created_by: req.user?.name || 'User'
     });

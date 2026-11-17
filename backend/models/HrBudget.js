@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const HrBudgetSchema = new mongoose.Schema({
   budgetId: { type: String, required: true, unique: true },
   financialYear: { type: String, required: true },
-  company: { type: String, default: 'Enterprise Corp' },
-  businessUnit: { type: String, default: 'Global HR' },
-  branch: { type: String, default: 'HQ Bangalore' },
+  company: { type: String, default: '' },
+  businessUnit: { type: String, default: '' },
+  branch: { type: String, default: '' },
   department: { type: String, required: true },
   costCenter: { type: String, required: true },
   budgetCategory: { type: String, required: true }, // Manpower, Recruitment, Welfare, Training, Operations

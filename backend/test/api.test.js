@@ -288,3 +288,52 @@ test('recruitment and training dashboards: no invented series or rates', async (
   assert.ok(!('trainingBudgetUtilization' in t));
   assert.notStrictEqual(t.skillGapClosurePercentage, '88.4%');
 });
+
+test('compliance documents: a real file is stored privately and served back byte for byte', async () => {
+  const post = async (token, fields, bytes, name) => {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(fields)) fd.append(k, v);
+    if (bytes) fd.append('file', new Blob([bytes]), name);
+    const res = await fetch(base + '/api/compliance/documents', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+    return { status: res.status, data: await res.json() };
+  };
+  const pdf = Buffer.from('%PDF-1.4\nT-DOC test file\n%%EOF');
+  const fields = { title: 'T-DOC PF challan', category: 'Challan Receipt' };
+
+  assert.strictEqual((await post(emp, fields, pdf, 'a.pdf')).status, 403, 'employees cannot upload');
+  assert.strictEqual((await post(hr, fields)).status, 400, 'a file is required');
+  assert.strictEqual((await post(hr, fields, pdf, 'a.html')).status, 400, 'type not on the allow list');
+  assert.strictEqual((await post(hr, fields, Buffer.from('<script>alert(1)</script>'), 'a.pdf')).status, 400, 'renamed file');
+  assert.strictEqual((await post(hr, { ...fields, category: 'Nope' }, pdf, 'a.pdf')).status, 400, 'unknown category');
+  assert.strictEqual((await post(hr, fields, Buffer.alloc(4 * 1024 * 1024 + 1, 0x25), 'big.pdf')).status, 400, 'over 4 MB');
+
+  const made = await post(hr, fields, pdf, 'challan july.pdf');
+  assert.strictEqual(made.status, 201);
+  assert.strictEqual(made.data.fileName, 'challan july.pdf');
+  const url = `${base}/api/compliance/documents/${made.data.docId}/download`;
+  assert.strictEqual((await fetch(url)).status, 401, 'no public access');
+  assert.strictEqual((await fetch(`${base}/uploads/${made.data.docId}.pdf`)).status, 404, 'not reachable through /uploads');
+  const got = await fetch(url, { headers: { Authorization: `Bearer ${hr}` } });
+  assert.strictEqual(got.status, 200);
+  assert.strictEqual(got.headers.get('content-type'), 'application/pdf');
+  assert.strictEqual(got.headers.get('x-content-type-options'), 'nosniff');
+  assert.ok(Buffer.from(await got.arrayBuffer()).equals(pdf));
+
+  const C = mongoose.connection.collection('compliancedocuments');
+  await C.insertOne({ docId: 'T-DOC-LEGACY', title: 'T-DOC legacy', category: 'Challan Receipt' });
+  assert.strictEqual((await call('GET', '/api/compliance/documents/T-DOC-LEGACY/preview', hr)).status, 404, 'no generated stand-in PDF');
+  await mongoose.connection.collection('compliance_files.files').deleteMany({ filename: new RegExp('^' + made.data.docId) });
+  await C.deleteMany({ title: /^T-DOC/ });
+});
+
+test('forms: empty required fields are refused, never filled with sample values', async () => {
+  const r = await call('POST', '/api/compliance/inspections', hr, { authority: 'T-AUTH', location: 'x', findings: 'y' });
+  assert.strictEqual(r.status, 400);
+  assert.match(r.data.message, /Inspector name/);
+  assert.strictEqual((await call('POST', '/api/compliance/challans/NOPE/pay', hr, {})).status, 400, 'bank reference required');
+  assert.strictEqual((await call('POST', '/api/budget/planning', hr, { department: 'T-Dept' })).status, 400);
+  const d = (await call('GET', '/api/exit/dashboard', hr)).data;
+  const separated = await mongoose.connection.collection('employeeexits').countDocuments({ status: 'Separated' });
+  assert.strictEqual(d.kpis.completedExits, separated, 'no fallback figure');
+  assert.ok(!('monthlyAttrition' in d.charts));
+});

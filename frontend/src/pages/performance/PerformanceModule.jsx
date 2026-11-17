@@ -1098,8 +1098,8 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                   onClick={() => {
                     const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
                     setGoalForm({
-                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
-                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : '',
+                      employeeName: defaultEmp ? defaultEmp.name : '',
                       department: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
                       designation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
                       kraName: 'HRMS Performance & Appraisal Framework Deployment',
@@ -1328,15 +1328,15 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                   onClick={() => {
                     const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
                     setPromoForm({
-                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
-                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : '',
+                      employeeName: defaultEmp ? defaultEmp.name : '',
                       currentDepartment: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
                       currentDesignation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
                       currentGrade: defaultEmp ? (defaultEmp.grade || 'Grade C') : 'Grade C',
-                      proposedDesignation: 'Senior Specialist',
-                      proposedGrade: 'Grade D',
+                      proposedDesignation: '',
+                      proposedGrade: '',
                       effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                      justification: 'Exceeded performance appraisal benchmark metrics with outstanding rating.'
+                      justification: ''
                     });
                     setShowPromoModal(true);
                   }}
@@ -1414,18 +1414,18 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                   className="btn btn-primary"
                   onClick={() => {
                     const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
-                    const defaultSalary = defaultEmp ? (Number(defaultEmp.salary) || Number(defaultEmp.ctc) || 1200000) : 1200000;
+                    const defaultSalary = defaultEmp ? (Number(defaultEmp.salary) || Number(defaultEmp.ctc) || '') : '';
                     setIncForm({
-                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1002',
-                      employeeName: defaultEmp ? defaultEmp.name : 'Akhil Sirivella',
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : '',
+                      employeeName: defaultEmp ? defaultEmp.name : '',
                       currentDepartment: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Human Resources') : 'Human Resources',
                       currentDesignation: defaultEmp ? (defaultEmp.designation || 'Staff') : 'HR Manager',
                       currentGrade: defaultEmp ? (defaultEmp.grade || 'Grade C') : 'Grade C',
                       currentCtc: defaultSalary,
-                      incrementPercentage: 12,
+                      incrementPercentage: '',
                       effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                       revisionType: 'Annual Increment',
-                      reason: 'Outstanding performance appraisal review rating.'
+                      reason: ''
                     });
                     setShowIncModal(true);
                   }}
@@ -1506,16 +1506,16 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                   onClick={() => {
                     const defaultEmp = (employees && employees.length > 0) ? employees[0] : null;
                     setPipForm({
-                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : 'EMP-1009',
-                      employeeName: defaultEmp ? defaultEmp.name : 'Rohan Das',
+                      employeeId: defaultEmp ? (defaultEmp.id || defaultEmp.employeeId || defaultEmp._id) : '',
+                      employeeName: defaultEmp ? defaultEmp.name : '',
                       department: defaultEmp ? (defaultEmp.dept || defaultEmp.department || 'Sales & Marketing') : 'Sales & Marketing',
                       designation: defaultEmp ? (defaultEmp.designation || 'Sales Executive') : 'Sales Executive',
                       startDate: new Date().toISOString().split('T')[0],
                       endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                       durationDays: 60,
-                      performanceGap: 'Lead conversion rate 45% below quota target.',
-                      expectedPerformance: 'Achieve minimum 85% lead conversion quota.',
-                      actionPlan: 'Weekly sales coaching and daily pipeline CRM updates.'
+                      performanceGap: '',
+                      expectedPerformance: '',
+                      actionPlan: ''
                     });
                     setShowPipReviewModal(false);
                     setPipDualViewMode('both');
@@ -2062,7 +2062,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                           employeeName: emp.name,
                           currentDepartment: emp.dept || emp.department || 'General',
                           currentDesignation: emp.designation || 'Staff',
-                          currentCtc: Number(emp.salary) || Number(emp.ctc) || incForm.currentCtc || 1200000
+                          currentCtc: Number(emp.salary) || Number(emp.ctc) || ''
                         });
                       } else {
                         setIncForm({ ...incForm, employeeId: empId });
@@ -2090,14 +2090,18 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Current CTC (₹) *</label>
-                  <input type="number" className="form-control" value={incForm.currentCtc} onChange={(e) => setIncForm({ ...incForm, currentCtc: Number(e.target.value) })} required />
+                  <input type="number" className="form-control" value={incForm.currentCtc} onChange={(e) => setIncForm({ ...incForm, currentCtc: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Increment Percentage (%) *</label>
-                  <input type="number" className="form-control" value={incForm.incrementPercentage} onChange={(e) => setIncForm({ ...incForm, incrementPercentage: Number(e.target.value) })} required />
+                  <input type="number" className="form-control" value={incForm.incrementPercentage} onChange={(e) => setIncForm({ ...incForm, incrementPercentage: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Reason for the Increment *</label>
+                  <textarea className="form-control" rows="2" value={incForm.reason} onChange={(e) => setIncForm({ ...incForm, reason: e.target.value })} required></textarea>
                 </div>
                 <div style={{ padding: '10px', background: 'hsla(var(--primary), 0.05)', borderRadius: '6px', fontSize: '0.85rem' }}>
-                  <strong>Revised Estimated CTC:</strong> ₹{Math.round(incForm.currentCtc * (1 + incForm.incrementPercentage / 100)).toLocaleString()}
+                  <strong>Revised Estimated CTC:</strong> {incForm.currentCtc && incForm.incrementPercentage ? `₹${Math.round(incForm.currentCtc * (1 + incForm.incrementPercentage / 100)).toLocaleString()}` : '—'}
                 </div>
               </div>
               <div className="modal-footer">
@@ -2244,6 +2248,10 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                       <label className="form-label">Expected Performance Target *</label>
                       <textarea className="form-control" rows="2" value={pipForm.expectedPerformance} onChange={(e) => setPipForm({ ...pipForm, expectedPerformance: e.target.value })} required></textarea>
                     </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Action Plan *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.actionPlan} onChange={(e) => setPipForm({ ...pipForm, actionPlan: e.target.value })} required></textarea>
+                    </div>
                   </div>
                   <div className="modal-footer">
                     <button type="button" className="btn btn-secondary" onClick={() => setShowPipModal(false)}>Cancel</button>
@@ -2382,6 +2390,10 @@ const PerformanceModule = ({ searchQuery = '' }) => {
                     <div style={{ gridColumn: 'span 2' }}>
                       <label className="form-label">Expected Performance Target *</label>
                       <textarea className="form-control" rows="2" value={pipForm.expectedPerformance} onChange={(e) => setPipForm({ ...pipForm, expectedPerformance: e.target.value })} required></textarea>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Action Plan *</label>
+                      <textarea className="form-control" rows="2" value={pipForm.actionPlan} onChange={(e) => setPipForm({ ...pipForm, actionPlan: e.target.value })} required></textarea>
                     </div>
                   </div>
                   <div className="modal-footer">

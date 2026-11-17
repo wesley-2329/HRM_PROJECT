@@ -95,11 +95,11 @@ const RecruitmentModule = () => {
     jobTitle: '',
     department: 'Engineering',
     grade: 'Grade A',
-    designation: 'Software Engineer',
-    costCenter: 'CC-101',
+    designation: '',
+    costCenter: '',
     employmentType: 'Full-Time',
     vacancyCount: 1,
-    annualCtcPerPosition: 1200000,
+    annualCtcPerPosition: '',
     targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     justification: '',
     priorityLevel: 'Medium'
@@ -109,13 +109,13 @@ const RecruitmentModule = () => {
   const [posForm, setPosForm] = useState({
     positionTitle: '',
     department: 'Engineering',
-    designation: 'Senior Developer',
+    designation: '',
     grade: 'Grade B',
-    reportingManager: 'Akhil Sirivella',
+    reportingManager: '',
     costCenter: 'CC-101',
-    currentHeadcount: 2,
-    proposedHeadcount: 4,
-    annualCtcBudget: 1500000,
+    currentHeadcount: '',
+    proposedHeadcount: '',
+    annualCtcBudget: '',
     justification: ''
   });
 
@@ -124,8 +124,8 @@ const RecruitmentModule = () => {
     positionTitle: '',
     department: 'Engineering',
     costCenter: 'CC-101',
-    annualCtcBudget: 1500000,
-    recruitmentCostBudget: 150000
+    annualCtcBudget: '',
+    recruitmentCostBudget: ''
   });
 
   // Cost Form state
@@ -133,10 +133,10 @@ const RecruitmentModule = () => {
     reqNumber: '',
     candidateId: '',
     costCategory: 'Job Portal',
-    vendorName: 'Naukri.com',
+    vendorName: '',
     department: 'Engineering',
     costCenter: 'CC-101',
-    amount: 25000,
+    amount: '',
     description: ''
   });
 
@@ -368,11 +368,11 @@ const RecruitmentModule = () => {
         jobTitle: '',
         department: 'Engineering',
         grade: 'Grade A',
-        designation: 'Software Engineer',
-        costCenter: 'CC-101',
+        designation: '',
+        costCenter: '',
         employmentType: 'Full-Time',
         vacancyCount: 1,
-        annualCtcPerPosition: 1200000,
+        annualCtcPerPosition: '',
         targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
         justification: '',
         priorityLevel: 'Medium'
@@ -452,7 +452,7 @@ const RecruitmentModule = () => {
 
       const res = await api.post('/recruitment/budgets', {
         ...budgetForm,
-        costCenter: budgetForm.costCenter || 'CC-101',
+        costCenter: budgetForm.costCenter,
         annualCtcBudget: Number(budgetForm.annualCtcBudget) || 0,
         recruitmentCostBudget: Number(budgetForm.recruitmentCostBudget) || 0,
         totalFinancialImpact: (Number(budgetForm.annualCtcBudget) || 0) + (Number(budgetForm.recruitmentCostBudget) || 0)
@@ -488,8 +488,8 @@ const RecruitmentModule = () => {
         positionTitle: '',
         department: 'Engineering',
         costCenter: 'CC-101',
-        annualCtcBudget: 1500000,
-        recruitmentCostBudget: 150000
+        annualCtcBudget: '',
+        recruitmentCostBudget: ''
       });
       fetchAllRecruitmentData();
     } catch (err) {
@@ -634,9 +634,9 @@ const RecruitmentModule = () => {
       const res = await api.post('/recruitment/costs', {
         ...costForm,
         amount: Number(costForm.amount) || 0,
-        department: costForm.department || 'Engineering',
-        costCategory: costForm.costCategory || 'Job Portal',
-        costCenter: costForm.costCenter || 'CC-101'
+        department: costForm.department,
+        costCategory: costForm.costCategory,
+        costCenter: costForm.costCenter
       });
 
       if (res.data) {
@@ -670,10 +670,10 @@ const RecruitmentModule = () => {
         reqNumber: '',
         candidateId: '',
         costCategory: 'Job Portal',
-        vendorName: 'Naukri.com',
+        vendorName: '',
         department: 'Engineering',
         costCenter: 'CC-101',
-        amount: 25000,
+        amount: '',
         description: ''
       });
       fetchAllRecruitmentData();
@@ -1142,9 +1142,9 @@ const RecruitmentModule = () => {
                       jobTitle: '',
                       department: 'Engineering',
                       grade: 'Grade B',
-                      costCenter: 'CC-ENG-101',
+                      costCenter: '',
                       vacancyCount: 1,
-                      annualCtcPerPosition: 1200000,
+                      annualCtcPerPosition: '',
                       targetHireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
                       priorityLevel: 'Medium',
                       justification: ''
@@ -1337,8 +1337,8 @@ const RecruitmentModule = () => {
                     positionTitle: '',
                     department: 'Engineering',
                     costCenter: 'CC-101',
-                    annualCtcBudget: 1500000,
-                    recruitmentCostBudget: 150000
+                    annualCtcBudget: '',
+                    recruitmentCostBudget: ''
                   });
                   setShowBudgetModal(true);
                 }}
@@ -1740,10 +1740,10 @@ const RecruitmentModule = () => {
                     reqNumber: '',
                     candidateId: '',
                     costCategory: 'Job Portal',
-                    vendorName: 'Naukri.com',
+                    vendorName: '',
                     department: 'Engineering',
                     costCenter: 'CC-101',
-                    amount: 25000,
+                    amount: '',
                     description: ''
                   });
                   setShowCostModal(true);
@@ -2568,9 +2568,9 @@ const RecruitmentModule = () => {
                   <div>
                     <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Professional & Compensation</h5>
                     <p><strong>Experience:</strong> {selectedCandidate.experience}</p>
-                    <p><strong>Current CTC:</strong> ₹{(selectedCandidate.currentCtc || 800000).toLocaleString()}</p>
-                    <p><strong>Expected CTC:</strong> ₹{(selectedCandidate.expectedCtc || 1200000).toLocaleString()}</p>
-                    <p><strong>Notice Period:</strong> {selectedCandidate.noticePeriodDays || 30} Days</p>
+                    <p><strong>Current CTC:</strong> {selectedCandidate.currentCtc ? `₹${selectedCandidate.currentCtc.toLocaleString()}` : '—'}</p>
+                    <p><strong>Expected CTC:</strong> {selectedCandidate.expectedCtc ? `₹${selectedCandidate.expectedCtc.toLocaleString()}` : '—'}</p>
+                    <p><strong>Notice Period:</strong> {selectedCandidate.noticePeriodDays != null ? `${selectedCandidate.noticePeriodDays} Days` : '—'}</p>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
                     <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Skills & NLP Extraction</h5>
@@ -2591,15 +2591,15 @@ const RecruitmentModule = () => {
                       <tr><th>Round</th><th>Interviewer</th><th>Date</th><th>Rating</th><th>Status</th></tr>
                     </thead>
                     <tbody>
-                      {(selectedCandidate.interviewHistory || [
-                        { roundName: 'Technical Round 1', interviewerName: 'Akhil Sirivella', rating: 4, status: 'Passed' },
-                        { roundName: 'System Design Round', interviewerName: 'Gara Nandini', rating: 5, status: 'Passed' }
-                      ]).map((ir, idx) => (
+                      {!selectedCandidate.interviewHistory?.length && (
+                        <tr><td colSpan="5" style={{ color: 'hsl(var(--text-secondary))' }}>No interviews recorded yet.</td></tr>
+                      )}
+                      {(selectedCandidate.interviewHistory || []).map((ir, idx) => (
                         <tr key={idx}>
                           <td><strong>{ir.roundName}</strong></td>
                           <td>{ir.interviewerName}</td>
-                          <td>{new Date(ir.scheduledDate || Date.now()).toLocaleDateString()}</td>
-                          <td><span style={{ color: '#f59e0b' }}>{'★'.repeat(ir.rating || 4)}</span></td>
+                          <td>{ir.scheduledDate ? new Date(ir.scheduledDate).toLocaleDateString() : '—'}</td>
+                          <td><span style={{ color: '#f59e0b' }}>{ir.rating ? '★'.repeat(ir.rating) : '—'}</span></td>
                           <td><span className="badge badge-success">{ir.status}</span></td>
                         </tr>
                       ))}
@@ -2612,10 +2612,10 @@ const RecruitmentModule = () => {
                 <div>
                   <h5 style={{ fontWeight: 700, marginBottom: '12px' }}>Offer & Onboarding Status</h5>
                   <div style={{ padding: '16px', background: 'hsl(var(--bg-main))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
-                    <p><strong>Offered CTC:</strong> ₹{(selectedCandidate.offerDetails?.offeredCtc || 1200000).toLocaleString()}</p>
-                    <p><strong>Joining Date:</strong> {selectedCandidate.offerDetails?.joiningDate ? new Date(selectedCandidate.offerDetails.joiningDate).toLocaleDateString() : 'Target Next Month'}</p>
-                    <p><strong>Offer Released Status:</strong> <span className="badge badge-success">{selectedCandidate.offerReleased || 'Yes'}</span></p>
-                    <p><strong>Joining Onboarding:</strong> <span className="badge badge-info">{selectedCandidate.joiningStatus || 'In Progress'}</span></p>
+                    <p><strong>Offered CTC:</strong> {selectedCandidate.offerDetails?.offeredCtc ? `₹${selectedCandidate.offerDetails.offeredCtc.toLocaleString()}` : '—'}</p>
+                    <p><strong>Joining Date:</strong> {selectedCandidate.offerDetails?.joiningDate ? new Date(selectedCandidate.offerDetails.joiningDate).toLocaleDateString() : '—'}</p>
+                    <p><strong>Offer Released Status:</strong> <span className="badge badge-success">{selectedCandidate.offerReleased || '—'}</span></p>
+                    <p><strong>Joining Onboarding:</strong> <span className="badge badge-info">{selectedCandidate.joiningStatus || '—'}</span></p>
                   </div>
                 </div>
               )}
@@ -2684,7 +2684,7 @@ const RecruitmentModule = () => {
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Offered Annual CTC (₹) *</label>
-                  <input type="number" name="offeredCtc" className="form-control" defaultValue="1200000" required />
+                  <input type="number" name="offeredCtc" min="1" className="form-control" required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Expected Joining Date *</label>

@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import api from '../../api';
-import { downloadPdfDocument, createPdfBlobUrl, openPdfDocumentInNewTab } from '../../utils/pdfGenerator';
+import { downloadPdfDocument } from '../../utils/pdfGenerator';
+
+const DOC_MAX_BYTES = 4 * 1024 * 1024; // same limit the API enforces
 
 const StatutoryComplianceModule = ({ searchQuery = '' }) => {
   const { user } = useContext(AuthContext);
@@ -112,10 +114,12 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
   };
 
   // Inputs
-  const [newChallan, setNewChallan] = useState({ statutoryType: 'PF', wageMonth: 'Jul 2026', totalAmount: 100000, employeeCount: 50, state: 'Karnataka' });
-  const [newNotice, setNewNotice] = useState({ noticeNumber: '', department: 'EPFO', priority: 'High', description: '' });
-  const [newInspection, setNewInspection] = useState({ authority: 'Labour Inspectorate', location: 'HQ Bangalore', inspectorName: '', findings: '' });
-  const [newDoc, setNewDoc] = useState({ title: '', category: 'Challan Receipt' });
+  const [newChallan, setNewChallan] = useState({ statutoryType: 'PF', wageMonth: '', totalAmount: '', employeeCount: '', state: '', dueDate: '' });
+  const [newNotice, setNewNotice] = useState({ noticeNumber: '', department: 'EPFO', priority: 'Normal', issueDate: '', dueDate: '', description: '' });
+  const [newInspection, setNewInspection] = useState({ authority: '', location: '', inspectorName: '', inspectionDate: '', closureStatus: 'Observations Open', findings: '' });
+  const [newDoc, setNewDoc] = useState({ title: '', category: '' });
+  const [docFile, setDocFile] = useState(null);
+  const [docUploading, setDocUploading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -188,6 +192,19 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
     }
   };
 
+  // Payment happens at the bank; this only records it, so the bank's reference is required.
+  const handleMarkChallanPaid = async (c) => {
+    const bankReferenceNo = window.prompt(`Bank reference number for the payment of ${c.challanNumber}:`);
+    if (!bankReferenceNo?.trim()) return;
+    try {
+      const res = await api.post(`/compliance/challans/${c.challanId}/pay`, { bankReferenceNo });
+      setChallans(challans.map(x => x.challanId === c.challanId ? res.data : x));
+      showToast(`${c.challanNumber} marked as paid.`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not record the payment. Please try again.', 'error');
+    }
+  };
+
   const handleCreateNotice = async (e) => {
     e.preventDefault();
     try {
@@ -214,102 +231,82 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
   const handleCreateDoc = async (e) => {
     e.preventDefault();
+    if (!docFile) return showToast('Attach the document file.', 'error');
+    if (docFile.size > DOC_MAX_BYTES) return showToast('File is too large. Maximum size is 4 MB.', 'error');
+    const body = new FormData();
+    body.append('title', newDoc.title);
+    body.append('category', newDoc.category);
+    body.append('file', docFile);
+    setDocUploading(true);
     try {
-      const res = await api.post('/compliance/documents', newDoc);
+      const res = await api.post('/compliance/documents', body);
       showToast('Document uploaded to compliance repository.', 'success');
       setDocuments([res.data, ...documents]);
       setShowDocModal(false);
+      setNewDoc({ title: '', category: '' });
+      setDocFile(null);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Could not save. Please check the details and try again.', 'error');
+      showToast(err.response?.data?.message || 'Could not upload. Please check the file and try again.', 'error');
+    } finally {
+      setDocUploading(false);
     }
   };
 
-  const getDocumentPdfParams = (doc) => {
-    const isChallan = doc.category === 'Challan Receipt' || (doc.title && doc.title.toLowerCase().includes('receipt'));
-    return {
-      title: isChallan ? `STATUTORY CHALLAN RECEIPT - ${doc.title}` : doc.title,
-      subtitle: `Category: ${doc.category || 'Statutory Compliance'} | Official Vault Record`,
-      docNumber: doc.docId || 'DOC-501',
-      recipient: `Uploaded By: ${doc.uploadedBy || 'Compliance Officer'}`,
-      date: doc.wageMonth || new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }),
-      metadata: [
-        { label: 'Document ID', value: doc.docId || 'DOC-501' },
-        { label: 'Category', value: doc.category || 'Challan Receipt' },
-        { label: 'Uploaded By', value: doc.uploadedBy || 'Compliance Officer' },
-        { label: 'Payment / Filing Ref', value: doc.challanNumber || 'CHL-PF-202607' },
-        { label: 'Settlement Status', value: doc.paymentStatus || 'Verified & Paid' },
-        { label: 'Digital Certificate', value: 'SHA-256 Validated & Digitally Signed' }
-      ],
-      sections: [
-        {
-          heading: 'Statutory Verification & Compliance Certification',
-          paragraphs: [
-            `This official statutory compliance document (${doc.title}) has been verified against enterprise governance and statutory authority mandates.`,
-            `Challan & payment settlement confirmed for ${doc.employeeCount || 480} eligible employees under ${doc.category || 'Statutory Compliance'}.`,
-            'Digital Certificate Validated: SHA-256 Confirmed by HR Orbit Enterprise Systems.'
-          ]
-        }
-      ],
-      footer: 'HR Orbit Enterprise Compliance Vault • Electronic Signature Verified'
-    };
+  // The file routes need the login token, so the file is fetched and shown from a blob URL
+  // instead of being linked to directly.
+  const fetchDocFile = async (doc, mode) => {
+    const res = await api.get(`/compliance/documents/${doc.docId}/${mode}`, { responseType: 'blob', timeout: 60000 });
+    return URL.createObjectURL(res.data);
+  };
+
+  const closeDocViewer = () => {
+    setShowDocViewerModal(false);
+    if (docPreviewUrl) URL.revokeObjectURL(docPreviewUrl);
+    setDocPreviewUrl(null);
   };
 
   const handleViewDocument = async (doc) => {
-    if (!doc || !doc.docId) {
-      showToast('Error: Compliance document ID is invalid or missing.', 'error');
-      setDocViewerError('Error: Compliance document ID is invalid or missing.');
-      return;
-    }
-
     setDocViewerError(null);
+    setDocPreviewUrl(null);
     setViewingDoc(doc);
     setShowDocViewerModal(true);
+    if (!doc.fileId) return setDocViewerError('No file was uploaded for this record.');
     setDocViewerLoading(true);
-
     try {
-      const pdfParams = getDocumentPdfParams(doc);
-      const blobUrl = createPdfBlobUrl(pdfParams);
-      setDocPreviewUrl(blobUrl);
-    } catch (e) {
-      console.warn('PDF blob creation warning:', e);
-    }
-
-    try {
-      const res = await api.get(`/compliance/documents/${doc.docId}`);
-      if (res.data) {
-        setViewingDoc(prev => ({ ...prev, ...res.data }));
-      }
-      showToast(`Viewing document: ${doc.title}`, 'info');
-    } catch (err) {
-      console.warn('Document details fetch notice:', err.message);
-      if (err.response && (err.response.status === 404 || err.response.status === 400)) {
-        setDocViewerError(err.response.data?.message || `Compliance document file not found or invalid document ID: ${doc.docId}`);
-        showToast(err.response.data?.message || 'Document not found or missing file.', 'error');
-      }
+      setDocPreviewUrl(await fetchDocFile(doc, 'preview'));
+    } catch {
+      setDocViewerError('Could not load the file. Please try again.');
     } finally {
       setDocViewerLoading(false);
     }
   };
 
-  const handleOpenDocInNewTab = (doc) => {
-    if (!doc || !doc.docId) {
-      showToast('Error: Invalid document ID', 'error');
-      return;
-    }
-    const pdfParams = getDocumentPdfParams(doc);
-    const opened = openPdfDocumentInNewTab(pdfParams);
-    if (opened) {
-      showToast(`Opening ${doc.title} in new tab...`, 'info');
-    } else {
-      window.open(`/api/compliance/documents/${doc.docId}/preview`, '_blank');
+  const handleOpenDocInNewTab = async (doc) => {
+    const tab = window.open('', '_blank'); // opened before the await, or the browser blocks it as a pop-up
+    try {
+      const url = await fetchDocFile(doc, 'preview');
+      if (tab) tab.location = url; else window.location.assign(url);
+    } catch {
+      if (tab) tab.close();
+      showToast('Could not open the file. Please try again.', 'error');
     }
   };
 
-  const handleDownloadDocPdf = (doc) => {
-    showToast(`Downloading receipt PDF for ${doc.title}...`, 'info');
-    const pdfParams = getDocumentPdfParams(doc);
-    downloadPdfDocument(pdfParams, `${(doc.title || 'compliance_document').replace(/\s+/g, '_')}.pdf`);
+  const handleDownloadDoc = async (doc) => {
+    try {
+      const url = await fetchDocFile(doc, 'download');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.fileName;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      showToast('Could not download the file. Please try again.', 'error');
+    }
   };
+
+  const isPreviewable = (doc) => /\.(pdf|jpe?g|png|webp)$/i.test(doc?.fileName || '');
+  const formatBytes = (n) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
 
 
   // Nav Items array matching spec
@@ -682,12 +679,12 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     <td>{c.wageMonth}</td>
                     <td>{c.employeeCount} Emps</td>
                     <td><strong>₹{(c.totalAmount || 0).toLocaleString()}</strong></td>
-                    <td>{c.dueDate}</td>
+                    <td>{c.dueDate ? new Date(c.dueDate).toLocaleDateString() : '—'}</td>
                     <td><span className={`badge ${c.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning'}`}>{c.paymentStatus}</span></td>
                     <td>
                       {c.paymentStatus !== 'Paid' ? (
-                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => showToast(`Payment for ${c.challanNumber} processed via HDFC NetBanking`, 'success')}>
-                          Pay Now
+                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleMarkChallanPaid(c)}>
+                          Mark as Paid
                         </button>
                       ) : (
                         <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => {
@@ -801,10 +798,10 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 <div key={i.inspectionId} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <strong style={{ fontSize: '0.9rem' }}>{i.authority} ({i.location})</strong>
-                    <span className="badge badge-success">{i.closureStatus}</span>
+                    <span className={`badge ${i.closureStatus === 'Closed' ? 'badge-success' : 'badge-warning'}`}>{i.closureStatus}</span>
                   </div>
                   <p style={{ margin: '6px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>{i.findings}</p>
-                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Inspected on {i.inspectionDate} by {i.inspectorName}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Inspected on {i.inspectionDate ? new Date(i.inspectionDate).toLocaleDateString() : '—'} by {i.inspectorName}</div>
                 </div>
               ))}
             </div>
@@ -817,17 +814,22 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {activeTab === 'documents' && (
         <div className="card p-5">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontWeight: 700 }}>Statutory Compliance Document Vault</h3>
-            <button className="btn btn-primary" onClick={() => setShowDocModal(true)}>
-              <i className="fa-solid fa-upload"></i> Upload Certificate / Receipt
-            </button>
+            {user?.role === 'hr' && (
+              <button className="btn btn-primary" onClick={() => setShowDocModal(true)}>
+                <i className="fa-solid fa-upload"></i> Upload Certificate / Receipt
+              </button>
+            )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          {documents.length === 0 && (
+            <p style={{ margin: 0, color: 'hsl(var(--text-secondary))', fontSize: '0.88rem' }}>No documents uploaded yet.</p>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '16px' }}>
             {documents.map((d) => (
               <div key={d.docId} className="card-document-item" style={{ padding: '16px', border: '1px solid hsl(var(--border))', borderRadius: '8px', background: 'hsl(var(--bg-card))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <i className="fa-solid fa-file-pdf" style={{ fontSize: '1.4rem', color: '#f43f5e' }}></i>
+                  <i className={`fa-solid ${/\.pdf$/i.test(d.fileName || '') ? 'fa-file-pdf' : 'fa-file-lines'}`} style={{ fontSize: '1.4rem', color: '#f43f5e' }}></i>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.title}>{d.title}</h4>
                     <span className="badge" style={{ fontSize: '0.72rem', background: 'rgba(99,102,241,0.1)', color: '#6366f1', marginTop: '4px', display: 'inline-block' }}>{d.category}</span>
@@ -836,6 +838,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', margin: '8px 0 12px 0' }}>
                   <div>Ref: <strong style={{ color: 'hsl(var(--text-primary))' }}>{d.docId}</strong></div>
                   <div>Uploaded By: {d.uploadedBy}</div>
+                  <div>{d.fileId ? `${d.fileName} · ${formatBytes(d.fileSize)}` : 'No file attached'}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <button
@@ -850,6 +853,8 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     <button
                       className="btn btn-outline"
                       title="Open in new window"
+                      aria-label="Open in new window"
+                      disabled={!d.fileId || !isPreviewable(d)}
                       id={`btn-tab-doc-${d.docId}`}
                       style={{ padding: '5px 10px', fontSize: '0.78rem' }}
                       onClick={() => handleOpenDocInNewTab(d)}
@@ -858,10 +863,12 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     </button>
                     <button
                       className="btn btn-outline"
-                      title="Download PDF"
+                      title="Download"
+                      aria-label="Download"
+                      disabled={!d.fileId}
                       id={`btn-download-doc-${d.docId}`}
                       style={{ padding: '5px 10px', fontSize: '0.78rem' }}
-                      onClick={() => handleDownloadDocPdf(d)}
+                      onClick={() => handleDownloadDoc(d)}
                     >
                       <i className="fa-solid fa-download"></i>
                     </button>
@@ -989,11 +996,11 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* Challan Modal */}
       {showChallanModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '480px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Generate Statutory Challan</h3>
             <form onSubmit={handleCreateChallan}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Statutory Type</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Statutory Type *</label>
                 <select className="form-control" value={newChallan.statutoryType} onChange={(e) => setNewChallan({ ...newChallan, statutoryType: e.target.value })}>
                   <option>PF</option>
                   <option>ESI</option>
@@ -1002,16 +1009,24 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Wage Month</label>
-                <input type="text" className="form-control" value={newChallan.wageMonth} onChange={(e) => setNewChallan({ ...newChallan, wageMonth: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Wage Month *</label>
+                <input type="text" className="form-control" placeholder="e.g. Jul 2026" value={newChallan.wageMonth} onChange={(e) => setNewChallan({ ...newChallan, wageMonth: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Total Amount (₹)</label>
-                <input type="number" className="form-control" value={newChallan.totalAmount} onChange={(e) => setNewChallan({ ...newChallan, totalAmount: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Total Amount (₹) *</label>
+                <input type="number" min="0" className="form-control" value={newChallan.totalAmount} onChange={(e) => setNewChallan({ ...newChallan, totalAmount: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Covered Employees Count *</label>
+                <input type="number" min="1" className="form-control" value={newChallan.employeeCount} onChange={(e) => setNewChallan({ ...newChallan, employeeCount: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>State *</label>
+                <input type="text" className="form-control" value={newChallan.state} onChange={(e) => setNewChallan({ ...newChallan, state: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Covered Employees Count</label>
-                <input type="number" className="form-control" value={newChallan.employeeCount} onChange={(e) => setNewChallan({ ...newChallan, employeeCount: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Payment Due Date *</label>
+                <input type="date" className="form-control" value={newChallan.dueDate} onChange={(e) => setNewChallan({ ...newChallan, dueDate: e.target.value })} required />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowChallanModal(false)}>Cancel</button>
@@ -1025,15 +1040,15 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* Notice Modal */}
       {showNoticeModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '480px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Government Notice</h3>
             <form onSubmit={handleCreateNotice}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Notice Reference Number</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Notice Reference Number *</label>
                 <input type="text" className="form-control" value={newNotice.noticeNumber} onChange={(e) => setNewNotice({ ...newNotice, noticeNumber: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Issuing Department</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Issuing Department *</label>
                 <select className="form-control" value={newNotice.department} onChange={(e) => setNewNotice({ ...newNotice, department: e.target.value })}>
                   <option>EPFO</option>
                   <option>ESIC</option>
@@ -1042,8 +1057,24 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                   <option>Tax Authority</option>
                 </select>
               </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Priority *</label>
+                <select className="form-control" value={newNotice.priority} onChange={(e) => setNewNotice({ ...newNotice, priority: e.target.value })}>
+                  <option>Normal</option>
+                  <option>High</option>
+                  <option>Critical</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Issue Date *</label>
+                <input type="date" className="form-control" value={newNotice.issueDate} onChange={(e) => setNewNotice({ ...newNotice, issueDate: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Reply Due Date *</label>
+                <input type="date" className="form-control" min={newNotice.issueDate} value={newNotice.dueDate} onChange={(e) => setNewNotice({ ...newNotice, dueDate: e.target.value })} required />
+              </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Description / Clarification Needed</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Description / Clarification Needed *</label>
                 <textarea className="form-control" rows="3" value={newNotice.description} onChange={(e) => setNewNotice({ ...newNotice, description: e.target.value })} required />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -1058,19 +1089,36 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* Inspection Modal */}
       {showInspectionModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '480px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Labour Inspection Record</h3>
             <form onSubmit={handleCreateInspection}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Authority Name</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Authority Name *</label>
                 <input type="text" className="form-control" value={newInspection.authority} onChange={(e) => setNewInspection({ ...newInspection, authority: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Plant / Location</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Plant / Location *</label>
                 <input type="text" className="form-control" value={newInspection.location} onChange={(e) => setNewInspection({ ...newInspection, location: e.target.value })} required />
               </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Inspector Name *</label>
+                <input type="text" className="form-control" value={newInspection.inspectorName} onChange={(e) => setNewInspection({ ...newInspection, inspectorName: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Inspection Date *</label>
+                <input type="date" className="form-control" value={newInspection.inspectionDate} onChange={(e) => setNewInspection({ ...newInspection, inspectionDate: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Status *</label>
+                <select className="form-control" value={newInspection.closureStatus} onChange={(e) => setNewInspection({ ...newInspection, closureStatus: e.target.value })}>
+                  <option>Scheduled</option>
+                  <option>In Progress</option>
+                  <option>Observations Open</option>
+                  <option>Closed</option>
+                </select>
+              </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Inspection Findings Summary</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Inspection Findings Summary *</label>
                 <textarea className="form-control" rows="3" value={newInspection.findings} onChange={(e) => setNewInspection({ ...newInspection, findings: e.target.value })} required />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -1085,27 +1133,34 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
       {/* Document Modal */}
       {showDocModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '480px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '480px', maxWidth: '95vw', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Upload Compliance Certificate / Document</h3>
             <form onSubmit={handleCreateDoc}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Document Title</label>
-                <input type="text" className="form-control" value={newDoc.title} onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })} required />
+                <label htmlFor="comp-doc-title" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Document Title *</label>
+                <input id="comp-doc-title" type="text" className="form-control" maxLength={120} value={newDoc.title} onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })} required />
               </div>
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Category</label>
-                <select className="form-control" value={newDoc.category} onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label htmlFor="comp-doc-category" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Category *</label>
+                <select id="comp-doc-category" className="form-control" value={newDoc.category} onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })} required>
+                  <option value="">Select a category</option>
                   <option>Challan Receipt</option>
                   <option>Return Receipt</option>
                   <option>Registration Certificate</option>
                   <option>Labour License</option>
                   <option>Government Notice</option>
                   <option>Inspection Report</option>
+                  <option>Compliance Certificate</option>
                 </select>
               </div>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="comp-doc-file" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>File *</label>
+                <input id="comp-doc-file" type="file" className="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={(e) => setDocFile(e.target.files[0] || null)} required />
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '4px' }}>PDF, DOC, DOCX, JPG, PNG or WEBP, up to 4 MB.</div>
+              </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowDocModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Upload Document</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowDocModal(false); setDocFile(null); }}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={docUploading}>{docUploading ? 'Uploading…' : 'Upload Document'}</button>
               </div>
             </form>
           </div>
@@ -1134,7 +1189,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             padding: '16px'
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowDocViewerModal(false);
+            if (e.target === e.currentTarget) closeDocViewer();
           }}
         >
           <div
@@ -1182,6 +1237,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                   id="btn-viewer-open-tab"
                   style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                   onClick={() => handleOpenDocInNewTab(viewingDoc)}
+                  disabled={!viewingDoc.fileId || !isPreviewable(viewingDoc)}
                   title="Open document in new browser tab"
                 >
                   <i className="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
@@ -1190,16 +1246,17 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                   className="btn btn-primary"
                   id="btn-viewer-download-pdf"
                   style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  onClick={() => handleDownloadDocPdf(viewingDoc)}
-                  title="Download valid PDF receipt"
+                  onClick={() => handleDownloadDoc(viewingDoc)}
+                  disabled={!viewingDoc.fileId}
+                  title="Download the uploaded file"
                 >
-                  <i className="fa-solid fa-download"></i> Download PDF
+                  <i className="fa-solid fa-download"></i> Download
                 </button>
                 <button
                   className="btn btn-outline"
                   id="btn-viewer-close"
                   style={{ padding: '6px 10px', fontSize: '1rem', border: 'none' }}
-                  onClick={() => setShowDocViewerModal(false)}
+                  onClick={() => closeDocViewer()}
                   title="Close viewer"
                 >
                   <i className="fa-solid fa-xmark"></i>
@@ -1213,7 +1270,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
                   <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.2rem' }}></i>
                   <div>
-                    <strong>Document Error:</strong> {docViewerError}
+                    {docViewerError}
                   </div>
                 </div>
               )}
@@ -1236,44 +1293,28 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                   <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>Uploaded On</div>
                   <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{viewingDoc.createdAt ? new Date(viewingDoc.createdAt).toLocaleDateString() : '—'}</div>
                 </div>
+                {viewingDoc.fileId && (
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>File</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', overflowWrap: 'anywhere' }}>{viewingDoc.fileName} · {formatBytes(viewingDoc.fileSize)}</div>
+                  </div>
+                )}
               </div>
-
 
               {/* Embedded Document Reading Canvas */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
-                    <i className="fa-solid fa-eye"></i> Document Preview & Contents:
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>
-                    SHA-256 Digital Verification Confirmed
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    width: '100%',
-                    height: '420px',
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border))',
-                    overflow: 'hidden',
-                    background: '#ffffff'
-                  }}
-                >
-                  {docPreviewUrl ? (
-                    <iframe
-                      src={docPreviewUrl}
-                      title={viewingDoc.title}
-                      style={{ width: '100%', height: '100%', border: 'none' }}
-                    />
+              {viewingDoc.fileId && !docViewerError && (
+                <div style={{ width: '100%', height: '420px', maxHeight: '55vh', borderRadius: '8px', border: '1px solid hsl(var(--border))', overflow: 'auto', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                  {docViewerLoading || !docPreviewUrl ? (
+                    <span role="status"><i className="fa-solid fa-spinner fa-spin"></i> Loading file…</span>
+                  ) : !isPreviewable(viewingDoc) ? (
+                    <span style={{ padding: '16px', textAlign: 'center' }}>This file type has no in-page preview. Use Download to open it.</span>
+                  ) : /\.pdf$/i.test(viewingDoc.fileName) ? (
+                    <iframe src={docPreviewUrl} title={viewingDoc.title} style={{ width: '100%', height: '100%', border: 'none' }} />
                   ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: '#64748b', gap: '8px' }}>
-                      <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: '#6366f1' }}></i>
-                      <span>Loading compliance document viewer...</span>
-                    </div>
+                    <img src={docPreviewUrl} alt={viewingDoc.title} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   )}
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -1287,15 +1328,12 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 background: 'hsl(var(--bg-card))'
               }}
             >
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fa-solid fa-circle-check" style={{ color: '#10b981' }}></i>
-                Official record verified under enterprise statutory governance
-              </div>
+              <span></span>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => setShowDocViewerModal(false)}
+                  onClick={() => closeDocViewer()}
                 >
                   Close Viewer
                 </button>

@@ -39,6 +39,7 @@ const BudgetNotificationLog = require('../models/BudgetNotificationLog');
 const BudgetAuditLog = require('../models/BudgetAuditLog');
 
 const { protect, adminOnly } = require('../middleware/auth');
+const { requireFields } = require('../utils/validate');
 
 // Audit logger helper
 const logAudit = async (req, action, entityType, entityId, changes) => {
@@ -120,13 +121,14 @@ router.get('/planning', protect, async (req, res, next) => {
 router.post('/planning', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { financialYear: 'Financial year', department: 'Department', costCenter: 'Cost center', budgetCategory: 'Budget category', proposedBudget: 'Proposed amount' });
     const budgetId = 'BDG-' + Date.now();
     const newBudget = await HrBudget.create({
       budgetId,
-      financialYear: body.financialYear || 'FY 2026-2027',
-      company: body.company || 'Enterprise Corp',
-      businessUnit: body.businessUnit || 'Global HR',
-      branch: body.branch || 'HQ Bangalore',
+      financialYear: body.financialYear,
+      company: body.company,
+      businessUnit: body.businessUnit,
+      branch: body.branch,
       department: body.department,
       costCenter: body.costCenter,
       budgetCategory: body.budgetCategory,
@@ -243,16 +245,18 @@ router.get('/manpower', protect, async (req, res, next) => {
 router.post('/manpower', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { financialYear: 'Financial year', department: 'Department', costCenter: 'Cost center', designation: 'Designation',
+      currentHeadcount: 'Current headcount', approvedHeadcount: 'Approved headcount', proposedHeadcount: 'Proposed headcount', avgMonthlySalary: 'Average monthly salary' });
     const budgetId = 'MPB-' + Date.now();
     const newManpower = await ManpowerBudget.create({
       budgetId,
-      financialYear: body.financialYear || 'FY 2026-2027',
-      company: body.company || 'Enterprise Corp',
+      financialYear: body.financialYear,
+      company: body.company,
       department: body.department,
       costCenter: body.costCenter,
-      grade: body.grade || 'G-3',
+      grade: body.grade,
       designation: body.designation,
-      employmentType: body.employmentType || 'Full Time',
+      employmentType: body.employmentType,
       currentHeadcount: Number(body.currentHeadcount) || 0,
       approvedHeadcount: Number(body.approvedHeadcount) || 0,
       proposedHeadcount: Number(body.proposedHeadcount) || 0,
@@ -284,18 +288,19 @@ router.get('/recruitment', protect, async (req, res, next) => {
 router.post('/recruitment-expense', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { expenseCategory: 'Expense category', vendorName: 'Vendor name', expenseDate: 'Expense date', amount: 'Amount', paymentStatus: 'Payment status' });
     const expenseId = 'RCX-' + Date.now();
     const newExpense = await RecruitmentExpense.create({
       expenseId,
       expenseCategory: body.expenseCategory,
       vendorName: body.vendorName || '',
       invoiceNumber: body.invoiceNumber || '',
-      expenseDate: body.expenseDate || new Date(),
+      expenseDate: body.expenseDate,
       amount: Number(body.amount) || 0,
       taxAmount: Number(body.taxAmount) || 0,
       totalAmount: (Number(body.amount) || 0) + (Number(body.taxAmount) || 0),
-      paymentStatus: body.paymentStatus || 'Paid',
-      hiringSource: body.hiringSource || 'Agency',
+      paymentStatus: body.paymentStatus,
+      hiringSource: body.hiringSource,
       supportingDocUrl: body.supportingDocUrl || ''
     });
     await logAudit(req, 'ADD_RECRUITMENT_EXPENSE', 'RecruitmentExpense', expenseId, newExpense);
@@ -319,18 +324,19 @@ router.post('/welfare-expense', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
     const expenseId = 'WFX-' + Date.now();
+    requireFields(body, { welfareActivity: 'Welfare activity', welfareCategory: 'Category', expenseDate: 'Expense date', invoiceAmount: 'Invoice amount', beneficiariesCount: 'Beneficiaries', paymentStatus: 'Payment status' });
     const newExpense = await WelfareExpense.create({
       expenseId,
       welfareActivity: body.welfareActivity,
       welfareCategory: body.welfareCategory,
       vendorName: body.vendorName || '',
-      expenseDate: body.expenseDate || new Date(),
+      expenseDate: body.expenseDate,
       invoiceNumber: body.invoiceNumber || '',
       invoiceAmount: Number(body.invoiceAmount) || 0,
       taxAmount: Number(body.taxAmount) || 0,
       totalAmount: (Number(body.invoiceAmount) || 0) + (Number(body.taxAmount) || 0),
       beneficiariesCount: Number(body.beneficiariesCount) || 0,
-      paymentStatus: body.paymentStatus || 'Paid'
+      paymentStatus: body.paymentStatus
     });
     await logAudit(req, 'ADD_WELFARE_EXPENSE', 'WelfareExpense', expenseId, newExpense);
     res.status(201).json(newExpense);

@@ -10,6 +10,7 @@ const AssessmentCertification = require('../models/AssessmentCertification');
 const LearningHistory = require('../models/LearningHistory');
 const TrainingAuditLog = require('../models/TrainingAuditLog');
 const { protect, adminOnly } = require('../middleware/auth');
+const { requireFields } = require('../utils/validate');
 
 // Audit logger helper
 const logAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -65,8 +66,8 @@ router.post('/tna', protect, async (req, res, next) => {
       employee: {
         id: req.user.id,
         name: req.user.name,
-        dept: req.user.dept || 'Engineering',
-        designation: req.user.designation || 'Software Engineer'
+        dept: req.user.dept,
+        designation: req.user.designation || ''
       },
       skillGapCategory: req.body.skillGapCategory || 'Technical',
       requestedSkill: req.body.requestedSkill,
@@ -120,13 +121,14 @@ router.post('/annual-plan', protect, adminOnly, async (req, res, next) => {
     const count = await AnnualTrainingPlan.countDocuments();
     const planId = `ATP-${2026 + count}`;
 
+    requireFields(req.body, { year: 'Year', title: 'Plan title', allocatedBudget: 'Allocated budget' });
     const newPlan = new AnnualTrainingPlan({
       planId,
-      year: req.body.year || 2026,
+      year: req.body.year,
       title: req.body.title,
-      allocatedBudget: req.body.allocatedBudget || 500000,
-      targetDepartments: req.body.targetDepartments || ['Engineering', 'Product', 'HR'],
-      plannedCoursesCount: req.body.plannedCoursesCount || 6
+      allocatedBudget: req.body.allocatedBudget,
+      targetDepartments: req.body.targetDepartments || [],
+      plannedCoursesCount: req.body.plannedCoursesCount || 0
     });
 
     await newPlan.save();

@@ -17,7 +17,7 @@ const RecruitmentExpenseSchema = new mongoose.Schema({
   taxAmount: { type: Number, default: 0 },
   totalAmount: { type: Number, required: true, default: 0 },
   paymentStatus: { type: String, enum: ['Pending', 'Approved', 'Paid', 'Rejected'], default: 'Paid' },
-  hiringSource: { type: String, default: 'Agency' },
+  hiringSource: { type: String, default: '' },
   costPerHire: { type: Number, default: 0 },
   supportingDocUrl: { type: String, default: '' },
   status: { type: String, default: 'Approved' },

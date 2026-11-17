@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const fs = require('fs');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const { requireFields } = require('../utils/validate');
+const { uploadFileFilter, setSafeHeaders, UPLOAD_MAX_BYTES } = require('../utils/gridStore');
 
 const PlantMaster = require('../models/PlantMaster');
 const LocationMaster = require('../models/LocationMaster');
@@ -136,21 +138,23 @@ router.get('/pf', protect, async (req, res, next) => {
 router.post('/pf/ecr', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { wageMonth: 'Wage month', employeeId: 'Employee ID', employeeName: 'Employee name', uan: 'UAN', pfWage: 'PF wage',
+      employeePfShare: 'Employee PF share', employerPfShare: 'Employer PF share', employerEpsShare: 'Employer EPS share', totalContribution: 'Total contribution' });
     const contribId = 'PFC-' + Date.now();
     const newContrib = await PfContribution.create({
       contributionId: contribId,
-      wageMonth: body.wageMonth || 'Jul 2026',
-      employeeId: body.employeeId || 'EMP-1001',
-      employeeName: body.employeeName || 'Gara Nandini',
-      uan: body.uan || '100988776655',
-      pfWage: Number(body.pfWage) || 15000,
-      employeePfShare: Number(body.employeePfShare) || 1800,
+      wageMonth: body.wageMonth,
+      employeeId: body.employeeId,
+      employeeName: body.employeeName,
+      uan: body.uan,
+      pfWage: Number(body.pfWage),
+      employeePfShare: Number(body.employeePfShare),
       vpfShare: Number(body.vpfShare) || 0,
-      employerPfShare: Number(body.employerPfShare) || 550,
-      employerEpsShare: Number(body.employerEpsShare) || 1250,
-      edliShare: Number(body.edliShare) || 75,
-      adminCharges: Number(body.adminCharges) || 75,
-      totalContribution: Number(body.totalContribution) || 3750,
+      employerPfShare: Number(body.employerPfShare),
+      employerEpsShare: Number(body.employerEpsShare),
+      edliShare: Number(body.edliShare) || 0,
+      adminCharges: Number(body.adminCharges) || 0,
+      totalContribution: Number(body.totalContribution),
       status: 'ECR Generated'
     });
     await logAudit(req, 'GENERATE_PF_ECR', 'PfContribution', contribId, newContrib);
@@ -206,16 +210,17 @@ router.get('/challans', protect, async (req, res, next) => {
 router.post('/challans', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { statutoryType: 'Statutory type', wageMonth: 'Wage month', state: 'State', dueDate: 'Due date', totalAmount: 'Total amount', employeeCount: 'Covered employees' });
     const challanId = 'CHL-' + Date.now();
     const newChallan = await StatutoryChallan.create({
       challanId,
       challanNumber: 'CHL-NO-' + Math.floor(Math.random() * 900000 + 100000),
-      statutoryType: body.statutoryType || 'PF',
-      wageMonth: body.wageMonth || 'Jul 2026',
-      state: body.state || 'Karnataka',
-      dueDate: body.dueDate || new Date('2026-08-15'),
-      totalAmount: Number(body.totalAmount) || 0,
-      employeeCount: Number(body.employeeCount) || 1,
+      statutoryType: body.statutoryType,
+      wageMonth: body.wageMonth,
+      state: body.state,
+      dueDate: body.dueDate,
+      totalAmount: Number(body.totalAmount),
+      employeeCount: Number(body.employeeCount),
       paymentStatus: 'Generated',
       createdBy: req.user?.name || 'Payroll Executive'
     });
@@ -228,11 +233,13 @@ router.post('/challans/:id/pay', protect, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
+    requireFields(body, { bankReferenceNo: 'Bank reference number' });
     const updated = await StatutoryChallan.findOneAndUpdate(
       { challanId: id },
-      { paymentStatus: 'Paid', paymentDate: new Date(), bankReferenceNo: body.bankReferenceNo || ('REF-' + Date.now()) },
+      { paymentStatus: 'Paid', paymentDate: new Date(), bankReferenceNo: String(body.bankReferenceNo).trim() },
       { new: true }
     );
+    if (!updated) return res.status(404).json({ message: 'Challan not found.' });
     await logAudit(req, 'PAY_STATUTORY_CHALLAN', 'StatutoryChallan', id, updated);
     res.json(updated);
   } catch (err) { next(err); }
@@ -251,16 +258,17 @@ router.get('/returns', protect, async (req, res, next) => {
 router.post('/returns', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { returnType: 'Return type', period: 'Period', state: 'State', filingDueDate: 'Filing due date', ackNumber: 'Acknowledgement number' });
     const returnId = 'RET-' + Date.now();
     const newReturn = await StatutoryReturn.create({
       returnId,
       returnType: body.returnType,
       frequency: body.frequency || 'Monthly',
-      period: body.period || 'Jul 2026',
-      state: body.state || 'Karnataka',
-      filingDueDate: body.filingDueDate || new Date(),
+      period: body.period,
+      state: body.state,
+      filingDueDate: body.filingDueDate,
       filingDate: new Date(),
-      ackNumber: body.ackNumber || ('ACK-' + Math.floor(Math.random() * 899999 + 100000)),
+      ackNumber: body.ackNumber,
       filingStatus: 'Filed'
     });
     await logAudit(req, 'FILE_STATUTORY_RETURN', 'StatutoryReturn', returnId, newReturn);
@@ -291,15 +299,16 @@ router.get('/notices', protect, async (req, res, next) => {
 router.post('/notices', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { noticeNumber: 'Notice reference number', department: 'Issuing department', issueDate: 'Issue date', dueDate: 'Reply due date', description: 'Description' });
     const noticeId = 'NTC-' + Date.now();
     const newNotice = await GovernmentNotice.create({
       noticeId,
-      noticeNumber: body.noticeNumber || ('NOT-' + Math.floor(Math.random() * 90000)),
-      department: body.department || 'EPFO',
-      issueDate: body.issueDate || new Date(),
-      dueDate: body.dueDate || new Date(),
-      priority: body.priority || 'High',
-      description: body.description || '',
+      noticeNumber: body.noticeNumber,
+      department: body.department,
+      issueDate: body.issueDate,
+      dueDate: body.dueDate,
+      priority: body.priority || 'Normal',
+      description: body.description,
       status: 'Received'
     });
     await logAudit(req, 'CREATE_GOVERNMENT_NOTICE', 'GovernmentNotice', noticeId, newNotice);
@@ -317,15 +326,16 @@ router.get('/inspections', protect, async (req, res, next) => {
 router.post('/inspections', protect, adminOnly, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { authority: 'Authority', location: 'Plant / location', inspectorName: 'Inspector name', inspectionDate: 'Inspection date', findings: 'Findings', closureStatus: 'Status' });
     const inspectionId = 'INS-' + Date.now();
     const newIns = await InspectionRecord.create({
       inspectionId,
-      authority: body.authority || 'Factory Inspectorate',
-      location: body.location || 'Bangalore Plant 1',
-      inspectorName: body.inspectorName || 'Mr. K. Sharma',
-      inspectionDate: body.inspectionDate || new Date(),
-      findings: body.findings || 'All safety & statutory registers inspected cleanly.',
-      closureStatus: body.closureStatus || 'Closed'
+      authority: body.authority,
+      location: body.location,
+      inspectorName: body.inspectorName,
+      inspectionDate: body.inspectionDate,
+      findings: body.findings,
+      closureStatus: body.closureStatus
     });
     await logAudit(req, 'LOG_LABOUR_INSPECTION', 'InspectionRecord', inspectionId, newIns);
     res.status(201).json(newIns);
@@ -336,111 +346,28 @@ router.post('/inspections', protect, adminOnly, async (req, res, next) => {
 // 12. COMPLIANCE DOCUMENTS REPOSITORY
 // ==========================================
 
-function escapePdfText(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)');
-}
+// Compliance files live in their own GridFS bucket. Unlike the 'uploads' bucket it has no public
+// /uploads URL, so every read goes through `protect` below.
+const complianceFiles = () => new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'compliance_files' });
+const docUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: uploadFileFilter,
+  limits: { fileSize: UPLOAD_MAX_BYTES, files: 1 }
+}).single('file');
 
-function generateCompliancePdfBinary(doc) {
-  const docId = escapePdfText(doc.docId || 'DOC-501');
-  const title = escapePdfText(doc.title || 'Statutory Compliance Record');
-  const category = escapePdfText(doc.category || 'Challan Receipt');
-  const uploadedBy = escapePdfText(doc.uploadedBy || 'Compliance Officer');
-  const wageMonth = escapePdfText(doc.wageMonth || 'Jul 2026');
-  const amount = escapePdfText(doc.totalAmount ? `INR ${Number(doc.totalAmount).toLocaleString()}` : 'INR 1,850,000');
-  const empCount = escapePdfText(doc.employeeCount ? `${doc.employeeCount} Employees` : '480 Staff Members');
-  const status = escapePdfText(doc.paymentStatus || 'Verified & Paid');
-  const challanNo = escapePdfText(doc.challanNumber || 'CHL-PF-202607');
+// First bytes each accepted type must start with, so a renamed file is rejected.
+const FILE_SIGNATURES = { '.pdf': '25504446', '.png': '89504e47', '.jpg': 'ffd8ff', '.jpeg': 'ffd8ff', '.webp': '52494646', '.doc': 'd0cf11e0', '.docx': '504b0304' };
+const DOC_CATEGORIES = ComplianceDocument.schema.path('category').enumValues;
 
-  const streamCommands = [
-    '0.95 0.96 0.98 rg',
-    '40 730 515 80 re f',
-    '0.39 0.40 0.95 RG',
-    '2 w',
-    '40 730 515 80 re S',
-    'BT',
-    '/F2 16 Tf',
-    '0.15 0.18 0.25 rg',
-    '60 775 Td',
-    '(STATUTORY COMPLIANCE DOCUMENT VAULT) Tj',
-    'ET',
-    'BT',
-    '/F1 10 Tf',
-    '0.40 0.45 0.55 rg',
-    '60 755 Td',
-    `(${title} - ${category}) Tj`,
-    'ET',
-    'BT',
-    '/F1 9 Tf',
-    '0.40 0.45 0.55 rg',
-    '60 738 Td',
-    `(Document ID: ${docId} | Uploaded By: ${uploadedBy}) Tj`,
-    'ET',
-    'BT',
-    '/F2 12 Tf',
-    '0.18 0.22 0.35 rg',
-    '60 690 Td',
-    '(Official Statutory Challan / Compliance Receipt) Tj',
-    'ET',
-    'BT',
-    '/F1 10 Tf',
-    '0.25 0.28 0.35 rg',
-    '60 665 Td',
-    `(Challan Ref: ${challanNo}    Wage Month: ${wageMonth}) Tj`,
-    'ET',
-    'BT',
-    '/F1 10 Tf',
-    '0.25 0.28 0.35 rg',
-    '60 645 Td',
-    `(Settled Amount: ${amount}    Coverage: ${empCount}) Tj`,
-    'ET',
-    'BT',
-    '/F1 10 Tf',
-    '0.25 0.28 0.35 rg',
-    '60 625 Td',
-    `(Payment Status: ${status}    Digital Seal: SHA-256 Validated) Tj`,
-    'ET',
-    'BT',
-    '/F1 9.5 Tf',
-    '0.25 0.28 0.35 rg',
-    '60 595 Td',
-    '(This document is an electronically generated and digitally validated statutory compliance record.) Tj',
-    'ET',
-    '0.85 0.88 0.92 RG',
-    '0.5 w',
-    '50 60 495 0 re S',
-    'BT',
-    '/F1 8 Tf',
-    '0.55 0.60 0.70 rg',
-    '50 45 Td',
-    '(HR Orbit Enterprise Systems - Confirmed & Digitally Verified) Tj',
-    'ET'
-  ].join('\n');
-
-  const streamLength = streamCommands.length;
-  const objects = [
-    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj',
-    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj',
-    '3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /MediaBox [0 0 595.28 841.89] /Contents 6 0 R >>\nendobj',
-    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj',
-    '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj',
-    `6 0 obj\n<< /Length ${streamLength} >>\nstream\n${streamCommands}\nendstream\nendobj`
-  ];
-
-  let offset = 9;
-  let pdfString = '%PDF-1.4\n';
-  const xref = ['xref', '0 7', '0000000000 65535 f '];
-  objects.forEach(obj => {
-    xref.push(String(offset).padStart(10, '0') + ' 00000 n ');
-    pdfString += obj + '\n';
-    offset = pdfString.length;
-  });
-  pdfString += xref.join('\n') + '\n' + 'trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n' + offset + '\n%%EOF';
-  return Buffer.from(pdfString, 'binary');
-}
+const findComplianceDoc = async (rawId) => {
+  const id = String(rawId || '').trim();
+  if (!id || id === 'undefined') return null;
+  if (mongoose.isValidObjectId(id)) {
+    const byId = await ComplianceDocument.findById(id);
+    if (byId) return byId;
+  }
+  return ComplianceDocument.findOne({ docId: id });
+};
 
 router.get('/documents', protect, async (req, res, next) => {
   try {
@@ -450,93 +377,54 @@ router.get('/documents', protect, async (req, res, next) => {
 
 router.get('/documents/:id', protect, async (req, res, next) => {
   try {
-    const rawId = req.params.id;
-    if (!rawId || rawId === 'undefined' || rawId.trim() === '') {
-      return res.status(400).json({ message: 'Compliance document ID is required' });
-    }
-
-    const trimmedId = rawId.trim();
-    let doc = null;
-    if (mongoose.isValidObjectId(trimmedId)) {
-      doc = await ComplianceDocument.findById(trimmedId);
-    }
-    if (!doc) {
-      doc = await ComplianceDocument.findOne({
-        $or: [
-          { docId: trimmedId },
-          { docId: new RegExp(`^${trimmedId}$`, 'i') },
-          { title: new RegExp(`^${trimmedId}$`, 'i') }
-        ]
-      });
-    }
-
-    if (!doc) {
-      return res.status(404).json({ message: `Compliance document file not found or invalid document ID: ${trimmedId}` });
-    }
-
+    const doc = await findComplianceDoc(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'Compliance document not found.' });
     res.json(doc);
   } catch (err) { next(err); }
 });
 
 router.get(['/documents/:id/preview', '/documents/:id/download', '/documents/:id/view'], protect, async (req, res, next) => {
   try {
-    const rawId = req.params.id;
-    if (!rawId || rawId === 'undefined' || rawId.trim() === '') {
-      return res.status(400).json({ message: 'Compliance document ID is required' });
-    }
+    const doc = await findComplianceDoc(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'Compliance document not found.' });
+    if (!doc.fileId) return res.status(404).json({ message: 'No file was uploaded for this record.' });
 
-    const trimmedId = rawId.trim();
-    let doc = null;
-    if (mongoose.isValidObjectId(trimmedId)) {
-      doc = await ComplianceDocument.findById(trimmedId);
-    }
-    if (!doc) {
-      doc = await ComplianceDocument.findOne({
-        $or: [
-          { docId: trimmedId },
-          { docId: new RegExp(`^${trimmedId}$`, 'i') },
-          { title: new RegExp(`^${trimmedId}$`, 'i') }
-        ]
-      });
-    }
-
-    if (!doc) {
-      return res.status(404).json({ message: `Compliance document file not found or invalid document ID: ${trimmedId}` });
-    }
-
-    const isDownload = req.path.includes('/download');
-    const safeTitle = (doc.title || 'compliance_document').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `${safeTitle}.pdf`;
-
-    // Check if physical file exists on disk
-    if (doc.fileUrl) {
-      const cleanPath = doc.fileUrl.startsWith('/') ? doc.fileUrl.slice(1) : doc.fileUrl;
-      const physicalPath = path.join(__dirname, '..', cleanPath);
-      if (fs.existsSync(physicalPath)) {
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${filename}"`);
-        return res.sendFile(physicalPath);
-      }
-    }
-
-    // Dynamic binary PDF fallback
-    const pdfBuffer = generateCompliancePdfBinary(doc);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${filename}"`);
-    return res.send(pdfBuffer);
+    setSafeHeaders(res, doc.fileName);
+    const inline = !req.path.endsWith('/download') && /\.(pdf|jpe?g|png|webp)$/i.test(doc.fileName);
+    res.set('Content-Disposition', `${inline ? 'inline' : 'attachment'}; filename="${doc.fileName.replace(/[^\w.-]/g, '_')}"`);
+    res.set('Cache-Control', 'private, no-store');
+    complianceFiles().openDownloadStream(doc.fileId)
+      .on('error', () => res.headersSent ? res.end() : res.status(404).json({ message: 'Stored file is missing.' }))
+      .pipe(res);
   } catch (err) { next(err); }
 });
 
-router.post('/documents', protect, adminOnly, async (req, res, next) => {
+router.post('/documents', protect, adminOnly, docUpload, async (req, res, next) => {
   try {
-    const body = req.body;
+    const title = String(req.body.title || '').trim();
+    const { category } = req.body;
+    const file = req.file;
+    if (!title) return res.status(400).json({ message: 'Document title is required.' });
+    if (!DOC_CATEGORIES.includes(category)) return res.status(400).json({ message: 'Choose a document category.' });
+    if (!file) return res.status(400).json({ message: 'Attach the document file (PDF, DOC, DOCX, JPG, PNG or WEBP, up to 4 MB).' });
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!file.buffer.subarray(0, 4).toString('hex').startsWith(FILE_SIGNATURES[ext])) {
+      return res.status(400).json({ message: 'The file content does not match its type. Upload the original file.' });
+    }
+
     const docId = 'DOC-COMP-' + Date.now();
+    const fileName = path.basename(file.originalname).replace(/[^\w.\- ]/g, '_');
+    const stream = complianceFiles().openUploadStream(`${docId}${ext}`);
+    await new Promise((resolve, reject) => stream.on('finish', resolve).on('error', reject).end(file.buffer));
     const newDoc = await ComplianceDocument.create({
       docId,
-      title: body.title,
-      category: body.category || 'Challan Receipt',
-      fileUrl: body.fileUrl || '/uploads/compliance/sample.pdf',
-      uploadedBy: req.user?.name || 'Compliance Officer'
+      title,
+      category,
+      fileId: stream.id,
+      fileName,
+      fileSize: file.size,
+      fileUrl: `/api/compliance/documents/${docId}/download`,
+      uploadedBy: req.user.name
     });
     await logAudit(req, 'UPLOAD_COMPLIANCE_DOC', 'ComplianceDocument', docId, newDoc);
     res.status(201).json(newDoc);

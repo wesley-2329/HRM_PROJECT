@@ -16,16 +16,16 @@ const ExitModule = ({ searchQuery = '' }) => {
 
   // Data States
   const [kpis, setKpis] = useState({
-    activeExitRequests: 6,
-    newResignations: 2,
-    pendingManagerApprovals: 2,
-    employeesInNoticePeriod: 3,
-    pendingClearances: 4,
-    pendingFF: 2,
-    exitInterviewsPending: 1,
-    noDuePending: 3,
-    completedExits: 18
+    activeExitRequests: 0,
+    newResignations: 0,
+    pendingReviews: 0,
+    employeesInNoticePeriod: 0,
+    clearanceInProgress: 0,
+    pendingClearances: 0,
+    pendingFF: 0,
+    completedExits: 0
   });
+  const [exitReasons, setExitReasons] = useState([]);
 
   const [resignations, setResignations] = useState([]);
 
@@ -49,9 +49,9 @@ const ExitModule = ({ searchQuery = '' }) => {
 
   // Form Inputs
   const [newResignation, setNewResignation] = useState({ reasonCategory: 'Career Growth', proposedLwd: '', reasonDetails: '' });
-  const [newInterview, setNewInterview] = useState({ exitId: 'EXT-1001', employeeName: 'Anil Kumar', overallSatisfactionScore: 4, primaryReason: 'Career Growth', feedbackComments: '' });
-  const [newFfs, setNewFfs] = useState({ exitId: 'EXT-1001', employeeId: 'EMP-1004', employeeName: 'Anil Kumar', pendingSalary: 45000, leaveEncashmentAmount: 32000, gratuityAmount: 125000, noticePayRecovery: 0, loanRecovery: 0 });
-  const [selectedExitCaseId, setSelectedExitCaseId] = useState('EXT-1001');
+  const [newInterview, setNewInterview] = useState({ exitId: '', employeeId: '', employeeName: '', overallSatisfactionScore: '', primaryReason: '', feedbackComments: '' });
+  const [newFfs, setNewFfs] = useState({ exitId: '', employeeId: '', employeeName: '', pendingSalary: '', leaveEncashmentAmount: '', gratuityAmount: '', noticePayRecovery: 0, loanRecovery: 0 });
+  const [selectedExitCaseId, setSelectedExitCaseId] = useState('');
 
   // Keep the F&F form's exit case in sync with the dropdown: when the loaded exit cases don't include the
   // current one, the <select> shows the first option, so the submitted case must match it (Bug 041)
@@ -62,15 +62,7 @@ const ExitModule = ({ searchQuery = '' }) => {
     }
   }, [resignations]);
 
-  const selectedExitCase = resignations.find((r) => r.exitId === selectedExitCaseId) || resignations[0] || {
-    exitId: 'EXT-1001',
-    employeeId: 'EMP-1004',
-    employeeName: 'Anil Kumar',
-    department: 'Engineering',
-    designation: 'Software Engineer',
-    proposedLwd: '2026-10-31',
-    approvedLwd: '2026-10-31'
-  };
+  const selectedExitCase = resignations.find((r) => r.exitId === selectedExitCaseId) || resignations[0];
 
   useEffect(() => {
     fetchData();
@@ -81,6 +73,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       if (activeTab === 'dashboard') {
         const res = await api.get('/exit/dashboard');
         if (res.data && res.data.kpis) setKpis(res.data.kpis);
+        setExitReasons(res.data?.charts?.exitReasons || []);
       } else if (activeTab === 'ess-portal' || activeTab === 'hr-exits') {
         const res = await api.get('/exit/resignations');
         if (Array.isArray(res.data)) setResignations(res.data);
@@ -94,10 +87,12 @@ const ExitModule = ({ searchQuery = '' }) => {
         const res = await api.get('/exit/assets');
         if (res.data && res.data.assets) setAssets(res.data.assets);
       } else if (activeTab === 'interview') {
-        const res = await api.get('/exit/interview');
+        const [res, exitsRes] = await Promise.all([api.get('/exit/interview'), api.get('/exit/resignations')]);
         if (Array.isArray(res.data)) setInterviews(res.data);
+        if (Array.isArray(exitsRes.data)) setResignations(exitsRes.data);
       } else if (activeTab === 'settlement') {
-        const res = await api.get('/exit/settlement');
+        const [res, exitsRes] = await Promise.all([api.get('/exit/settlement'), api.get('/exit/resignations')]);
+        if (Array.isArray(exitsRes.data)) setResignations(exitsRes.data);
         if (Array.isArray(res.data)) {
           const seen = new Set();
           const deduped = [];
@@ -318,26 +313,24 @@ const ExitModule = ({ searchQuery = '' }) => {
           </div>
 
           {/* Attrition & Exit Reason Analytics */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))', gap: '20px', marginBottom: '24px' }}>
             <div className="card" style={{ padding: '20px' }}>
               <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Top Primary Resignation Reasons</span>
+                <span>Resignation Reasons</span>
                 <i className="fa-solid fa-chart-pie" style={{ color: 'hsl(var(--primary))' }}></i>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-                {[
-                  { reason: 'Career Growth & Advancement', pct: 45, color: '#6366f1' },
-                  { reason: 'Higher Compensation Package', pct: 25, color: '#3b82f6' },
-                  { reason: 'Personal & Relocation Reasons', pct: 15, color: '#ec4899' },
-                  { reason: 'Work-Life Balance / Hybrid Flexibility', pct: 15, color: '#10b981' }
-                ].map((item) => (
+                {exitReasons.length === 0 && (
+                  <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>No resignations recorded yet.</span>
+                )}
+                {exitReasons.map((item) => (
                   <div key={item.reason}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '4px', fontWeight: 600 }}>
                       <span>{item.reason}</span>
-                      <span>{item.pct}%</span>
+                      <span>{item.count} ({item.pct}%)</span>
                     </div>
                     <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${item.pct}%`, height: '100%', background: item.color, borderRadius: '4px' }}></div>
+                      <div style={{ width: `${item.pct}%`, height: '100%', background: '#6366f1', borderRadius: '4px' }}></div>
                     </div>
                   </div>
                 ))}
@@ -351,10 +344,10 @@ const ExitModule = ({ searchQuery = '' }) => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                 {[
-                  { stage: '1. Resignation Submission', count: '2 Requests', desc: 'Employee proposed LWD & reason details', icon: 'fa-paper-plane' },
-                  { stage: '2. Manager & HR Review', count: '1 Pending', desc: 'Retention discussion & LWD confirmation', icon: 'fa-user-check' },
-                  { stage: '3. Department Clearances', count: '4 In Progress', desc: 'IT, Admin, Security, Finance checklists', icon: 'fa-shield' },
-                  { stage: '4. Exit Interview & F&F', count: '2 Ready', desc: 'Settlement calculation & No Due Certificate', icon: 'fa-calculator' }
+                  { stage: '1. Resignation Submission', count: `${kpis.newResignations} submitted`, desc: 'Employee proposed LWD & reason details', icon: 'fa-paper-plane' },
+                  { stage: '2. Manager & HR Review', count: `${kpis.pendingReviews} in review`, desc: 'Retention discussion & LWD confirmation', icon: 'fa-user-check' },
+                  { stage: '3. Department Clearances', count: `${kpis.clearanceInProgress} in progress`, desc: 'IT, Admin, Security, Finance checklists', icon: 'fa-shield' },
+                  { stage: '4. Exit Interview & F&F', count: `${kpis.pendingFF} pending`, desc: 'Settlement calculation & No Due Certificate', icon: 'fa-calculator' }
                 ].map((s) => (
                   <div key={s.stage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -732,7 +725,10 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* ======================================================== */}
       {/* 8. NO DUE CERTIFICATE & EXIT DOCUMENTS VIEWS             */}
       {/* ======================================================== */}
-      {(activeTab === 'no-due' || activeTab === 'documents') && (
+      {(activeTab === 'no-due' || activeTab === 'documents') && !selectedExitCase && (
+        <div className="card p-5" style={{ color: 'hsl(var(--text-secondary))' }}>No exit cases yet. Documents are prepared once a resignation is on record.</div>
+      )}
+      {(activeTab === 'no-due' || activeTab === 'documents') && selectedExitCase && (
         <div>
           {/* Target Exit Case Selector Bar */}
           <div className="card p-4 mb-4" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.2)' }}>
@@ -769,8 +765,8 @@ const ExitModule = ({ searchQuery = '' }) => {
                   <span className="badge badge-success">Fully Cleared</span>
                 </div>
                 <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem' }}>Employee: <strong>{selectedExitCase.employeeName} ({selectedExitCase.employeeId})</strong></p>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Department: <strong>{selectedExitCase.department}</strong> | Designation: <strong>{selectedExitCase.designation || 'Software Engineer'}</strong></p>
-                <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Last Working Day: <strong>{selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31'}</strong> (All 8 clearances verified)</p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Department: <strong>{selectedExitCase.department}</strong> | Designation: <strong>{selectedExitCase.designation || '—'}</strong></p>
+                <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>Last Working Day: <strong>{selectedExitCase.approvedLwd || selectedExitCase.proposedLwd}</strong> (All 8 clearances verified)</p>
                 <button
                   id="btn-download-ndc-pdf"
                   className="btn btn-primary"
@@ -786,8 +782,8 @@ const ExitModule = ({ searchQuery = '' }) => {
                         { label: 'Employee Name', value: selectedExitCase.employeeName },
                         { label: 'Employee ID', value: selectedExitCase.employeeId },
                         { label: 'Department', value: selectedExitCase.department },
-                        { label: 'Designation', value: selectedExitCase.designation || 'Software Engineer' },
-                        { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31' },
+                        { label: 'Designation', value: selectedExitCase.designation || '—' },
+                        { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd },
                         { label: 'Clearance Status', value: 'Fully Cleared & Authorized' },
                         { label: 'Signatory', value: 'Head of HR Governance' }
                       ],
@@ -853,8 +849,8 @@ const ExitModule = ({ searchQuery = '' }) => {
                             { label: 'Employee Name', value: selectedExitCase.employeeName },
                             { label: 'Employee ID', value: selectedExitCase.employeeId },
                             { label: 'Department', value: selectedExitCase.department },
-                            { label: 'Designation', value: selectedExitCase.designation || 'Specialist' },
-                            { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd || '2026-10-31' }
+                            { label: 'Designation', value: selectedExitCase.designation || '—' },
+                            { label: 'Last Working Day', value: selectedExitCase.approvedLwd || selectedExitCase.proposedLwd }
                           ],
                           sections: [
                             {
@@ -970,7 +966,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* Resignation Modal */}
       {showResignModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Submit Formal Resignation</h3>
             <form onSubmit={handleCreateResignation}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -1004,15 +1000,33 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* Exit Interview Modal */}
       {showInterviewModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Record Exit Interview Feedback</h3>
             <form onSubmit={handleCreateInterview}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Overall Satisfaction Score (1-5)</label>
+                <label htmlFor="exit-interview-case" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Exit Case *</label>
+                <select
+                  id="exit-interview-case"
+                  className="form-control"
+                  value={newInterview.exitId}
+                  onChange={(e) => {
+                    const sel = resignations.find((r) => r.exitId === e.target.value);
+                    setNewInterview({ ...newInterview, exitId: e.target.value, employeeId: sel?.employeeId || '', employeeName: sel?.employeeName || '' });
+                  }}
+                  required
+                >
+                  <option value="">Select an exit case</option>
+                  {resignations.map((r) => (
+                    <option key={r.exitId} value={r.exitId}>{r.employeeName} ({r.employeeId}) - {r.exitId}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Overall Satisfaction Score (1-5) *</label>
                 <input type="number" min="1" max="5" className="form-control" value={newInterview.overallSatisfactionScore} onChange={(e) => setNewInterview({ ...newInterview, overallSatisfactionScore: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Primary Reason</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Primary Reason *</label>
                 <input type="text" className="form-control" value={newInterview.primaryReason} onChange={(e) => setNewInterview({ ...newInterview, primaryReason: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
@@ -1031,7 +1045,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       {/* F&F Settlement Modal */}
       {showFfsModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Calculate Full & Final (F&F) Settlement</h3>
             <form onSubmit={handleCreateFfs}>
               <div style={{ marginBottom: '14px' }}>

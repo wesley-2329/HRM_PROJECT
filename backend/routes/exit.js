@@ -30,6 +30,7 @@ const ExitNotificationLog = require('../models/ExitNotificationLog');
 const ExitAuditLog = require('../models/ExitAuditLog');
 
 const { protect, adminOnly } = require('../middleware/auth');
+const { requireFields } = require('../utils/validate');
 
 // Audit logger helper
 const logAudit = async (req, action, entityType, entityId, changes) => {
@@ -55,38 +56,29 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 router.get('/dashboard', protect, async (req, res, next) => {
   try {
-    const exits = await EmployeeExit.find();
-    const activeExits = exits.filter(e => e.status !== 'Separated' && e.status !== 'Withdrawn').length || 6;
-    const newResignations = exits.filter(e => e.status === 'Submitted').length || 2;
-    const noticeActive = exits.filter(e => e.status === 'Notice Active').length || 3;
-    const completedExits = exits.filter(e => e.status === 'Separated').length || 18;
+    const [exits, pendingClearances] = await Promise.all([
+      EmployeeExit.find().lean(),
+      DepartmentClearance.countDocuments({ clearanceStatus: { $in: ['Pending', 'On Hold'] } })
+    ]);
+    const withStatus = (...statuses) => exits.filter(e => statuses.includes(e.status)).length;
+    const reasonCounts = {};
+    for (const e of exits) reasonCounts[e.reasonCategory] = (reasonCounts[e.reasonCategory] || 0) + 1;
 
     res.json({
       kpis: {
-        activeExitRequests: activeExits,
-        newResignations,
-        pendingManagerApprovals: 2,
-        employeesInNoticePeriod: noticeActive,
-        pendingClearances: 4,
-        pendingFF: 2,
-        exitInterviewsPending: 1,
-        noDuePending: 3,
-        completedExits
+        activeExitRequests: exits.filter(e => e.status !== 'Separated' && e.status !== 'Withdrawn').length,
+        newResignations: withStatus('Submitted'),
+        pendingReviews: withStatus('Manager Review', 'HR Review'),
+        employeesInNoticePeriod: withStatus('Notice Active'),
+        clearanceInProgress: withStatus('Clearance In Progress'),
+        pendingClearances,
+        pendingFF: withStatus('F&F Pending'),
+        completedExits: withStatus('Separated')
       },
       charts: {
-        monthlyAttrition: [
-          { month: 'Mar', count: 3 },
-          { month: 'Apr', count: 4 },
-          { month: 'May', count: 2 },
-          { month: 'Jun', count: 5 },
-          { month: 'Jul', count: 4 }
-        ],
-        exitReasons: [
-          { reason: 'Career Growth', pct: 45 },
-          { reason: 'Higher Compensation', pct: 25 },
-          { reason: 'Personal / Relocation', pct: 15 },
-          { reason: 'Work-Life Balance', pct: 15 }
-        ]
+        exitReasons: Object.entries(reasonCounts)
+          .map(([reason, count]) => ({ reason, count, pct: Math.round(count / exits.length * 100) }))
+          .sort((x, y) => y.count - x.count)
       }
     });
   } catch (err) { next(err); }
@@ -105,17 +97,19 @@ router.get('/resignations', protect, async (req, res, next) => {
 router.post('/resignations', protect, async (req, res, next) => {
   try {
     const body = req.body;
+    requireFields(body, { proposedLwd: 'Proposed last working day', reasonCategory: 'Reason' });
     const exitId = 'EXT-' + Math.floor(Math.random() * 9000 + 1000);
+    // A resignation is always the signed-in person's own; their details come from their employee record.
     const newExit = await EmployeeExit.create({
       exitId,
-      employeeId: req.user?.id || body.employeeId || 'EMP-1004',
-      employeeName: req.user?.name || body.employeeName || 'Anil Kumar',
-      department: body.department || 'Engineering',
-      designation: body.designation || 'Software Engineer',
-      joiningDate: body.joiningDate || new Date('2022-01-15'),
+      employeeId: req.user.id,
+      employeeName: req.user.name,
+      department: req.user.dept,
+      designation: req.user.designation || '',
+      joiningDate: req.user.joined,
       resignationDate: new Date(),
-      proposedLwd: body.proposedLwd || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-      reasonCategory: body.reasonCategory || 'Career Growth',
+      proposedLwd: body.proposedLwd,
+      reasonCategory: body.reasonCategory,
       status: 'Submitted'
     });
 
@@ -206,6 +200,7 @@ router.post('/interview', protect, async (req, res, next) => {
     const employeeName = req.user.role === 'hr' ? body.employeeName : req.user.name;
     const score = Number(body.overallSatisfactionScore);
     if (!body.exitId || !employeeId) return res.status(400).json({ message: 'Exit ID and employee are required.' });
+    requireFields(body, { primaryReason: 'Primary reason' });
     if (!(score >= 1 && score <= 5)) return res.status(400).json({ message: 'Overall satisfaction must be between 1 and 5.' });
     const interviewId = 'INT-' + Date.now();
     const newInterview = await ExitInterview.create({
@@ -214,7 +209,7 @@ router.post('/interview', protect, async (req, res, next) => {
       employeeId,
       employeeName,
       overallSatisfactionScore: score,
-      primaryReason: body.primaryReason || 'Career Growth',
+      primaryReason: body.primaryReason,
       feedbackComments: body.feedbackComments || '',
       status: 'Completed'
     });
@@ -287,6 +282,8 @@ router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) 
     };
 
     const existed = await FullFinalSettlement.findOne({ exitId });
+    const exitCase = await EmployeeExit.findOne({ exitId });
+    if (!exitCase) return res.status(404).json({ message: 'Exit case not found. Choose an existing exit case.' });
 
     // Bug 041: single atomic upsert instead of find-then-create, so one exit case maps to one settlement
     let ffs = await FullFinalSettlement.findOneAndUpdate(
@@ -295,9 +292,9 @@ router.post('/settlement/calculate', protect, adminOnly, async (req, res, next) 
         $set: calculated,
         $setOnInsert: {
           settlementId: 'FFS-' + Date.now(),
-          employeeId: body.employeeId || 'EMP-1004',
-          employeeName: body.employeeName || 'Anil Kumar',
-          lastWorkingDay: body.lastWorkingDay || new Date()
+          employeeId: exitCase.employeeId,
+          employeeName: exitCase.employeeName,
+          lastWorkingDay: body.lastWorkingDay || exitCase.approvedLwd || exitCase.proposedLwd
         }
       },
       { upsert: true, new: true, sort: { createdAt: 1 } }

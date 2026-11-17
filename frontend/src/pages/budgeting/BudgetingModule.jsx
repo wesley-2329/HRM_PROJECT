@@ -166,10 +166,16 @@ const BudgetingModule = ({ searchQuery = '' }) => {
   };
 
   // Form Inputs
-  const [newBudget, setNewBudget] = useState({ department: 'Engineering', costCenter: 'CC-ENG-101', budgetCategory: 'Manpower', proposedBudget: 1000000, remarks: '' });
-  const [newRecExpense, setNewRecExpense] = useState({ expenseCategory: 'Job Portal Subscription', vendorName: 'Naukri.com Enterprise', invoiceNumber: '', amount: 100000, taxAmount: 18000, hiringSource: 'Portal' });
-  const [newWelExpense, setNewWelExpense] = useState({ welfareActivity: '', welfareCategory: 'Food & Canteen', vendorName: '', invoiceAmount: 50000, taxAmount: 9000, beneficiariesCount: 50 });
-  const [newManpower, setNewManpower] = useState({ department: 'Engineering', designation: 'Software Engineer', currentHeadcount: 10, approvedHeadcount: 15, proposedHeadcount: 15, avgMonthlySalary: 90000 });
+  // Indian financial year (April to March) that today falls in; shown in the forms, where it can be changed.
+  const currentFY = () => {
+    const d = new Date();
+    const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+    return `FY ${y}-${y + 1}`;
+  };
+  const [newBudget, setNewBudget] = useState({ financialYear: currentFY(), department: 'Engineering', costCenter: '', budgetCategory: 'Manpower', proposedBudget: '', remarks: '' });
+  const [newRecExpense, setNewRecExpense] = useState({ expenseCategory: 'Job Portal Subscription', vendorName: '', invoiceNumber: '', expenseDate: '', amount: '', taxAmount: '', paymentStatus: '' });
+  const [newWelExpense, setNewWelExpense] = useState({ welfareActivity: '', welfareCategory: 'Food & Canteen', vendorName: '', expenseDate: '', invoiceAmount: '', taxAmount: '', beneficiariesCount: '', paymentStatus: '' });
+  const [newManpower, setNewManpower] = useState({ financialYear: currentFY(), department: '', costCenter: '', designation: '', currentHeadcount: '', approvedHeadcount: '', proposedHeadcount: '', avgMonthlySalary: '' });
 
   useEffect(() => {
     fetchData();
@@ -1770,9 +1776,13 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* Create Budget Modal */}
       {showPlanningModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Propose New Department Budget</h3>
             <form onSubmit={handleCreateBudget}>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Financial Year *</label>
+                <input type="text" className="form-control" value={newBudget.financialYear} onChange={(e) => setNewBudget({ ...newBudget, financialYear: e.target.value })} required />
+              </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Department</label>
                 <select className="form-control" value={newBudget.department} onChange={(e) => setNewBudget({ ...newBudget, department: e.target.value })}>
@@ -1798,8 +1808,8 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Proposed Amount (₹)</label>
-                <input type="number" className="form-control" value={newBudget.proposedBudget} onChange={(e) => setNewBudget({ ...newBudget, proposedBudget: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Proposed Amount (₹) *</label>
+                <input type="number" min="0" className="form-control" value={newBudget.proposedBudget} onChange={(e) => setNewBudget({ ...newBudget, proposedBudget: e.target.value })} required />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPlanningModal(false)}>Cancel</button>
@@ -1813,7 +1823,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* Recruitment Expense Modal */}
       {showRecruitmentModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Record Recruitment Expense</h3>
             <form onSubmit={handleCreateRecExpense}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -1828,12 +1838,29 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Vendor Name</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Vendor Name *</label>
                 <input type="text" className="form-control" value={newRecExpense.vendorName} onChange={(e) => setNewRecExpense({ ...newRecExpense, vendorName: e.target.value })} required />
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Amount (₹)</label>
-                <input type="number" className="form-control" value={newRecExpense.amount} onChange={(e) => setNewRecExpense({ ...newRecExpense, amount: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Amount (₹) *</label>
+                <input type="number" min="0" className="form-control" value={newRecExpense.amount} onChange={(e) => setNewRecExpense({ ...newRecExpense, amount: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Tax Amount (₹)</label>
+                <input type="number" min="0" className="form-control" placeholder="0" value={newRecExpense.taxAmount} onChange={(e) => setNewRecExpense({ ...newRecExpense, taxAmount: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Expense Date *</label>
+                <input type="date" className="form-control" value={newRecExpense.expenseDate} onChange={(e) => setNewRecExpense({ ...newRecExpense, expenseDate: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Payment Status *</label>
+                <select className="form-control" value={newRecExpense.paymentStatus} onChange={(e) => setNewRecExpense({ ...newRecExpense, paymentStatus: e.target.value })} required>
+                  <option value="">Select status</option>
+                  <option>Pending</option>
+                  <option>Approved</option>
+                  <option>Paid</option>
+                </select>
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowRecruitmentModal(false)}>Cancel</button>
@@ -1847,7 +1874,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* Welfare Expense Modal */}
       {showWelfareModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Employee Welfare Expense</h3>
             <form onSubmit={handleCreateWelfareExpense}>
               <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -1865,8 +1892,29 @@ const BudgetingModule = ({ searchQuery = '' }) => {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Invoice Amount (₹)</label>
-                <input type="number" className="form-control" value={newWelExpense.invoiceAmount} onChange={(e) => setNewWelExpense({ ...newWelExpense, invoiceAmount: e.target.value })} required />
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Invoice Amount (₹) *</label>
+                <input type="number" min="0" className="form-control" value={newWelExpense.invoiceAmount} onChange={(e) => setNewWelExpense({ ...newWelExpense, invoiceAmount: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Tax Amount (₹)</label>
+                <input type="number" min="0" className="form-control" placeholder="0" value={newWelExpense.taxAmount} onChange={(e) => setNewWelExpense({ ...newWelExpense, taxAmount: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Employees Benefited *</label>
+                <input type="number" className="form-control" value={newWelExpense.beneficiariesCount} onChange={(e) => setNewWelExpense({ ...newWelExpense, beneficiariesCount: e.target.value })} min="0" required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Expense Date *</label>
+                <input type="date" className="form-control" value={newWelExpense.expenseDate} onChange={(e) => setNewWelExpense({ ...newWelExpense, expenseDate: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Payment Status *</label>
+                <select className="form-control" value={newWelExpense.paymentStatus} onChange={(e) => setNewWelExpense({ ...newWelExpense, paymentStatus: e.target.value })} required>
+                  <option value="">Select status</option>
+                  <option>Pending</option>
+                  <option>Approved</option>
+                  <option>Paid</option>
+                </select>
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowWelfareModal(false)}>Cancel</button>
@@ -1880,9 +1928,13 @@ const BudgetingModule = ({ searchQuery = '' }) => {
       {/* Manpower Modal */}
       {showManpowerModal && (
         <div className="modal-backdrop active" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div className="modal-content" style={{ width: '500px', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+          <div className="modal-content" style={{ width: '500px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Submit Headcount & Manpower Budget</h3>
             <form onSubmit={handleCreateManpower}>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Financial Year *</label>
+                <input type="text" className="form-control" value={newManpower.financialYear} onChange={(e) => setNewManpower({ ...newManpower, financialYear: e.target.value })} required />
+              </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Department</label>
                 <input type="text" className="form-control" value={newManpower.department} onChange={(e) => setNewManpower({ ...newManpower, department: e.target.value })} required />
@@ -1890,6 +1942,14 @@ const BudgetingModule = ({ searchQuery = '' }) => {
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Designation Target</label>
                 <input type="text" className="form-control" value={newManpower.designation} onChange={(e) => setNewManpower({ ...newManpower, designation: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Cost Center *</label>
+                <input type="text" className="form-control" value={newManpower.costCenter} onChange={(e) => setNewManpower({ ...newManpower, costCenter: e.target.value })} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Proposed Headcount *</label>
+                <input type="number" className="form-control" value={newManpower.proposedHeadcount} onChange={(e) => setNewManpower({ ...newManpower, proposedHeadcount: e.target.value })} min="0" required />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                 <div>

@@ -16,6 +16,7 @@ const SalaryRevisionRequest = require('../models/SalaryRevisionRequest');
 const Employee = require('../models/Employee');
 const Counter = require('../models/Counter');
 const { protect, adminOnly } = require('../middleware/auth');
+const { requireFields } = require('../utils/validate');
 
 // HR, or the employee's reporting manager, may act on that employee's performance records.
 const canManage = async (req, employeeId) => {
@@ -60,16 +61,16 @@ router.get('/dashboard', protect, async (req, res, next) => {
     const promotions = await PromotionRequest.find();
     const increments = await SalaryRevisionRequest.find();
 
-    const activeCyclesCount = cycles.filter(c => c.status === 'Active').length || 1;
-    const completedReviewsCount = annualReviews.filter(r => ['Published & Acknowledged', 'Completed'].includes(r.status)).length || 14;
-    const pendingReviewsCount = annualReviews.filter(r => !['Published & Acknowledged', 'Completed'].includes(r.status)).length || 6;
-    const approvedPromotionsCount = promotions.filter(p => p.status === 'Approved').length || 4;
-    const approvedIncrementsCount = increments.filter(i => i.status === 'Approved').length || 18;
-    const activePipsCount = pips.filter(p => p.outcome === 'In Progress').length || 2;
+    const activeCyclesCount = cycles.filter(c => c.status === 'Active').length;
+    const completedReviewsCount = annualReviews.filter(r => ['Published & Acknowledged', 'Completed'].includes(r.status)).length;
+    const pendingReviewsCount = annualReviews.filter(r => !['Published & Acknowledged', 'Completed'].includes(r.status)).length;
+    const approvedPromotionsCount = promotions.filter(p => p.status === 'Approved').length;
+    const approvedIncrementsCount = increments.filter(i => i.status === 'Approved').length;
+    const activePipsCount = pips.filter(p => p.outcome === 'In Progress').length;
 
     const avgPerfScore = annualReviews.length > 0
-      ? Math.round(annualReviews.reduce((acc, curr) => acc + (curr.calculatedOverallScore || 85), 0) / annualReviews.length)
-      : 86.5;
+      ? Math.round(annualReviews.reduce((acc, curr) => acc + (curr.calculatedOverallScore || 0), 0) / annualReviews.length)
+      : null;
 
     res.json({
       kpis: {
@@ -82,30 +83,11 @@ router.get('/dashboard', protect, async (req, res, next) => {
         avgPerfScore
       },
       performanceDistribution: [
-        { category: 'Outstanding (5.0)', count: annualReviews.filter(r => r.performanceCategory === 'Outstanding').length || 5 },
-        { category: 'Exceeds Expectations (4.0 - 4.9)', count: annualReviews.filter(r => r.performanceCategory === 'Exceeds Expectations').length || 12 },
-        { category: 'Meets Expectations (3.0 - 3.9)', count: annualReviews.filter(r => r.performanceCategory === 'Meets Expectations').length || 8 },
-        { category: 'Needs Improvement (2.0 - 2.9)', count: annualReviews.filter(r => r.performanceCategory === 'Needs Improvement').length || 2 },
-        { category: 'Unsatisfactory (< 2.0)', count: annualReviews.filter(r => r.performanceCategory === 'Unsatisfactory').length || 1 }
-      ],
-      departmentPerformance: [
-        { dept: 'Engineering', avgScore: 88, completionPct: 92 },
-        { dept: 'Human Resources', avgScore: 85, completionPct: 100 },
-        { dept: 'Finance', avgScore: 84, completionPct: 95 },
-        { dept: 'Sales & Marketing', avgScore: 87, completionPct: 88 },
-        { dept: 'Product Design', avgScore: 90, completionPct: 100 }
-      ],
-      promotionTrend: [
-        { year: '2023', count: 8 },
-        { year: '2024', count: 12 },
-        { year: '2025', count: 15 },
-        { year: '2026', count: 18 }
-      ],
-      incrementTrend: [
-        { year: '2023', avgIncrementPct: 9.5 },
-        { year: '2024', avgIncrementPct: 10.2 },
-        { year: '2025', avgIncrementPct: 11.0 },
-        { year: '2026', avgIncrementPct: 12.5 }
+        { category: 'Outstanding (5.0)', count: annualReviews.filter(r => r.performanceCategory === 'Outstanding').length },
+        { category: 'Exceeds Expectations (4.0 - 4.9)', count: annualReviews.filter(r => r.performanceCategory === 'Exceeds Expectations').length },
+        { category: 'Meets Expectations (3.0 - 3.9)', count: annualReviews.filter(r => r.performanceCategory === 'Meets Expectations').length },
+        { category: 'Needs Improvement (2.0 - 2.9)', count: annualReviews.filter(r => r.performanceCategory === 'Needs Improvement').length },
+        { category: 'Unsatisfactory (< 2.0)', count: annualReviews.filter(r => r.performanceCategory === 'Unsatisfactory').length }
       ]
     });
   } catch (err) { next(err); }
@@ -686,6 +668,7 @@ router.post('/promotions', protect, async (req, res, next) => {
 
     const effectiveDate = req.body.effectiveDate ? new Date(req.body.effectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+    requireFields(req.body, { proposedDesignation: 'Proposed designation', proposedGrade: 'Proposed grade', justification: 'Business justification' });
     const newPromotion = new PromotionRequest({
       ...req.body,
       employeeId,
@@ -693,16 +676,16 @@ router.post('/promotions', protect, async (req, res, next) => {
       currentDepartment,
       currentDesignation,
       currentGrade,
-      proposedDesignation: proposedDesignation || 'Senior Specialist',
-      proposedGrade: proposedGrade || 'Grade C',
+      proposedDesignation,
+      proposedGrade,
       effectiveDate,
-      justification: req.body.justification || 'Exemplary performance appraisal rating and organizational leadership recommendation.',
+      justification: req.body.justification,
       requestId,
       status: req.body.status || 'Pending Verification',
       approvalHistory: [{
         status: 'Submitted',
         actorName: req.user?.name || 'Reporting Manager',
-        comments: req.body.justification || 'Performance recommendation',
+        comments: req.body.justification,
         timestamp: new Date()
       }]
     });
@@ -845,8 +828,10 @@ router.post('/increments', protect, async (req, res, next) => {
     }
 
     const effectiveDate = req.body.effectiveDate ? new Date(req.body.effectiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const reason = req.body.reason || req.body.justification || 'Performance appraisal merit increment';
-    const currentCtc = Number(req.body.currentCtc) || 1200000;
+    const reason = req.body.reason || req.body.justification;
+    const currentCtc = Number(req.body.currentCtc);
+    if (!(currentCtc > 0)) return res.status(400).json({ message: 'Please fill in: Current CTC.' });
+    requireFields({ reason }, { reason: 'Reason for the increment' });
     const incrementAmount = Number(req.body.incrementAmount) || Math.round((currentCtc * incrementPercentage) / 100);
 
     const newInc = new SalaryRevisionRequest({
@@ -998,9 +983,8 @@ router.post('/pip', protect, async (req, res, next) => {
     const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
     const durationDays = Number(req.body.durationDays) || 60;
     const endDate = req.body.endDate ? new Date(req.body.endDate) : new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
-    const performanceGap = req.body.performanceGap || 'Identified performance criteria gaps requiring structured development.';
-    const expectedPerformance = req.body.expectedPerformance || 'Achieve performance benchmark metrics aligned with department KPIs.';
-    const actionPlan = req.body.actionPlan || 'Bi-weekly manager coaching, structured checkpoints, and quota review.';
+    requireFields(req.body, { performanceGap: 'Performance gap identified', expectedPerformance: 'Expected performance target', actionPlan: 'Action plan' });
+    const { performanceGap, expectedPerformance, actionPlan } = req.body;
 
     const newPip = new PipRecord({
       ...req.body,
