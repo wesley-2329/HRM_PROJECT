@@ -46,7 +46,7 @@ const ManpowerRequisitionSchema = new mongoose.Schema({
   },
   costCenter: {
     type: String,
-    default: 'CC-101'
+    default: ''
   },
   employmentType: {
     type: String,

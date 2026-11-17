@@ -519,7 +519,7 @@ router.post('/budgets', protect, adminOnly, async (req, res, next) => {
 
     const newBudgetReq = new VacancyBudgetRequest({
       ...req.body,
-      costCenter: req.body.costCenter || 'CC-101',
+      costCenter: req.body.costCenter || '',
       annualCtcBudget,
       recruitmentCostBudget,
       totalFinancialImpact,
@@ -1007,7 +1007,7 @@ router.post('/costs', protect, adminOnly, async (req, res, next) => {
       amount: Number(req.body.amount) || 0,
       costCategory: req.body.costCategory || 'Job Portal',
       department: req.body.department || 'Engineering',
-      costCenter: req.body.costCenter || 'CC-101',
+      costCenter: req.body.costCenter || '',
       recruiterId: req.user.id,
       recruiterName: req.user?.name || 'Recruiter',
       created_by: req.user?.name || 'User'

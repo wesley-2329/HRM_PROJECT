@@ -7,6 +7,7 @@ import api from '../../api';
 
 const RecruitmentModule = () => {
   const { user } = useContext(AuthContext);
+  const { costCenters = [] } = useContext(DataContext) || {};
   const { showToast } = useToast();
 
   // Active Tab State
@@ -60,7 +61,7 @@ const RecruitmentModule = () => {
   const [costs, setCosts] = useState([]);
   const [masters, setMasters] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // drives the .is-loading placeholders
 
   // Modals state
   const [showReqModal, setShowReqModal] = useState(false);
@@ -112,7 +113,7 @@ const RecruitmentModule = () => {
     designation: '',
     grade: 'Grade B',
     reportingManager: '',
-    costCenter: 'CC-101',
+    costCenter: '',
     currentHeadcount: '',
     proposedHeadcount: '',
     annualCtcBudget: '',
@@ -123,7 +124,7 @@ const RecruitmentModule = () => {
   const [budgetForm, setBudgetForm] = useState({
     positionTitle: '',
     department: 'Engineering',
-    costCenter: 'CC-101',
+    costCenter: '',
     annualCtcBudget: '',
     recruitmentCostBudget: ''
   });
@@ -135,7 +136,7 @@ const RecruitmentModule = () => {
     costCategory: 'Job Portal',
     vendorName: '',
     department: 'Engineering',
-    costCenter: 'CC-101',
+    costCenter: '',
     amount: '',
     description: ''
   });
@@ -153,7 +154,7 @@ const RecruitmentModule = () => {
   // Load all module data with role scope
   const fetchAllRecruitmentData = async (roleOverride) => {
     const role = roleOverride || selectedRole;
-    setLoading(true);
+    // Placeholders only on the first load (loading starts true); refreshes after a save keep the page.
     try {
       const [dashRes, reqRes, posRes, budRes, resRes, candRes, tpRes, costRes, masterRes, auditRes] = await Promise.all([
         api.get(`/recruitment/dashboard?role=${role}`).catch(() => ({ data: null })),
@@ -487,7 +488,7 @@ const RecruitmentModule = () => {
       setBudgetForm({
         positionTitle: '',
         department: 'Engineering',
-        costCenter: 'CC-101',
+        costCenter: '',
         annualCtcBudget: '',
         recruitmentCostBudget: ''
       });
@@ -672,7 +673,7 @@ const RecruitmentModule = () => {
         costCategory: 'Job Portal',
         vendorName: '',
         department: 'Engineering',
-        costCenter: 'CC-101',
+        costCenter: '',
         amount: '',
         description: ''
       });
@@ -828,7 +829,10 @@ const RecruitmentModule = () => {
   };
 
   return (
-    <div className="recruitment-module-container" style={{ padding: '20px', minHeight: '85vh', background: 'hsl(var(--bg-main))' }}>
+    <div className={`recruitment-module-container${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ padding: '20px', minHeight: '85vh', background: 'hsl(var(--bg-main))' }}>
+      <datalist id="recruit-cost-centers">
+        {costCenters.filter((c) => c.status !== 'Inactive').map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+      </datalist>
       
       {/* Enterprise Header & Role Switcher */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -1105,7 +1109,7 @@ const RecruitmentModule = () => {
                   </div>
                   <div>
                     <label className="form-label">Cost Center</label>
-                    <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
+                    <input type="text" className="form-control" list="recruit-cost-centers" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
                   </div>
                   <div>
                     <label className="form-label">Vacancy Count *</label>
@@ -1336,7 +1340,7 @@ const RecruitmentModule = () => {
                   setBudgetForm({
                     positionTitle: '',
                     department: 'Engineering',
-                    costCenter: 'CC-101',
+                    costCenter: '',
                     annualCtcBudget: '',
                     recruitmentCostBudget: ''
                   });
@@ -1742,7 +1746,7 @@ const RecruitmentModule = () => {
                     costCategory: 'Job Portal',
                     vendorName: '',
                     department: 'Engineering',
-                    costCenter: 'CC-101',
+                    costCenter: '',
                     amount: '',
                     description: ''
                   });
@@ -2036,7 +2040,7 @@ const RecruitmentModule = () => {
                   </div>
                   <div>
                     <label className="form-label">Cost Center</label>
-                    <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
+                    <input type="text" className="form-control" list="recruit-cost-centers" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} />
                   </div>
                   <div>
                     <label className="form-label">Vacancy Count *</label>
@@ -2309,7 +2313,7 @@ const RecruitmentModule = () => {
                     </div>
                     <div>
                       <label className="form-label">Cost Center</label>
-                      <input type="text" className="form-control" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
+                      <input type="text" className="form-control" list="recruit-cost-centers" value={reqForm.costCenter} onChange={(e) => setReqForm({ ...reqForm, costCenter: e.target.value })} placeholder="CC-ENG-101" />
                     </div>
                     <div>
                       <label className="form-label">Vacancy Count *</label>
@@ -2809,6 +2813,10 @@ const RecruitmentModule = () => {
                   </select>
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Cost Centre *</label>
+                  <input type="text" className="form-control" list="recruit-cost-centers" value={costForm.costCenter} onChange={(e) => setCostForm({ ...costForm, costCenter: e.target.value })} placeholder="Choose or type a cost centre code" required />
+                </div>
+                <div className="form-group">
                   <label className="form-label">Amount (₹) *</label>
                   <input type="number" className="form-control" value={costForm.amount} onChange={(e) => setCostForm({ ...costForm, amount: Number(e.target.value) })} required />
                 </div>
@@ -2867,6 +2875,10 @@ const RecruitmentModule = () => {
                   <input type="text" className="form-control" style={{ height: '42px' }} value={posForm.designation} onChange={(e) => setPosForm({ ...posForm, designation: e.target.value })} required />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Cost Centre *</label>
+                  <input type="text" className="form-control" style={{ height: '42px' }} list="recruit-cost-centers" value={posForm.costCenter} onChange={(e) => setPosForm({ ...posForm, costCenter: e.target.value })} placeholder="Choose or type a cost centre code" required />
+                </div>
+                <div className="form-group">
                   <label className="form-label">Grade Band</label>
                   <input type="text" className="form-control" style={{ height: '42px' }} value={posForm.grade} onChange={(e) => setPosForm({ ...posForm, grade: e.target.value })} />
                 </div>
@@ -2912,17 +2924,7 @@ const RecruitmentModule = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Cost Center Allocation *</label>
-                  <select 
-                    className="form-control" 
-                    value={budgetForm.costCenter || 'CC-101'} 
-                    onChange={(e) => setBudgetForm({ ...budgetForm, costCenter: e.target.value })} 
-                    required
-                  >
-                    <option value="CC-101">CC-101 (Engineering Core)</option>
-                    <option value="CC-102">CC-102 (Product & Design)</option>
-                    <option value="CC-103">CC-103 (HR & Talent)</option>
-                    <option value="CC-104">CC-104 (Finance & Operations)</option>
-                  </select>
+                  <input type="text" className="form-control" list="recruit-cost-centers" value={budgetForm.costCenter} onChange={(e) => setBudgetForm({ ...budgetForm, costCenter: e.target.value })} placeholder="Choose or type a cost centre code" required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Annual CTC Budget (₹) *</label>
