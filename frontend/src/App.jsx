@@ -45,7 +45,7 @@ const DemoDataBadge = () => {
   }, []);
   if (!isDemo) return null;
   return (
-    <div role="status" style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 9999, padding: '4px 10px', borderRadius: 999,
+    <div role="status" style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 9999, pointerEvents: 'none', opacity: 0.9, padding: '4px 10px', borderRadius: 999,
       background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.02em' }}>
       DEMO DATA
     </div>

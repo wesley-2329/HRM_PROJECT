@@ -1483,7 +1483,7 @@ body.dark-mode .glass-card {
 }
 
 .toast {
-  @apply min-w-[320px] p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 text-sm font-semibold shadow-xl flex items-center gap-3 relative overflow-hidden transition-all duration-300 pointer-events-auto;
+  @apply min-w-[320px] p-4 rounded-xl bg-white dark:bg-slate-900 border-l-4 text-sm font-semibold shadow-xl flex items-center gap-3 relative overflow-hidden transition-all duration-300 pointer-events-none;
 }
 
 .toast.active {
@@ -3704,10 +3704,11 @@ body.data-loading .module-viewport .card::after {
   body.data-loading .metric-val, body.data-loading .module-viewport .card::after { animation: none; }
 }
 
-/* Phones: toasts sit at the bottom and fit the screen, so they never cover the header's menu button
-   (the 320px minimum width used to push them off the left edge). */
+/* Phones: toasts sit just below the 70px header (clear of its menu button and of the form/modal buttons at
+   the bottom of the screen) and fit the width; the 320px minimum used to push them off the left edge.
+   The toast body is click-through (Toast.jsx), so a button under it still works. */
 @media (max-width: 640px) {
-  .toast-container { top: auto; bottom: 16px; left: 12px; right: 12px; }
+  .toast-container { top: 78px; bottom: auto; left: 12px; right: 12px; }
   .toast { min-width: 0; }
 }
 

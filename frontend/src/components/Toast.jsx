@@ -111,6 +111,8 @@ export const ToastProvider = ({ children }) => {
   const toastContainer = (
     <div
       className="toast-container"
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed', // top/right come from .toast-container so phones can move it to the bottom
         zIndex: 9999999,
@@ -130,7 +132,7 @@ export const ToastProvider = ({ children }) => {
             key={t.id}
             className={`toast ${t.type === 'danger' ? 'error' : t.type} ${t.active ? 'active' : ''}`}
             style={{
-              pointerEvents: 'auto',
+              pointerEvents: 'none', // taps pass through to the page; only the close button catches them
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -145,6 +147,7 @@ export const ToastProvider = ({ children }) => {
               type="button"
               onClick={() => dismissToast(t.id)}
               style={{
+                pointerEvents: 'auto',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
