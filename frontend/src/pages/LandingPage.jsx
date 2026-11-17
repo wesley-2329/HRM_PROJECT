@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LandingCanvas3D from '../components/LandingCanvas3D';
+// three.js is ~0.5 MB: load the 3D background after the page text, in its own chunk
+const LandingCanvas3D = lazy(() => import('../components/LandingCanvas3D'));
 import LandingOverlayUI from '../components/LandingOverlayUI';
 
 const LandingPage = () => {
@@ -170,7 +171,7 @@ const LandingPage = () => {
       
       {/* 3D Wireframe Mesh Background Layer (Fixed position in background) */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1, pointerEvents: 'none' }}>
-        <LandingCanvas3D scrollProgress={scrollProgress} />
+        <Suspense fallback={null}><LandingCanvas3D scrollProgress={scrollProgress} /></Suspense>
       </div>
 
       {/* Interactive Custom Cursor Elements */}

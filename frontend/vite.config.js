@@ -5,6 +5,15 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [tailwindcss(), react()],
+  build: {
+    rolldownOptions: {
+      output: {
+        // three.js ships as two modules; keep its core in its own chunk so the landing page's lazily loaded
+        // 3D background downloads as two parallel files instead of one 0.5 MB file.
+        codeSplitting: { groups: [{ name: 'three-core', test: /node_modules[\\/]three[\\/]build[\\/]three\.core/ }] }
+      }
+    }
+  },
   server: {
     port: 5173,
     strictPort: false,

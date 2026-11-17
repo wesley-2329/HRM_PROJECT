@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigat
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ToastProvider } from './components/Toast';
-import LoginGateway from './pages/LoginGateway';
+const LoginGateway = React.lazy(() => import('./pages/LoginGateway'));
 import Sidebar from './components/Sidebar';
 import TopNavbar from './components/TopNavbar';
 import HRTopNavbar from './components/HRTopNavbar';
