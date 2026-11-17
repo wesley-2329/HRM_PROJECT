@@ -467,6 +467,9 @@ const ExitModule = ({ searchQuery = '' }) => {
                     </td>
                   </tr>
                 ))}
+                {resignations.length === 0 && (
+                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--text-secondary))' }}>No resignations on record.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

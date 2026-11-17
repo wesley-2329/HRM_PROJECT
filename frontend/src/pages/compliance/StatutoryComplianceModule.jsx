@@ -367,19 +367,19 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Statutory Compliance Monitor</h1>
           </div>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
-            Enterprise statutory governance for PF, ESI, Professional Tax, Labour Welfare Fund, Challans, Returns, Notices, and Labour Inspections.
+            {user?.role === 'hr' ? 'Enterprise statutory governance for PF, ESI, Professional Tax, Labour Welfare Fund, Challans, Returns, Notices, and Labour Inspections.' : 'Your PF, ESI, Professional Tax and Labour Welfare Fund records.'}
           </p>
         </div>
 
-        {/* Global Controls & Actions */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {/* Global Controls & Actions (HR only) */}
+        {user?.role === 'hr' && <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button className="btn btn-secondary" onClick={() => setShowNoticeModal(true)}>
             <i className="fa-solid fa-building-flag" style={{ marginRight: '6px' }}></i> Log Govt Notice
           </button>
           <button className="btn btn-primary" onClick={() => setShowChallanModal(true)}>
             <i className="fa-solid fa-plus" style={{ marginRight: '6px' }}></i> Generate Challan
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Navigation Sub-Tabs Bar */}
@@ -623,6 +623,9 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     <td><span className={`badge ${p.status === 'Inactive' ? 'badge-secondary' : 'badge-success'}`}>{p.status === 'Inactive' ? 'Inactive' : 'Active Member'}</span></td>
                   </tr>
                 ))}
+                {pfProfiles.length === 0 && (
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--text-secondary))' }}>No records on file yet.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -660,6 +663,9 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     <td><span className="badge badge-success">{e.status}</span></td>
                   </tr>
                 ))}
+                {esiProfiles.length === 0 && (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: 'hsl(var(--text-secondary))' }}>No records on file yet.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -3814,6 +3814,16 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           </section>
         )}
 
+        {/* Company budgets are HR only; an old link or bookmark gets an explanation, not a blank page */}
+        {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
+          <section id="emp-mod-budgeting" className="emp-module">
+            <div className="card" style={{ maxWidth: '560px' }}>
+              <div className="card-title"><i className="fa-solid fa-lock"></i> HR Budgeting</div>
+              <p style={{ margin: 0, color: 'hsl(var(--text-secondary))' }}>Company budgets are available to HR only. Contact HR if you need budget information for your team.</p>
+            </div>
+          </section>
+        )}
+
         {/* Recruitment & Onboarding Module */}
         {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding' || currentModule === 'career-portal') && (
           <section id="emp-mod-recruitment" className="emp-module">
