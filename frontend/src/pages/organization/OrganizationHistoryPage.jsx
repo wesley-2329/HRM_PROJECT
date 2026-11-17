@@ -24,69 +24,10 @@ const OrganizationHistoryPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Seed fallback demo data if backend arrays are empty to assist presentation
-  const finalReportingHistory = reportingHistory.length > 0 ? reportingHistory : [
-    {
-      _id: 'demo-rep-1',
-      employeeId: 'EMP001',
-      employeeName: 'Jane Smith',
-      oldManagerId: 'David Lee (MGR004)',
-      newManagerId: 'Sarah Connor (MGR001)',
-      reason: 'Department restructuring for alignment',
-      effectiveDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      _id: 'demo-rep-2',
-      employeeId: 'EMP014',
-      employeeName: 'Alex Mercer',
-      oldManagerId: 'Sarah Connor (MGR001)',
-      newManagerId: 'Elena Rostova (MGR003)',
-      reason: 'Project delegation expansion',
-      effectiveDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  const finalTransferHistory = transferHistory.length > 0 ? transferHistory : [
-    {
-      _id: 'demo-tf-1',
-      employeeId: 'EMP001',
-      employeeName: 'Jane Smith',
-      oldDept: 'Marketing',
-      newDept: 'Product Engineering',
-      reason: 'Strategic reassignment to core product line',
-      effectiveDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      _id: 'demo-tf-2',
-      employeeId: 'EMP009',
-      employeeName: 'John Doe',
-      oldDept: 'Sales Support',
-      newDept: 'Customer Experience',
-      reason: 'Internal support function consolidation',
-      effectiveDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  const finalDesignationHistory = designationHistory && designationHistory.length > 0 ? designationHistory : [
-    {
-      _id: 'demo-desg-1',
-      employeeId: 'EMP001',
-      employeeName: 'Jane Smith',
-      oldDesignation: 'Senior Developer',
-      newDesignation: 'Product Lead Manager',
-      reason: 'Annual Performance Appraisal Promotion',
-      effectiveDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      _id: 'demo-desg-2',
-      employeeId: 'EMP005',
-      employeeName: 'Ryan Reynolds',
-      oldDesignation: 'HR Coordinator',
-      newDesignation: 'Talent Acquisition Manager',
-      reason: 'Role scope expansion',
-      effectiveDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
+  // Only real history records are shown (and exported); an empty history shows the empty state
+  const finalReportingHistory = reportingHistory || [];
+  const finalTransferHistory = transferHistory || [];
+  const finalDesignationHistory = designationHistory || [];
 
   // Normalize timelines
   const normalizedManagers = finalReportingHistory.map(h => ({
