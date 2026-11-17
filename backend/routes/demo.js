@@ -11,7 +11,11 @@ router.post('/reset', protect, adminOnly, async (req, res, next) => {
   try {
     const status = await require('../scripts/seed_demo').ensureDemoSeeded({ force: true });
     res.status(status === 'seeded' ? 200 : 409).json({ status });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[Demo] reset failed: ' + err.message);
+    // The seed already retried. Signing in with a demo login rebuilds the data again.
+    res.status(503).json({ status: 'failed', message: 'The demo reset did not finish. Please try again; signing in with a demo account also rebuilds it.' });
+  }
 });
 
 module.exports = router;

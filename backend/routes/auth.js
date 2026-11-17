@@ -40,6 +40,15 @@ router.post('/login', async (req, res, next) => {
     employee = await Employee.findOne({ email: lowerEmail });
   }
 
+  // Preview demo: if a demo login is missing (e.g. a reset broke off half way), rebuild the demo data
+  // and look again, so the documented logins always recover. ensureDemoSeeded refuses non-demo databases.
+  const demoEnv = process.env.VERCEL_ENV === 'preview' || process.env.DEMO_AUTO_SEED === 'true';
+  if (!employee && demoEnv && ['hr@company.com', 'employee@company.com'].includes(lowerEmail)) {
+    const status = await require('../scripts/seed_demo').ensureDemoSeeded().catch((e) => 'failed: ' + e.message);
+    console.log('[Demo] login-triggered seed: ' + status);
+    employee = await Employee.findOne({ email: lowerEmail });
+  }
+
   if (!employee) {
     return res.status(401).json({ message: 'Account not found. Please Sign Up first.' });
   }

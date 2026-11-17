@@ -28,6 +28,17 @@ const Ticket = require('../models/Ticket');
 const Task = require('../models/Task');
 const Training = require('../models/Training');
 const DiscussionMessage = require('../models/DiscussionMessage');
+const HrBudget = require('../models/HrBudget');
+const ManpowerBudget = require('../models/ManpowerBudget');
+const RecruitmentExpense = require('../models/RecruitmentExpense');
+const WelfareExpense = require('../models/WelfareExpense');
+const DueDateTracker = require('../models/DueDateTracker');
+const StatutoryChallan = require('../models/StatutoryChallan');
+const GovernmentNotice = require('../models/GovernmentNotice');
+const InspectionRecord = require('../models/InspectionRecord');
+const EmployeeExit = require('../models/EmployeeExit');
+const DepartmentClearance = require('../models/DepartmentClearance');
+const FullFinalSettlement = require('../models/FullFinalSettlement');
 
 // Deterministic "random" so every seed produces the same demo.
 const SEED = 20261115;
@@ -186,7 +197,93 @@ async function seedDemoData({ hrPassword, employeePassword }) {
     { senderId: 'EMP-0006', senderName: 'Kavitha Iyer', senderRole: 'employee', message: 'Engineering all-hands moves to Thursday 4 pm this week.', time: '11:40' }
   ]);
 
+  await seedModuleDemo();
   return { employees: PEOPLE.length, attendance: sheets.length, leaves: leaves.length, candidates: cands.length };
+}
+
+// Budgeting, statutory compliance and exit records, so those pages have something to show in a demo.
+// Every id starts with DEMO- and every free-text field says "Demo record", so nobody mistakes them for
+// real figures. Amounts are round illustrative numbers.
+async function seedModuleDemo() {
+  const FY = (() => { const d = new Date(); const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return `FY ${y}-${y + 1}`; })();
+  const NOTE = 'Demo record for the preview environment.';
+  const at = (n) => new Date(Date.now() + n * DAY);
+  const month = (n) => at(n).toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+  await HrBudget.create([
+    ['Engineering', 'CC-ENG', 'Manpower', 4800000, 3100000, 'Approved'],
+    ['Engineering', 'CC-ENG', 'Training', 600000, 240000, 'Approved'],
+    ['Human Resources', 'CC-HR', 'Recruitment', 900000, 410000, 'Approved'],
+    ['Human Resources', 'CC-HR', 'Welfare', 500000, 180000, 'Approved'],
+    ['Finance', 'CC-FIN', 'Operations', 350000, 120000, 'Submitted'],
+    ['Sales & Marketing', 'CC-SM', 'Manpower', 2400000, 1650000, 'Approved']
+  ].map(([department, costCenter, budgetCategory, amount, used, status], i) => ({
+    budgetId: `DEMO-BDG-${i + 1}`, financialYear: FY, department, costCenter, budgetCategory, status, remarks: NOTE,
+    proposedBudget: amount, approvedBudget: status === 'Approved' ? amount : 0, forecastBudget: amount,
+    utilizedBudget: status === 'Approved' ? used : 0, remainingBudget: status === 'Approved' ? amount - used : 0
+  })));
+  await ManpowerBudget.create([
+    { budgetId: 'DEMO-MPB-1', financialYear: FY, department: 'Engineering', costCenter: 'CC-ENG', designation: 'Software Engineer', currentHeadcount: 5, approvedHeadcount: 7, proposedHeadcount: 7, vacancyCount: 2, avgMonthlySalary: 95000, annualSalaryBudget: 7980000, status: 'Approved', justification: NOTE },
+    { budgetId: 'DEMO-MPB-2', financialYear: FY, department: 'Finance', costCenter: 'CC-FIN', designation: 'Accounts Executive', currentHeadcount: 1, approvedHeadcount: 1, proposedHeadcount: 2, vacancyCount: 1, avgMonthlySalary: 55000, annualSalaryBudget: 1320000, status: 'Submitted', justification: NOTE }
+  ]);
+  await RecruitmentExpense.create([
+    ['Job Portal Subscription', 'Demo Job Portal', 120000, 'Paid', -40],
+    ['Background Verification', 'Demo Verification Services', 36000, 'Paid', -20],
+    ['Referral Bonus', 'Internal', 50000, 'Approved', -6]
+  ].map(([expenseCategory, vendorName, amount, paymentStatus, d], i) => ({
+    expenseId: `DEMO-RCX-${i + 1}`, expenseCategory, vendorName, amount, taxAmount: Math.round(amount * 0.18), totalAmount: Math.round(amount * 1.18),
+    paymentStatus, expenseDate: at(d), invoiceNumber: `DEMO-INV-${i + 1}`, hiringSource: ''
+  })));
+  await WelfareExpense.create([
+    { expenseId: 'DEMO-WEL-1', welfareActivity: 'Quarterly team lunch (demo)', welfareCategory: 'Food & Canteen', vendorName: 'Demo Caterers', expenseDate: at(-25), invoiceAmount: 60000, taxAmount: 3000, totalAmount: 63000, beneficiariesCount: 12, paymentStatus: 'Paid' },
+    { expenseId: 'DEMO-WEL-2', welfareActivity: 'Annual health check-up (demo)', welfareCategory: 'Health & Wellness', vendorName: 'Demo Diagnostics', expenseDate: at(-10), invoiceAmount: 96000, taxAmount: 0, totalAmount: 96000, beneficiariesCount: 12, paymentStatus: 'Pending' }
+  ]);
+
+  await DueDateTracker.create([
+    ['PF ECR filing', -18, 'Completed', 'High'],
+    ['ESI monthly contribution', -3, 'Pending', 'Critical'],
+    ['Professional Tax return', 6, 'Pending', 'High'],
+    ['LWF half-yearly contribution', 12, 'Pending', 'Medium'],
+    ['Annual return under Shops & Establishments Act', 40, 'Pending', 'Low']
+  ].map(([complianceName, d, status, priority], i) => ({
+    trackerId: `DEMO-DUE-${i + 1}`, complianceName: `${complianceName} (demo)`, dueDate: at(d), daysRemaining: Math.max(0, d), priority, status,
+    reminderTier: d < 0 ? 'Overdue' : d <= 7 ? '7 Days' : d <= 15 ? '15 Days' : '30 Days', responsibleOfficer: 'Venkat Raman'
+  })));
+  await StatutoryChallan.create([
+    { challanId: 'DEMO-CHL-1', challanNumber: 'DEMO-CHL-PF-01', statutoryType: 'PF', wageMonth: month(-35), state: 'Karnataka', dueDate: at(-20), totalAmount: 186000, employeeCount: 12, paymentStatus: 'Paid', paymentDate: at(-22), bankReferenceNo: 'DEMO-REF-0001', createdBy: 'Venkat Raman' },
+    { challanId: 'DEMO-CHL-2', challanNumber: 'DEMO-CHL-ESI-01', statutoryType: 'ESI', wageMonth: month(-5), state: 'Karnataka', dueDate: at(10), totalAmount: 21400, employeeCount: 4, paymentStatus: 'Generated', createdBy: 'Venkat Raman' }
+  ]);
+  await GovernmentNotice.create({ noticeId: 'DEMO-NTC-1', noticeNumber: 'DEMO-EPFO-2026-01', department: 'EPFO', issueDate: at(-8), dueDate: at(7), priority: 'Normal', description: `Clarification on two UAN mismatches. ${NOTE}`, status: 'Under Review' });
+  await InspectionRecord.create({ inspectionId: 'DEMO-INS-1', authority: 'Labour Department', location: 'HQ Bangalore', inspectorName: 'Demo Inspector', inspectionDate: at(-30), findings: `Registers reviewed; display of abstracts to be updated. ${NOTE}`, closureStatus: 'Observations Open' });
+
+  // Two exit cases: one with clearances still open, one fully cleared with F&F calculated and the
+  // No Due Certificate left for HR to issue during the demo.
+  const person = (id) => PEOPLE.find(p => p[0] === id);
+  const exitCase = (exitId, id, status, lwd, reason) => {
+    const p = person(id);
+    return { exitId, employeeId: id, employeeName: p[1], department: p[3], designation: p[4], joiningDate: new Date(p[7]), resignationDate: at(lwd - 60), proposedLwd: at(lwd), approvedLwd: at(lwd), reasonCategory: reason, status, createdBy: p[1] };
+  };
+  await EmployeeExit.create([
+    exitCase('DEMO-EXT-1', 'EMP-0011', 'Clearance In Progress', 9, 'Career Growth'),
+    exitCase('DEMO-EXT-2', 'EMP-0009', 'F&F Pending', -4, 'Higher Studies')
+  ]);
+  const depts = ['Reporting Manager', 'IT', 'Finance', 'Admin', 'HR'];
+  const approver = { 'Reporting Manager': ['EMP-0010', 'EMP-0008'], IT: ['EMP-0006', 'EMP-0006'], Finance: ['EMP-0008', 'EMP-0008'], Admin: ['EMP-0005', 'EMP-0005'], HR: ['EMP-0001', 'EMP-0001'] };
+  await DepartmentClearance.create([
+    ...depts.map((d, i) => {
+      const done = i < 2; // case 1: manager and IT done, Finance / Admin / HR open
+      return { clearanceId: `DEMO-CLR-1-${i + 1}`, exitId: 'DEMO-EXT-1', departmentName: d, clearanceStatus: done ? 'Approved' : 'Pending',
+        approverId: done ? approver[d][0] : '', approverName: done ? nameOf[approver[d][0]] : '', actionDate: done ? at(-2) : undefined, remarks: done ? NOTE : '' };
+    }),
+    ...depts.map((d, i) => ({ clearanceId: `DEMO-CLR-2-${i + 1}`, exitId: 'DEMO-EXT-2', departmentName: d, clearanceStatus: 'Approved',
+      approverId: approver[d][1], approverName: nameOf[approver[d][1]], actionDate: at(-6 + i), remarks: NOTE }))
+  ]);
+  await FullFinalSettlement.create({
+    settlementId: 'DEMO-FFS-1', exitId: 'DEMO-EXT-2', employeeId: 'EMP-0009', employeeName: nameOf['EMP-0009'], lastWorkingDay: at(-4),
+    pendingSalary: 38000, leaveEncashmentAmount: 12000, gratuityAmount: 0, totalEarnings: 50000,
+    noticePayRecovery: 0, loanRecovery: 5000, assetDamageRecovery: 0, totalDeductions: 5000, netSettlementAmount: 45000,
+    clearanceVerified: true, status: 'HR Approved'
+  });
 }
 
 // Preview self-setup: a demo database is usable only if both documented demo logins exist. If either is
@@ -195,28 +292,53 @@ async function seedDemoData({ hrPassword, employeePassword }) {
 // Only ever runs on a database whose name ends in "_demo".
 async function ensureDemoSeeded({ force = false } = {}) {
   const db = mongoose.connection;
+  // Two independent guards: the database must be a demo one, and this must not be a production deployment.
   if (!db.name.endsWith('_demo')) return 'skipped: not a demo database';
-  if (!force && await Employee.countDocuments({ email: { $in: ['hr@company.com', 'employee@company.com'] } }) === 2) return 'skipped: already seeded';
+  if (process.env.VERCEL_ENV === 'production') return 'skipped: production deployment';
+  if (!force && await demoLoginsReady()) return 'skipped: already seeded';
   if (!process.env.DEMO_HR_PASSWORD || !process.env.DEMO_EMPLOYEE_PASSWORD) return 'skipped: demo passwords are not set';
   try {
     await db.collection('demo_meta').updateOne({ _id: 'seed-lock', at: { $lt: new Date(Date.now() - 5 * 60 * 1000) } }, { $set: { at: new Date() } }, { upsert: true });
   } catch (e) {
     return 'skipped: another instance is seeding';
   }
-  // deleteMany keeps each collection's indexes, so the seed's unique fields still apply
-  for (const c of await db.db.listCollections().toArray()) {
-    if (c.name !== 'demo_meta' && !c.name.startsWith('system.')) await db.db.collection(c.name).deleteMany({});
-  }
   try {
-    const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });
-    console.log(`[Demo] Seeded ${db.name}: ${r.employees} employees, ${r.attendance} attendance records.`);
-    return 'seeded';
+    // A dropped connection mid-way (Atlas answered one reset with a TLS "internal error") would leave the
+    // database half cleared. Each attempt starts again from a clean slate, and only a run that ends with
+    // both demo logins working counts as done.
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // deleteMany keeps each collection's indexes, so the seed's unique fields still apply
+        for (const c of await db.db.listCollections().toArray()) {
+          if (c.name !== 'demo_meta' && !c.name.startsWith('system.')) await db.db.collection(c.name).deleteMany({});
+        }
+        const r = await seedDemoData({ hrPassword: process.env.DEMO_HR_PASSWORD, employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD });
+        if (!await demoLoginsReady()) throw new Error('demo logins missing after seeding');
+        console.log(`[Demo] Seeded ${db.name}: ${r.employees} employees, ${r.attendance} attendance records (attempt ${attempt}).`);
+        return 'seeded';
+      } catch (e) {
+        lastError = e;
+        console.error(`[Demo] Seed attempt ${attempt} failed: ${e.message}`);
+        if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 1500));
+      }
+    }
+    throw lastError;
   } finally {
-    await db.collection('demo_meta').deleteOne({ _id: 'seed-lock' }); // free the lock (also lets a failed seed retry)
+    await db.collection('demo_meta').deleteOne({ _id: 'seed-lock' }).catch(() => {}); // free the lock (also lets a failed seed retry)
   }
 }
 
-module.exports = { seedDemoData, ensureDemoSeeded };
+// Both documented demo accounts exist and accept their documented passwords.
+async function demoLoginsReady() {
+  const users = await Employee.find({ email: { $in: ['hr@company.com', 'employee@company.com'] } });
+  const pw = { 'hr@company.com': process.env.DEMO_HR_PASSWORD, 'employee@company.com': process.env.DEMO_EMPLOYEE_PASSWORD };
+  if (users.length !== 2) return false;
+  if (!pw['hr@company.com'] || !pw['employee@company.com']) return true; // nothing to compare against
+  return (await Promise.all(users.map(u => u.matchPassword(pw[u.email]).catch(() => false)))).every(Boolean);
+}
+
+module.exports = { seedDemoData, ensureDemoSeeded, demoLoginsReady };
 
 // CLI: full rebuild (drops the demo database first).
 if (require.main === module) {
