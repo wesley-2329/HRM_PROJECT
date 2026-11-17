@@ -4,9 +4,6 @@
   "installCommand": "unset npm_config_cache_dir NPM_CONFIG_CACHE_DIR; npm ci --prefix frontend --include=dev && npm ci --prefix backend --omit=dev",
   "buildCommand": "unset npm_config_cache_dir NPM_CONFIG_CACHE_DIR; npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
-  "regions": [
-    "iad1"
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
