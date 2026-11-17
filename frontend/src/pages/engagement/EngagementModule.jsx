@@ -8,6 +8,21 @@ const EngagementModule = ({ searchQuery = '' }) => {
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('overview');
+  // Tab strip scrolls sideways when it does not fit; arrows show only when there is more to see
+  const tabsRef = useRef(null);
+  const [tabScroll, setTabScroll] = useState({ left: false, right: false });
+  const updateTabScroll = () => {
+    const el = tabsRef.current;
+    if (el) setTabScroll({ left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 });
+  };
+  useEffect(() => {
+    updateTabScroll();
+    window.addEventListener('resize', updateTabScroll);
+    return () => window.removeEventListener('resize', updateTabScroll);
+  }, []);
+  useEffect(() => {
+    tabsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab]);
 
   // Module Data States
   const [dashboardMetrics, setDashboardMetrics] = useState({
@@ -363,18 +378,21 @@ const EngagementModule = ({ searchQuery = '' }) => {
     <div className={`engagement-module-container${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ padding: '0 0 24px 0', width: '100%', maxWidth: '100%', margin: '0 auto' }}>
       
       {/* Header Banner */}
-      <div className="glass-card mb-6" style={{
+      <div className="glass-card" style={{
         background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))',
         border: '1px solid rgba(168, 85, 247, 0.2)',
         borderRadius: '16px',
         padding: '24px',
+        marginBottom: '20px',
         display: 'flex',
+        flexWrap: 'wrap',
+        gap: '16px',
         justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.2rem, 1rem + 1.5vw, 1.75rem)', fontWeight: 800, color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{
               background: 'linear-gradient(135deg, #6366f1, #a855f7)',
               color: '#fff',
@@ -399,13 +417,26 @@ const EngagementModule = ({ searchQuery = '' }) => {
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="sub-nav-tabs" style={{
+      <div style={{ position: 'relative', marginBottom: '24px', borderBottom: '1px solid hsl(var(--border))' }}>
+      {tabScroll.left && (
+        <button type="button" aria-label="Scroll tabs left" onClick={() => tabsRef.current.scrollBy({ left: -240, behavior: 'smooth' })}
+          className="btn btn-secondary" style={{ position: 'absolute', left: 0, top: '4px', zIndex: 2, width: '36px', height: '40px', padding: 0, borderRadius: '10px', boxShadow: '6px 0 12px hsl(var(--bg-main, 0 0% 100%))' }}>
+          <i className="fa-solid fa-chevron-left"></i>
+        </button>
+      )}
+      {tabScroll.right && (
+        <button type="button" aria-label="Scroll tabs right" onClick={() => tabsRef.current.scrollBy({ left: 240, behavior: 'smooth' })}
+          className="btn btn-secondary" style={{ position: 'absolute', right: 0, top: '4px', zIndex: 2, width: '36px', height: '40px', padding: 0, borderRadius: '10px', boxShadow: '-6px 0 12px hsl(var(--bg-main, 0 0% 100%))' }}>
+          <i className="fa-solid fa-chevron-right"></i>
+        </button>
+      )}
+      <div className="sub-nav-tabs" role="tablist" ref={tabsRef} onScroll={updateTabScroll} style={{
         display: 'flex',
         gap: '8px',
         overflowX: 'auto',
-        paddingBottom: '12px',
-        marginBottom: '24px',
-        borderBottom: '1px solid hsl(var(--border))'
+        padding: '4px 2px 12px',
+        scrollPaddingInline: '44px',
+        scrollbarWidth: 'thin'
       }}>
         {[
           { id: 'overview', label: 'Dashboard Overview', icon: 'fa-chart-pie' },
@@ -420,8 +451,11 @@ const EngagementModule = ({ searchQuery = '' }) => {
         ].map(tab => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
+              flexShrink: 0,
               padding: '10px 18px',
               borderRadius: '10px',
               border: activeTab === tab.id ? 'none' : '1px solid hsl(var(--border))',
@@ -442,6 +476,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
             {tab.label}
           </button>
         ))}
+      </div>
       </div>
 
       {/* TAB 1: OVERVIEW DASHBOARD */}
@@ -481,23 +516,22 @@ const EngagementModule = ({ searchQuery = '' }) => {
           </div>
 
           {/* Quick Action Bar */}
-          <div className="glass-card mb-6" style={{ padding: '20px', borderRadius: '14px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem', marginRight: '8px', color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions:</span>
-            <button className="btn btn-primary" onClick={() => setShowSuggestionModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
-              <i className="fa-solid fa-lightbulb"></i> Submit Suggestion
-            </button>
-            <button className="btn btn-secondary" onClick={() => setShowHelpdeskModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
-              <i className="fa-solid fa-headset"></i> Raise IT/HR Ticket
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowGrievanceModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
-              <i className="fa-solid fa-shield-heart"></i> Raise Grievance
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowWelfareModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
-              <i className="fa-solid fa-hand-holding-hand"></i> Request Welfare Benefit
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowRecognitionModal(true)} style={{ borderRadius: '8px', fontSize: '0.85rem' }}>
-              <i className="fa-solid fa-award"></i> Give Kudos
-            </button>
+          <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', marginBottom: '24px' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '14px', color: 'hsl(var(--foreground))' }}><i className="fa-solid fa-bolt text-warning"></i> Quick Actions</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '12px' }}>
+              {[
+                ['fa-lightbulb', 'Submit Suggestion', setShowSuggestionModal],
+                ['fa-headset', 'Raise IT/HR Ticket', setShowHelpdeskModal],
+                ['fa-shield-heart', 'Raise Grievance', setShowGrievanceModal],
+                ['fa-hand-holding-hand', 'Request Welfare Benefit', setShowWelfareModal],
+                ['fa-award', 'Give Kudos', setShowRecognitionModal]
+              ].map(([icon, label, open], i) => (
+                <button key={label} className={`btn ${i === 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => open(true)}
+                  style={{ borderRadius: '8px', fontSize: '0.85rem', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%' }}>
+                  <i className={`fa-solid ${icon}`}></i> {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Recent Communications Feed */}
