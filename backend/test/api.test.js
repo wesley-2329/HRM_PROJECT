@@ -455,3 +455,18 @@ test('budget transfer is saved, cannot overdraw, and survives two simultaneous r
     await A.deleteMany({ allocationId: /^T-AL-/ });
   }
 });
+
+test('F&F settlement: simultaneous approve requests leave exactly one record per exit case (Bug 041)', async () => {
+  const E = require('../models/EmployeeExit');
+  const F = require('../models/FullFinalSettlement');
+  await E.collection.insertOne({ exitId: 'T-EXT-FNF', employeeId: 'T-OTHER', employeeName: 'T-OTHER', department: 'Engineering', joiningDate: new Date('2024-01-01'), resignationDate: new Date(), proposedLwd: new Date(), status: 'F&F Pending' });
+  try {
+    const body = { exitId: 'T-EXT-FNF', pendingSalary: 50000, leaveEncashmentAmount: 1000, gratuityAmount: 0 };
+    const res = await Promise.all(Array.from({ length: 5 }, () => call('POST', '/api/exit/settlement/calculate', hr, body)));
+    assert.ok(res.every(r => r.status < 300), JSON.stringify(res.map(r => [r.status, r.data.message])));
+    assert.strictEqual(await F.countDocuments({ exitId: 'T-EXT-FNF' }), 1, 'one settlement');
+  } finally {
+    await E.deleteMany({ exitId: 'T-EXT-FNF' });
+    await F.deleteMany({ exitId: 'T-EXT-FNF' });
+  }
+});
