@@ -352,6 +352,13 @@ test('exit: certificate only after every required clearance is approved; HR only
     assert.strictEqual((await call('GET', '/api/exit/no-due/T-EXT-NDC', other)).status, 200, 'the exiting employee can');
     const [first, ...rest] = st.clearances;
     assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'On Hold' })).status, 400, 'hold needs remarks');
+    assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Rejected', remarks: '   ' })).status, 400, 'blank remarks refused');
+    assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Done' })).status, 400, 'unknown status refused');
+    const held = await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'On Hold', remarks: 'Laptop not returned' });
+    assert.strictEqual(held.status, 200);
+    assert.strictEqual(held.data.remarks, 'Laptop not returned');
+    assert.ok((await call('GET', '/api/exit/no-due/T-EXT-NDC', hr)).data.pending.includes(first.departmentName), 'on hold still blocks');
+    assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Rejected', remarks: 'Dues outstanding' })).status, 200);
     await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Approved' });
     const blocked = await call('POST', '/api/exit/no-due/T-EXT-NDC', hr);
     assert.strictEqual(blocked.status, 409);

@@ -92,13 +92,21 @@ const ExitModule = ({ searchQuery = '' }) => {
     }
   };
 
-  const handleClearanceDecision = async (c) => {
+  // On Hold / Rejected need a reason, so they go through the remarks dialog; Approve is direct.
+  const [clearanceDecision, setClearanceDecision] = useState(null); // { c, status, remarks }
+  const [decisionBusy, setDecisionBusy] = useState(false);
+  const handleClearanceDecision = async (c, status = 'Approved', remarks = '') => {
+    if (status !== 'Approved' && !remarks.trim()) { showToast('Please enter the reason in Remarks.', 'error'); return; }
+    setDecisionBusy(true);
     try {
-      const res = await api.put(`/exit/clearance/${c.clearanceId}`, { clearanceStatus: 'Approved' });
+      const res = await api.put(`/exit/clearance/${c.clearanceId}`, { clearanceStatus: status, remarks });
       setClearances((prev) => prev.map((x) => (x.clearanceId === c.clearanceId ? res.data : x)));
-      showToast(`${c.departmentName} clearance approved.`, 'success');
+      setClearanceDecision(null);
+      showToast(`${c.departmentName} clearance ${status === 'Approved' ? 'approved' : status === 'Rejected' ? 'rejected' : 'put on hold'}.`, 'success');
     } catch (err) {
       showToast(err.response?.data?.message || 'Could not update the clearance. Please try again.', 'error');
+    } finally {
+      setDecisionBusy(false);
     }
   };
 
@@ -450,7 +458,7 @@ const ExitModule = ({ searchQuery = '' }) => {
                     <td>{r.exitCoordinator}</td>
                     <td><span className={`badge ${r.status === 'Notice Active' ? 'badge-warning' : 'badge-primary'}`}>{r.status}</span></td>
                     <td>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => showToast(`Opening Exit File for ${r.employeeName}...`, 'info')}>
+                      <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => { setSelectedExitCaseId(r.exitId); setActiveTab('no-due'); }}>
                         <i className="fa-solid fa-folder-open"></i> Manage
                       </button>
                     </td>
@@ -517,9 +525,9 @@ const ExitModule = ({ searchQuery = '' }) => {
                 <col style={{ width: '15%' }} />
                 <col style={{ width: '13%' }} />
                 <col style={{ width: '11%' }} />
-                <col style={{ width: '20%' }} />
+                <col style={{ width: '17%' }} />
                 <col style={{ width: '10%' }} />
-                <col style={{ width: '10%' }} />
+                <col style={{ width: '13%' }} />
               </colgroup>
               <thead>
                 <tr style={{ borderBottom: '2px solid hsl(var(--border))' }}>
@@ -542,12 +550,24 @@ const ExitModule = ({ searchQuery = '' }) => {
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.approverName || '—'}</td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{c.actionDate ? fmtDate(c.actionDate) : 'Pending'}</td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.remarks}</td>
-                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
+                    <td style={{ padding: '12px 10px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}><span className={`badge ${c.clearanceStatus === 'Approved' ? 'badge-success' : c.clearanceStatus === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{c.clearanceStatus}</span></td>
                     <td style={{ padding: '12px 10px', verticalAlign: 'middle' }}>
                       {c.clearanceStatus !== 'Approved' ? (isHR ? (
-                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} onClick={() => handleClearanceDecision(c)}>
-                          Approve Clearance
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <button id={`btn-clr-approve-${c.clearanceId}`} className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} disabled={decisionBusy} onClick={() => handleClearanceDecision(c)}>
+                            Approve
+                          </button>
+                          {c.clearanceStatus !== 'On Hold' && (
+                            <button id={`btn-clr-hold-${c.clearanceId}`} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap' }} disabled={decisionBusy} onClick={() => setClearanceDecision({ c, status: 'On Hold', remarks: '' })}>
+                              On Hold
+                            </button>
+                          )}
+                          {c.clearanceStatus !== 'Rejected' && (
+                            <button id={`btn-clr-reject-${c.clearanceId}`} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', whiteSpace: 'nowrap', color: '#dc2626' }} disabled={decisionBusy} onClick={() => setClearanceDecision({ c, status: 'Rejected', remarks: '' })}>
+                              Reject
+                            </button>
+                          )}
+                        </div>
                       ) : <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>Awaiting {c.departmentName}</span>
                       ) : (
                         <span className="badge badge-success">Completed</span>
@@ -561,6 +581,24 @@ const ExitModule = ({ searchQuery = '' }) => {
               </tbody>
             </table>
           </div>
+          {clearanceDecision && (
+            <div className="modal-backdrop active" role="dialog" aria-modal="true" aria-labelledby="clr-decision-title" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
+              <form className="modal-content" style={{ width: '440px', maxWidth: '95vw', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}
+                onSubmit={(e) => { e.preventDefault(); handleClearanceDecision(clearanceDecision.c, clearanceDecision.status, clearanceDecision.remarks); }}>
+                <h3 id="clr-decision-title" style={{ margin: '0 0 6px 0' }}>{clearanceDecision.status === 'Rejected' ? 'Reject' : 'Put on hold'}: {clearanceDecision.c.departmentName} clearance</h3>
+                <p style={{ margin: '0 0 14px 0', fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>{clearanceDecision.c.clearanceId} · Exit {clearanceDecision.c.exitId}. The certificate cannot be issued until this department approves.</p>
+                <label htmlFor="clr-decision-remarks" style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px' }}>Remarks (reason) *</label>
+                <textarea id="clr-decision-remarks" className="form-control" rows={3} maxLength={500} required autoFocus value={clearanceDecision.remarks}
+                  onChange={(e) => setClearanceDecision({ ...clearanceDecision, remarks: e.target.value })} placeholder="e.g. Laptop not yet returned" style={{ width: '100%', marginBottom: '16px' }} />
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setClearanceDecision(null)} disabled={decisionBusy}>Cancel</button>
+                  <button type="submit" id="btn-confirm-clr-decision" className="btn btn-primary" style={clearanceDecision.status === 'Rejected' ? { background: '#dc2626', borderColor: '#dc2626' } : undefined} disabled={decisionBusy || !clearanceDecision.remarks.trim()}>
+                    {decisionBusy ? 'Saving…' : clearanceDecision.status === 'Rejected' ? 'Reject' : 'Put on hold'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
@@ -826,7 +864,7 @@ const ExitModule = ({ searchQuery = '' }) => {
                     return (
                       <li key={dept} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '0.82rem' }}>
                         <span><i className={`fa-solid ${ok ? 'fa-circle-check' : 'fa-clock'}`} style={{ color: ok ? '#10b981' : '#f59e0b', marginRight: '6px' }}></i>{dept}</span>
-                        <span style={{ color: 'hsl(var(--text-secondary))', textAlign: 'right' }}>{ok ? `${c.approverName || ''} · ${fmtDate(c.actionDate)}` : (c?.clearanceStatus || 'Not started')}</span>
+                        <span style={{ color: 'hsl(var(--text-secondary))', textAlign: 'right' }}>{ok ? `${c.approverName || ''} · ${fmtDate(c.actionDate)}` : `${c?.clearanceStatus || 'Not started'}${c?.remarks ? ` · ${c.remarks}` : ''}`}</span>
                       </li>
                     );
                   })}
