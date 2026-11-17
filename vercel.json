@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm ci --prefix frontend && npm ci --prefix backend",
-  "buildCommand": "npm run build --prefix frontend",
+  "installCommand": "unset npm_config_cache_dir NPM_CONFIG_CACHE_DIR; npm ci --prefix frontend --include=dev && npm ci --prefix backend --omit=dev",
+  "buildCommand": "unset npm_config_cache_dir NPM_CONFIG_CACHE_DIR; npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
