@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+// dismissible: Escape and a click on the backdrop close it (opt-in, so forms are not lost by accident)
+const Modal = ({ isOpen, onClose, title, children, dismissible = false }) => {
   // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -13,10 +14,17 @@ const Modal = ({ isOpen, onClose, title, children }) => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || !dismissible) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, dismissible, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div style={{
+    <div onClick={dismissible ? (e) => { if (e.target === e.currentTarget) onClose(); } : undefined} style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -32,6 +40,9 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       transition: 'opacity 0.25s ease'
     }}>
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeof title === 'string' ? title : undefined}
         className="emp-card" 
         style={{
           width: '100%',
@@ -74,6 +85,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
               transition: 'background 0.2s'
             }}
             className="hover-bg-slate"
+            aria-label="Close"
           >
             <i className="fa-solid fa-xmark"></i>
           </button>

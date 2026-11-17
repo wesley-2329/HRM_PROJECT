@@ -817,15 +817,24 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
     }
   };
 
-  const handleDeleteEmployee = async (id) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
-      try {
-        await api.delete(`/employees/${id}`);
-        showToast('Employee deleted.', 'danger');
-        fetchEmployees();
-      } catch (err) {
-        showToast('Error deleting employee', 'error');
-      }
+  const [empToDelete, setEmpToDelete] = useState(null);
+  const [deletingEmp, setDeletingEmp] = useState(false);
+  const deletingEmpRef = useRef(false); // state updates too late to stop a double click
+  const handleDeleteEmployee = (id) => setEmpToDelete(employees.find(e => e.id === id) || { id });
+  const confirmDeleteEmployee = async () => {
+    if (!empToDelete || deletingEmpRef.current) return;
+    deletingEmpRef.current = true;
+    setDeletingEmp(true);
+    try {
+      await api.delete(`/employees/${empToDelete.id}`);
+      showToast(`${empToDelete.name || 'Employee'} deleted.`, 'success');
+      setEmpToDelete(null);
+      fetchEmployees();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not delete the employee. Please try again.', 'error');
+    } finally {
+      deletingEmpRef.current = false;
+      setDeletingEmp(false);
     }
   };
 
@@ -2852,6 +2861,24 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
           <button className="btn btn-danger" onClick={confirmDeleteNote} style={{ padding: '8px 20px', background: 'hsl(var(--danger))', color: '#fff' }}>Yes</button>
         </div>
       </div>
+    </Modal>
+
+    {/* Bug 073: employee delete confirmation (replaces window.confirm) */}
+    <Modal isOpen={!!empToDelete} onClose={() => { if (!deletingEmp) setEmpToDelete(null); }} title="Delete employee" dismissible>
+      {empToDelete && (
+        <div style={{ padding: '4px 0' }}>
+          <p style={{ fontSize: '0.95rem', color: 'hsl(var(--text-primary))', margin: '0 0 8px', lineHeight: 1.5, overflowWrap: 'anywhere' }}>
+            Are you sure you want to delete this employee? <strong>{empToDelete.name || empToDelete.id}</strong>{empToDelete.name ? ` (${empToDelete.id})` : ''}
+          </p>
+          <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', margin: '0 0 20px' }}>This action cannot be undone.</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+            <button id="btn-cancel-delete-employee" className="btn btn-secondary" onClick={() => setEmpToDelete(null)} disabled={deletingEmp} style={{ padding: '8px 20px' }}>No, Cancel</button>
+            <button id="btn-confirm-delete-employee" className="btn btn-danger" onClick={confirmDeleteEmployee} disabled={deletingEmp} style={{ padding: '8px 20px', background: 'hsl(var(--danger))', color: '#fff' }}>
+              {deletingEmp ? <><i className="fa-solid fa-spinner fa-spin"></i> Deleting…</> : 'Yes, Delete'}
+            </button>
+          </div>
+        </div>
+      )}
     </Modal>
 
     {/* BUG-004 Task Review Modal */}
