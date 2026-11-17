@@ -49,7 +49,13 @@ const TrainingModule = ({ searchQuery = '' }) => {
     fetchModuleData();
   }, [activeTab]);
 
+  // The page shows placeholder bars (.is-loading in index.css) while this runs, not zeros.
+  const [loading, setLoading] = useState(true);
   const fetchModuleData = async () => {
+    // Placeholders only on the first load; refreshes after a save keep the current figures on screen.
+    try { await fetchModuleDataInner(); } finally { setLoading(false); }
+  };
+  const fetchModuleDataInner = async () => {
     try {
       const [mRes, tnaRes, planRes, progRes, tvRes, sklRes, compRes, assRes, histRes, audRes] = await Promise.allSettled([
         api.get('/training/dashboard'),
@@ -153,7 +159,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
   };
 
   return (
-    <div className="training-module-container" style={{ padding: '0 0 24px 0', width: '100%', maxWidth: '100%', margin: '0 auto' }}>
+    <div className={`training-module-container${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ padding: '0 0 24px 0', width: '100%', maxWidth: '100%', margin: '0 auto' }}>
       
       {/* Header Banner */}
       <div className="glass-card mb-6" style={{

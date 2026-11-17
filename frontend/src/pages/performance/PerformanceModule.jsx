@@ -35,7 +35,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   const [increments, setIncrements] = useState([]);
   const [pips, setPips] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // drives the .is-loading placeholders
 
   // Modals state
   const [showCycleModal, setShowCycleModal] = useState(false);
@@ -167,7 +167,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
 
   // Load Module Data
   const fetchAllPerformanceData = async () => {
-    setLoading(true);
+    // Placeholders only on the first load (loading starts true); refreshes after a save keep the page.
     try {
       const [dashRes, cycRes, rsRes, compRes, tempRes, kraRes, kpiRes, goalRes, midRes, annRes, prmRes, incRes, pipRes, auditRes] = await Promise.all([
         api.get('/performance/dashboard').catch(() => ({ data: null })),
@@ -727,7 +727,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
   };
 
   return (
-    <div className="performance-module-container" style={{ padding: '20px', minHeight: '85vh', background: 'hsl(var(--bg-main))' }}>
+    <div className={`performance-module-container${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ padding: '20px', minHeight: '85vh', background: 'hsl(var(--bg-main))' }}>
       
       {/* Enterprise Header & Role Switcher */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -796,7 +796,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <div className="metric-card primary">
               <div>
                 <span className="metric-label">Active Appraisal Cycles</span>
-                <div className="metric-val">{cycles.filter(c => c.status === 'Active').length || 1}</div>
+                <div className="metric-val">{cycles.filter(c => c.status === 'Active').length}</div>
                 <span className="metric-trend up"><i className="fa-solid fa-check"></i> FY 2026-27 Active</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-calendar-days"></i></div>
@@ -805,7 +805,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <div className="metric-card success">
               <div>
                 <span className="metric-label">Completed Reviews</span>
-                <div className="metric-val">{annualReviews.filter(r => ['Published & Acknowledged', 'Completed'].includes(r.status)).length || 14}</div>
+                <div className="metric-val">{annualReviews.filter(r => ['Published & Acknowledged', 'Completed'].includes(r.status)).length}</div>
                 <span className="metric-trend up"><i className="fa-solid fa-check"></i> Acknowledged</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-circle-check"></i></div>
@@ -814,7 +814,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <div className="metric-card warning">
               <div>
                 <span className="metric-label">Approved Promotions</span>
-                <div className="metric-val">{promotions.filter(p => p.status === 'Approved').length || 4}</div>
+                <div className="metric-val">{promotions.filter(p => p.status === 'Approved').length}</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Master Updated</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-award"></i></div>
@@ -823,7 +823,7 @@ const PerformanceModule = ({ searchQuery = '' }) => {
             <div className="metric-card info">
               <div>
                 <span className="metric-label">Approved Increments</span>
-                <div className="metric-val">{increments.filter(i => i.status === 'Approved').length || 18}</div>
+                <div className="metric-val">{increments.filter(i => i.status === 'Approved').length}</div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Payroll Synced</span>
               </div>
               <div className="metric-icon-box"><i className="fa-solid fa-wallet"></i></div>

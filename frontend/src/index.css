@@ -3683,8 +3683,9 @@ input.input:focus, textarea.input:focus, select.input:focus { border-color: hsl(
 }
 
 /* ── First data load ─────────────────────────────────────────────────────────
-   DataContext sets body.data-loading until the dashboard's data has arrived. Tiles and the panels
-   below them show pulsing placeholder bars instead of zeros and "nothing here" messages. */
+   DataContext sets body.data-loading until the first batch of shared data (employees, leave,
+   attendance, tasks…) has arrived. Tiles and every card on the page keep their titles and show
+   pulsing bars instead of zeros, "logged out" or "nothing here" messages. */
 @keyframes skeleton-pulse { 50% { opacity: 0.45; } }
 body.data-loading .metric-val {
   width: 4ch; max-width: 100%; border-radius: 6px; color: transparent;
@@ -3692,15 +3693,15 @@ body.data-loading .metric-val {
 }
 body.data-loading .metric-val * { visibility: hidden; }
 body.data-loading .metric-val ~ * { visibility: hidden; }
-body.data-loading .metric-grid ~ * .card { position: relative; }
-body.data-loading .metric-grid ~ * .card > :not(.card-title) { visibility: hidden; }
-body.data-loading .metric-grid ~ * .card::after {
+body.data-loading .module-viewport .card { position: relative; }
+body.data-loading .module-viewport .card > :not(.card-title, :is(h2, h3, h4):first-child) { visibility: hidden; }
+body.data-loading .module-viewport .card::after {
   content: ''; position: absolute; inset: 60px 20px auto; height: 82px; border-radius: 6px;
   background: repeating-linear-gradient(to bottom, hsl(var(--border)) 0 14px, transparent 14px 34px);
   animation: skeleton-pulse 1.2s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  body.data-loading .metric-val, body.data-loading .metric-grid ~ * .card::after { animation: none; }
+  body.data-loading .metric-val, body.data-loading .module-viewport .card::after { animation: none; }
 }
 
 /* Phones: toasts sit at the bottom and fit the screen, so they never cover the header's menu button
@@ -3708,4 +3709,32 @@ body.data-loading .metric-grid ~ * .card::after {
 @media (max-width: 640px) {
   .toast-container { top: auto; bottom: 16px; left: 12px; right: 12px; }
   .toast { min-width: 0; }
+}
+
+/* ── Module pages while their data loads ─────────────────────────────────────
+   A module root gets .is-loading until its first answer arrives (and on tab change for the tabbed
+   finance/compliance/exit modules). Figures and table cells become pulsing bars, so a page never
+   shows 0 or "nothing found" before it knows. Pages fed by DataContext get the same treatment
+   through body.data-loading. */
+.is-loading :is(.card, .glass-card, .metric-card, [class*="stat-card"]) :is(h2, .metric-val, [class*="stat-value"]),
+.is-loading td,
+body.data-loading .module-viewport td {
+  color: transparent !important;
+  border-radius: 6px;
+  background-image: linear-gradient(hsl(var(--border)), hsl(var(--border)));
+  background-size: calc(100% - 16px) 12px;
+  background-position: 8px center;
+  background-repeat: no-repeat;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+.is-loading :is(.card, .glass-card, .metric-card, [class*="stat-card"]) :is(h2, .metric-val, [class*="stat-value"]) {
+  min-width: 4ch; max-width: 8ch; background-size: 100% 70%; background-position: 0 center;
+}
+.is-loading :is(.card, .glass-card, .metric-card, [class*="stat-card"]) :is(h2, .metric-val, [class*="stat-value"]) *,
+.is-loading td *,
+body.data-loading .module-viewport td * { visibility: hidden; }
+.is-loading canvas { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .is-loading td, .is-loading :is(.card, .glass-card, .metric-card, [class*="stat-card"]) :is(h2, .metric-val, [class*="stat-value"]),
+  body.data-loading .module-viewport td { animation: none; }
 }

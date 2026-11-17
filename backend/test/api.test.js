@@ -337,3 +337,51 @@ test('forms: empty required fields are refused, never filled with sample values'
   assert.strictEqual(d.kpis.completedExits, separated, 'no fallback figure');
   assert.ok(!('monthlyAttrition' in d.charts));
 });
+
+test('exit: certificate only after every required clearance is approved; HR only', async () => {
+  const E = mongoose.connection.collection('employeeexits');
+  await E.insertOne({ exitId: 'T-EXT-NDC', employeeId: 'T-OTHER', employeeName: 'T-OTHER', department: 'Engineering', joiningDate: new Date('2024-01-01'), resignationDate: new Date(), proposedLwd: new Date(), status: 'Submitted' });
+  try {
+    let st = (await call('GET', '/api/exit/no-due/T-EXT-NDC', hr)).data;
+    assert.strictEqual(st.started, false);
+    assert.strictEqual((await call('POST', '/api/exit/no-due/T-EXT-NDC', hr)).status, 409, 'nothing approved yet');
+    assert.strictEqual((await call('POST', '/api/exit/clearance/start/T-EXT-NDC', emp)).status, 403);
+    st = (await call('POST', '/api/exit/clearance/start/T-EXT-NDC', hr)).data;
+    assert.ok(st.required.length > 0 && st.pending.length === st.required.length);
+    assert.strictEqual((await call('GET', '/api/exit/no-due/T-EXT-NDC', emp)).status, 404, 'another employee cannot see it');
+    assert.strictEqual((await call('GET', '/api/exit/no-due/T-EXT-NDC', other)).status, 200, 'the exiting employee can');
+    const [first, ...rest] = st.clearances;
+    assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'On Hold' })).status, 400, 'hold needs remarks');
+    await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Approved' });
+    const blocked = await call('POST', '/api/exit/no-due/T-EXT-NDC', hr);
+    assert.strictEqual(blocked.status, 409);
+    assert.deepStrictEqual(blocked.data.pending, rest.map(c => c.departmentName));
+    for (const c of rest) await call('PUT', `/api/exit/clearance/${c.clearanceId}`, emp, { clearanceStatus: 'Approved' });
+    assert.strictEqual((await call('POST', '/api/exit/no-due/T-EXT-NDC', hr)).status, 409, 'employee approvals were refused');
+    for (const c of rest) await call('PUT', `/api/exit/clearance/${c.clearanceId}`, hr, { clearanceStatus: 'Approved' });
+    assert.strictEqual((await call('POST', '/api/exit/no-due/T-EXT-NDC', other)).status, 403, 'employees cannot issue');
+    const issued = await call('POST', '/api/exit/no-due/T-EXT-NDC', hr);
+    assert.strictEqual(issued.status, 201);
+    assert.strictEqual(issued.data.certificate.employeeId, 'T-OTHER');
+    assert.strictEqual((await call('PUT', `/api/exit/clearance/${first.clearanceId}`, hr, { clearanceStatus: 'Rejected', remarks: 'x' })).status, 409, 'locked after issue');
+  } finally {
+    await E.deleteMany({ exitId: 'T-EXT-NDC' });
+    await mongoose.connection.collection('departmentclearances').deleteMany({ exitId: 'T-EXT-NDC' });
+    await mongoose.connection.collection('noduecertificates').deleteMany({ exitId: 'T-EXT-NDC' });
+  }
+});
+
+test('compliance documents: HR deletes the record and its stored file; others cannot', async () => {
+  const fd = new FormData();
+  fd.append('title', 'T-DOC delete me'); fd.append('category', 'Challan Receipt');
+  fd.append('file', new Blob([Buffer.from('%PDF-1.4\n%%EOF')]), 'x.pdf');
+  const made = await (await fetch(base + '/api/compliance/documents', { method: 'POST', headers: { Authorization: `Bearer ${hr}` }, body: fd })).json();
+  const files = mongoose.connection.collection('compliance_files.files');
+  assert.strictEqual(await files.countDocuments({ _id: new mongoose.Types.ObjectId(made.fileId) }), 1);
+  assert.strictEqual((await call('DELETE', `/api/compliance/documents/${made.docId}`, emp)).status, 403);
+  assert.strictEqual((await call('DELETE', `/api/compliance/documents/${made.docId}`, hr)).status, 200);
+  assert.strictEqual(await files.countDocuments({ _id: new mongoose.Types.ObjectId(made.fileId) }), 0, 'file removed');
+  assert.strictEqual(await mongoose.connection.collection('compliance_files.chunks').countDocuments({ files_id: new mongoose.Types.ObjectId(made.fileId) }), 0);
+  assert.strictEqual((await call('GET', `/api/compliance/documents/${made.docId}`, hr)).status, 404);
+  assert.strictEqual((await call('DELETE', `/api/compliance/documents/${made.docId}`, hr)).status, 404, 'second delete');
+});

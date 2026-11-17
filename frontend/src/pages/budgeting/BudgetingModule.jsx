@@ -181,7 +181,13 @@ const BudgetingModule = ({ searchQuery = '' }) => {
     fetchData();
   }, [activeTab]);
 
+  // The page shows placeholder bars (.is-loading in index.css) while this runs, not zeros.
+  const [loading, setLoading] = useState(true);
   const fetchData = async () => {
+    setLoading(true);
+    try { await fetchDataInner(); } finally { setLoading(false); }
+  };
+  const fetchDataInner = async () => {
     try {
       if (activeTab === 'dashboard') {
         const res = await api.get('/budget/dashboard');
@@ -344,7 +350,7 @@ const BudgetingModule = ({ searchQuery = '' }) => {
   ];
 
   return (
-    <div className="module-container p-6" style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
+    <div className={`module-container p-6${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
       
       {/* Module Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
