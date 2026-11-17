@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import { downloadPdfDocument } from '../../utils/pdfGenerator';
@@ -581,7 +582,7 @@ const ExitModule = ({ searchQuery = '' }) => {
               </tbody>
             </table>
           </div>
-          {clearanceDecision && (
+          {clearanceDecision && createPortal(
             <div className="modal-backdrop active" role="dialog" aria-modal="true" aria-labelledby="clr-decision-title" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
               <form className="modal-content" style={{ width: '440px', maxWidth: '95vw', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}
                 onSubmit={(e) => { e.preventDefault(); handleClearanceDecision(clearanceDecision.c, clearanceDecision.status, clearanceDecision.remarks); }}>
@@ -597,7 +598,7 @@ const ExitModule = ({ searchQuery = '' }) => {
                   </button>
                 </div>
               </form>
-            </div>
+            </div>, document.body
           )}
         </div>
       )}
