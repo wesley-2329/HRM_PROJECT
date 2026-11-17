@@ -53,3 +53,17 @@ export const formatDateTimeString = (dateVal) => {
 
   return `${formatDateString(dateObj)} at ${formatTimeString(dateObj)}`;
 };
+
+// YYYY-MM-DD of the *local* calendar day (toISOString() gives the UTC day, which is the previous day
+// for anything between 00:00 and 05:30 IST). Use it to compare against <input type="date"> values.
+export const toLocalYmd = (dateVal) => {
+  const d = dateVal instanceof Date ? dateVal : new Date(dateVal);
+  if (isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+// Indian display format, e.g. 13 Nov 2026
+export const formatDateIN = (dateVal) => {
+  const d = dateVal instanceof Date ? dateVal : new Date(dateVal);
+  return isNaN(d.getTime()) ? '--' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};

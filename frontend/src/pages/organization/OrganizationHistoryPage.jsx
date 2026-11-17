@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { DataContext } from '../../context/DataContext';
 import { OrganizationToolbar, SearchFilterBar } from './components/SharedComponents';
+import { toLocalYmd, formatDateIN } from '../../utils/dateUtils';
 
 const OrganizationHistoryPage = () => {
   const {
@@ -145,11 +146,11 @@ const OrganizationHistoryPage = () => {
   // Filters mapping helper
   const filterRecord = (item) => {
     const matchesSearch = 
-      item.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.employeeName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.employeeId || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.desc.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesDate = !dateFilter || item.date.toISOString().split('T')[0] === dateFilter;
+    const matchesDate = !dateFilter || toLocalYmd(item.date) === dateFilter;
     return matchesSearch && matchesDate;
   };
 
@@ -173,16 +174,17 @@ const OrganizationHistoryPage = () => {
   const handleExportCSV = () => {
     const headers = ['Date', 'Employee ID', 'Employee Name', 'Audit Event', 'Description', 'Reason'];
     const rows = currentList.map(h => [
-      h.date.toLocaleDateString(),
+      toLocalYmd(h.date),
       h.employeeId,
       h.employeeName,
       h.type,
       h.desc,
       h.reason
     ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + [headers, ...rows].map(r => r.map(cell).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent).replace(/#/g, '%23');
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `Organization_History_${activeTab}.csv`);
@@ -203,10 +205,10 @@ const OrganizationHistoryPage = () => {
       {/* Interactive Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid hsl(var(--border))', gap: '20px' }}>
         {[
-          { id: 'timeline', label: 'Chronological Timeline', count: combinedList.length, color: '#3b82f6' },
-          { id: 'managers', label: 'Manager Reassignments', count: normalizedManagers.length, color: '#8b5cf6' },
-          { id: 'transfers', label: 'Department Transfers', count: normalizedTransfers.length, color: '#10b981' },
-          { id: 'designations', label: 'Designations & Band shifts', count: normalizedDesignations.length, color: '#ec4899' }
+          { id: 'timeline', label: 'Chronological Timeline', count: combinedList.filter(filterRecord).length, color: '#3b82f6' },
+          { id: 'managers', label: 'Manager Reassignments', count: normalizedManagers.filter(filterRecord).length, color: '#8b5cf6' },
+          { id: 'transfers', label: 'Department Transfers', count: normalizedTransfers.filter(filterRecord).length, color: '#10b981' },
+          { id: 'designations', label: 'Designations & Band shifts', count: normalizedDesignations.filter(filterRecord).length, color: '#ec4899' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -255,6 +257,11 @@ const OrganizationHistoryPage = () => {
             value={dateFilter} 
             onChange={e => setDateFilter(e.target.value)} 
           />
+          {(searchTerm || dateFilter) && (
+            <button type="button" className="btn btn-secondary" style={{ height: '38px' }} onClick={() => { setSearchTerm(''); setDateFilter(''); }}>
+              <i className="fa-solid fa-xmark"></i> Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -298,7 +305,7 @@ const OrganizationHistoryPage = () => {
                           </span>
                         </div>
                         <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>
-                          {item.date.toLocaleDateString()}
+                          {formatDateIN(item.date)}
                         </span>
                       </div>
 
@@ -322,7 +329,7 @@ const OrganizationHistoryPage = () => {
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--text-secondary))', fontSize: '0.85rem' }}>
-                No chronological logs matched selection filters.
+                {searchTerm || dateFilter ? `No history entries match ${[searchTerm && `"${searchTerm}"`, dateFilter && formatDateIN(`${dateFilter}T00:00`)].filter(Boolean).join(' on ')}.` : 'No history entries yet.'}
               </div>
             )}
           </div>
@@ -346,7 +353,7 @@ const OrganizationHistoryPage = () => {
                 {currentList.length > 0 ? (
                   currentList.map((item) => (
                     <tr key={item.id} style={{ borderBottom: '1px solid hsl(var(--border))', fontSize: '0.88rem' }}>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>{item.date.toLocaleDateString()}</td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>{formatDateIN(item.date)}</td>
                       <td style={{ padding: '12px', fontWeight: 600 }}>{item.employeeName}</td>
                       <td style={{ padding: '12px' }}>{item.employeeId}</td>
                       <td style={{ padding: '12px', textDecoration: 'line-through', opacity: 0.65 }}>{item.details.from}</td>
@@ -357,7 +364,7 @@ const OrganizationHistoryPage = () => {
                 ) : (
                   <tr>
                     <td colSpan="6" style={{ textAlign: 'center', padding: '30px 0', color: 'hsl(var(--text-secondary))' }}>
-                      No record details matched search filters.
+                      {searchTerm || dateFilter ? 'No history entries match the current filters.' : 'No history entries yet.'}
                     </td>
                   </tr>
                 )}
