@@ -125,7 +125,13 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
     fetchData();
   }, [activeTab]);
 
+  // The page shows placeholder bars (.is-loading in index.css) while this runs, not zeros.
+  const [loading, setLoading] = useState(true);
   const fetchData = async () => {
+    setLoading(true);
+    try { await fetchDataInner(); } finally { setLoading(false); }
+  };
+  const fetchDataInner = async () => {
     try {
       if (activeTab === 'dashboard' || activeTab === 'executive') {
         const res = await api.get('/compliance/dashboard');
@@ -305,6 +311,23 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
     }
   };
 
+  const [docToDelete, setDocToDelete] = useState(null);
+  const [docDeleting, setDocDeleting] = useState(false);
+  const handleDeleteDoc = async () => {
+    setDocDeleting(true);
+    try {
+      await api.delete(`/compliance/documents/${docToDelete.docId}`);
+      setDocuments((prev) => prev.filter((d) => d.docId !== docToDelete.docId));
+      if (viewingDoc?.docId === docToDelete.docId) closeDocViewer();
+      showToast(`"${docToDelete.title}" deleted.`, 'success');
+      setDocToDelete(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not delete the document. Please try again.', 'error');
+    } finally {
+      setDocDeleting(false);
+    }
+  };
+
   const isPreviewable = (doc) => /\.(pdf|jpe?g|png|webp)$/i.test(doc?.fileName || '');
   const formatBytes = (n) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
 
@@ -332,7 +355,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
   ];
 
   return (
-    <div className="module-container p-6" style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
+    <div className={`module-container p-6${loading ? ' is-loading' : ''}`} aria-busy={loading} style={{ background: 'hsl(var(--bg-main))', minHeight: '100vh', color: 'hsl(var(--text-primary))' }}>
       
       {/* Module Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -872,6 +895,18 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                     >
                       <i className="fa-solid fa-download"></i>
                     </button>
+                    {user?.role === 'hr' && (
+                      <button
+                        className="btn btn-outline"
+                        title="Delete"
+                        aria-label={`Delete ${d.title}`}
+                        id={`btn-delete-doc-${d.docId}`}
+                        style={{ padding: '5px 10px', fontSize: '0.78rem', color: '#ef4444' }}
+                        onClick={() => setDocToDelete(d)}
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1126,6 +1161,24 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
                 <button type="submit" className="btn btn-primary">Save Record</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {docToDelete && (
+        <div className="modal-backdrop active" role="dialog" aria-modal="true" aria-labelledby="del-doc-title" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
+          <div className="modal-content" style={{ width: '420px', maxWidth: '95vw', background: 'hsl(var(--bg-card))', padding: '24px', borderRadius: '12px', color: 'hsl(var(--text-primary))' }}>
+            <h3 id="del-doc-title" style={{ margin: '0 0 10px 0' }}>Delete this document?</h3>
+            <p style={{ margin: '0 0 18px 0', fontSize: '0.88rem', color: 'hsl(var(--text-secondary))', overflowWrap: 'anywhere' }}>
+              <strong style={{ color: 'hsl(var(--text-primary))' }}>{docToDelete.title}</strong>{docToDelete.fileName ? ` (${docToDelete.fileName})` : ''} and its file will be removed permanently.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setDocToDelete(null)} disabled={docDeleting}>Cancel</button>
+              <button type="button" id="btn-confirm-delete-doc" className="btn btn-primary" style={{ background: '#dc2626', borderColor: '#dc2626' }} onClick={handleDeleteDoc} disabled={docDeleting}>
+                {docDeleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

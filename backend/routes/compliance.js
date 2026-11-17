@@ -432,6 +432,21 @@ router.post('/documents', protect, adminOnly, docUpload, async (req, res, next) 
 });
 
 
+// Removes a wrongly uploaded document: the record first, so it can never point at a deleted file;
+// then its file. A file left behind by a failed second step is private and is logged for cleanup.
+router.delete('/documents/:id', protect, adminOnly, async (req, res, next) => {
+  try {
+    const doc = await findComplianceDoc(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'Compliance document not found.' });
+    await ComplianceDocument.deleteOne({ _id: doc._id });
+    if (doc.fileId) {
+      await complianceFiles().delete(doc.fileId).catch((e) => console.error(`[Compliance] file ${doc.fileId} of ${doc.docId} not deleted: ${e.message}`));
+    }
+    await logAudit(req, 'DELETE_COMPLIANCE_DOC', 'ComplianceDocument', doc.docId, { title: doc.title, fileName: doc.fileName });
+    res.json({ deleted: doc.docId });
+  } catch (err) { next(err); }
+});
+
 // ==========================================
 // 13. MASTERS & AUDIT HISTORY
 // ==========================================
