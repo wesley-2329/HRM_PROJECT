@@ -50,7 +50,7 @@ const getCategoryChecklist = (category) => {
 // @route   GET /api/audits/stats
 // @desc    Get audit stats for dashboard
 // @access  Private
-router.get('/stats', protect, async (req, res, next) => {
+router.get('/stats', protect, adminOnly, async (req, res, next) => {
   try {
     const total = await Audit.countDocuments();
     const open = await Audit.countDocuments({ status: { $ne: 'Closed' } });
@@ -83,7 +83,7 @@ router.get('/stats', protect, async (req, res, next) => {
 // @route   GET /api/audits
 // @desc    Get all audits
 // @access  Private
-router.get('/', protect, async (req, res, next) => {
+router.get('/', protect, adminOnly, async (req, res, next) => {
   try {
     const audits = await Audit.find().sort({ createdAt: -1 });
     res.json(audits);
@@ -438,7 +438,7 @@ router.post('/close', protect, async (req, res, next) => {
 });
 
 // 5. Dashboard GET /api/audits/dashboard
-router.get('/dashboard', protect, async (req, res, next) => {
+router.get('/dashboard', protect, adminOnly, async (req, res, next) => {
   try {
     const total = await Audit.countDocuments();
     const open = await Audit.countDocuments({ status: { $ne: 'Closed' } });

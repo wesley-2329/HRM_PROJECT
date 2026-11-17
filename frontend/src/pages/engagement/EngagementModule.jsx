@@ -98,7 +98,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
         api.get('/engagement/welfare'),
         api.get('/engagement/recognition'),
         api.get('/engagement/communications'),
-        api.get('/engagement/audit')
+        user?.role === 'hr' ? api.get('/engagement/audit') : Promise.resolve({ data: [] }) // audit trail is HR only
       ]);
 
       if (dashRes.status === 'fulfilled') setDashboardMetrics(dashRes.value.data);
@@ -448,7 +448,7 @@ const EngagementModule = ({ searchQuery = '' }) => {
           { id: 'communications', label: 'Company Bulletins', icon: 'fa-bullhorn' },
           { id: 'reports', label: 'Reports & Audits', icon: 'fa-file-invoice' },
           { id: 'framework', label: 'Framework Config', icon: 'fa-gears' }
-        ].map(tab => (
+        ].filter(tab => tab.id !== 'reports' || user?.role === 'hr').map(tab => (
           <button
             key={tab.id}
             role="tab"

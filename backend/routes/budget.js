@@ -63,7 +63,7 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 // 1. DASHBOARD & EXECUTIVE KPIS
 // ==========================================
-router.get('/dashboard', protect, async (req, res, next) => {
+router.get('/dashboard', protect, adminOnly, async (req, res, next) => {
   try {
     const budgets = await HrBudget.find();
     const allocations = await BudgetAllocation.find();
@@ -111,7 +111,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // ==========================================
 // 2. BUDGET PLANNING
 // ==========================================
-router.get('/planning', protect, async (req, res, next) => {
+router.get('/planning', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await HrBudget.find().sort({ createdAt: -1 });
     res.json(list);
@@ -161,7 +161,7 @@ router.put('/planning/:id', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 3. BUDGET ALLOCATION
 // ==========================================
-router.get('/allocation', protect, async (req, res, next) => {
+router.get('/allocation', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await BudgetAllocation.find().sort({ createdAt: -1 });
     res.json(list);
@@ -222,7 +222,7 @@ router.post('/allocation', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 4. COST ANALYTICS
 // ==========================================
-router.get('/analytics', protect, async (req, res, next) => {
+router.get('/analytics', protect, adminOnly, async (req, res, next) => {
   try {
     const stored = await CostAnalytics.find();
     if (stored.length) return res.json(stored);
@@ -243,7 +243,7 @@ router.get('/analytics', protect, async (req, res, next) => {
 // ==========================================
 // 5. FORECAST & VARIANCE
 // ==========================================
-router.get('/forecast', protect, async (req, res, next) => {
+router.get('/forecast', protect, adminOnly, async (req, res, next) => {
   try {
     const [forecasts, variances] = await Promise.all([ForecastData.find(), VarianceAnalysis.find()]);
     res.json({ forecasts, variances });
@@ -253,7 +253,7 @@ router.get('/forecast', protect, async (req, res, next) => {
 // ==========================================
 // 6. BUDGET HISTORY & AUDIT LOGS
 // ==========================================
-router.get('/history', protect, async (req, res, next) => {
+router.get('/history', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await BudgetAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
@@ -263,7 +263,7 @@ router.get('/history', protect, async (req, res, next) => {
 // ==========================================
 // 7. MANPOWER BUDGET & WORKFORCE PLANNING
 // ==========================================
-router.get('/manpower', protect, async (req, res, next) => {
+router.get('/manpower', protect, adminOnly, async (req, res, next) => {
   try {
     const manpower = await ManpowerBudget.find().sort({ createdAt: -1 });
     const plans = await HeadcountPlanning.find();
@@ -305,7 +305,7 @@ router.post('/manpower', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 8. RECRUITMENT BUDGET & EXPENSE TRACKING
 // ==========================================
-router.get('/recruitment', protect, async (req, res, next) => {
+router.get('/recruitment', protect, adminOnly, async (req, res, next) => {
   try {
     const budgets = await RecruitmentBudget.find();
     const expenses = await RecruitmentExpense.find().sort({ expenseDate: -1 });
@@ -340,7 +340,7 @@ router.post('/recruitment-expense', protect, adminOnly, async (req, res, next) =
 // ==========================================
 // 9. WELFARE BUDGET & EXPENSE TRACKING
 // ==========================================
-router.get('/welfare', protect, async (req, res, next) => {
+router.get('/welfare', protect, adminOnly, async (req, res, next) => {
   try {
     const budgets = await WelfareBudget.find();
     const expenses = await WelfareExpense.find().sort({ expenseDate: -1 });
@@ -375,7 +375,7 @@ router.post('/welfare-expense', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 10. BUDGET MASTERS & APPROVAL MATRIX
 // ==========================================
-router.get('/masters', protect, async (req, res, next) => {
+router.get('/masters', protect, adminOnly, async (req, res, next) => {
   try {
     const years = await FinancialYearMaster.find();
     const categories = await BudgetCategoryMaster.find();

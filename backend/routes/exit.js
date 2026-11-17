@@ -54,7 +54,7 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 // 1. DASHBOARD & KPIS
 // ==========================================
-router.get('/dashboard', protect, async (req, res, next) => {
+router.get('/dashboard', protect, adminOnly, async (req, res, next) => {
   try {
     const [exits, pendingClearances] = await Promise.all([
       EmployeeExit.find().lean(),
@@ -439,7 +439,7 @@ router.get('/masters', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/history', protect, async (req, res, next) => {
+router.get('/history', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await ExitAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

@@ -11,7 +11,9 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Employees see only their own PF/ESI/PT/LWF records; filings, notices and audits are HR only (API enforces it too)
+  const EMPLOYEE_TABS = ['pf', 'esi', 'pt', 'lwf'];
+  const [activeTab, setActiveTab] = useState(user?.role === 'hr' ? 'dashboard' : 'pf');
 
   // Filters
   const [filterState, setFilterState] = useState('All');
@@ -382,7 +384,7 @@ const StatutoryComplianceModule = ({ searchQuery = '' }) => {
 
       {/* Navigation Sub-Tabs Bar */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', marginBottom: '24px', overflowX: 'auto' }}>
-        {menuTabs.map((t) => (
+        {menuTabs.filter((t) => user?.role === 'hr' || EMPLOYEE_TABS.includes(t.id)).map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}

@@ -501,3 +501,34 @@ test('PF/ESI profiles and exit assets: employees see only their own', async () =
     await X.collection.deleteMany({ esiProfileId: /^T-ESI/ });
   }
 });
+
+test('company-level budget, compliance, recruitment-cost and audit data is HR only', async () => {
+  const hrOnly = [
+    '/api/budget/dashboard', '/api/budget/planning', '/api/budget/allocation', '/api/budget/analytics', '/api/budget/forecast',
+    '/api/budget/history', '/api/budget/manpower', '/api/budget/recruitment', '/api/budget/welfare', '/api/budget/masters',
+    '/api/compliance/dashboard', '/api/compliance/overview', '/api/compliance/calendar', '/api/compliance/challans', '/api/compliance/returns',
+    '/api/compliance/due-dates', '/api/compliance/notices', '/api/compliance/inspections', '/api/compliance/documents', '/api/compliance/history',
+    '/api/recruitment/dashboard', '/api/recruitment/positions', '/api/recruitment/budgets', '/api/recruitment/costs', '/api/recruitment/audit-logs',
+    '/api/audits', '/api/audits/stats', '/api/audits/dashboard', '/api/engagement/audit', '/api/training/audit', '/api/exit/dashboard', '/api/exit/history'
+  ];
+  for (const p of hrOnly) {
+    assert.strictEqual((await call('GET', p, emp)).status, 403, `employee blocked: ${p}`);
+    assert.strictEqual((await call('GET', p, hr)).status, 200, `HR allowed: ${p}`);
+  }
+  // what employees still need keeps working, scoped to them
+  for (const p of ['/api/compliance/pf', '/api/compliance/esi', '/api/compliance/pt', '/api/compliance/lwf', '/api/recruitment/requisitions', '/api/recruitment/candidates', '/api/exit/resignations', '/api/salary-revisions']) {
+    assert.strictEqual((await call('GET', p, emp)).status, 200, `employee still allowed: ${p}`);
+  }
+});
+
+test('career portal: employees see open jobs without budget or approval data', async () => {
+  const R = require('../models/ManpowerRequisition');
+  await R.collection.insertOne({ reqNumber: 'T-REQ-1', jobTitle: 'T-REQ Engineer', department: 'Engineering', status: 'Approved', vacancyCount: 1, annualCtcPerPosition: 900000, totalBudgetEstimated: 900000, costCenter: 'CC-T', approverName: 'Boss', deletedAt: null, createdAt: new Date() });
+  try {
+    const job = (await call('GET', '/api/recruitment/requisitions', emp)).data.find(r => r.reqNumber === 'T-REQ-1');
+    assert.ok(job && job.jobTitle === 'T-REQ Engineer');
+    for (const k of ['totalBudgetEstimated', 'costCenter', 'approverName']) assert.strictEqual(job[k], undefined, k);
+    const full = (await call('GET', '/api/recruitment/requisitions', hr)).data.find(r => r.reqNumber === 'T-REQ-1');
+    assert.strictEqual(full.totalBudgetEstimated, 900000);
+  } finally { await R.collection.deleteMany({ reqNumber: /^T-REQ/ }); }
+});

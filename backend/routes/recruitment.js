@@ -72,6 +72,10 @@ const getRequestedRole = (req) => {
   return String(role).toLowerCase();
 };
 
+// Non-HR users (career portal) get an open job's public details, not its budget, cost centre or approval trail
+const PUBLIC_JOB_FIELDS = ['_id', 'reqNumber', 'jobTitle', 'department', 'designation', 'grade', 'employmentType', 'vacancyCount', 'annualCtcPerPosition', 'targetHireDate', 'justification', 'priorityLevel', 'status', 'createdAt'];
+const publicJob = (doc) => { const o = doc.toObject ? doc.toObject() : doc; return Object.fromEntries(PUBLIC_JOB_FIELDS.filter(k => k in o).map(k => [k, o[k]])); };
+
 // Candidate contact details are for HR only; other roles see the rest of the record
 const withoutContacts = (req, docs) => req.user?.role === 'hr' ? docs : docs.map(d => { const o = d.toObject ? d.toObject() : { ...d }; delete o.email; delete o.phone; return o; });
 
@@ -100,7 +104,7 @@ const logAudit = async (req, entityType, entityId, action, previousState, newSta
 // ==========================================
 // 1. RECRUITMENT DASHBOARD & KPI ANALYTICS
 // ==========================================
-router.get('/dashboard', protect, async (req, res, next) => {
+router.get('/dashboard', protect, adminOnly, async (req, res, next) => {
   try {
     const requisitions = await ManpowerRequisition.find({ deletedAt: null });
     const positions = await PositionApprovalRequest.find({ deletedAt: null });
@@ -211,7 +215,7 @@ router.get('/requisitions', protect, async (req, res, next) => {
       dedupedList.push(item);
     }
 
-    res.json(dedupedList);
+    res.json(req.user?.role === 'hr' ? dedupedList : dedupedList.map(publicJob));
   } catch (err) { next(err); }
 });
 
@@ -356,7 +360,7 @@ router.put('/requisitions/:id/assign', protect, adminOnly, async (req, res, next
 // ==========================================
 // 3. POSITION APPROVAL & ORG VALIDATION
 // ==========================================
-router.get('/positions', protect, async (req, res, next) => {
+router.get('/positions', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     let filter = { deletedAt: null };
@@ -444,7 +448,7 @@ router.put('/positions/:id/approve', protect, adminOnly, async (req, res, next) 
 // ==========================================
 // 4. VACANCY BUDGET APPROVAL
 // ==========================================
-router.get('/budgets', protect, async (req, res, next) => {
+router.get('/budgets', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     let filter = { deletedAt: null };
@@ -923,7 +927,7 @@ router.put('/talent-pool/:id/reactivate', protect, adminOnly, async (req, res, n
 // ==========================================
 // 8. RECRUITMENT COST TRACKING
 // ==========================================
-router.get('/costs', protect, async (req, res, next) => {
+router.get('/costs', protect, adminOnly, async (req, res, next) => {
   try {
     const role = getRequestedRole(req);
     let filter = { deletedAt: null };
@@ -1042,7 +1046,7 @@ router.post('/masters', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 10. RECRUITMENT AUDIT LOGS
 // ==========================================
-router.get('/audit-logs', protect, async (req, res, next) => {
+router.get('/audit-logs', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await RecruitmentAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

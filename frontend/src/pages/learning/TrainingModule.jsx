@@ -67,7 +67,7 @@ const TrainingModule = ({ searchQuery = '' }) => {
         api.get('/training/competency-matrix'),
         api.get('/training/assessments'),
         api.get('/training/learning-history'),
-        api.get('/training/audit')
+        user?.role === 'hr' ? api.get('/training/audit') : Promise.resolve({ data: [] }) // audit trail is HR only
       ]);
 
       if (mRes.status === 'fulfilled') setMetrics(mRes.value.data);

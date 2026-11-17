@@ -9,7 +9,9 @@ const ExitModule = ({ searchQuery = '' }) => {
   const { user } = useContext(AuthContext);
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Employees work on their own exit case; company KPIs, all-case management, analytics and the audit trail are HR only
+  const EMPLOYEE_TABS = ['ess-portal', 'notice-period', 'clearance', 'assets', 'interview', 'settlement', 'no-due', 'documents'];
+  const [activeTab, setActiveTab] = useState(user?.role === 'hr' ? 'dashboard' : 'ess-portal');
 
   // Filters
   const [filterDept, setFilterDept] = useState('All');
@@ -296,7 +298,7 @@ const ExitModule = ({ searchQuery = '' }) => {
 
       {/* Navigation Sub-Tabs Bar */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '12px', marginBottom: '24px', overflowX: 'auto' }}>
-        {menuTabs.map((t) => (
+        {menuTabs.filter((t) => user?.role === 'hr' || EMPLOYEE_TABS.includes(t.id)).map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}

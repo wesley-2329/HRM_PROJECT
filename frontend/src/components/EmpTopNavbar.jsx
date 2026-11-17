@@ -481,7 +481,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
           {/* Finance & Exit Dropdown */}
           <div className="emp-menu-item" ref={itemRefs.finance} onMouseEnter={() => handleMouseEnter('finance')} onMouseLeave={handleMouseLeave}>
             <a 
-              className={`emp-menu-link ${isGroupActive(['hr-budgeting', 'statutory-compliance', 'exit-management']) ? 'active' : ''}`}
+              className={`emp-menu-link ${isGroupActive(['statutory-compliance', 'exit-management']) ? 'active' : ''}`}
               onClick={(e) => toggleDropdown('finance', e)}
             >
               <i className="fa-solid fa-calculator"></i>
@@ -495,23 +495,13 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
               onMouseLeave={handleMouseLeave}
             >
               <a
-                className={`emp-dropdown-item ${isTabActive('hr-budgeting') ? 'active' : ''}`}
-                onClick={() => handleNavClick('hr-budgeting')}
-              >
-                <i className="fa-solid fa-coins"></i>
-                <div>
-                  <div className="emp-dropdown-title">HR Budgeting</div>
-                  <span className="emp-dropdown-item-desc">Department headcount costs & budget insights</span>
-                </div>
-              </a>
-              <a
                 className={`emp-dropdown-item ${isTabActive('statutory-compliance') ? 'active' : ''}`}
                 onClick={() => handleNavClick('statutory-compliance')}
               >
                 <i className="fa-solid fa-scale-balanced"></i>
                 <div>
                   <div className="emp-dropdown-title">Statutory Compliance</div>
-                  <span className="emp-dropdown-item-desc">PF, ESI, PT, and compliance details</span>
+                  <span className="emp-dropdown-item-desc">Your PF, ESI, PT and LWF details</span>
                 </div>
               </a>
               <a

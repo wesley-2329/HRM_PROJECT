@@ -699,7 +699,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // 8. AUDIT LOGS
 // ==========================================
 
-router.get('/audit', protect, async (req, res, next) => {
+router.get('/audit', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await EngagementAuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);

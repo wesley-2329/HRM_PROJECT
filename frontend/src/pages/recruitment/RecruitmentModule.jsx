@@ -167,18 +167,20 @@ const RecruitmentModule = () => {
   const fetchAllRecruitmentData = async (roleOverride) => {
     const role = roleOverride || selectedRole;
     // Placeholders only on the first load (loading starts true); refreshes after a save keep the page.
+    // Dashboard, positions, budgets, costs and audit logs are HR only (the API refuses others), so don't ask
+    const hrOnly = (path, empty) => user?.role === 'hr' ? api.get(path).catch(() => ({ data: empty })) : Promise.resolve({ data: empty });
     try {
       const [dashRes, reqRes, posRes, budRes, resRes, candRes, tpRes, costRes, masterRes, auditRes] = await Promise.all([
-        api.get(`/recruitment/dashboard?role=${role}`).catch(() => ({ data: null })),
+        hrOnly(`/recruitment/dashboard?role=${role}`, null),
         api.get(`/recruitment/requisitions?role=${role}`).catch(() => ({ data: [] })),
-        api.get(`/recruitment/positions?role=${role}`).catch(() => ({ data: [] })),
-        api.get(`/recruitment/budgets?role=${role}`).catch(() => ({ data: [] })),
+        hrOnly(`/recruitment/positions?role=${role}`, []),
+        hrOnly(`/recruitment/budgets?role=${role}`, []),
         api.get(`/recruitment/resumes?role=${role}`).catch(() => ({ data: [] })),
         api.get(`/recruitment/candidates?role=${role}`).catch(() => ({ data: [] })),
         api.get(`/recruitment/talent-pool?role=${role}`).catch(() => ({ data: [] })),
-        api.get(`/recruitment/costs?role=${role}`).catch(() => ({ data: [] })),
+        hrOnly(`/recruitment/costs?role=${role}`, []),
         api.get(`/recruitment/masters?role=${role}`).catch(() => ({ data: [] })),
-        api.get(`/recruitment/audit-logs?role=${role}`).catch(() => ({ data: [] }))
+        hrOnly(`/recruitment/audit-logs?role=${role}`, [])
       ]);
 
       setDashboardData(dashRes.data);

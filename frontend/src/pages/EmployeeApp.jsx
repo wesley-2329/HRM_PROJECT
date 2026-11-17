@@ -35,7 +35,6 @@ const RecruitmentModule = lazy(() => import('./recruitment/RecruitmentModule'));
 const PerformanceModule = lazy(() => import('./performance/PerformanceModule'));
 const EngagementModule = lazy(() => import('./engagement/EngagementModule'));
 const TrainingModule = lazy(() => import('./learning/TrainingModule'));
-const BudgetingModule = lazy(() => import('./budgeting/BudgetingModule'));
 const StatutoryComplianceModule = lazy(() => import('./compliance/StatutoryComplianceModule'));
 const ExitModule = lazy(() => import('./exit/ExitModule'));
 
@@ -3843,12 +3842,6 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
           </section>
         )}
 
-        {/* HR Budgeting & Cost Analytics */}
-        {(currentModule === 'hr-budgeting' || currentModule === 'budgeting' || currentModule === 'budget') && (
-          <section id="emp-mod-budgeting" className="emp-module">
-            <BudgetingModule />
-          </section>
-        )}
 
         {/* Statutory Compliance Monitor */}
         {(currentModule === 'statutory-compliance' || currentModule === 'compliance' || currentModule === 'statutory') && (

@@ -69,7 +69,7 @@ const logAudit = async (req, action, entityType, entityId, changes) => {
 // ==========================================
 // 1. COMPLIANCE DASHBOARD & EXECUTIVE KPIS
 // ==========================================
-router.get('/dashboard', protect, async (req, res, next) => {
+router.get('/dashboard', protect, adminOnly, async (req, res, next) => {
   try {
     const challans = await StatutoryChallan.find();
     const notices = await GovernmentNotice.find();
@@ -108,7 +108,7 @@ router.get('/dashboard', protect, async (req, res, next) => {
 // ==========================================
 // 2. STATUTORY OVERVIEW
 // ==========================================
-router.get('/overview', protect, async (req, res, next) => {
+router.get('/overview', protect, adminOnly, async (req, res, next) => {
   try {
     res.json(await StatutoryActMaster.find());
   } catch (err) { next(err); }
@@ -117,7 +117,7 @@ router.get('/overview', protect, async (req, res, next) => {
 // ==========================================
 // 3. COMPLIANCE CALENDAR
 // ==========================================
-router.get('/calendar', protect, async (req, res, next) => {
+router.get('/calendar', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await ComplianceCalendar.find().sort({ dueDate: 1 });
     res.json(list);
@@ -181,8 +181,8 @@ router.get('/esi', protect, async (req, res, next) => {
 // ==========================================
 router.get('/pt', protect, async (req, res, next) => {
   try {
-    const profiles = await EmployeePtProfile.find();
-    const calculations = await PtCalculation.find();
+    const profiles = await EmployeePtProfile.find(ownScope(req));
+    const calculations = await PtCalculation.find(ownScope(req));
     const rules = await PtRuleMaster.find();
     res.json({ profiles, calculations, rules });
   } catch (err) { next(err); }
@@ -193,8 +193,8 @@ router.get('/pt', protect, async (req, res, next) => {
 // ==========================================
 router.get('/lwf', protect, async (req, res, next) => {
   try {
-    const profiles = await EmployeeLwfProfile.find();
-    const contributions = await LwfContribution.find();
+    const profiles = await EmployeeLwfProfile.find(ownScope(req));
+    const contributions = await LwfContribution.find(ownScope(req));
     const rules = await LwfRuleMaster.find();
     res.json({ profiles, contributions, rules });
   } catch (err) { next(err); }
@@ -203,7 +203,7 @@ router.get('/lwf', protect, async (req, res, next) => {
 // ==========================================
 // 8. CHALLANS & PAYMENTS
 // ==========================================
-router.get('/challans', protect, async (req, res, next) => {
+router.get('/challans', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await StatutoryChallan.find().sort({ createdAt: -1 });
     res.json(list);
@@ -251,7 +251,7 @@ router.post('/challans/:id/pay', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 9. RETURN FILING
 // ==========================================
-router.get('/returns', protect, async (req, res, next) => {
+router.get('/returns', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await StatutoryReturn.find().sort({ filingDueDate: 1 });
     res.json(list);
@@ -282,7 +282,7 @@ router.post('/returns', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 // 10. DUE DATE TRACKER
 // ==========================================
-router.get('/due-dates', protect, async (req, res, next) => {
+router.get('/due-dates', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await DueDateTracker.find().sort({ dueDate: 1 });
     res.json(list);
@@ -292,7 +292,7 @@ router.get('/due-dates', protect, async (req, res, next) => {
 // ==========================================
 // 11. GOVERNMENT NOTICES & INSPECTIONS
 // ==========================================
-router.get('/notices', protect, async (req, res, next) => {
+router.get('/notices', protect, adminOnly, async (req, res, next) => {
   try {
     const notices = await GovernmentNotice.find().sort({ createdAt: -1 });
     res.json(notices);
@@ -319,7 +319,7 @@ router.post('/notices', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/inspections', protect, async (req, res, next) => {
+router.get('/inspections', protect, adminOnly, async (req, res, next) => {
   try {
     const list = await InspectionRecord.find().sort({ inspectionDate: -1 });
     res.json(list);
@@ -372,13 +372,13 @@ const findComplianceDoc = async (rawId) => {
   return ComplianceDocument.findOne({ docId: id });
 };
 
-router.get('/documents', protect, async (req, res, next) => {
+router.get('/documents', protect, adminOnly, async (req, res, next) => {
   try {
     res.json(await ComplianceDocument.find().sort({ createdAt: -1 }));
   } catch (err) { next(err); }
 });
 
-router.get('/documents/:id', protect, async (req, res, next) => {
+router.get('/documents/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const doc = await findComplianceDoc(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Compliance document not found.' });
@@ -386,7 +386,7 @@ router.get('/documents/:id', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get(['/documents/:id/preview', '/documents/:id/download', '/documents/:id/view'], protect, async (req, res, next) => {
+router.get(['/documents/:id/preview', '/documents/:id/download', '/documents/:id/view'], protect, adminOnly, async (req, res, next) => {
   try {
     const doc = await findComplianceDoc(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Compliance document not found.' });
@@ -464,7 +464,7 @@ router.get('/masters', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/history', protect, async (req, res, next) => {
+router.get('/history', protect, adminOnly, async (req, res, next) => {
   try {
     const logs = await StatutoryAuditLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);
