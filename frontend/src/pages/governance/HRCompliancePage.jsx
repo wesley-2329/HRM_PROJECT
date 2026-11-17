@@ -3527,7 +3527,7 @@ const HRCompliancePage = ({ currentSubModule }) => {
                   className="btn btn-secondary w-full"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => downloadPdfDocument({
-                    title: `AUDIT REPORT: ${a.name.toUpperCase()}`,
+                    title: `REGULATORY AUDIT REPORT: ${a.name.toUpperCase()}`,
                     subtitle: 'Governance & Regulatory Compliance Archive',
                     docNumber: a.auditNumber,
                     recipient: `Auditor: ${a.auditorName}`,

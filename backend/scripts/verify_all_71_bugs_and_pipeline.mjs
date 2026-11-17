@@ -625,9 +625,11 @@ assert(
 // Pipeline 9: Statutory Compliance & Audit Reporting Pipeline
 console.log('\n[Pipeline 9: Statutory Compliance & Regulatory Audit Pipeline]');
 assert(
-  files.statutoryModule.includes('openPdfDocumentInNewTab') &&
-  files.statutoryModule.includes('handleOpenDocInNewTab'),
-  'P9.1: Compliance document Challan receipt preview opens valid PDF in new tab'
+  // The fake generated preview was replaced by the real uploaded file (GridFS), fetched with the login token
+  files.statutoryModule.includes('/compliance/documents/') &&
+  files.statutoryModule.includes("responseType: 'blob'") &&
+  files.statutoryModule.includes('No file was uploaded for this record.'),
+  'P9.1: Compliance document Challan receipt preview opens the uploaded file (or says none was uploaded)'
 );
 assert(
   files.compliancePage.includes('btn-download-') &&
