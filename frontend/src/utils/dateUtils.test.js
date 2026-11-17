@@ -4,7 +4,7 @@ import assert from 'node:assert';
 import { toLocalYmd, formatDateIN } from './dateUtils.js';
 
 test('local calendar day, not the UTC day', () => {
-  process.env.TZ = 'Asia/Kolkata';
+  globalThis.process.env.TZ = 'Asia/Kolkata';
   assert.strictEqual(toLocalYmd(new Date('2026-11-12T18:31:00Z')), '2026-11-13'); // 00:01 IST on 13 Nov
   assert.strictEqual(toLocalYmd(new Date('2026-11-12T23:59:00Z')), '2026-11-13'); // 05:29 IST
   assert.strictEqual(toLocalYmd(new Date('2026-11-12T18:29:00Z')), '2026-11-12'); // 23:59 IST on 12 Nov
