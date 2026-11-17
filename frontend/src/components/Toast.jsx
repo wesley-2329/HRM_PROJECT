@@ -112,9 +112,7 @@ export const ToastProvider = ({ children }) => {
     <div
       className="toast-container"
       style={{
-        position: 'fixed',
-        top: '24px',
-        right: '24px',
+        position: 'fixed', // top/right come from .toast-container so phones can move it to the bottom
         zIndex: 9999999,
         pointerEvents: 'none',
         display: 'flex',

@@ -1,5 +1,5 @@
 import { FEATURES } from '../features';
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { lazy, useContext, useState, useEffect, useRef } from 'react';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -9,22 +9,6 @@ import Modal from '../components/Modal';
 import { getAvatarUrl } from '../App';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { themeColor, themeColors } from '../utils/chartTheme';
-import OrgStructure from './OrgStructure';
-import DocumentVault from './DocumentVault';
-import HRCompliancePage from './governance/HRCompliancePage';
-import ApprovalsInbox from '../components/ApprovalsInbox';
-import ProbationManagement from '../components/ProbationManagement';
-import TransferManagement from '../components/TransferManagement';
-import PromotionManagement from '../components/PromotionManagement';
-import GradeManagement from '../components/GradeManagement';
-import SalaryRevisionManagement from '../components/SalaryRevisionManagement';
-import RecruitmentModule from './recruitment/RecruitmentModule';
-import PerformanceModule from './performance/PerformanceModule';
-import EngagementModule from './engagement/EngagementModule';
-import TrainingModule from './learning/TrainingModule';
-import BudgetingModule from './budgeting/BudgetingModule';
-import StatutoryComplianceModule from './compliance/StatutoryComplianceModule';
-import ExitModule from './exit/ExitModule';
 import secureVaultIllustration from '../assets/secure_vault_illustration.jpg';
 
 const SECURITY_ILLUSTRATION_FALLBACK = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjUwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2VjR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ZjQ2ZTUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDZiNmQ0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgcng9IjE2IiBmaWxsPSIjZjhmYWZjIi8+CiAgPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iMzYwIiBoZWlnaHQ9IjIxMCIgcng9IjEyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjEwMCIgcj0iNDgiIGZpbGw9InVybCgjc2VjR3JhZCkiIG9wYWNpdHk9IjAuMTIiLz4KICA8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxMDAiIHI9IjM2IiBmaWxsPSJ1cmwoI3NlY0dyYWQpIiBvcGFjaXR5PSIwLjIiLz4KICA8cGF0aCBkPSJNMjAwIDcwIEwyMjQgODIgVjEwNiBDMjI0IDEyMiAyMTQgMTM2IDIwMCAxNDIgQzE4NiAxMzYgMTc2IDEyMiAxNzYgMTA2IFY4MiBaIiBmaWxsPSJ1cmwoI3NlY0dyYWQpIi8+CiAgPHBhdGggZD0iTTE5NCAxMDAgTDE5OCAxMDQgTDIwOCA5NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTcyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUyOTNiIiBmb250LXNpemU9IjE1IiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIj5TZWN1cml0eSAmYW1wOyBDb21wbGlhbmNlIFZhdWx0PC90ZXh0PgogIDx0ZXh0IHg9IjIwMCIgeT0iMTk0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjQ3NDhiIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmIj5FbnRlcnByaXNlIElkZW50aXR5ICZhbXA7IENyZWRlbnRpYWwgUHJvdGVjdGlvbjwvdGV4dD4KPC9zdmc+";
@@ -39,6 +23,24 @@ import {
   PayslipModal,
   AddWalkinModal
 } from '../components/Modals';
+
+// Each module is its own chunk, fetched the first time its page is opened.
+const OrgStructure = lazy(() => import('./OrgStructure'));
+const DocumentVault = lazy(() => import('./DocumentVault'));
+const HRCompliancePage = lazy(() => import('./governance/HRCompliancePage'));
+const ApprovalsInbox = lazy(() => import('../components/ApprovalsInbox'));
+const ProbationManagement = lazy(() => import('../components/ProbationManagement'));
+const TransferManagement = lazy(() => import('../components/TransferManagement'));
+const PromotionManagement = lazy(() => import('../components/PromotionManagement'));
+const GradeManagement = lazy(() => import('../components/GradeManagement'));
+const SalaryRevisionManagement = lazy(() => import('../components/SalaryRevisionManagement'));
+const RecruitmentModule = lazy(() => import('./recruitment/RecruitmentModule'));
+const PerformanceModule = lazy(() => import('./performance/PerformanceModule'));
+const EngagementModule = lazy(() => import('./engagement/EngagementModule'));
+const TrainingModule = lazy(() => import('./learning/TrainingModule'));
+const BudgetingModule = lazy(() => import('./budgeting/BudgetingModule'));
+const StatutoryComplianceModule = lazy(() => import('./compliance/StatutoryComplianceModule'));
+const ExitModule = lazy(() => import('./exit/ExitModule'));
 
 const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
   const {

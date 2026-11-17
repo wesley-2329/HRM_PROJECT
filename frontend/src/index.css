@@ -3681,3 +3681,31 @@ input.input:focus, textarea.input:focus, select.input:focus { border-color: hsl(
   [style*="display: grid"] > .card > h2:nth-child(2),
   [style*="display: grid"] > .glass-card > div:nth-child(2)[style*="font-size: 1.8rem"] { font-size: 1.2rem !important; overflow-wrap: anywhere; }
 }
+
+/* ── First data load ─────────────────────────────────────────────────────────
+   DataContext sets body.data-loading until the dashboard's data has arrived. Tiles and the panels
+   below them show pulsing placeholder bars instead of zeros and "nothing here" messages. */
+@keyframes skeleton-pulse { 50% { opacity: 0.45; } }
+body.data-loading .metric-val {
+  width: 4ch; max-width: 100%; border-radius: 6px; color: transparent;
+  background: hsl(var(--border)); animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+body.data-loading .metric-val * { visibility: hidden; }
+body.data-loading .metric-val ~ * { visibility: hidden; }
+body.data-loading .metric-grid ~ * .card { position: relative; }
+body.data-loading .metric-grid ~ * .card > :not(.card-title) { visibility: hidden; }
+body.data-loading .metric-grid ~ * .card::after {
+  content: ''; position: absolute; inset: 60px 20px auto; height: 82px; border-radius: 6px;
+  background: repeating-linear-gradient(to bottom, hsl(var(--border)) 0 14px, transparent 14px 34px);
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.data-loading .metric-val, body.data-loading .metric-grid ~ * .card::after { animation: none; }
+}
+
+/* Phones: toasts sit at the bottom and fit the screen, so they never cover the header's menu button
+   (the 320px minimum width used to push them off the left edge). */
+@media (max-width: 640px) {
+  .toast-container { top: auto; bottom: 16px; left: 12px; right: 12px; }
+  .toast { min-width: 0; }
+}

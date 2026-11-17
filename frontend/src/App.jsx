@@ -154,7 +154,7 @@ const MainLayoutWrapper = ({ role, overrideModule }) => {
 
         <div className="module-viewport">
           <ErrorBoundary resetKey={overrideModule || module}>
-            <React.Suspense fallback={null}>
+            <React.Suspense fallback={<div role="status" style={{ padding: '48px 16px', textAlign: 'center', color: 'hsl(var(--text-secondary))' }}><i className="fa-solid fa-spinner fa-spin"></i> Loading…</div>}>
             {isHR ? (
               <HRApp
                 currentModule={overrideModule || module}

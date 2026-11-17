@@ -11,6 +11,9 @@ export const DataProvider = ({ children }) => {
   const { showToast } = useToast();
 
   const [employees, setEmployees] = useState([]);
+  // Whose dashboard data has arrived. Until it matches the signed-in user, pages show placeholder
+  // bars (body.data-loading in index.css) instead of zeros and "nothing here" messages.
+  const [loadedFor, setLoadedFor] = useState(null);
   const [leaves, setLeaves] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [tickets, setTickets] = useState([]);
@@ -462,8 +465,15 @@ export const DataProvider = ({ children }) => {
     for (let i = 0; i < tasks.length; i += chunkSize) {
       const chunk = tasks.slice(i, i + chunkSize);
       await Promise.all(chunk.map(fn => fn().catch(err => console.error('Error in batch fetch item:', err))));
+      if (i === 0) setLoadedFor(user.id || user._id);
     }
   };
+  const dataLoading = !!user && loadedFor !== (user.id || user._id);
+  useEffect(() => {
+    document.body.classList.toggle('data-loading', dataLoading);
+    document.body.setAttribute('aria-busy', dataLoading);
+  }, [dataLoading]);
+
   // Socket Connection and Event Listeners
   useEffect(() => {
     if (!user) return;
