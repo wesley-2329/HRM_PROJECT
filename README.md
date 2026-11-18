@@ -71,6 +71,24 @@ The server enforces the split: a Preview deployment refuses any database not end
 and a URI without a database name is rejected. On first start, a Preview deployment fills an empty demo database with the demo data.
 `GET /api/health` shows the database name and which variables are present (never their values).
 
+Three Vercel projects build Production from `main`: `hrorbit.` (hrorbit.vercel.app), `hrorbit` (hrorbit-sigma.vercel.app)
+and `hrorbit-sigma` (hrorbit-sigma-eight.vercel.app). The last two skip Preview builds (Ignored Build Step
+`[ "$VERCEL_ENV" != "production" ]`). Vercel applies a changed environment variable only to deployments built after the change.
+
+#### Releasing to Production
+1. Preview: reset the demo (`POST /api/demo/reset` as HR) and sign in with both demo logins.
+2. Production variables (each project): `MONGODB_URI` ends in `/hrorbit`, holds the current Atlas password; `JWT_SECRET` set.
+3. Merge without rewriting history: `git checkout main && git merge --ff-only redesign && git push origin main`.
+4. For each project, once the build is Ready: `GET /api/health` → `"database":"connected"`, `"dbName":"hrorbit"`,
+   `"environment":"production"`; sign in as HR and as an employee; no "DEMO DATA" badge; `POST /api/demo/reset` → 404.
+
+#### Rolling back
+- **Fastest:** Vercel → project → Deployments → the previous Production deployment → *Instant Rollback*. It restores that
+  build *and the environment variables it was built with* (an old database password comes back with it).
+- **Previous code with current variables:** that deployment → *Redeploy* (rebuilds the same commit with today's variables).
+- **Code:** `git revert --no-edit <first>^..<last>` on `main` (one revert per commit, no force-push), then push to redeploy.
+- Rollbacks do not touch the database; nothing in a release migrates or deletes data.
+
 ---
 
 ### 2. Start Backend Server
