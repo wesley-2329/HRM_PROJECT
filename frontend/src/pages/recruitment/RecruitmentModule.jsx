@@ -855,7 +855,7 @@ const RecruitmentModule = () => {
             <i className="fa-solid fa-users-gear"></i> Enterprise Recruitment & Onboarding
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
-            End-to-end recruitment lifecycle: Requisitions, Position Approvals, Budgeting, Resume NLP Parsing, 360° Candidate DB, Talent Pool & Cost Tracking.
+            End-to-end recruitment lifecycle: Requisitions, Position Approvals, Budgeting, Resume Uploads & Duplicate Checks, 360° Candidate DB, Talent Pool & Cost Tracking.
           </p>
         </div>
 
@@ -1442,7 +1442,7 @@ const RecruitmentModule = () => {
                   <input id="resume-file-input" type="file" className="form-control" accept=".pdf,.doc,.docx" onChange={(e) => setResumeUploadFile(e.target.files[0])} required />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={uploadingResume}>
-                  {uploadingResume ? <><i className="fa-solid fa-spinner fa-spin"></i> Parsing NLP Skills...</> : <><i className="fa-solid fa-microchip"></i> Parse Resume & Calculate Score</>}
+                  {uploadingResume ? <><i className="fa-solid fa-spinner fa-spin"></i> Uploading...</> : <><i className="fa-solid fa-microchip"></i> Upload Resume & Check Duplicates</>}
                 </button>
               </form>
             </div>
@@ -2587,7 +2587,7 @@ const RecruitmentModule = () => {
                     <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Personal & Contact</h5>
                     <p><strong>Email:</strong> {selectedCandidate.email || '--'}</p>
                     <p><strong>Phone:</strong> {selectedCandidate.phone || '--'}</p>
-                    <p><strong>Location:</strong> {selectedCandidate.location || 'Hyderabad, India'}</p>
+                    <p><strong>Location:</strong> {selectedCandidate.location || '—'}</p>
                   </div>
                   <div>
                     <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Professional & Compensation</h5>
@@ -2597,11 +2597,13 @@ const RecruitmentModule = () => {
                     <p><strong>Notice Period:</strong> {selectedCandidate.noticePeriodDays != null ? `${selectedCandidate.noticePeriodDays} Days` : '—'}</p>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
-                    <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Skills & NLP Extraction</h5>
+                    <h5 style={{ fontWeight: 700, color: 'hsl(var(--primary))' }}>Skills</h5>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {(selectedCandidate.skills || 'React.js, Node.js, Express, MongoDB, Docker').split(',').map(s => (
-                        <span key={s} className="badge badge-primary">{s.trim()}</span>
-                      ))}
+                      {selectedCandidate.skills
+                        ? selectedCandidate.skills.split(',').filter(s => s.trim()).map(s => (
+                          <span key={s} className="badge badge-primary">{s.trim()}</span>
+                        ))
+                        : <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>No skills recorded yet.</span>}
                     </div>
                   </div>
                 </div>
