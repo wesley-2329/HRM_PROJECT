@@ -126,6 +126,10 @@ test('transfer: employee may raise only their own; cannot approve it', async () 
   assert.strictEqual((await call('PUT', `/api/transfers/${own.data._id}/action`, emp, { decision: 'Approve' })).status, 403);
   assert.strictEqual((await call('PUT', `/api/transfers/${own.data._id}/action`, hr, {})).status, 400);
   assert.strictEqual((await call('PUT', `/api/transfers/${own.data._id}/action`, hr, { decision: 'Approve' })).status, 200);
+  // finalising needs a real destination; nothing is filled in for HR
+  assert.strictEqual((await call('POST', `/api/transfers/${own.data._id}/process`, hr, { newDepartment: '', newLocation: '' })).status, 400);
+  const done = await call('POST', `/api/transfers/${own.data._id}/process`, hr, { newDepartment: 'Engineering', newLocation: 'Chennai Branch' });
+  assert.strictEqual(done.status, 200, JSON.stringify(done.data));
 });
 
 test('profile update never returns the password hash', async () => {

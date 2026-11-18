@@ -6,7 +6,7 @@ import { useToast } from './Toast';
 
 const TransferManagement = () => {
   const { user } = useContext(AuthContext);
-  const { employees } = useContext(DataContext);
+  const { employees, costCenters = [] } = useContext(DataContext);
   const { showToast } = useToast();
 
   const [transfers, setTransfers] = useState([]);
@@ -282,11 +282,12 @@ const TransferManagement = () => {
                                     onClick={() => {
                                       setSelectedTrn(t);
                                       setProcessForm({
-                                        newDepartment: t.newDepartment || 'Engineering',
-                                        newLocation: t.newLocation || 'Bangalore Head Office',
+                                        // the request's own values, never invented ones; HR fills anything missing
+                                        newDepartment: t.newDepartment || '',
+                                        newLocation: t.newLocation || '',
                                         newManagerId: t.newManagerId || '',
-                                        newCostCenter: t.newCostCenter || 'CC-ENG-01',
-                                        newGrade: t.newGrade || 'B2'
+                                        newCostCenter: t.newCostCenter || '',
+                                        newGrade: t.newGrade || ''
                                       });
                                       setInnerTab('process');
                                     }}
@@ -429,7 +430,9 @@ const TransferManagement = () => {
                         className="form-control"
                         value={processForm.newDepartment}
                         onChange={(e) => setProcessForm(prev => ({ ...prev, newDepartment: e.target.value }))}
+                        required
                       >
+                        <option value="">Select department...</option>
                         {depts.map(d => <option key={d._id} value={d.name}>{d.name}</option>)}
                       </select>
                     </div>
@@ -440,7 +443,9 @@ const TransferManagement = () => {
                         className="form-control"
                         value={processForm.newLocation}
                         onChange={(e) => setProcessForm(prev => ({ ...prev, newLocation: e.target.value }))}
+                        required
                       >
+                        <option value="">Select branch...</option>
                         {branches.map(b => <option key={b._id} value={b.name}>{b.name}</option>)}
                       </select>
                     </div>
@@ -469,8 +474,13 @@ const TransferManagement = () => {
                         className="form-control" 
                         value={processForm.newCostCenter}
                         onChange={(e) => setProcessForm(prev => ({ ...prev, newCostCenter: e.target.value }))}
+                        list="transfer-cost-centers"
+                        placeholder="Choose or type a cost centre"
                         required
                       />
+                      <datalist id="transfer-cost-centers">
+                        {costCenters.filter(c => c.status !== 'Inactive').map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                      </datalist>
                     </div>
                   </div>
 

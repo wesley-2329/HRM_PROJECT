@@ -200,6 +200,10 @@ router.post('/:id/process', protect, async (req, res, next) => {
       return res.status(403).json({ message: 'Only HR Managers are authorized to finalize transfers.' });
     }
 
+    if (!String(newDepartment || '').trim() || !String(newLocation || '').trim()) {
+      return res.status(400).json({ message: 'Please fill in: New department, New location.' });
+    }
+
     let newManagerName = '';
     if (newManagerId) {
       const mgr = await Employee.findOne({ id: newManagerId });
