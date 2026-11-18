@@ -78,7 +78,17 @@ api.interceptors.response.use(
   (error) => {
     // Distinguish individual request timeout/cancellation from DB outage
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || axios.isCancel(error)) {
-      // Individual timeout: do NOT falsely treat as database offline
+      // Individual timeout: do NOT falsely treat as database offline. Screens show err.response.data.message, so
+      // give them the honest version: the server may still have saved the change, so check before retrying.
+      if (!axios.isCancel(error) && !error.response && error.config?.method && error.config.method !== 'get') {
+        error.response = { status: 0, data: { message: 'The server did not answer in time, so this change may or may not have been saved. Refresh the page and check before trying again.' } };
+      }
+      return Promise.reject(error);
+    }
+
+    // Connection dropped on a save: same honest answer as a timeout
+    if (!error.response && error.config?.method && error.config.method !== 'get') {
+      error.response = { status: 0, data: { message: 'The connection to the server was lost, so this change may or may not have been saved. Refresh the page and check before trying again.' } };
       return Promise.reject(error);
     }
 

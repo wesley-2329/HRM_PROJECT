@@ -225,7 +225,7 @@ const ExitModule = ({ searchQuery = '' }) => {
       setShowFfsModal(false);
     } catch (err) {
       // Bug 041: the server answered with an error, so nothing was saved; don't fake a row
-      if (err.response) {
+      if (err.response && err.response.status !== 0) { // status 0 = no answer (api.js timeout marker)
         showToast(err.response.data?.message || 'Failed to calculate F&F settlement.', 'error');
         return;
       }
