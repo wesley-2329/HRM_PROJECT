@@ -61,6 +61,7 @@ after(async () => {
   await SalaryRevisionRequest.deleteMany({ employeeId: /^T-/ });
   await TransferRequest.deleteMany({ employeeId: /^T-/ });
   await Leave.deleteMany({ empId: /^T-/ });
+  await mongoose.connection.collection('midyearreviews').deleteMany({ employeeId: /^T-/ });
   server.close();
   await mongoose.disconnect();
 });
@@ -554,5 +555,26 @@ test('resume parser: simulated results are labelled and not copied into the cand
   } finally {
     await ResumeAnalysis.deleteMany({ candidateName: /^T-RES/ });
     await Candidate.deleteMany({ name: /^T-RES/ });
+  }
+});
+
+test('performance lists: employees see their own records, managers also their reports, HR everyone (Bug 078)', async () => {
+  // T-EMP and T-OTHER (who reports to T-EMP) each submit a self assessment; only subject/rating/comments are sent.
+  for (const [token, label] of [[emp, 'T-EMP'], [other, 'T-OTHER']]) {
+    const r = await call('POST', '/api/performance/mid-year-reviews', token, { reviewPeriod: `T-SELF ${label}`, selfRating: 4, employeeComments: 'ok' });
+    assert.strictEqual(r.status, 201, JSON.stringify(r.data));
+    assert.strictEqual(r.data.employeeId, label);
+    assert.strictEqual(r.data.department, 'Engineering');
+  }
+  const ids = async (token) => (await call('GET', '/api/performance/mid-year-reviews', token)).data
+    .filter(r => /^T-SELF/.test(r.reviewPeriod)).map(r => r.employeeId).sort();
+  assert.deepStrictEqual(await ids(other), ['T-OTHER']);
+  assert.deepStrictEqual(await ids(emp), ['T-EMP', 'T-OTHER']);
+  assert.deepStrictEqual(await ids(hr), ['T-EMP', 'T-OTHER']);
+  // the other lists and the dashboard use the same scope: nothing outside T-OTHER's own records
+  for (const path of ['goals', 'annual-reviews', 'promotions', 'increments', 'pip']) {
+    const r = await call('GET', `/api/performance/${path}`, other);
+    assert.strictEqual(r.status, 200);
+    assert.ok(r.data.every(x => x.employeeId === 'T-OTHER'), `${path} leaked ${r.data.map(x => x.employeeId)}`);
   }
 });

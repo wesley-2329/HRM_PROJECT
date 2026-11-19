@@ -314,6 +314,11 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   const [leaveFrom, setLeaveFrom] = useState('');
   const [leaveTo, setLeaveTo] = useState('');
   const [leaveReason, setLeaveReason] = useState('');
+  const applyingLeaveRef = useRef(false); // stops a double click sending the same leave twice
+  const emptySelfReview = { subject: '', rating: 3, comments: '' };
+  const [selfReview, setSelfReview] = useState(emptySelfReview);
+  const [selfReviewSaving, setSelfReviewSaving] = useState(false);
+  const selfReviewSavingRef = useRef(false); // state updates too late to stop a double click
   // The apply form shows the balance of the year being booked (may differ from the dashboard's current year).
   const formYear = (leaveFrom || '').slice(0, 4) || String(new Date().getFullYear());
   const [formBalance, setFormBalance] = useState(null);
@@ -1287,6 +1292,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
   // Leave Submit
   const handleApplyLeave = async (e) => {
     e.preventDefault();
+    if (applyingLeaveRef.current) return;
+    applyingLeaveRef.current = true;
     try {
       const res = await api.post('/leaves', {
         type: leaveType,
@@ -1303,6 +1310,30 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
       setAttSubTab('history');
     } catch (err) {
       showToast(err.response?.data?.message || 'Error applying for leave.', 'error');
+    } finally {
+      applyingLeaveRef.current = false;
+    }
+  };
+
+  // Saved as a Mid-Year Review, which HR sees under Performance → Mid-Year Review.
+  const handleSelfReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (selfReviewSavingRef.current) return;
+    selfReviewSavingRef.current = true;
+    setSelfReviewSaving(true);
+    try {
+      await api.post('/performance/mid-year-reviews', {
+        reviewPeriod: selfReview.subject.trim(),
+        selfRating: Number(selfReview.rating),
+        employeeComments: selfReview.comments.trim()
+      });
+      showToast('Self assessment submitted to HR.', 'success');
+      setSelfReview(emptySelfReview);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not submit your self assessment. Please try again.', 'error');
+    } finally {
+      selfReviewSavingRef.current = false;
+      setSelfReviewSaving(false);
     }
   };
 
@@ -2658,64 +2689,24 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
         {/* 6. PIP / Performance View */}
         {currentModule === 'emp-pip' && (
           <section id="emp-mod-emp-pip" className="emp-module">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-              <div className="card">
-                <div className="card-title">Current Performance Rating</div>
-                <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                  <div style={{ fontSize: '3.5rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>4.2</div>
-                  <div style={{ color: 'var(--warning)', fontSize: '1.25rem' }}>
-                    <i className="fa-solid fa-star"></i>
-                    <i className="fa-solid fa-star"></i>
-                    <i className="fa-solid fa-star"></i>
-                    <i className="fa-solid fa-star"></i>
-                    <i className="fa-solid fa-star-half-stroke"></i>
-                  </div>
-                  <p style={{ marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Review Period: FY 2025-2026</p>
+            {/* Ratings, PIPs and goals come from the Performance module below; this form adds a self assessment. */}
+            <div className="card" style={{ marginBottom: '24px' }}>
+              <div className="card-title">Submit Self-Assessment Feedback</div>
+              <form onSubmit={handleSelfReviewSubmit}>
+                <div className="form-group">
+                  <label htmlFor="self-review-subject">Assessment Subject</label>
+                  <input id="self-review-subject" type="text" className="form-control" placeholder="Mid-year Review" value={selfReview.subject} onChange={(e) => setSelfReview({ ...selfReview, subject: e.target.value })} required />
                 </div>
-              </div>
-              <div className="card">
-                <div className="card-title">Development & Performance Standing</div>
-                <div style={{ padding: '15px', borderRadius: '10px', background: 'hsla(var(--success), 0.1)', border: '1px solid hsla(var(--success), 0.2)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong>Performance Level</strong>
-                    <span className="badge badge-success">Meeting Expectations</span>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>You are in good standing. No special improvement plans are active. Keep up the high standards!</p>
+                <div className="form-group">
+                  <label htmlFor="self-review-rating">Rating (Self Evaluation): {selfReview.rating} / 5</label>
+                  <input id="self-review-rating" type="range" min="1" max="5" className="form-control" style={{ padding: 0 }} value={selfReview.rating} onChange={(e) => setSelfReview({ ...selfReview, rating: e.target.value })} />
                 </div>
-              </div>
-            </div>
-
-            <div className="dashboard-layout">
-              <div>
-                <div className="card">
-                  <div className="card-title">Submit Self-Assessment Feedback</div>
-                  <form onSubmit={(e) => { e.preventDefault(); showToast('Self assessment submitted.', 'success'); }}>
-                    <div className="form-group">
-                      <label>Assessment Subject</label>
-                      <input type="text" className="form-control" placeholder="Mid-year Review" required />
-                    </div>
-                    <div className="form-group">
-                      <label>Rating (Self Evaluation)</label>
-                      <input type="range" min="1" max="5" className="form-control" style={{ padding: 0 }} />
-                    </div>
-                    <div className="form-group">
-                      <label>Comments / Rationale</label>
-                      <textarea className="form-control" style={{ height: '80px' }} required></textarea>
-                    </div>
-                    <button className="btn btn-primary">Submit Feedback</button>
-                  </form>
+                <div className="form-group">
+                  <label htmlFor="self-review-comments">Comments / Rationale</label>
+                  <textarea id="self-review-comments" className="form-control" style={{ height: '80px' }} value={selfReview.comments} onChange={(e) => setSelfReview({ ...selfReview, comments: e.target.value })} required></textarea>
                 </div>
-              </div>
-              <div>
-                <div className="card" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)', color: '#fff', border: 'none' }}>
-                  <div className="card-title" style={{ color: '#fff' }}>AI Skill Suggestions</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem', color: '#e2e8f0' }}>
-                    <div><i className="fa-solid fa-rocket" aria-hidden="true"></i> Improve TypeScript proficiency via targeted exercises.</div>
-                    <div><i className="fa-solid fa-bullseye" aria-hidden="true"></i> Attend peer leadership coding workshops.</div>
-                    <div><i className="fa-solid fa-laptop-code" aria-hidden="true"></i> Enhance code review response latency metrics.</div>
-                  </div>
-                </div>
-              </div>
+                <button type="submit" className="btn btn-primary" disabled={selfReviewSaving}>{selfReviewSaving ? 'Submitting…' : 'Submit Feedback'}</button>
+              </form>
             </div>
           </section>
         )}

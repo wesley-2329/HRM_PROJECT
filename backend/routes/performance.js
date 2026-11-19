@@ -25,6 +25,12 @@ const canManage = async (req, employeeId) => {
   return !!emp && emp.functionalManagerId === req.user.id;
 };
 const forbid = (res) => res.status(403).json({ message: 'Only HR or the reporting manager can do this.' });
+// Filter for list routes: HR sees everyone; others see their own records and their direct reports' (same rule as canManage).
+const teamScope = async (req) => {
+  if (req.user.role === 'hr') return {};
+  const reports = await Employee.find({ functionalManagerId: req.user.id }).select('id');
+  return { employeeId: { $in: [req.user.id, ...reports.map(e => e.id)] } };
+};
 
 // Audit Logger Helper
 const logPerfAudit = async (req, entityType, entityId, action, previousState, newState, comments) => {
@@ -53,13 +59,14 @@ const logPerfAudit = async (req, entityType, entityId, action, previousState, ne
 // ==========================================
 router.get('/dashboard', protect, async (req, res, next) => {
   try {
+    const scope = await teamScope(req);
     const cycles = await AppraisalCycleMaster.find({ deletedAt: null });
-    const goals = await EmployeeGoal.find({ deletedAt: null });
-    const midReviews = await MidYearReview.find({ deletedAt: null });
-    const annualReviews = await AnnualReview.find({ deletedAt: null });
-    const pips = await PipRecord.find({ deletedAt: null });
-    const promotions = await PromotionRequest.find();
-    const increments = await SalaryRevisionRequest.find();
+    const goals = await EmployeeGoal.find({ deletedAt: null, ...scope });
+    const midReviews = await MidYearReview.find({ deletedAt: null, ...scope });
+    const annualReviews = await AnnualReview.find({ deletedAt: null, ...scope });
+    const pips = await PipRecord.find({ deletedAt: null, ...scope });
+    const promotions = await PromotionRequest.find(scope);
+    const increments = await SalaryRevisionRequest.find(scope);
 
     const activeCyclesCount = cycles.filter(c => c.status === 'Active').length;
     const completedReviewsCount = annualReviews.filter(r => ['Published & Acknowledged', 'Completed'].includes(r.status)).length;
@@ -233,7 +240,7 @@ router.post('/kpis', protect, adminOnly, async (req, res, next) => {
 // ==========================================
 router.get('/goals', protect, async (req, res, next) => {
   try {
-    const list = await EmployeeGoal.find({ deletedAt: null }).sort({ createdAt: -1 });
+    const list = await EmployeeGoal.find({ deletedAt: null, ...(await teamScope(req)) }).sort({ createdAt: -1 });
     // Deduplicate goals by goalCode and _id before returning
     const seen = new Set();
     const deduplicated = list.filter(g => {
@@ -415,7 +422,7 @@ router.put('/goals/:id/revision', protect, async (req, res, next) => {
 // ==========================================
 router.get('/mid-year-reviews', protect, async (req, res, next) => {
   try {
-    const list = await MidYearReview.find({ deletedAt: null }).sort({ createdAt: -1 });
+    const list = await MidYearReview.find({ deletedAt: null, ...(await teamScope(req)) }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
@@ -424,9 +431,16 @@ router.post('/mid-year-reviews', protect, async (req, res, next) => {
   try {
     const employeeId = req.body.employeeId || req.user.id;
     if (employeeId !== req.user.id && !(await canManage(req, employeeId))) return forbid(res);
+    // The employee self-assessment form sends only subject/rating/comments; fill the rest from records.
+    const emp = await Employee.findOne({ id: employeeId }).select('name dept designation');
+    const cycle = req.body.appraisalCycleId ? null : await AppraisalCycleMaster.findOne({ deletedAt: null, status: 'Active' }).sort({ createdAt: -1 });
     const newReview = new MidYearReview({
       ...req.body,
       employeeId,
+      employeeName: req.body.employeeName || emp?.name,
+      department: req.body.department || emp?.dept,
+      designation: req.body.designation || emp?.designation || 'Not set',
+      appraisalCycleId: req.body.appraisalCycleId || (cycle ? String(cycle._id) : 'No open cycle'),
       status: 'Submitted'
     });
     await newReview.save();
@@ -465,7 +479,7 @@ router.put('/mid-year-reviews/:id/manager-review', protect, async (req, res, nex
 // ==========================================
 router.get('/annual-reviews', protect, async (req, res, next) => {
   try {
-    const list = await AnnualReview.find({ deletedAt: null }).sort({ createdAt: -1 });
+    const list = await AnnualReview.find({ deletedAt: null, ...(await teamScope(req)) }).sort({ createdAt: -1 });
     res.json(list);
   } catch (err) { next(err); }
 });
@@ -562,7 +576,7 @@ router.put('/annual-reviews/:id/acknowledge', protect, async (req, res, next) =>
 // ==========================================
 router.get('/promotions', protect, async (req, res, next) => {
   try {
-    const list = await PromotionRequest.find().sort({ createdAt: -1 });
+    const list = await PromotionRequest.find(await teamScope(req)).sort({ createdAt: -1 });
     // Deduplicate list by requestId, _id, and active employee promotion
     const seen = new Set();
     const deduplicated = list.filter(p => {
@@ -742,7 +756,7 @@ router.put('/promotions/:id/approve', protect, adminOnly, async (req, res, next)
 // ==========================================
 router.get('/increments', protect, async (req, res, next) => {
   try {
-    const list = await SalaryRevisionRequest.find().sort({ createdAt: -1 });
+    const list = await SalaryRevisionRequest.find(await teamScope(req)).sort({ createdAt: -1 });
     // Deduplicate by requestId and _id
     const seen = new Set();
     const deduplicated = list.filter(i => {
@@ -899,7 +913,8 @@ router.put('/increments/:id/approve', protect, adminOnly, async (req, res, next)
 router.get('/pip', protect, async (req, res, next) => {
   try {
     const list = await PipRecord.find({
-      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }]
+      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+      ...(await teamScope(req))
     }).sort({ createdAt: -1 });
     // Deduplicate by pipCode and _id
     const seen = new Set();
