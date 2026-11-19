@@ -775,8 +775,8 @@ const PerformanceModule = ({ searchQuery = '' }) => {
           { id: 'increments', label: 'Increment & Payroll Sync', icon: 'fa-sack-dollar' },
           { id: 'pip', label: 'PIP Lifecycle Engine', icon: 'fa-user-gear' },
           { id: 'reports', label: 'Performance Reports', icon: 'fa-file-csv' },
-          { id: 'audit', label: 'Audit Logs', icon: 'fa-shield-halved' }
-        ].map(tab => (
+          { id: 'audit', label: 'Audit Logs', icon: 'fa-shield-halved', hrOnly: true } // the API is HR-only
+        ].filter(tab => !tab.hrOnly || user?.role === 'hr').map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}

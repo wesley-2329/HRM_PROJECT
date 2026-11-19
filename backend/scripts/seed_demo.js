@@ -40,6 +40,7 @@ const InspectionRecord = require('../models/InspectionRecord');
 const EmployeeExit = require('../models/EmployeeExit');
 const DepartmentClearance = require('../models/DepartmentClearance');
 const FullFinalSettlement = require('../models/FullFinalSettlement');
+const { seedShowcase } = require('./seed_showcase');
 
 // Deterministic "random" so every seed produces the same demo.
 const SEED = 20261115;
@@ -199,6 +200,7 @@ async function seedDemoData({ hrPassword, employeePassword }) {
   ]);
 
   await seedModuleDemo();
+  await seedShowcase({ PEOPLE, nameOf });
   return { employees: PEOPLE.length, attendance: sheets.length, leaves: leaves.length, candidates: cands.length };
 }
 
