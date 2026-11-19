@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { DataContext } from '../context/DataContext';
 import { encodeId, getAvatarUrl } from '../App';
+import { switchTheme } from '../utils/themeTransition';
 
 const TopNavbar = ({ currentModule, setMobileActive, darkMode, setDarkMode, onSearch }) => {
   const { user, logout } = useContext(AuthContext);
@@ -96,13 +97,7 @@ const TopNavbar = ({ currentModule, setMobileActive, darkMode, setDarkMode, onSe
         </button>
         <button
           className="theme-toggle-btn"
-          onClick={() => {
-            const nextMode = !darkMode;
-            setDarkMode(nextMode);
-            if (window.triggerModeAnimation) {
-              window.triggerModeAnimation(nextMode);
-            }
-          }}
+          onClick={(e) => switchTheme(!darkMode, setDarkMode, e.currentTarget)}
           aria-label="Toggle dark mode"
           title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >

@@ -3751,3 +3751,16 @@ body.data-loading .module-viewport td * { visibility: hidden; }
   /* empty-state rows span the whole (scrolling) table; keep the message on screen */
   table td[colspan] { text-align: left !important; }
 }
+
+/* "Orbit Eclipse" theme switch (utils/themeTransition.js): the new theme shows through a moving disc with a soft penumbra */
+@property --ecl-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --ecl-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --ecl-r { syntax: '<length>'; inherits: false; initial-value: 0px; }
+html.theme-eclipse::view-transition-old(root),
+html.theme-eclipse::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.theme-eclipse::view-transition-new(root) {
+  -webkit-mask-image: radial-gradient(circle var(--ecl-r) at var(--ecl-x) var(--ecl-y), #000 calc(var(--ecl-r) * 0.82), transparent var(--ecl-r));
+  mask-image: radial-gradient(circle var(--ecl-r) at var(--ecl-x) var(--ecl-y), #000 calc(var(--ecl-r) * 0.82), transparent var(--ecl-r));
+}
+/* colours must land at once inside the snapshot, not fade separately */
+html.theme-eclipse *, html.theme-eclipse *::before, html.theme-eclipse *::after { transition: none !important; }

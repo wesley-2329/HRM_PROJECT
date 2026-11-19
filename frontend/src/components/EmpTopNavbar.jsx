@@ -6,6 +6,7 @@ import { DataContext } from '../context/DataContext';
 import { getAvatarUrl, encodeId } from '../App';
 import hrorbitLogo from '../assets/hrorbit_logo.png';
 import PalettePicker from './PalettePicker';
+import { switchTheme } from '../utils/themeTransition';
 
 const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'indigo', onSearch }) => {
   const { user, logout } = useContext(AuthContext);
@@ -698,13 +699,7 @@ const EmpTopNavbar = ({ currentModule, darkMode, setDarkMode, navbarTheme = 'ind
         {/* Dark Mode Toggle */}
         <button
           className="theme-toggle-btn"
-          onClick={() => {
-            const nextMode = !darkMode;
-            setDarkMode(nextMode);
-            if (window.triggerModeAnimation) {
-              window.triggerModeAnimation(nextMode);
-            }
-          }}
+          onClick={(e) => switchTheme(!darkMode, setDarkMode, e.currentTarget)}
           aria-label="Toggle dark mode"
           title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
