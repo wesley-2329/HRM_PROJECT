@@ -75,7 +75,7 @@ const ReportingManagerMatrixLanding = ({ mode }) => {
       />
 
       {/* Mini dashboard banner */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats">
         {[
           { label: 'Total Mapped Employees', value: employees.length, color: 'hsl(var(--primary))' },
           { label: 'Department Nodes', value: departments.length, color: '#10b981' },

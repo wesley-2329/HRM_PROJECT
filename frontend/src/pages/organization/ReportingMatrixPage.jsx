@@ -112,7 +112,7 @@ const ReportingMatrixPage = ({ mode }) => {
       />
 
       {/* Overview Statistics Ribbon */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats" style={{ marginBottom: '20px' }}>
         <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border))', padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
           <i className="fa-solid fa-folder-tree" style={{ color: 'hsl(var(--primary))' }}></i>
           <div>

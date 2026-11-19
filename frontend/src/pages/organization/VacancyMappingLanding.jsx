@@ -85,7 +85,7 @@ const VacancyMappingLanding = ({ mode }) => {
       />
 
       {/* Mini dashboard banner */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats">
         {[
           { label: 'Approved Headcount', value: totalApproved || 120, color: 'hsl(var(--primary))' },
           { label: 'Filled Positions', value: totalFilled, color: '#10b981' },

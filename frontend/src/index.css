@@ -3739,3 +3739,15 @@ body.data-loading .module-viewport td * { visibility: hidden; }
   .is-loading td, .is-loading :is(.card, .glass-card, .metric-card, [class*="stat-card"]) :is(h2, .metric-val, [class*="stat-value"]),
   body.data-loading .module-viewport td { animation: none; }
 }
+
+/* Organization stat chips: fill the row at any width (4 across on desktop, 2 on phones, 1 below ~300px) */
+.org-mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr)); gap: 16px; }
+.org-mini-stats > div { min-width: 0 !important; }
+
+/* Phones: headings stay on one line so wide tables scroll sideways instead of squeezing to a letter per line */
+@media (max-width: 640px) {
+  :is([style*="overflow-x: auto"], [style*="overflow: auto"], .table-responsive) > table th { white-space: nowrap; }
+  table.table :is(th, td) { padding: 8px 12px; }
+  /* empty-state rows span the whole (scrolling) table; keep the message on screen */
+  table td[colspan] { text-align: left !important; }
+}

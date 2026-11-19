@@ -78,7 +78,7 @@ const CompanyHierarchyLanding = ({ mode }) => {
       />
 
       {/* Mini dashboard banner */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats">
         {[
           { label: 'Registered Branches', value: branches.length, color: 'hsl(var(--primary))' },
           { label: 'Active Departments', value: departments.length, color: '#10b981' },

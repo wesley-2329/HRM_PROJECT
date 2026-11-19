@@ -2597,7 +2597,7 @@ const HRApp = ({ currentModule, setCurrentModule, searchQuery }) => {
       )}
 
       {/* Recruitment & Onboarding Module */}
-      {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding' || currentModule === 'recruitment-module') && (
+      {(currentModule === 'recruitment-ats' || currentModule === 'recruitment' || currentModule === 'recruitment-onboarding' || currentModule === 'onboarding-workflow' || currentModule === 'recruitment-module') && (
         <section id="hr-mod-recruitment-ats" className="hr-module">
           <RecruitmentModule searchQuery={searchQuery} />
         </section>

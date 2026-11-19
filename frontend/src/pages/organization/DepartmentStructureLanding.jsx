@@ -68,7 +68,7 @@ const DepartmentStructureLanding = ({ mode }) => {
       />
 
       {/* Mini dashboard banner */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats">
         {[
           { label: 'Active Departments', value: departments.filter(d => d.status === 'Active').length, color: 'hsl(var(--primary))' },
           { label: 'Sub Departments', value: subDepartments.length, color: '#10b981' },

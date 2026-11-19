@@ -75,7 +75,7 @@ const SpanOfControlLanding = ({ mode }) => {
       />
 
       {/* Mini dashboard banner */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      <div className="org-mini-stats">
         {[
           { label: 'Total Team Leads', value: employees.filter(e => employees.some(x => x.teamLeadId === e.id)).length, color: 'hsl(var(--primary))' },
           { label: 'Staff Count', value: employees.length, color: '#10b981' },
