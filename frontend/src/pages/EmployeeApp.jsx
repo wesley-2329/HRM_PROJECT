@@ -2080,7 +2080,7 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                 </div>
 
                 {/* Latest Notifications with live real-time timestamps and scroll */}
-                <div className="card" style={{ marginBottom: 0, flex: '1 1 auto' }}>
+                <div className="card" style={{ marginBottom: 0, flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-bell" style={{ color: 'hsl(var(--primary))' }}></i>
@@ -2095,7 +2095,8 @@ const EmployeeApp = ({ currentModule, setCurrentModule }) => {
                       <i className="fa-solid fa-arrow-right"></i>
                     </button>
                   </div>
-                  <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+                  {/* flex-basis 0: the list fills whatever height the card gets and scrolls inside it */}
+                  <div style={{ flex: '1 1 0', minHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
                     {notifications.length > 0 ? (
                       notifications.slice(0, 8).map(n => (
                         <div key={n._id} style={{ padding: '10px 12px', background: n.read ? 'transparent' : 'hsl(var(--bg-main))', borderBottom: '1px solid hsl(var(--border))', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>

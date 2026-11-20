@@ -136,4 +136,6 @@ Once the servers are running, log in with the following default credentials to a
 - **Password**: `employee123`
 - **Role**: Select **Employee Portal** on the login card.
 - **Registration Option**: You can also register a new account. Click on the **Create an account** link in the Employee Portal section of the login gateway to sign up. Once submitted, it is automatically approved and ready to log in.
+
+> These passwords are for the live (`hrorbit`) database. When the app shows the **DEMO DATA** badge (Preview, or a local backend on `hrorbit_demo`), use `DEMO_HR_PASSWORD` / `DEMO_EMPLOYEE_PASSWORD` from `backend/.env.demo` instead.
 # HRM_PROJECT
